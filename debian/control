@@ -1,0 +1,29 @@
+Source: ejabberd
+Section: net
+Priority: optional
+Maintainer: Torsten Werner <twerner@debian.org>
+Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 4.1.0), erlang-base-hipe | erlang-runtime | erlang, erlang-nox | erlang, erlang-src | erlang, grep-dctrl, libexpat1-dev, libssl-dev
+Standards-Version: 3.6.1
+
+Package: ejabberd
+Architecture: any
+Depends: erlang-base-hipe | erlang-runtime | ${erlang:Depends}, erlang-nox | ${erlang-Depends}, openssl, ${misc:Depends}, ${shlibs:Depends}
+Suggests: libunix-syslog-perl
+Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
+ ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang
+ Features:
+  - (Mostly) XMPP-compliant
+  - Web based administration
+  - Load balancing: can run in a cluster of machines
+  - Fault-tolerance: database can be replicated and stored on multiple
+    nodes (nodes can be added or replaced 'on the fly')
+  - Virtual hosting: several virtual domains can be served using single ejabberd
+    instance
+  - SSL/TLS support
+  - Multi-User Chat (MUC/conference)
+  - IRC transport
+  - Jabber Users Directory, based on users vCards
+  - Service Discovery
+  - Shared roster
+ .
+ Homepage: http://www.process-one.net/en/projects/ejabberd/ 

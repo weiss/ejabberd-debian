@@ -1,0 +1,38 @@
+#!/bin/sh
+
+[ -f /etc/default/ejabberd ] && . /etc/default/ejabberd
+
+if [ -r /var/lib/ejabberd/.erlang.cookie ]
+then
+    HOME=/var/lib/ejabberd
+    export HOME
+fi
+
+CONFIG=/etc/ejabberd/ejabberd.cfg
+LOG=/var/log/ejabberd/ejabberd.log
+SASL_LOG=/var/log/ejabberd/sasl.log
+SPOOL=/var/lib/ejabberd
+
+ARGS=
+while [ $# -ne 0 ]
+do
+    PARAM=$1
+    shift
+    case $PARAM in
+	--) break ;;
+	--config) CONFIG=$1 ; shift ;;
+	--log) LOG=$1 ; shift ;;
+	--sasl-log) SASL_LOG=$1 ; shift ;;
+	--spool) SPOOL=$1 ; shift ;;
+	*) ARGS="$ARGS $PARAM" ;;
+    esac
+done
+
+exec erl -sname ejabberd \
+    -s ejabberd \
+    -kernel inetrc \"/etc/ejabberd/inetrc\" \
+    -ejabberd config \"$CONFIG\" log_path \"$LOG\" \
+    -sasl sasl_error_logger \{file,\"$SASL_LOG\"\} \
+    -mnesia dir \"$SPOOL\" \
+    $ERL_OPTIONS $ARGS "$@"
+

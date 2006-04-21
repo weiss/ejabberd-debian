@@ -1,0 +1,10 @@
+This package tries to backup the old ejabberd database if upgraded from
+0.7.5 to 0.9 because the new format is incompatible to the old one. The
+backup can be found at /var/lib/ejabberd.bak .
+
+IMPORTANT: do not forget to update the 'host' configuration to 'hosts'
+in /etc/ejabberd/ejabberd.cfg when upgrading from version 0.7.5.
+
+
+Torsten Werner <twerner@debian.org>       Tue May 17 23:59:41 CEST 2005
+

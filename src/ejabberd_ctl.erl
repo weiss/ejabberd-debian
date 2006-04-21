@@ -237,7 +237,7 @@ process(_Node, _Args) ->
 
 print_usage() ->
     io:format(
-      "Usage: ejabberdctl node command~n"
+      "Usage: ejabberdctl [--node node] command [options]~n"
       "~n"
       "Available commands:~n"
       "  status\t\t\tget ejabberd status~n"
@@ -256,8 +256,9 @@ print_usage() ->
       "  registered-users\t\tlist all registered users~n"
       "  delete-expired-messages\tdelete expired offline messages from database~n"
       "~n"
-      "Example:~n"
-      "  ejabberdctl ejabberd@host restart~n"
+      "Examples:~n"
+      "  ejabberdctl restart~n"
+      "  ejabberdctl --node ejabberd@host restart~n"
      ).
 
 dump_to_textfile(File) ->

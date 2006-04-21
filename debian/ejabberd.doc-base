@@ -1,0 +1,10 @@
+Document: ejabberd
+Title: Debian ejabberd Manual
+Author: Alexey Shchepin <alexey@sevcom.net>
+Abstract: User manual for ejabberd - Erlang Jabber server.
+Section: Apps/Net
+
+Format: HTML
+Index: /usr/share/doc/ejabberd/guide.html
+Files: /usr/share/doc/ejabberd/*.html
+ 

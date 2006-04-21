@@ -84,7 +84,7 @@ install: all
 clean: clean-recursive clean-local
 
 clean-local:
-	rm -f *.beam $(ERLSHLIBS)
+	rm -f *.beam $(ERLSHLIBS) XmppAddr.{asn1db,erl,hrl}
 
 distclean: distclean-recursive clean-local
 	rm -f config.status

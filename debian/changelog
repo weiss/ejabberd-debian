@@ -1,0 +1,161 @@
+ejabberd (1.0.0-2) unstable; urgency=low
+
+  * downgraded erlang-Depends to erlang-runtime, closes: #361739
+
+ -- Torsten Werner <twerner@debian.org>  Mon, 10 Apr 2006 20:52:45 +0200
+
+ejabberd (1.0.0-1) unstable; urgency=low
+
+  * new upstream release, closes: #344330, #353989
+    - Server-to-server Encryption for Enhanced Security: STARTTLS +
+    SASL_EXTERNAL and STARTTLS + Dialback.
+    - Different certificates can be defined for each virtual host.
+    - Shared Roster groups support has been enhanced. New is the ability to
+    add all registered users to a Shared Roster group.
+    - Improved ODBC support.
+    - Support for vCard storage in ODBC has been added.
+    - New tool to convert an Mnesia-based installation to an ODBC compatible
+    relational database.
+    - Native PostgreSQL support.
+    - More XHTML 1.0 Transitional compliancy work is included.
+    - Documentation has been extended to cover more topics.
+
+ -- Torsten Werner <twerner@debian.org>  Sun,  5 Mar 2006 10:20:50 +0100
+
+ejabberd (0.9.8-1) unstable; urgency=low
+
+  * new upstream version
+  * added debian/watch
+  * merged some documentation and configuration fixes from Sergei Golovan
+    <sgolovan@nes.ru>
+
+ -- Torsten Werner <twerner@debian.org>  Sat,  6 Aug 2005 19:39:59 +0200
+
+ejabberd (0.9.1-2) unstable; urgency=low
+
+  * some fixes to the german translation, thanks to Patrick Dreker
+    <pdreker@debianforum.de> for pointing that out, closes: #317955
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 13 Jul 2005 21:53:16 +0200
+
+ejabberd (0.9.1-1) unstable; urgency=low
+
+  * New upstream release, closes: #309526
+  * added --enable-odbc to configure
+  * small fix to init script
+  * thanks to Sergei Golovan <sgolovan@nes.ru> for helping
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 25 May 2005 23:55:28 +0200
+
+ejabberd (0.9-2) unstable; urgency=low
+
+  * smoothed the upgrade procedure from 0.7.5
+  * added custom inetrc file (erlang R10 doesn't load /etc/resolv.conf when
+    running in -sname mode, making resolving of SRV record impossible),
+    thanks to Sergej Golovan, closes: #299533
+  * updated homepage
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 18 May 2005 00:16:22 +0200
+
+ejabberd (0.9-1) unstable; urgency=low
+
+  * new upstream version, closes: #307652
+
+ -- Torsten Werner <twerner@debian.org>  Tue, 10 May 2005 22:04:03 +0200
+
+ejabberd (0.7.5-7) unstable; urgency=low
+
+  * can build now with various erlang versions because of buggy erlang on arm
+
+ -- Torsten Werner <twerner@debian.org>  Sat,  8 Jan 2005 23:34:27 +0100
+
+ejabberd (0.7.5-6) unstable; urgency=low
+
+  * changed to versioned (Build-)Depends: erlang (>= 1:10), closes: #282836
+  * fixed error in init script, closes: #283205
+  * scripts ejabberd and ejabberdctl export $HOME environment variable now
+  * usage message for ejabberdctl updated to reflect the different call syntax
+    thanks to Sergei Golovan (both changes)
+  * updated the Description proposed by Andreas van Cranenburgh
+
+ -- Torsten Werner <twerner@debian.org>  Tue, 30 Nov 2004 22:05:28 +0100
+
+ejabberd (0.7.5-5) unstable; urgency=low
+
+  * renamed debian/control to debian/control.in and changed Build-Depends:
+    @cdbs@
+
+ -- Torsten Werner <twerner@debian.org>  Fri, 19 Nov 2004 23:58:01 +0100
+
+ejabberd (0.7.5-4) unstable; urgency=low
+
+  * switched to cdbs
+  * fixed perl script and added Suggests: libunix-syslog-perl
+
+ -- Torsten Werner <twerner@debian.org>  Thu, 18 Nov 2004 15:48:36 +0100
+
+ejabberd (0.7.5-3) unstable; urgency=low
+
+  * changed maintainer to myself
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 17 Nov 2004 19:23:08 +0100
+
+ejabberd (0.7.5-2) unstable; urgency=low
+
+  * fixed doc-base file
+  * initial upload based on Sergei's work
+
+ -- Torsten Werner <twerner@debian.org>  Wed,  3 Nov 2004 21:43:58 +0100
+
+ejabberd (0.7.5-1) unstable; urgency=low
+
+  * new upstream release (highlights: new tls module, starttls,
+    improvements in admiin web interface, bugfixes)
+  * improved init.d script
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Sun, 10 Oct 2004 21:44:25 +0400
+
+ejabberd (0.7-2) unstable; urgency=low
+
+  * workaround for mnesia issue in mod_last
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Wed, 14 Jul 2004 01:43:13 +0400
+
+ejabberd (0.7-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Tue, 13 Jul 2004 20:35:29 +0400
+
+ejabberd (0.6-alpha-20040522-4) unstable; urgency=low
+
+  * fixed icq.localhost entry in config file
+  * added example options to config file
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Thu, 17 Jun 2004 00:23:32 +0400
+
+ejabberd (0.6-alpha-20040522-3) unstable; urgency=low
+
+  * fixed comments in config file
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Wed, 16 Jun 2004 21:10:13 +0400
+
+ejabberd (0.6-alpha-20040522-2) unstable; urgency=low
+
+  * added comments to config file
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Sun, 13 Jun 2004 13:24:58 +0400
+
+ejabberd (0.6-alpha-20040522-1) unstable; urgency=low
+
+  * new upstream CVS snapshot
+  * updated manual pade for ejabberdctl
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Sun, 30 May 2004 09:36:59 +0400
+
+ejabberd (0.6-alpha-20040417-1) unstable; urgency=low
+
+  * initial prerelease from upstream CVS snapshot
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Sun, 25 Apr 2004 16:39:22 +0400
+

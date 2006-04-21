@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+
+DEB_AUTO_UPDATE_DEBIAN_CONTROL := true
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+DEB_BUILDDIR := $(shell pwd)/src
+DEB_CONFIGURE_SCRIPT := $(DEB_BUILDDIR)/configure
+DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc
+
+UPSTREAM_VERSION := $(shell dpkg-parsechangelog | sed -ne's!^Version: \(.*\)-.*!\1!p')
+
+DEB_MAKE_INSTALL_TARGET := install DESTDIR=`pwd`/debian/ejabberd \
+	EJABBERDDIR=`pwd`/debian/ejabberd/usr/lib/erlang/lib/ejabberd-$(UPSTREAM_VERSION)
+
+CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
+
+# declares a minimal versioned erlang Depends:
+install/ejabberd::
+	grep-status -s Version -PX erlang | sed -e's!^Version: \(.*\)!erlang:Depends=erlang (>= \1)!' >> debian/ejabberd.substvars
+

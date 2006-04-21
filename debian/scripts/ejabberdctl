@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ -r /var/lib/ejabberd/.erlang.cookie ]
+then
+    HOME=/var/lib/ejabberd
+    export HOME
+fi
+
+NODE=ejabberd@`hostname -s`
+
+if [ $# -ne 0 ]
+then
+    case $1 in
+	--node) shift ; NODE=$1 ; shift ;;
+    esac
+fi
+
+exec erl -noinput -sname ejabberdctl -s ejabberd_ctl -extra $NODE "$@"
+

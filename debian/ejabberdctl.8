@@ -1,0 +1,92 @@
+.TH ejabberdctl 8 "3 August 2005" "Version 0.9.1" "ejabberdctl manual page"
+
+.SH NAME
+ejabberd Jabber/XMPP server control interface
+
+.SH SYNOPSIS
+.PP 
+\fBejabberdctl\fR \fI[--node node] command [options]\fP
+
+.SH DESCRIPTION
+.PP 
+\fBejabberdctl\fR  is a front end to the Apache ejabberd Jabber/XMPP server.
+It is designed to help the administrator control the functioning of the
+\fBejabberd\fR daemon.
+
+.SH OPTIONS
+.I node
+Specifies remote erlang node to connect to. Default value is
+\fIejabberd@`hostname -s`\fP.
+
+.TP
+The \fIcommand\fP can be any one of the following options:
+.TP
+.BI status
+Requests status of the ejabberd server.
+.TP
+.BI stop
+Stops the ejabberd server.
+.TP
+.BI restart
+Restarts the ejabberd server.
+.TP
+.BI reopen-log
+Force the ejabberd server to reopen its log file.
+.TP
+.BI register " user server password"
+Register user \fIuser\fP with password \fIpassword\fP at ejabberd virtual
+host \fIserver\fP.
+.TP
+.BI unregister " user server"
+Unregister user \fIuser\fP at ejabberd virtual host \fIserver\fP.
+.TP
+.BI backup " filepath"
+Backup user database of the ejabberd server to file \fIfilepath\fP.
+.TP
+.BI restore " filepath"
+Restore user database of the ejabberd server from backup file \fIfilepath\fP.
+.TP
+.BI install-fallback " filepath"
+Install a backup to \fIfilepath\fP as fallback. The fallback will be
+used to restore the database at the next start-up.
+.TP
+.BI dump " filepath"
+Dump user database of the ejabberd server to text file \fIfilepath\fP.
+.TP
+.BI load " filepath"
+Restore user database of the ejabberd server from text file \fIfilepath\fP.
+.TP
+.BI import-file " filepath"
+Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
+\fIfilepath\fP is \fI.../example.org/user.xml\fP then imported username will be
+\fIuser\fP and it will be imported to virtual server \fIexample.org\fP.
+.TP
+.BI import-dir " directorypath"
+Import user data from jabberd 1.4 spool directory \fIdirectorypath\fP. Directory
+name should be the name of virtual server to import users.
+.TP
+.BI registered-users
+List all registered at the ejabberd server users (at all virtual hosts).
+
+.SH SEE ALSO 
+.PP 
+\fBerl\fR(1), \fBejabberd\fR(8), \fBmnesia\fR(3).
+
+.PP 
+The program documentation is available at \fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+A copy of the documentation can be found at /usr/share/doc/ejabberd/html/guide.html.
+ 
+.SH AUTHORS
+.PP 
+This manual page was adapted by Sergei Golovan <sgolovan@nes.ru> for 
+the \fBDebian\fP system (but may be used by others) from the
+\fBejabberd\fP documentation written by Alexey Shchepin <alexey@sevcom.net>.
+
+Permission is granted to copy, distribute and/or modify this document under 
+the terms of the GNU General Public License, Version 2 any  
+later version published by the Free Software Foundation. 
+.PP 
+On Debian systems, the complete text of the GNU General Public 
+License can be found in /usr/share/common-licenses/GPL. 
+
+

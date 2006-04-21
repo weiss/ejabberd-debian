@@ -1,0 +1,151 @@
+.TH ejabberd 8 "3 August 2005" "Version 0.9.8" "ejabberd manual page"
+
+.SH NAME
+ejabberd \(em Distributed fault-tolerant Jabber/XMPP server 
+
+.SH SYNOPSIS
+.PP 
+\fBejabberd\fR \fI[options] [--] [erlang_options]\fP
+
+.SH DESCRIPTION
+.PP 
+\fBejabberd\fR is a distributed fault-tolerant Jabber/XMPP server written in Erlang. 
+
+main features are: 
+.PD 0
+.TP
+- Distributed: \fBejabberd\fR can run on a cluster of machines
+.TP
+- Fault-tolerance: All the information can be stored on more than one node, nodes can be added or replaced 'on the fly' 
+.TP
+- Built-in Multi-User Chat service 
+.TP
+- Built-in IRC transport 
+.TP
+- Built-in Publish-Subscribe service 
+.TP
+- Built-in Jabber User Directory service based on users vCards 
+.TP
+- SSL support 
+.TP
+- Mostly XMPP-compliant 
+.TP
+- Support for JEP-0030 (Service Discovery) 
+.TP
+- Support for JEP-0039 (Statistics Gathering) 
+.TP
+- Support for xml:lang
+
+.SH OPTIONS
+.TP
+.BI \-\-config " config\-file"
+Specifies an alternate \fIconfig\-file\fP to be parsed at startup, rather
+than the default (\fB/etc/ejabberd/ejabberd.cfg\fP).
+.TP
+.BI \-\-spool " spool\-dir"
+Specifies an alternate \fIspool\-dir\fP to store user database instead of
+the default (\fB/var/lib/ejabberd\fP).
+.TP
+.BI \-\-log " log\-file"
+Log Jabber events to specified \fIlog\-file\fP rather than to the default
+(\fB/var/log/ejabberd/ejabberd.log\fP).
+.TP
+.BI \-\-sasl\-log " sasl\-log\-file"
+Log SASL (System Application Support Libraries) events to specified
+\fIsasl\-log\-file\fP rather than to the default (\fB/var/log/ejabberd/sasl.log\fP).
+.TP
+.I erlang_options
+Other options (and all options following \fB\-\-\fR) are passed directly to
+\fBErlang\fR interpreter. See \fBErlang\fR documentation for more details on
+interpreter options.
+Some useful options are:
+.br
+.sp
+.BI -detached
+    Starts the Erlang system detached from the system console.
+.br
+.BI -heart
+    Starts heart beat monitoring of the Erlang system.
+.br
+.BI -noinput
+    Ensures that the Erlang system never tries to read any input.
+
+.SH CONFIGURATION FILE
+.PP 
+The file \fB/etc/ejabberd/ejabberd.cfg\fR contains the main configuration.
+It is initially loaded the first time \fBejabberd\fR is
+executed, then it is parsed and stored in a database. Subsiquently the
+configuration is loaded from the database and any commands in the configuration
+file are appended to the entries in the database. The configuration file
+consists of a sequence of Erlang terms. Parts of lines after `%' sign
+are ignored. Each term is a tuple, where the first element is the name of an
+option, and the others are option values. E. g. if this file does not contain a
+"host" definition, then the value stored in the database will be used.
+
+To override old values stored in the database the following lines can be added
+in config:
+.br
+  override_global.
+.br
+  override_local.
+.br
+  override_acls.
+
+A complete explanation of each configuration value can be found in the
+official \fBejabberd\fR documentation. See "\fBSEE ALSO\fR" part of this
+manual page for more information about the documentation.
+
+.SH OPTIONS FILE
+.PP 
+The file \fB/etc/default/ejabberd\fR contains specific options.
+
+.PD 0
+.TP
+.I ERL_OPTIONS
+With this option, parameters can be passed to \fBErlang\fR interpretor. See
+\fBErlang\fR documentation for more details on interpreter options.
+
+.TP
+.I ERL_MAX_PORTS
+To use more than 1024 connections (default value), \fIERL_MAX_PORTS\fP should be set
+to the number of connections needed.
+
+.TP
+.I ERL_FULLSWEEP_AFTER
+To reduce memory usage when allowing a large number of connections, \fIERL_FULLSWEEP_AFTER\fP
+may be set to 0 by uncommenting the corresponding line into the options file,
+but in this case \fBejabberd\fR may start to work slower.
+
+.SH FILES
+.PD 0
+.TP
+.I /etc/ejabberd/ejabberd.cfg
+default configuration file
+
+.TP
+.I /etc/default/ejabberd
+default variables
+
+.SH SEE ALSO 
+.PP 
+\fBerl\fR(1), \fBsasl\fR(6), \fBejabberdctl\fR(8). 
+
+.PP 
+The program documentation is available at \fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+A copy of the documentation can be found at /usr/share/doc/ejabberd/html/guide.html.
+ 
+.SH AUTHORS
+.PP 
+This manual page was adapted by Christophe Romain <cro@tuxfamily.org>
+and Sergei Golovan <sgolovan@nes.ru> for 
+the \fBDebian\fP system (but may be used by others) from the
+\fBejabberd\fP documentation written by Alexey Shchepin <alexey@sevcom.net>.
+
+Permission is granted to copy, distribute and/or modify this document under 
+the terms of the GNU General Public License, Version 2 any  
+later version published by the Free Software Foundation. 
+.PP 
+On Debian systems, the complete text of the GNU General Public 
+License can be found in /usr/share/common-licenses/GPL. 
+
+

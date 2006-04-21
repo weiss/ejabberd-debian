@@ -1,0 +1,2231 @@
+=erl_crash_dump:0.1
+Mon Apr 10 20:56:26 2006
+Slogan: init terminating in do_boot ()
+System version: Erlang (BEAM) emulator version 5.4.12 [source] [hipe] [threads:0]
+Compiled: Mon Mar  6 22:53:37 2006
+Atoms: 1568
+=memory
+total: 1091754
+processes: 145968
+processes_used: 138960
+system: 945786
+atom: 92765
+atom_used: 67695
+binary: 9448
+code: 193023
+ets: 26852
+=hash_table:atom_tab
+size: 2411
+used: 1168
+objs: 1568
+depth: 5
+=index_table:atom_tab
+size: 3000
+limit: 1048576
+used: 1568
+rate: 100
+=hash_table:module_code
+size: 47
+used: 9
+objs: 9
+depth: 1
+=index_table:module_code
+size: 50
+limit: 65536
+used: 9
+rate: 10
+=hash_table:export_list
+size: 797
+used: 541
+objs: 864
+depth: 6
+=index_table:export_list
+size: 900
+limit: 65536
+used: 864
+rate: 100
+=hash_table:process_reg
+size: 11
+used: 2
+objs: 2
+depth: 1
+=hash_table:fun_table
+size: 23
+used: 8
+objs: 12
+depth: 3
+=hash_table:node_table
+size: 11
+used: 1
+objs: 1
+depth: 1
+=hash_table:dist_table
+size: 11
+used: 1
+objs: 1
+depth: 1
+=allocated_areas
+processes: 138960 145968
+ets: 26852
+sys_misc: 98349
+static: 524409
+atom_space: 32772 7990
+binary: 9448
+atom_table: 21733
+module_table: 480
+export_table: 6880
+register_table: 108
+fun_table: 154
+module_refs: 1024
+loaded_code: 141725
+dist_table: 167
+node_table: 131
+bits_bufs_size: 2
+bif_timer: 40028
+link_lh: 0
+dist_buf: 0
+proc: 6908 716
+atom_entry: 38260 37972
+export_entry: 42440 41672
+module_entry: 828 388
+reg_proc: 508 76
+monitor_sh: 24 24
+nlink_sh: 508 124
+proc_list: 24 24
+fun_entry: 1148 700
+db_tab: 1628 188
+=allocator:sys_alloc
+option e: true
+option m: libc
+option tt: 131072
+option tp: 0
+=allocator:temp_alloc
+versions: 0.9 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 90
+option rsbcmt: 80
+option mmbcs: 65536
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option as: af
+mbcs blocks: 0 8 8
+mbcs blocks size: 0 11704 11704
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 65568 65568 65568
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 65568
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+temp_alloc calls: 459
+temp_free calls: 459
+temp_realloc calls: 3
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:sl_alloc
+versions: 2.1 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 80
+option rsbcmt: 80
+option mmbcs: 131072
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option mbsd: 3
+option as: gf
+mbcs blocks: 0 0 0
+mbcs blocks size: 0 0 0
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 131104 131104 131104
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 131104
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+sl_alloc calls: 0
+sl_free calls: 0
+sl_realloc calls: 0
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:std_alloc
+versions: 0.9 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 20
+option rsbcmt: 80
+option mmbcs: 131072
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option as: bf
+mbcs blocks: 25 25 25
+mbcs blocks size: 30608 32984 32984
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 131104 131104 131104
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 131104
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+std_alloc calls: 27
+std_free calls: 2
+std_realloc calls: 4
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:ll_alloc
+versions: 0.9 2.1
+option e: true
+option sbct: 4294967295
+option asbcst: 0
+option rsbcst: 0
+option rsbcmt: 0
+option mmbcs: 2097152
+option mmsbc: 0
+option mmmbc: 0
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option as: aobf
+mbcs blocks: 162 162 162
+mbcs blocks size: 1085952 1087200 1087200
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 2097184 2097184 2097184
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 2097184
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+ll_alloc calls: 162
+ll_free calls: 0
+ll_realloc calls: 20
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:eheap_alloc
+versions: 2.1 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 50
+option rsbcmt: 80
+option mmbcs: 524288
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option mbsd: 3
+option as: gf
+mbcs blocks: 3 23 23
+mbcs blocks size: 7208 21920 21920
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 524320 524320 524320
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 524320
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+eheap_alloc calls: 58
+eheap_free calls: 55
+eheap_realloc calls: 4
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:binary_alloc
+versions: 0.9 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 20
+option rsbcmt: 80
+option mmbcs: 131072
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option as: bf
+mbcs blocks: 1 3 3
+mbcs blocks size: 9456 72696 72696
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 131104 131104 131104
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 131104
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+binary_alloc calls: 20
+binary_free calls: 19
+binary_realloc calls: 18
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:ets_alloc
+versions: 0.9 2.1
+option e: true
+option sbct: 524288
+option asbcst: 4145152
+option rsbcst: 20
+option rsbcmt: 80
+option mmbcs: 131072
+option mmsbc: 256
+option mmmbc: 10
+option lmbcs: 5242880
+option smbcs: 1048576
+option mbcgs: 10
+option as: bf
+mbcs blocks: 4 4 4
+mbcs blocks size: 2128 2128 2128
+mbcs carriers: 1 1 1
+mbcs mseg carriers: 0
+mbcs sys_alloc carriers: 1
+mbcs carriers size: 131104 131104 131104
+mbcs mseg carriers size: 0
+mbcs sys_alloc carriers size: 131104
+sbcs blocks: 0 0 0
+sbcs blocks size: 0 0 0
+sbcs carriers: 0 0 0
+sbcs mseg carriers: 0
+sbcs sys_alloc carriers: 0
+sbcs carriers size: 0 0 0
+sbcs mseg carriers size: 0
+sbcs sys_alloc carriers size: 0
+ets_alloc calls: 4
+ets_free calls: 0
+ets_realloc calls: 0
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+sys_alloc calls: 1
+sys_free calls: 0
+sys_realloc calls: 0
+=allocator:fix_alloc
+option e: true
+proc: 6908 716
+atom_entry: 38260 37972
+export_entry: 42440 41672
+module_entry: 828 388
+reg_proc: 508 76
+monitor_sh: 24 24
+nlink_sh: 508 124
+proc_list: 24 24
+fun_entry: 1148 700
+db_tab: 1628 188
+=allocator:mseg_alloc
+version: 0.9
+option amcbf: 4194304
+option rmcbf: 20
+option mcs: 5
+option cci: 1000
+cached_segments: 0
+cache_hits: 0
+segments: 0
+segments_watermark: 0
+mseg_alloc calls: 0
+mseg_dealloc calls: 0
+mseg_realloc calls: 0
+mseg_create calls: 0
+mseg_destroy calls: 0
+mseg_recreate calls: 0
+mseg_clear_cache calls: 0
+mseg_check_cache calls: 0
+=allocator:alloc_util
+option mmc: 1024
+option ycs: 1048576
+=allocator:instr
+option m: false
+option s: false
+option t: false
+=proc:<0.0.0>
+State: Running
+Name: init
+Spawned as: otp_ring0:start/2
+Spawned by: []
+Started: Mon Apr 10 20:56:26 2006
+Message queue length: 0
+Number of heap fragments: 0
+Heap fragment data: 0
+Link list: [<0.2.0>]
+Reductions: 410
+Stack+heap: 987
+OldHeap: 0
+Heap unused: 107
+OldHeap unused: 0
+Program counter: 0x4032b3f8 (init:boot_loop/2 + 32)
+CP: 0x4032b288 (init:things_to_string/1 + 68)
+=proc:<0.2.0>
+State: Waiting
+Name: erl_prim_loader
+Spawned as: erlang:apply/2
+Spawned by: <0.1.0>
+Started: Mon Apr 10 20:56:26 2006
+Message queue length: 0
+Number of heap fragments: 1
+Heap fragment data: 194
+Link list: [#Port<0.2>, <0.0.0>]
+Reductions: 1056
+Stack+heap: 610
+OldHeap: 0
+Heap unused: 31
+OldHeap unused: 0
+Program counter: 0x403457ec (erl_prim_loader:loop/3 + 52)
+CP: 0x8195aa8 (<terminate process normally>)
+arity = 0
+=port:#Port<0.1>
+Slot: 1
+Connected: #Port<0.0>
+Port controls linked-in driver: async
+=port:#Port<0.2>
+Slot: 2
+Connected: <0.2.0>
+Links: <0.2.0>
+Port controls linked-in driver: efile
+=node:'nonode@nohost'
+=no_distribution
+=loaded_modules
+Current code: 141725
+Old code: 0
+=mod:otp_ring0
+Current size: 521
+=mod:init
+Current size: 31626
+=mod:prim_inet
+Current size: 35320
+=mod:prim_file
+Current size: 25720
+=mod:erl_prim_loader
+Current size: 21805
+=mod:erlang
+Current size: 11025
+=mod:error_handler
+Current size: 1835
+Current attributes: 836C00000001680264000376736E6C000000016E1000EA21C40E9AD953D94DA6DE0279DD043D6A6A
+Current compilation info: 836C0000000468026400076F7074696F6E736C0000000468026400036377646B00452F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F73726368026400066F75746469726B004D2F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F6562696E6802640001696B00502F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F696E636C75646564000A64656275675F696E666F6A680264000776657273696F6E6B0006342E332E3131680264000474696D65680662000007D6610361066116613A61186802640006736F757263656B00572F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F6572726F725F68616E646C65722E65726C6A
+=mod:heart
+Current size: 6720
+Current attributes: 836C00000001680264000376736E6C000000016E1000E5E37241FDBC8DD63B8014F1AE5D11416A6A
+Current compilation info: 836C0000000468026400076F7074696F6E736C0000000468026400036377646B00452F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F73726368026400066F75746469726B004D2F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F6562696E6802640001696B00502F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F696E636C75646564000A64656275675F696E666F6A680264000776657273696F6E6B0006342E332E3131680264000474696D65680662000007D6610361066116613A611E6802640006736F757263656B004F2F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F68656172742E65726C6A
+=mod:error_logger
+Current size: 7153
+Current attributes: 836C00000001680264000376736E6C000000016E100004309F6B1114FB3F671F415016A4179E6A6A
+Current compilation info: 836C0000000468026400076F7074696F6E736C0000000468026400036377646B00452F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F73726368026400066F75746469726B004D2F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F6562696E6802640001696B00502F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F2E2E2F696E636C75646564000A64656275675F696E666F6A680264000776657273696F6E6B0006342E332E3131680264000474696D65680662000007D6610361066116613A61186802640006736F757263656B00562F686F6D652F77696C6C2F64656269616E2F7061636B616765732F65726C616E672F6275696C642F6F74705F7372635F523130422D392F6C69622F6B65726E656C2F7372632F6572726F725F6C6F676765722E65726C6A
+=fun
+Module: init
+Uniq: 43471263
+Index: 7
+Address: 0x40331928
+Native_address: 0x810ae04
+Refc: 1
+=fun
+Module: init
+Uniq: 55609101
+Index: 6
+Address: 0x40331a2c
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: init
+Uniq: 113341227
+Index: 8
+Address: 0x4033190c
+Native_address: 0x810ae1c
+Refc: 1
+=fun
+Module: erl_prim_loader
+Uniq: 118883332
+Index: 1
+Address: 0x40349938
+Native_address: 0x810ae1c
+Refc: 1
+=fun
+Module: erl_prim_loader
+Uniq: 31081110
+Index: 0
+Address: 0x40349988
+Native_address: 0x810ae1c
+Refc: 1
+=fun
+Module: init
+Uniq: 57585714
+Index: 2
+Address: 0x40331bec
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: erlang
+Uniq: 24496633
+Index: 0
+Address: 0x4034c60c
+Native_address: 0x810ae0c
+Refc: 1
+=fun
+Module: init
+Uniq: 85221007
+Index: 4
+Address: 0x40331b88
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: init
+Uniq: 9898573
+Index: 3
+Address: 0x40331bd0
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: init
+Uniq: 38671175
+Index: 0
+Address: 0x40331c24
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: init
+Uniq: 37443366
+Index: 1
+Address: 0x40331c08
+Native_address: 0x810ae14
+Refc: 1
+=fun
+Module: init
+Uniq: 5273502
+Index: 5
+Address: 0x40331aa0
+Native_address: 0x810ae1c
+Refc: 1
+=proc_stack:<0.0.0>
+0x4044c658:SReturn addr 0x8195AA8 (<terminate process normally>)
+=proc_heap:<0.0.0>
+=proc_stack:<0.2.0>
+0x40450934:SReturn addr 0x8195AA8 (<terminate process normally>)
+y0:H4044FFC8
+y1:P<0.1.0>
+y2:H4044FFD0
+y3:A8:infinity
+=proc_heap:<0.2.0>
+4044FFC8:lH4044FFF8|H40450000
+4044FFF8:lI47|H40450010
+40450010:lI117|H40450028
+40450028:lI115|H40450040
+40450040:lI114|H40450058
+40450058:lI47|H40450070
+40450070:lI108|H40450088
+40450088:lI105|H404500A0
+404500A0:lI98|H404500B8
+404500B8:lI47|H404500D0
+404500D0:lI101|H404500E8
+404500E8:lI114|H40450100
+40450100:lI108|H40450118
+40450118:lI97|H40450130
+40450130:lI110|H40450148
+40450148:lI103|H40450160
+40450160:lI47|H40450170
+40450170:lI108|H40450180
+40450180:lI105|H40450190
+40450190:lI98|H404501A0
+404501A0:lI47|H404501B0
+404501B0:lI107|H404501C0
+404501C0:lI101|H404501D0
+404501D0:lI114|H404501E0
+404501E0:lI110|H404501F0
+404501F0:lI101|H40450200
+40450200:lI108|H40450210
+40450210:lI45|H40450220
+40450220:lI50|H40450230
+40450230:lI46|H40450240
+40450240:lI49|H40450250
+40450250:lI48|H40450260
+40450260:lI46|H40450270
+40450270:lI49|H40450280
+40450280:lI50|H40450290
+40450290:lI47|H404502A0
+404502A0:lI101|H404502B0
+404502B0:lI98|H404502C0
+404502C0:lI105|H404502D0
+404502D0:lI110|N
+40450000:lH40450018|N
+40450018:lI47|H40450030
+40450030:lI117|H40450048
+40450048:lI115|H40450060
+40450060:lI114|H40450078
+40450078:lI47|H40450090
+40450090:lI108|H404500A8
+404500A8:lI105|H404500C0
+404500C0:lI98|H404500D8
+404500D8:lI47|H404500F0
+404500F0:lI101|H40450108
+40450108:lI114|H40450120
+40450120:lI108|H40450138
+40450138:lI97|H40450150
+40450150:lI110|H40450168
+40450168:lI103|H40450178
+40450178:lI47|H40450188
+40450188:lI108|H40450198
+40450198:lI105|H404501A8
+404501A8:lI98|H404501B8
+404501B8:lI47|H404501C8
+404501C8:lI115|H404501D8
+404501D8:lI116|H404501E8
+404501E8:lI100|H404501F8
+404501F8:lI108|H40450208
+40450208:lI105|H40450218
+40450218:lI98|H40450228
+40450228:lI45|H40450238
+40450238:lI49|H40450248
+40450248:lI46|H40450258
+40450258:lI49|H40450268
+40450268:lI51|H40450278
+40450278:lI46|H40450288
+40450288:lI49|H40450298
+40450298:lI49|H404502A8
+404502A8:lI47|H404502B8
+404502B8:lI101|H404502C8
+404502C8:lI98|H404502D8
+404502D8:lI105|H404502E0
+404502E0:lI110|N
+4044FFD0:t7:A5:state,A5:efile,N,A4:none,p<0.2>,A8:infinity,A5:false
+=atoms
+is_string
+nice_tuple
+nice
+display2
+add_node
+tag_event
+handle_event2
+lost_messages
+bad_query
+handle_call
+handle_info
+handle_event
+go_back
+no_log_file
+allready_have_logfile
+which_handlers
+simple_logger
+delete_handler
+delete_report_handler
+add_handler
+add_report_handler
+swap
+logfile
+swap_handler
+error_info
+info_msg
+info_report
+std_info
+std_warning
+warning_report
+format
+error_msg
+noinput
+noshell
+home
+progname
+root
+report_problem
+send_shutdown
+get_heart_cmd
+send_heart_cmd
+send_heart_beat
+stop_error
+do_cycle_port_program
+no_reboot_shutdown
+port_terminated
+bad_cmd
+wait_ack
+bad_heart_flag
+check_start_heart
+get_heart_timeouts
+port_problem
+start_portprogram
+wait
+cycle
+clear_cmd
+get_cmd
+set_cmd
+start_error
+no_heart
+wait_for_init_ack
+stub_function
+'no -init_debug flag'
+minimal
+erlangrc
+permanent
+start_boot
+applications_loaded
+pool_master
+take_over_monitor
+rsh_starter
+timer_server
+stdlib
+init_kernel_started
+mod
+maxP
+maxT
+start_phases
+tty
+included_applications
+applications
+ddll_server
+os_server
+rex
+net_sup
+kernel_sup
+global_name_server
+fixtable_server
+file_server_2
+boot_server
+modules
+vsn
+description
+start_link
+modules_loaded
+beam_lib
+c
+calendar
+dets
+dets_server
+dets_sup
+dets_utils
+dets_v8
+dets_v9
+dict
+digraph
+digraph_utils
+edlin
+edlin_expand
+epp
+erl_bits
+erl_internal
+erl_lint
+erl_posix_msg
+erl_pp
+erl_tar
+error_logger_file_h
+error_logger_tty_h
+eval_bits
+file_sorter
+filelib
+gb_sets
+gb_trees
+gen
+gen_event
+gen_fsm
+io_lib
+io_lib_format
+io_lib_fread
+io_lib_pretty
+lib
+lists_sort
+log_mf_h
+ms_transform
+orddict
+ordsets
+otp_internal
+pg
+pool
+proc_lib
+proplists
+qlc
+qlc_pt
+queue
+random
+regexp
+sets
+shell
+shell_default
+slave
+sofs
+supervisor
+supervisor_bridge
+sys
+win32reg
+application
+application_controller
+application_master
+application_starter
+code_aux
+code_server
+disk_log
+disk_log_1
+disk_log_server
+disk_log_sup
+dist_ac
+dist_util
+erl_boot_server
+erl_ddll
+erl_distribution
+erl_epmd
+erl_reply
+file_io_server
+file_server
+gen_tcp
+gen_udp
+global_group
+global_search
+group
+hipe_unified_loader
+inet6_tcp
+inet6_tcp_dist
+inet6_udp
+inet_config
+inet_db
+inet_dns
+inet_gethost_native
+inet_hosts
+inet_parse
+inet_res
+inet_tcp
+inet_tcp_dist
+inet_udp
+kernel
+kernel_config
+net
+net_adm
+old_file_server
+packages
+pg2
+ram_file
+rpc
+user_drv
+user_sup
+wrap_log_reader
+zlib
+linux
+unix
+dist_ctrl
+ets_realloc_moves
+'no -path flag'
+'no -id flag'
+'no -hosts flag'
+'no -loader flag'
+'-noinput'
+'-noshell'
+'-home'
+'-progname'
+'conftest.erl'
+'@files'
+'/home/twerner/debian/ejabberd-1.0.0/src'
+'@cwd'
+compile_cmdline
+erl_compile
+'-spawn_opt/5-fun-0-'
+list_to_integer_sign
+concat_binary
+get_cookie
+auth
+set_cookie
+ignored
+send_nosuspend
+fun_info_1
+disconnect
+disconnect_node
+warning_msg
+is_well_formed_list
+crasher
+remote_spawn_error
+foldl
+no_link
+gen_server
+'-start/3-fun-0-'
+'-get_files/8-fun-0-'
+ipv4_addr
+ipv4_address
+einal
+ipv4_list
+to_strs
+min
+keyins
+keysort
+send_all
+win32
+absolute_filename
+port_error
+ll_close
+ll_open_set_bind
+ll_udp_open
+ll_tcp_connect
+udp_options
+tcp_timeout
+tcp_options
+inet_stop_port
+inet_get_cwd
+inet_read_file_info
+inet_list_dir
+inet_send_and_rcv
+file_not_found
+get_from_port_inet1
+get_from_port_inet
+inet_timeout_handler
+inet_exit_port
+find_collect
+'no server found'
+find_loop
+ebusy
+connect_master
+find_master
+efile_timeout_handler
+efile_exit_port
+noport
+efile_stop_port
+efile_get_cwd
+efile_read_file_info
+efile_list_dir
+'prim_load port died'
+get_from_port_efile2
+get_from_port_efile1
+get_from_port_efile
+par_get_file
+multi_get_from_port_efile
+handle_timeout
+loader_get_cwd
+loader_read_file_info
+loader_list_dir
+no_multi_get
+error_report
+std_error
+enotdir
+enoent
+check_file_result
+get_path
+init_ack
+ose_inet
+premature_end_of_list
+lists_split
+transform_ldata
+get_uint32s
+get_uint32
+get_uint64
+uint32
+date_to_bytes
+int_to_bytes
+file_access
+other
+device
+directory
+regular
+symlink
+file_type
+transform_info_ints
+translate_response
+cur
+bof
+lseek_position
+delayed_write
+read_ahead
+open_mode
+port_died
+bad_response_from_port
+drv_get_response
+drv_command
+drv_close
+emfile
+drv_open
+list_dir_int
+list_dir
+read_link_info_int
+read_link_info
+read_link_int
+read_link
+make_symlink_int
+make_symlink
+make_link_int
+make_link
+file_info
+write_file_info_int
+write_file_info
+altname_int
+altname
+read_file_info_int
+read_file_info
+del_dir_int
+del_dir
+make_dir_int
+make_dir
+rename_int
+delete_int
+absname
+filename
+vxworks
+set_cwd_int
+set_cwd
+get_cwd_int
+get_cwd
+write_file
+read_file
+ipread_s32bu_p32bu
+copy_opened
+file
+truncate
+position
+pread_int
+pread
+enomem
+sync
+pwrite_int
+pwrite
+file_descriptor
+open_int_setopts
+open_int
+efile
+prim_file
+internal
+ctl_cmd
+get_ip6
+get_ip4
+get_ip
+ip6_to_bytes
+ip4_to_bytes
+ip_to_bytes
+rev
+build_iflist
+encode_ifname
+enc_time
+busy
+listening
+accepting
+connecting
+bound
+dec_status
+dec_stats
+decode_stats
+recv_cnt
+recv_max
+recv_avg
+recv_dvi
+send_cnt
+send_max
+send_avg
+recv_oct
+send_oct
+enc_stats
+encode_stats
+dec_subs
+decode_subs
+enc_subs
+encode_subs
+encode_ifopt_val
+encode_ifopts
+decode_ifopts
+dec_ifopt
+enc_ifopt
+up
+down
+no_broadcast
+pointtopoint
+no_pointtopoint
+multicast
+hwaddr
+mtu
+dstaddr
+broadaddr
+addr
+netmask
+type_ifopt
+dec_opt_val
+decode_opt_val
+enc_opts
+encode_opts
+enc_opt_val
+encode_opt_val
+enum_name
+enum_val
+enum_names
+enum_vals
+borlist
+dec_value
+any
+loopback
+enc_value
+ether
+bitenumlist
+type_value
+uint
+int
+bool
+ip
+list
+term
+once
+on
+off
+enum
+raw
+sunrm
+asn1
+cdr
+fcgi
+tpkt
+httph
+type_opt
+dec_opt
+reuseaddr
+dontroute
+linger
+broadcast
+sndbuf
+recbuf
+multicast_if
+multicast_ttl
+multicast_loop
+add_membership
+drop_membership
+buffer
+header
+mode
+deliver
+exit_on_close
+high_watermark
+low_watermark
+bit8
+send_timeout
+packet_size
+enc_opt
+is_sockopt_val
+attach
+detach
+unrecv
+getservbyport1
+getservbyport
+getservbyname1
+getservbyname
+gethostname
+getstatus
+gettype
+getindex
+getfd
+getstat
+subscribe
+ifset
+ifget
+getiflist
+getopts
+getopt
+setopts
+setopt
+setsockname
+sockname
+setpeername
+peername
+recvfrom0
+recvfrom
+async_recv
+recv0
+recv
+sendto
+listen
+async_accept
+active
+nodelay
+keepalive
+delay_send
+tos
+accept_opts
+accept0
+accept
+async_connect
+connect0
+bind
+close_pend_loop
+send_pend
+shutdown_pend_loop
+shutdown_2
+subs_empty_out_q
+shutdown_1
+write
+read_write
+tcp_inet
+udp_inet
+dgram
+open0
+fdopen1
+open1
+fdopen
+einval
+inet
+inet6
+prim_inet
+'-bs2as/1-fun-0-'
+'-bs2ss/1-fun-0-'
+'-boot/1-fun-0-'
+'-values_to_atoms_again/1-fun-0-'
+'-notify/1-fun-0-'
+'-alive_processes/0-lc$^0/1-0-'
+'-do_boot/2-fun-0-'
+'-par_load_modules/2-fun-0-'
+'-par_load_modules/2-fun-1-'
+'-shutdown_timer/1-fun-0-'
+extension
+concat
+set_argument
+get_argument1
+to_strings
+get_flag_args
+get_flag_list
+check
+flag
+start_arg2
+eval_arg
+start_arg
+end_args
+start_extra_arg
+arg
+parse_boot_args
+timer
+flush_timout
+'-shutdown_time'
+shutdown_timer
+load_mod_code
+load_mod
+exprs
+erl_eval
+parse_exprs
+erl_parse
+dot
+erl_scan
+start_it
+start_em
+start_in_kernel
+get_var_val
+get_var_value
+extract_var
+add_var
+fix_path
+make_path
+'cannot load'
+get_files
+par_load_modules
+load_modules
+debug
+'unexpected command in bootfile'
+kernelProcess
+preLoaded
+primLoad
+path
+embedded
+kernel_load_completed
+eval_script
+script
+get_file
+'bootfile format error'
+'cannot get bootfile'
+not_found
+get_boot
+'-pz'
+'-pa'
+path_flags
+bootfile
+'-boot_var'
+'-init_debug'
+'-mode'
+'-root'
+do_boot
+'-path'
+'-id'
+none
+'-hosts'
+'-loader'
+prim_load_flags
+add_to_kernel
+set_path
+erl_prim_loader
+start_prim_loader
+sleep
+kernel_pid
+terminate
+del
+sub
+do_unload
+unload
+kill_all_ports
+kill_em
+get_pids
+alive_processes
+kill_all_pids
+resend
+shutdown_timeout
+shutdown_loop
+shutdown_kernel_pid
+shutdown
+heart
+get_heart
+shutdown_pids
+stop_heart
+clear_system
+do_stop
+stopping
+'-config'
+'-boot'
+user
+notfound
+do_handle_msg
+new_state
+handle_msg
+not_allowed
+loop
+ignore
+new_kernelpid
+garb_boot_loop
+foreach
+notify
+badrecord
+progress
+boot_loop
+crash
+halt_string
+things_to_string
+flatten
+printable_list
+state
+starting
+flags_to_atoms_again
+values_to_atoms_again
+map
+b2s
+b2a
+s
+eval
+prepare_run_args
+reboot
+request
+started
+wait_until_started
+notify_when_started
+make_permanent
+ensure_loaded
+fetch_loaded
+get_status
+get_flags
+get_flag
+get_args
+bs2ss
+bs2as
+script_id
+get_argument
+get_plain_arguments
+get_arguments
+fatal
+run
+boot
+otp_ring0
+'TRACE'
+'DELETE'
+'PUT'
+'POST'
+'HEAD'
+'GET'
+'OPTIONS'
+'Proxy-Connection'
+'Keep-Alive'
+'Cookie'
+'X-Forwarded-For'
+'Set-Cookie2'
+'Set-Cookie'
+'Accept-Ranges'
+'Last-Modified'
+'Expires'
+'Etag'
+'Content-Type'
+'Content-Range'
+'Content-Md5'
+'Content-Location'
+'Content-Length'
+'Content-Language'
+'Content-Encoding'
+'Content-Base'
+'Allow'
+'Www-Authenticate'
+'Warning'
+'Vary'
+'Server'
+'Retry-After'
+'Public'
+'Proxy-Authenticate'
+'Location'
+'Age'
+'User-Agent'
+'Referer'
+'Range'
+'Proxy-Authorization'
+'Max-Forwards'
+'If-Unmodified-Since'
+'If-Range'
+'If-None-Match'
+'If-Match'
+'If-Modified-Since'
+'Host'
+'From'
+'Authorization'
+'Accept-Language'
+'Accept-Encoding'
+'Accept-Charset'
+'Accept'
+'Via'
+'Upgrade'
+'Transfer-Encoding'
+'Pragma'
+'Date'
+'Connection'
+'Cache-Control'
+scheme
+https
+http
+absoluteURI
+abs_path
+http_error
+http_response
+http_request
+http_header
+http_eoh
+empty_out_q
+inet_reply
+inet_async
+udp_error
+udp_closed
+udp
+tcp_error
+tcp_closed
+tcp
+select_trap
+'count_trap\000'
+delete_trap
+x86
+inc_stack_0
+handle_fp_exception
+show_message_area
+test_reschedule
+modeswitch_debug_off
+modeswitch_debug_on
+in_native
+show_literals
+show_term
+show_pcb
+nstack_used_size
+show_nstack
+show_heap
+show_estack
+stop_hrvtime
+get_hrvtime
+misc_timer_clear
+misc_timer
+gc_timer_clear
+shared_gc_timer
+gc_timer
+send_timer_clear
+send_timer
+system_timer_clear
+system_timer
+pause_times
+gc_info_clear
+shared_gc_info
+gc_info
+message_sizes
+message_info_clear
+message_info
+process_info_clear
+trap_count_clear
+trap_count_get
+call_count_clear
+call_count_get
+call_count_off
+call_count_on
+bs_allocate
+bs_put_small_float
+bs_put_big_integer
+bs_put_float
+bs_put_binary_all
+bs_put_binary
+bs_put_integer
+bs_restore
+bs_save
+bs_test_tail
+bs_skip_bits_all
+bs_skip_bits
+bs_get_binary_all
+bs_get_binary
+bs_get_float
+bs_get_integer
+bs_start_match
+bs_final
+bs_put_string
+bs_init
+conv_big_to_float
+op_exact_eqeq_2
+cmp_2
+set_timeout
+select_msg
+rethrow
+hipe_apply
+gc_1
+suspend_0
+suspend_msg_timeout
+suspend_msg
+erts_global_mso
+erts_mb
+erl_fp_exception
+load_fe
+x86_abs_pcrel
+constant
+closure
+c_const
+remote
+load_mfa
+redirect_referred_from
+remove_refs_from
+mark_referred_from
+add_ref
+patch_call
+patch_insn
+get_rts_param
+system_crc
+check_crc
+find_na_or_make_stub
+make_fe
+term_to_word
+atom_to_word
+primop_address
+bif_address
+enter_sdesc
+code_size
+update_code_size
+invalidate_funinfo_native_addresses
+set_funinfo_native_address
+set_native_address
+fun_to_address
+merge_term
+constants_size
+alloc_data
+enter_code
+ref_set
+ref_get
+ref
+array_update
+array_sub
+array_length
+array
+bytearray_update
+bytearray_sub
+bytearray
+write_u32
+write_u8
+hipe_bifs
+old_binary_to_term
+list_to_existing_atom
+iolist_to_binary
+iolist_size
+make_fun
+to_integer
+string
+is_boolean
+get_module_info
+warning_map
+hibernate
+blocking_read_file
+is_native
+is_module_native
+make_stub_module
+module_md5
+get_chunk
+dump_links
+dump_monitors
+flat_size
+same
+disassemble
+erts_debug
+search
+keysearch
+'erl.lang.list.keylist'
+keymember
+reverse
+is_element
+lists
+getpid
+setenv
+'erl.system.os'
+putenv
+os
+match_spec_run_r
+match_spec_compile
+select_delete
+select_reverse
+select_count
+select
+update_counter
+slot
+safe_fixtable
+rename
+insert_new
+insert
+prev
+is_key
+member
+match_object
+match
+last
+db_info
+lookup_element
+lookup
+is_compiled_ms
+old_fixtable
+fixtable
+first
+delete_object
+delete_all_objects
+db_delete
+'erl.lang.ets'
+'$erase'
+'$get_keys'
+'$get'
+'$put'
+match_spec_test
+is_record
+is_function
+is_binary
+is_reference
+is_port
+is_pid
+is_number
+is_integer
+is_float
+is_constant
+is_tuple
+is_list
+is_atom
+subtract
+'--'
+append
+'++'
+send
+'!'
+divide
+multiply
+minus
+plus
+not_arith_equal
+not_equal
+arith_equal
+equal
+less_or_equal
+less
+greater_or_equal
+greater
+'erl.lang.bool'
+is_builtin
+get_stacktrace
+raise
+fault
+is_process_alive
+demonitor
+fun_to_list
+port_to_list
+ref_to_list
+system_monitor
+system_info
+system_flag
+append_element
+make
+make_tuple
+read
+read_timer
+cancel
+cancel_timer
+send_after
+'erl.lang.timer'
+start_timer
+pow
+atan2
+sqrt
+log10
+log
+exp
+erfc
+erf
+atanh
+atan
+asinh
+asin
+acosh
+acos
+tanh
+tan
+sinh
+sin
+cosh
+'erl.lang.math'
+cos
+math
+bump_reductions
+process_display
+resume_process
+suspend_process
+seq_trace_print
+seq_trace_info
+seq_trace
+trace_info
+trace_pattern
+get_data
+port_get_data
+set_data
+port_set_data
+port_connect
+port_close
+control
+port_control
+port_command
+port_call
+dist_link
+dist_unlink
+dist_exit
+setnode
+spawn_opt
+whereis
+unlink
+utc_to_local
+universaltime_to_localtime
+utc
+universaltime
+tuple_to_list
+trunc
+tl
+time_of_day
+time
+from_term
+term_to_binary
+statistics
+split
+split_binary
+spawn_link
+spawn
+setelement
+self
+round
+registered
+put
+purge
+purge_module
+process_info
+set_flag
+process_flag
+preloaded
+pre_loaded
+ports
+port_info
+pid_to_string
+pid_to_list
+open
+'erl.lang.port'
+open_port
+now
+nodes
+monitor_node
+function_exported
+is_loaded
+module_loaded
+final
+md5_final
+update
+md5_update
+init
+md5_init
+digest
+'erl.util.crypt.md5'
+md5
+'erl.lang.ref'
+make_ref
+local_to_utc
+localtime_to_universaltime
+localtime
+loaded
+load
+load_module
+list_to_tuple
+string_to_pid
+list_to_pid
+list_to_integer
+list_to_float
+from_list
+list_to_binary
+from_string
+list_to_atom
+link
+length
+'erl.lang.node'
+is_alive
+'erl.lang.integer'
+integer_to_list
+'erl.lang.list'
+hd
+hash
+phash2
+phash
+'erl.lang.system'
+halt
+set_group_leader
+group_leader
+get_keys
+get
+garbage_collect_message_area
+'erl.system'
+garbage_collect
+'erl.lang.function'
+fun_info
+'erl.lang.float'
+float_to_list
+to_float
+float
+'erl.lang.term'
+external_size
+signal
+'erl.lang.proc'
+'erl.lang.proc.pdict'
+erase
+'erl.lang.tuple'
+element
+display_nl
+display_string
+'erl.system.debug'
+display
+delete
+delete_module
+today
+'erl.util.date'
+date
+check_process
+'erl.system.code'
+check_process_code
+to_term
+binary_to_term
+to_list
+'erl.lang.binary'
+binary_to_list
+to_string
+'erl.lang.atom'
+atom_to_list
+'erl.lang'
+apply
+'erl.lang.number'
+abs
+yield
+xor
+wordsize
+warning
+wall_clock
+waiting
+visible
+version
+value
+uniq
+used
+use_stdio
+use_mmap_table
+ultrasparc_set_pcr
+ultrasparc_read_tick2
+ultrasparc_read_pic2
+ultrasparc_read_tick1
+ultrasparc_read_pic1
+unregister
+undef
+type
+tuple
+try_clause
+trap_exit
+tracer
+trace_control_word
+traced
+trace_ts
+trace
+total
+timestamp
+'*'
+timeout_value
+threads
+thread_pool_size
+this
+table
+'SYSTEM'
+system_architecture
+system_version
+system_limit
+system
+sys_misc
+suspended
+suspend
+stream
+stop
+stderr_to_stdout
+static
+status
+start
+stack_size
+sl_alloc
+size
+silent
+shared
+separate
+set_tcw_fake
+set_tcw
+set_seq_token
+set_on_spawn
+set_on_link
+set_on_first_spawn
+set_on_first_link
+set
+serial
+sequential_trace_token
+sequential_tracer
+save_calls
+runtime
+running
+runnable
+run_queue
+return_trace
+return_to
+return_from
+restart
+reset
+rem
+refc
+registered_name
+register
+reductions
+recent_size
+receive
+quantify
+purify
+public
+protection
+protected
+procs
+process_dump
+process_limit
+process_count
+processes_used
+processes
+process
+private
+priority
+print
+port
+pid
+pause
+'+'
+packet
+owner
+output
+out
+ose_ti_proc
+ose_process_type
+ose_process_prio
+ose_pri_proc
+ose_phantom
+ose_int_proc
+ose_bg_proc
+os_version
+os_type
+orelse
+ordered_set
+or
+on_load
+old_heap_size
+old_heap_block_size
+ok
+objects
+nouse_stdio
+notalive
+not_purged
+not_a_list
+not
+no_integer
+no_float
+nosuspend
+noproc
+nofile
+noeol
+nodedown
+node
+nocookie
+noconnection
+noconnect
+next
+new_uniq
+new_index
+new
+net_kernel
+'/='
+'=/='
+native_addresses
+named_table
+name
+more
+monitors
+monitor
+monitored_by
+monitor_list
+module_info
+module
+'-'
+min_heap_size
+meta_match_spec
+meta
+messages
+message_queue_len
+message
+memory_types
+memory
+mbuf_size
+max_processes
+max_tables
+maximum
+max
+match_spec
+machine
+'<'
+low
+long_gc
+local
+little
+links
+link_list
+line
+'=<'
+last_calls
+large_heap
+label
+known
+killed
+kill
+keypos
+io
+is_seq_trace
+invalid
+instruction_counts
+internal_status
+internal_error
+input
+initial_call
+info
+index
+in
+imports
+if_clause
+id
+hybrid
+hipe_architecture
+high
+hide
+hidden
+heap_type
+heap_sizes
+heap_size
+heap_block_size
+'>'
+global_heaps_size
+global
+getting_unlinked
+getting_linked
+getenv
+get_tcw
+get_seq_token
+generational
+'>='
+gc_start
+gc_end
+garbage_collection
+function_clause
+functions
+function
+fullsweep_if_old_binaries
+fullsweep_after
+flags
+fd
+external
+exports
+exiting
+existing
+exit_status
+ets
+error_logger
+error_handler
+'ERROR'
+erlang
+'=='
+'=:='
+eol
+eof
+env
+endian
+enable_trace
+emulator
+elib_malloc
+duplicate_bag
+dunlink
+dsend
+'$dictionary'
+'$_'
+'$$'
+dmonitor_p
+dmonitor_node
+dlink
+div
+'/'
+dist
+display_items
+disable_trace
+dictionary
+dgroup_leader
+depth
+dexit
+debug_flags
+data
+current_function
+creation
+cpu_timestamp
+copy
+context_switches
+const
+cons
+connected
+connect
+compressed
+compile
+compat_rel
+command
+code
+closed
+close
+clear
+cd
+catchlevel
+case_clause
+caller
+call_count
+busy_port
+busy_dist_port
+bsr
+bsl
+breakpoint
+break_ignored
+bxor
+bor
+bnot
+binary
+big
+band
+bag
+badfun
+badsig
+badmatch
+badfile
+badarity
+badarith
+badarg
+backtrace_depth
+backtrace
+attributes
+atom_used
+atom
+arity
+andthen
+andalso
+and
+allocator
+allocated_areas
+allocated
+all
+'EXIT'
+'DOWN'
+undefined_lambda
+undefined_function
+nocatch
+undefined
+exit
+error
+throw
+return
+call
+normal
+timeout
+infinity
+fun
+''
+'$end_of_table'
+'nonode@nohost'
+'_'
+true
+false
+=end
