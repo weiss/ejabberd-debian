@@ -1,4 +1,4 @@
-.TH ejabberd 8 "3 August 2005" "Version 0.9.8" "ejabberd manual page"
+.TH ejabberd 8 "24 April 2006" "Version 1.1.1" "ejabberd manual page"
 
 .SH NAME
 ejabberd \(em Distributed fault-tolerant Jabber/XMPP server 
@@ -14,9 +14,11 @@ ejabberd \(em Distributed fault-tolerant Jabber/XMPP server
 main features are: 
 .PD 0
 .TP
+- XMPP-compliant 
+.TP
 - Distributed: \fBejabberd\fR can run on a cluster of machines
 .TP
-- Fault-tolerance: All the information can be stored on more than one node, nodes can be added or replaced 'on the fly' 
+- Fault-tolerant: All the information can be stored on more than one node, nodes can be added or replaced 'on the fly' 
 .TP
 - Built-in Multi-User Chat service 
 .TP
@@ -28,8 +30,6 @@ main features are:
 .TP
 - SSL support 
 .TP
-- Mostly XMPP-compliant 
-.TP
 - Support for JEP-0030 (Service Discovery) 
 .TP
 - Support for JEP-0039 (Statistics Gathering) 
@@ -37,6 +37,27 @@ main features are:
 - Support for xml:lang
 
 .SH OPTIONS
+.TP
+.BI \-\-node " node"
+Specifies erlang \fInode\fP at which ejabberd server will be run. Default
+node is \fBejabberd\fP. If the node name does not contain symbol @ then
+actual node name becomes \fBnode@hostname\fP where hostname is short host
+name (\fI`hostname -s`\fP).
+
+Examples of \fI--node\fP option:
+
+.BI ejabberd
+Locally run ejabberd server at node \fIejabberd@`hostname -s`\fP.
+
+.BI ejabberd@otherhost
+Pretend that ejabberd server runs at otherhost at node \fIejabberd@otherhost\fP.
+(Note that none can remotely connect to this node if otherhost is resoved
+to other computer IP.)
+
+.BI ejabberd@localhost
+Locally run ejabberd server at node \fIejabberd@localhost\fP. Only nodes
+running at the same host can connect to this node.
+
 .TP
 .BI \-\-config " config\-file"
 Specifies an alternate \fIconfig\-file\fP to be parsed at startup, rather

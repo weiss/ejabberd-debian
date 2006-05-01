@@ -1,4 +1,4 @@
-# Additionnal options passed to erlang while starting ejabberd.
+# Additional options passed to erlang while starting ejabberd.
 # See erl(3) for more info
 # default options already passed are:
 #   -noshell -detached

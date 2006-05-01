@@ -18,9 +18,10 @@ if [ -f /etc/default/ejabberd ] ; then
     . /etc/default/ejabberd
 fi
 
-status()
+ctl()
 {
-    $EJABBERDCTL status >/dev/null
+    action="$1"
+    su $EJABBERDUSER -c "$EJABBERDCTL $action" >/dev/null
 }
 
 start()
@@ -32,41 +33,40 @@ start()
 case "$1" in
     start)
 	echo -n "Starting jabber server: $NAME"
-	if status
-	then
-	    echo " already running."
-	    false
+	if ctl status ; then
+	    echo -n " already running"
 	else
 	    start
 	fi
     ;;
     stop)
 	echo -n "Stopping jabber server: $NAME"
-	if $EJABBERDCTL stop
-	then
-	    cnt=0
-	    while status
-	    do
-		cnt=`expr $cnt + 1`
-		if [ $cnt -gt 60 ]
-		then
-		    echo -n " failed"
-		    break
-		fi
+	if ctl status ; then
+	    if ctl stop ; then
+		cnt=0
 		sleep 1
-		echo -n .
-	    done
+		while ctl status ; do
+		    echo -n .
+		    cnt=`expr $cnt + 1`
+		    if [ $cnt -gt 60 ] ; then
+			echo -n " failed"
+			break
+		    fi
+		    sleep 1
+		done
+	    else
+		echo -n " failed"
+	    fi
 	else
-	    echo -n " failed"
+	    echo -n " already stopped"
 	fi
-	true
     ;;
     restart|force-reload)
 	echo -n "Restarting jabber server: $NAME"
-	if status
-	then
-	    $EJABBERDCTL restart
+	if ctl status ; then
+	    ctl restart
 	else
+	    echo -n " is not running. Starting $NAME"
 	    start
 	fi
     ;;
@@ -77,9 +77,10 @@ case "$1" in
 esac
 
 if [ $? -eq 0 ]; then
-	echo .
-	exit 0
+    echo .
 else
-	echo "failed."
-	exit 1
+    echo " failed."
 fi
+
+exit 0
+

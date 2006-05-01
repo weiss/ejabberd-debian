@@ -1,3 +1,12 @@
+ejabberd (1.1.1-1) experimental; urgency=low
+
+  * New upstream release
+  * applied changes from Sergei Golovan
+  * removed src/Makefile.in from Debians SVN because the changes have been
+    included upstream
+
+ -- Torsten Werner <twerner@debian.org>  Mon,  1 May 2006 19:36:19 +0200
+
 ejabberd (1.0.0-2) unstable; urgency=low
 
   * downgraded erlang-Depends to erlang-runtime, closes: #361739

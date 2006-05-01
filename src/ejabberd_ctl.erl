@@ -254,7 +254,7 @@ print_vhost_usage(Host) ->
 		   Desc, NewLine]
 	  end, CmdDescs),
     io:format(
-      "Usage: ejabberdctl node vhost host command~n"
+      "Usage: ejabberdctl [--node node] vhost host command~n"
       "~n"
       "Available commands:~n"
       ++ FmtCmdDescs ++

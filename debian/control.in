@@ -7,12 +7,12 @@ Standards-Version: 3.6.1
 
 Package: ejabberd
 Architecture: any
-Depends: erlang-base-hipe | erlang-runtime | ${erlang:Depends}, erlang-nox | ${erlang-Depends}, openssl, ${misc:Depends}, ${shlibs:Depends}
+Depends: erlang-base-hipe | erlang-runtime | ${erlang:Depends}, erlang-nox | ${erlang:Depends}, openssl, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl
 Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang
  Features:
-  - (Mostly) XMPP-compliant
+  - XMPP-compliant
   - Web based administration
   - Load balancing: can run in a cluster of machines
   - Fault-tolerance: database can be replicated and stored on multiple

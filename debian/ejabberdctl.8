@@ -1,25 +1,45 @@
-.TH ejabberdctl 8 "3 August 2005" "Version 0.9.1" "ejabberdctl manual page"
+.TH ejabberdctl 8 "24 April 2006" "Version 1.1.1" "ejabberdctl manual page"
 
 .SH NAME
 ejabberd Jabber/XMPP server control interface
 
 .SH SYNOPSIS
 .PP 
-\fBejabberdctl\fR \fI[--node node] command [options]\fP
+\fBejabberdctl\fR \fI[--node node] [vhost server] command [options]\fP
 
 .SH DESCRIPTION
 .PP 
-\fBejabberdctl\fR  is a front end to the Apache ejabberd Jabber/XMPP server.
+\fBejabberdctl\fR  is a front end to the ejabberd Jabber/XMPP server.
 It is designed to help the administrator control the functioning of the
-\fBejabberd\fR daemon.
+running \fBejabberd\fR daemon.
 
 .SH OPTIONS
-.I node
+.TP
+.BI \-\-node " node"
 Specifies remote erlang node to connect to. Default value is
-\fIejabberd@`hostname -s`\fP.
+\fIejabberd@`hostname -s`\fP. If the node name does not contain symbol \fI@\fP
+then actual node name becomes \fInode@host\fP where \fIhost\fP is short
+hostname (\fI`hostname -s`\fP).
+
+Examples of \fI--node\fP option:
+
+.BI ejabberd
+Connect to locally run ejabberd server at node \fIejabberd@`hostname -s`\fP.
+
+.BI ejabberd@otherhost
+Connect to remotely run ejabberd server at node \fIejabberd@otherhost\fP.
+
+.BI ejabberd@localhost
+Connect to locally run ejabberd server at node \fIejabberd@localhost\fP.
 
 .TP
-The \fIcommand\fP can be any one of the following options:
+.BI vhost " server"
+Specifies that \fIcommand\fP should be executed for virtual host \fIserver\fP.
+There are only few commands that require \fIvhost\fP argument.
+
+.PP
+If there are no \fIvhost server\fP options then the \fIcommand\fP can be any
+of the following:
 .TP
 .BI status
 Requests status of the ejabberd server.
@@ -65,8 +85,25 @@ Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
 Import user data from jabberd 1.4 spool directory \fIdirectorypath\fP. Directory
 name should be the name of virtual server to import users.
 .TP
+.BI delete-expired-messages
+Delete expired offline messages from ejabberd database.
+.TP
+.BI user-resources " user server"
+List all connected resources of user \fIuser@server\fP.
+.TP
+.BI connected-users-number
+Report number of established users' sessions.
+.TP
+.BI connected-users
+List all established users' sessions.
+
+.PP
+If there are \fIvhost server\fP options then the \fIcommand\fP can be
+the following:
+.TP
 .BI registered-users
-List all registered at the ejabberd server users (at all virtual hosts).
+List all registered at the ejabberd server users (at virtual host \fIserver\fP).
+
 
 .SH SEE ALSO 
 .PP 

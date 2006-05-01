@@ -8,6 +8,7 @@ then
     export HOME
 fi
 
+NODE=ejabberd
 CONFIG=/etc/ejabberd/ejabberd.cfg
 LOG=/var/log/ejabberd/ejabberd.log
 SASL_LOG=/var/log/ejabberd/sasl.log
@@ -20,6 +21,7 @@ do
     shift
     case $PARAM in
 	--) break ;;
+	--node) NODE=$1; shift ;;
 	--config) CONFIG=$1 ; shift ;;
 	--log) LOG=$1 ; shift ;;
 	--sasl-log) SASL_LOG=$1 ; shift ;;
@@ -28,7 +30,7 @@ do
     esac
 done
 
-exec erl -sname ejabberd \
+exec erl -sname $NODE \
     -s ejabberd \
     -kernel inetrc \"/etc/ejabberd/inetrc\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \

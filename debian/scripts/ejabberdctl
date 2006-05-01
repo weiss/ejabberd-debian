@@ -11,7 +11,15 @@ NODE=ejabberd@`hostname -s`
 if [ $# -ne 0 ]
 then
     case $1 in
-	--node) shift ; NODE=$1 ; shift ;;
+	--node)
+	    shift
+	    if [[ $1 == *@* ]]
+	    then
+		NODE=$1
+	    else
+		NODE=$1@`hostname -s`
+	    fi
+	    shift ;;
     esac
 fi
 
