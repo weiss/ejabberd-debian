@@ -1,3 +1,15 @@
+ejabberd (1.1.1-2) experimental; urgency=low
+
+  [ Sergei Golovan ]
+  * changed Build-Depends from erlang-base-hipe to erlang-base
+  * fix for lintian complaint about incorrect usage of chown
+
+  [ Torsten Werner ]
+  * making Build-Depends and erlang:Depends more strict: they are working now
+    only with the latest versions of erlang
+
+ -- Torsten Werner <twerner@debian.org>  Tue,  2 May 2006 21:00:47 +0200
+
 ejabberd (1.1.1-1) experimental; urgency=low
 
   * New upstream release

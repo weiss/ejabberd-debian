@@ -24,14 +24,14 @@ set -e
 
 case "$1" in
     configure)
-	chown ejabberd.ejabberd /etc/ejabberd
+	chown ejabberd:ejabberd /etc/ejabberd
 	chmod 700 /etc/ejabberd
 
-	chown ejabberd.ejabberd /etc/ejabberd/ejabberd.cfg
+	chown ejabberd:ejabberd /etc/ejabberd/ejabberd.cfg
 	chmod 600 /etc/ejabberd/ejabberd.cfg
 
 	install -m 700 -d /var/lib/ejabberd
-	chown -R ejabberd.ejabberd /var/lib/ejabberd
+	chown -R ejabberd:ejabberd /var/lib/ejabberd
 	install -o ejabberd -g adm -m 750 -d /var/log/ejabberd
 
 	cd /etc/ssl/certs
@@ -51,7 +51,7 @@ $HOSTNAME
 ejabberd
 root@$HOSTNAME.$DOMAINNAME
 +
-	    chown ejabberd.ejabberd ejabberd.pem
+	    chown ejabberd:ejabberd ejabberd.pem
 	    chmod 600 ejabberd.pem
 	    ln -sf ejabberd.pem `openssl x509 -noout -hash < ejabberd.pem`.0
 	fi
