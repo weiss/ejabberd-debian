@@ -1,3 +1,11 @@
+ejabberd (1.1.1-3) experimental; urgency=low
+
+  [ Sergei Golovan ]
+  * moved ejabberd SSL certificate from /etc/ssl/certs to /etc/ejabberd,
+    closes: #368414
+
+ -- Torsten Werner <twerner@debian.org>  Sun, 04 Jun 2006 22:13:07 +0400
+
 ejabberd (1.1.1-2) experimental; urgency=low
 
   [ Sergei Golovan ]

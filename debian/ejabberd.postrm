@@ -26,13 +26,6 @@ case "$1" in
 	rm -Rf /var/log/ejabberd 2>/dev/null
 	rm -f /var/lib/ejabberd/.erlang.cookie 2>/dev/null
 
-	# remove SSL certificate if it was created during install
-	cd /etc/ssl/certs
-	if [ -f ejabberd.pem ] ; then
-	    rm -f `openssl x509 -noout -hash < ejabberd.pem`.0
-	    rm -f ejabberd.pem
-	fi
-	
 	[ -d /var/lib/ejabberd ] && chown -R root:root /var/lib/ejabberd 
 	deluser ejabberd 2>/dev/null || true
 	delgroup ejabberd 2>/dev/null || true
