@@ -36,7 +36,7 @@ case "$1" in
 
 	# bug #368414
 	cd /etc/ssl/certs
-	if [ -f ejabberd.pem ]
+	if [ -f ejabberd.pem ] && [ ! -z $2 ] && dpkg --compare-versions "$2" lt-nl "1.1.1-3"
 	then
 	    echo "Moving ejabberd.pem from /etc/ssl/certs to /etc/ejabberd..."
 	    rm -f `openssl x509 -noout -hash < ejabberd.pem`.0
