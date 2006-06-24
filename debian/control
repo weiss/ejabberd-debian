@@ -2,7 +2,7 @@ Source: ejabberd
 Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
-Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 4.2.0), erlang-base | erlang-base-hipe, erlang-nox, erlang-dev, grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
+Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 4.2.0), quilt, patchutils, cdbs (>= 0.4.27-1), erlang-base | erlang-base-hipe, erlang-nox, erlang-dev, grep-dctrl, libexpat1-dev, libssl-dev, quilt, zlib1g-dev
 Standards-Version: 3.6.1
 
 Package: ejabberd

@@ -222,14 +222,13 @@ print_usage() ->
 		   Desc, NewLine]
 	  end, CmdDescs),
     io:format(
-      "Usage: ejabberdctl [--node node] command [options]~n"
+      "Usage: ejabberdctl node command~n"
       "~n"
       "Available commands:~n"
       ++ FmtCmdDescs ++
       "~n"
-      "Examples:~n"
-      "  ejabberdctl restart~n"
-      "  ejabberdctl --node ejabberd@host restart~n"
+      "Example:~n"
+      "  ejabberdctl ejabberd@host restart~n"
      ).
 
 print_vhost_usage(Host) ->
@@ -254,7 +253,7 @@ print_vhost_usage(Host) ->
 		   Desc, NewLine]
 	  end, CmdDescs),
     io:format(
-      "Usage: ejabberdctl [--node node] vhost host command~n"
+      "Usage: ejabberdctl node vhost host command~n"
       "~n"
       "Available commands:~n"
       ++ FmtCmdDescs ++

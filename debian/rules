@@ -4,6 +4,7 @@ DEB_AUTO_UPDATE_DEBIAN_CONTROL := true
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 
 DEB_BUILDDIR := $(shell pwd)/src
 DEB_CONFIGURE_SCRIPT := $(DEB_BUILDDIR)/configure

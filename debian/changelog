@@ -1,8 +1,9 @@
 ejabberd (1.1.1-4) unstable; urgency=low
 
   * updated Build-Depends for erlang 10.b.10
+  * switched to quilt for managing upstream patches
 
- -- Torsten Werner <twerner@debian.org>  Mon, 12 Jun 2006 21:53:50 +0200
+ -- Torsten Werner <twerner@debian.org>  Sat, 24 Jun 2006 21:06:59 +0200
 
 ejabberd (1.1.1-3) unstable; urgency=low
 

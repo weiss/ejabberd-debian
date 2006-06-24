@@ -1,0 +1,31 @@
+Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
+===================================================================
+--- ejabberd-1.1.1.orig/src/ejabberd_ctl.erl	2006-04-27 00:29:50.000000000 +0200
++++ ejabberd-1.1.1/src/ejabberd_ctl.erl	2006-05-01 19:24:18.000000000 +0200
+@@ -222,13 +222,14 @@
+ 		   Desc, NewLine]
+ 	  end, CmdDescs),
+     io:format(
+-      "Usage: ejabberdctl node command~n"
++      "Usage: ejabberdctl [--node node] command [options]~n"
+       "~n"
+       "Available commands:~n"
+       ++ FmtCmdDescs ++
+       "~n"
+-      "Example:~n"
+-      "  ejabberdctl ejabberd@host restart~n"
++      "Examples:~n"
++      "  ejabberdctl restart~n"
++      "  ejabberdctl --node ejabberd@host restart~n"
+      ).
+ 
+ print_vhost_usage(Host) ->
+@@ -253,7 +254,7 @@
+ 		   Desc, NewLine]
+ 	  end, CmdDescs),
+     io:format(
+-      "Usage: ejabberdctl node vhost host command~n"
++      "Usage: ejabberdctl [--node node] vhost host command~n"
+       "~n"
+       "Available commands:~n"
+       ++ FmtCmdDescs ++
