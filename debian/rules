@@ -25,3 +25,8 @@ CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
 # declares a minimal versioned erlang Depends:
 install/ejabberd::
 	grep-status -s Version -PX erlang-nox | sed -e's!^Version: \(.*\)!erlang:Depends=erlang-base (>= \1) | erlang-base-hipe (>= \1), erlang-nox (>= \1)!' >> debian/ejabberd.substvars
+
+get-orig-source:
+	dh_testdir
+	wget -O ../ejabberd_$(DEB_UPSTREAM_VERSION).orig.tar.gz http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION).tar.gz
+
