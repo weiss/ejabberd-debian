@@ -1,0 +1,14 @@
+Template: ejabberd/AdminUser
+Type: string
+Default: root
+_Description: The name of an admin account for ejabberd:
+ Please provide the name of an account to administrate the ejabberd server.
+ After the installation of ejabberd you can use this account to log in with
+ any Jabber client to do administrative tasks or go to
+ http://your.host.name:5280/admin/ and log in with this account to enter
+ the admin interface.
+
+Template: ejabberd/AdminPasswd
+Type: password
+_Description: The password for the admin account:
+ Please enter the password for the administrative user.

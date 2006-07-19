@@ -3,11 +3,11 @@ Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
 Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 4.2.0), quilt, patchutils, cdbs (>= 0.4.27-1), erlang-base | erlang-base-hipe, erlang-nox, erlang-dev, grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
-Standards-Version: 3.6.1
+Standards-Version: 3.7.2
 
 Package: ejabberd
 Architecture: any
-Depends: ${erlang:Depends}, adduser, openssl, ${misc:Depends}, ${shlibs:Depends}
+Depends: ${erlang:Depends}, adduser, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl
 Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang

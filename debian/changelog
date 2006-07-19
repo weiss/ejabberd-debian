@@ -2,8 +2,12 @@ ejabberd (1.1.1-5) unstable; urgency=low
 
   * UNRELEASED
   * add target get-orig-source in debian/rules
+  * updated Standards-Version to 3.7.2, no changes needed
+  * use ucf for handling conffiles
+  * remove old cruft not needed any more
+  * use debconf to setup an admin account, partially fixes: #286110
 
- -- Torsten Werner <twerner@debian.org>  Sat, 15 Jul 2006 00:01:50 +0200
+ -- Torsten Werner <twerner@debian.org>  Wed, 19 Jul 2006 22:51:45 +0200
 
 ejabberd (1.1.1-4) unstable; urgency=low
 
