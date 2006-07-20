@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: ejabberd
 Architecture: any
-Depends: ${erlang:Depends}, adduser, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
+Depends: ${erlang:Depends}, adduser, bash, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl
 Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang

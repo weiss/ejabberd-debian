@@ -6,8 +6,9 @@ ejabberd (1.1.1-5) unstable; urgency=low
   * use ucf for handling conffiles
   * remove old cruft not needed any more
   * use debconf to setup an admin account, partially fixes: #286110
+  * make bashism explicitely
 
- -- Torsten Werner <twerner@debian.org>  Wed, 19 Jul 2006 22:51:45 +0200
+ -- Torsten Werner <twerner@debian.org>  Thu, 20 Jul 2006 07:21:44 +0200
 
 ejabberd (1.1.1-4) unstable; urgency=low
 
