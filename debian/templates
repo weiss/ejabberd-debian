@@ -1,3 +1,9 @@
+Template: ejabberd/Hostname
+Type: string
+Default: localhost
+_Description: The name of the host ejabberd will serve:
+ Please enter the hostname of your Jabber server.
+
 Template: ejabberd/AdminUser
 Type: string
 Default: root

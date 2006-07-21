@@ -13,36 +13,40 @@ TEMPFILE=$(mktemp)
 
 setup_ejabberd()
 {
-  chown ejabberd:ejabberd /etc/ejabberd
-  chmod 700 /etc/ejabberd
+    # Ejabberd config dir may contain sensitive data, so makig it readable only by ejabberd user.
+    chown ejabberd:ejabberd /etc/ejabberd
+    chmod 700 /etc/ejabberd
 
-  install -m 700 -d /var/lib/ejabberd
-  chown -R ejabberd:ejabberd /var/lib/ejabberd
-  install -o ejabberd -g adm -m 750 -d /var/log/ejabberd
+    # The sane is for /var/lib/ejabberd, where the users database is located.
+    install -m 700 -d /var/lib/ejabberd
+    chown -R ejabberd:ejabberd /var/lib/ejabberd
 
-  # bug #368414
-  cd /etc/ssl/certs
-  if [ -f ejabberd.pem ] && [ ! -z $2 ] && dpkg --compare-versions "$2" lt-nl "1.1.1-3"
-  then
-      echo "Moving ejabberd.pem from /etc/ssl/certs to /etc/ejabberd..."
-      rm -f $(openssl x509 -noout -hash < ejabberd.pem).0
-      mv ejabberd.pem /etc/ejabberd
-      echo "Replacing /etc/ejabberd/ejabberd.pem for /etc/ssl/certs/ejabberd.pem in the config file..."
-      sed -i -e 's:/etc/ssl/certs/ejabberd.pem:/etc/ejabberd/ejabberd.pem:g' /etc/ejabberd/ejabberd.cfg
-  fi
+    # Ejabberd logs should be readable by users in adm group (see also logrotate script).
+    install -o ejabberd -g adm -m 750 -d /var/log/ejabberd
 
-  # making /etc/ejabberd/ejabberd.pem
-  ( cd /etc/ejabberd
-  if [ -f ejabberd.pem ]
-  then
-      echo "You already have /etc/ejabberd/ejabberd.pem"
-      chown ejabberd:ejabberd ejabberd.pem
-      chmod 600 ejabberd.pem
-  else
-      HOSTNAME=$(hostname -s)
-      DOMAINNAME=$(hostname -d)
-      openssl req -new -x509 -days 365 -nodes -out ejabberd.pem \
-	  -keyout ejabberd.pem > /dev/null 2>&1 <<+
+    # Moving certivicate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
+    cd /etc/ssl/certs
+    if [ -f ejabberd.pem ] && [ ! -z $2 ] && dpkg --compare-versions "$2" lt-nl "1.1.1-3"
+    then
+	echo "Moving ejabberd.pem from /etc/ssl/certs to /etc/ejabberd..."
+	rm -f $(openssl x509 -noout -hash < ejabberd.pem).0
+	mv ejabberd.pem /etc/ejabberd
+	echo "Replacing /etc/ejabberd/ejabberd.pem for /etc/ssl/certs/ejabberd.pem in the config file..."
+	sed -i -e 's:/etc/ssl/certs/ejabberd.pem:/etc/ejabberd/ejabberd.pem:g' /etc/ejabberd/ejabberd.cfg
+    fi
+
+    # Making /etc/ejabberd/ejabberd.pem if it does not exist.
+    ( cd /etc/ejabberd
+    if [ -f ejabberd.pem ]
+    then
+	echo "You already have /etc/ejabberd/ejabberd.pem"
+	chown ejabberd:ejabberd ejabberd.pem
+	chmod 600 ejabberd.pem
+    else
+	HOSTNAME=$(hostname -s)
+	DOMAINNAME=$(hostname -d)
+	openssl req -new -x509 -days 365 -nodes -out ejabberd.pem \
+		    -keyout ejabberd.pem > /dev/null 2>&1 <<+++
 .
 .
 .
@@ -50,23 +54,25 @@ $DOMAINNAME
 $HOSTNAME
 ejabberd
 root@$HOSTNAME.$DOMAINNAME
-+
-  fi
-  chown ejabberd:ejabberd /etc/ejabberd/ejabberd.pem
-  chmod 600 /etc/ejabberd/ejabberd.pem
-  )
++++
+    fi
+    chown ejabberd:ejabberd /etc/ejabberd/ejabberd.pem
+    chmod 600 /etc/ejabberd/ejabberd.pem
+    )
 
-  db_get ejabberd/AdminUser
-  USER="$RET"
-  db_get ejabberd/AdminPasswd
-  PASSWD="$RET"
-  sed -e "s/__USER__/$USER/g" $CONFIG_SOURCE > $TEMPFILE
-  ucf --three-way --debconf-ok $TEMPFILE $CONFIG_TARGET
-  db_stop
-  chown ejabberd:ejabberd $CONFIG_TARGET
-  chmod 600 $CONFIG_TARGET
-  invoke-rc.d ejabberd start
-  ejabberdctl register $USER localhost $PASSWD
+    db_get ejabberd/Hostname
+    HOSTNAME="$RET"
+    db_get ejabberd/AdminUser
+    USER="$RET"
+    db_get ejabberd/AdminPasswd
+    PASSWD="$RET"
+    sed -e "s/__USER__/$USER/g ; s/__HOSTNAME__/$HOSTNAME/g" $CONFIG_SOURCE >$TEMPFILE
+    ucf --three-way --debconf-ok $TEMPFILE $CONFIG_TARGET
+    db_stop
+
+    # Making ejabberd config readable only by ejabberd user.
+    chown ejabberd:ejabberd $CONFIG_TARGET
+    chmod 600 $CONFIG_TARGET
 }
 
 case "$1" in
@@ -89,6 +95,16 @@ esac
 
 #DEBHELPER#
 
-exit 0
+if [ "$i" = "configure" ]
+then
+    # Registering ejabberd admin.
+    # NOTE: I've commented out the registration because it may cause a
+    # security hazard. Example: with default user (root) and password
+    # (empty!) ejabberd will be vulnerable. We must decide how to allow
+    # admin creation but 1) forbid empty passwords, 2) not owerwrite
+    # the password if the user already exists.
+    #ejabberdctl register $USER localhost $PASSWD
+fi
 
+exit 0
 
