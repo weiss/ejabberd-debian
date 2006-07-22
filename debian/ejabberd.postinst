@@ -9,11 +9,10 @@ CONFIG_SOURCE=/usr/share/ejabberd/ejabberd.cfg
 CONFIG_TARGET=/etc/ejabberd/ejabberd.cfg
 TEMPFILE=$(mktemp)
 
+. /usr/share/debconf/confmodule
+
 setup_ejabberd()
 {
-    if [ -x /etc/init.d/nscd ]; then
-        invoke-rc.d nscd restart
-    fi
     # Ejabberd config dir may contain sensitive data, so makig it readable only by ejabberd user.
     chown ejabberd:ejabberd /etc/ejabberd
     chmod 700 /etc/ejabberd
@@ -61,12 +60,11 @@ root@$HOSTNAME.$DOMAINNAME
     chmod 600 /etc/ejabberd/ejabberd.pem
     )
 
-    . /usr/share/debconf/confmodule
-    db_get ejabberd/Hostname
+    db_get ejabberd/hostname
     HOSTNAME="$RET"
-    db_get ejabberd/AdminUser
+    db_get ejabberd/user
     USER="$RET"
-    db_get ejabberd/AdminPasswd
+    db_get ejabberd/password
     PASSWD="$RET"
     sed -e "s/__USER__/$USER/g ; s/__HOSTNAME__/$HOSTNAME/g" $CONFIG_SOURCE >$TEMPFILE
     ucf --three-way --debconf-ok $TEMPFILE $CONFIG_TARGET
@@ -79,13 +77,12 @@ root@$HOSTNAME.$DOMAINNAME
 
 register_admin()
 {
-    . /usr/share/debconf/confmodule
-    db_get ejabberd/AdminRegistered
-    if [ "$RET" = "false" -a -n "$USER" -a -n "$PASSWD" ]; then
+    FLAG="/var/lib/ejabberd/.admin_registered"
+    if [ ! -f $FLAG -a -n "$USER" -a -n "$PASSWD" ]; then
+        sleep 5
         ejabberdctl register "$USER" localhost "$PASSWD"
-	db_set ejabberd/AdminRegistered true
+	touch $FLAG
     fi
-    db_stop
 }
 
 case "$1" in

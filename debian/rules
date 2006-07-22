@@ -24,6 +24,7 @@ CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
 
 # declares a minimal versioned erlang Depends:
 install/ejabberd::
+	$(RM) $(DEB_DESTDIR)/etc/ejabberd/ejabberd.cfg
 	grep-status -s Version -PX erlang-nox | sed -e's!^Version: \(.*\)!erlang:Depends=erlang-base (>= \1) | erlang-base-hipe (>= \1), erlang-nox (>= \1)!' >> debian/ejabberd.substvars
 
 get-orig-source:

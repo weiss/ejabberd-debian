@@ -1,10 +1,10 @@
-Template: ejabberd/Hostname
+Template: ejabberd/hostname
 Type: string
 Default: localhost
 _Description: The name of the host ejabberd will serve:
  Please enter the hostname of your Jabber server.
 
-Template: ejabberd/AdminUser
+Template: ejabberd/user
 Type: string
 _Description: The name of an admin account for ejabberd:
  Please provide the name of an account to administrate the ejabberd server.
@@ -15,15 +15,18 @@ _Description: The name of an admin account for ejabberd:
  .
  Leave empty if you don't want to create an admin account automatically.
 
-Template: ejabberd/AdminRegistered
-Type: boolean
-Default: false
-Description: Has the admin account already been registered?
- This question is for internal use only to make sure that the admin user is not
- registered twice.
-
-Template: ejabberd/AdminPasswd
+Template: ejabberd/password
 Type: password
 _Description: The password for the admin account:
- Please enter the password for the administrative user. You will be asked twice
- for verification.
+ Please enter the password for the administrative user.
+
+Template: ejabberd/verify
+Type: password
+_Description: The password for the admin account again for verification:
+ Please reenter the password for the administrative user for verification.
+
+Template: ejabberd/nomatch
+Type: note
+_Description: The passwords do not match!
+ The passwords you have typed do not match. Please try again.
+
