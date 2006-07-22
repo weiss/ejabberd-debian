@@ -1,9 +1,27 @@
 #!/bin/sh -e
 
+get_passwd()
+{
+  db_input medium ejabberd/AdminPasswd || true
+  db_go || true
+  db_get ejabberd/AdminPasswd
+  FIRST="$RET"
+  db_input medium ejabberd/AdminPasswd || true
+  db_go || true
+  db_get ejabberd/AdminPasswd
+  SECOND="$RET"
+  if [ "$FIRST" != "$SECOND" ]; then
+    get_passwd
+  fi
+}
+
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
 db_input medium ejabberd/AdminUser || true
-db_input medium ejabberd/AdminPasswd || true
 db_go || true
+db_get ejabberd/AdminUser
+if [ -n "$RET" ]; then
+  get_passwd
+fi
 

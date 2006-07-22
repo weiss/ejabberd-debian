@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-19 22:29+0200\n"
+"POT-Creation-Date: 2006-07-22 03:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,12 +27,24 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../templates:4
-msgid "The name of an admin account for ejabberd:"
+msgid "The name of the host ejabberd will serve:"
 msgstr ""
 
 #. Type: string
 #. Description
 #: ../templates:4
+msgid "Please enter the hostname of your Jabber server."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:9
+msgid "The name of an admin account for ejabberd:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../templates:9
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -40,14 +52,22 @@ msgid ""
 "name:5280/admin/ and log in with this account to enter the admin interface."
 msgstr ""
 
+#. Type: string
+#. Description
+#: ../templates:9
+msgid "Leave empty if you don't want to create an admin account automatically."
+msgstr ""
+
 #. Type: password
 #. Description
-#: ../templates:13
+#: ../templates:27
 msgid "The password for the admin account:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:13
-msgid "Please enter the password for the administrative user."
+#: ../templates:27
+msgid ""
+"Please enter the password for the administrative user. You will be asked "
+"twice for verification."
 msgstr ""

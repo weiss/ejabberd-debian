@@ -14,11 +14,11 @@ DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc
 # Not adding breaks roster import for some gateways (specifically JIT)
 #DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc --enable-roster-gateway-workaround
 
-UPSTREAM_VERSION := $(shell dpkg-parsechangelog | sed -ne's!^Version: \(.*\)-.*!\1!p')
-
-DEB_MAKE_INSTALL_TARGET := install DESTDIR=`pwd`/debian/ejabberd \
-	EJABBERDDIR=`pwd`/debian/ejabberd/usr/lib/erlang/lib/ejabberd-$(UPSTREAM_VERSION) \
-	ETCDIR=`pwd`/debian/ejabberd/etc/ejabberd
+EJABBERDIR := /usr/lib/erlang/lib/ejabberd-$(DEB_UPSTREAM_VERSION)
+DEB_MAKE_INSTALL_TARGET := install DESTDIR=$(DEB_DESTDIR) \
+	EJABBERDDIR=$(DEB_DESTDIR)$(EJABBERDIR)           \
+	ETCDIR=$(DEB_DESTDIR)/etc/ejabberd                \
+	LOGDIR=$(DEB_DESTDIR)/var/log/ejabberd
 
 CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
 

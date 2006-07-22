@@ -9,10 +9,11 @@ CONFIG_SOURCE=/usr/share/ejabberd/ejabberd.cfg
 CONFIG_TARGET=/etc/ejabberd/ejabberd.cfg
 TEMPFILE=$(mktemp)
 
-. /usr/share/debconf/confmodule
-
 setup_ejabberd()
 {
+    if [ -x /etc/init.d/nscd ]; then
+        invoke-rc.d nscd restart
+    fi
     # Ejabberd config dir may contain sensitive data, so makig it readable only by ejabberd user.
     chown ejabberd:ejabberd /etc/ejabberd
     chmod 700 /etc/ejabberd
@@ -60,6 +61,7 @@ root@$HOSTNAME.$DOMAINNAME
     chmod 600 /etc/ejabberd/ejabberd.pem
     )
 
+    . /usr/share/debconf/confmodule
     db_get ejabberd/Hostname
     HOSTNAME="$RET"
     db_get ejabberd/AdminUser
@@ -75,8 +77,19 @@ root@$HOSTNAME.$DOMAINNAME
     chmod 600 $CONFIG_TARGET
 }
 
+register_admin()
+{
+    . /usr/share/debconf/confmodule
+    db_get ejabberd/AdminRegistered
+    if [ "$RET" = "false" -a -n "$USER" -a -n "$PASSWD" ]; then
+        ejabberdctl register "$USER" localhost "$PASSWD"
+	db_set ejabberd/AdminRegistered true
+    fi
+    db_stop
+}
+
 case "$1" in
-    configure)
+    configure|reconfigure)
     setup_ejabberd
     ;;
 
@@ -95,16 +108,11 @@ esac
 
 #DEBHELPER#
 
-if [ "$i" = "configure" ]
-then
-    # Registering ejabberd admin.
-    # NOTE: I've commented out the registration because it may cause a
-    # security hazard. Example: with default user (root) and password
-    # (empty!) ejabberd will be vulnerable. We must decide how to allow
-    # admin creation but 1) forbid empty passwords, 2) not owerwrite
-    # the password if the user already exists.
-    #ejabberdctl register $USER localhost $PASSWD
-fi
+case "$1" in
+    configure|reconfigure)
+    register_admin
+    ;;
+esac
 
 exit 0
 
