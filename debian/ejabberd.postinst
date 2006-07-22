@@ -61,12 +61,12 @@ root@$HOSTNAME.$DOMAINNAME
     )
 
     db_get ejabberd/hostname
-    HOSTNAME="$RET"
+    HOST="$RET"
     db_get ejabberd/user
     USER="$RET"
     db_get ejabberd/password
     PASSWD="$RET"
-    sed -e "s/__USER__/$USER/g ; s/__HOSTNAME__/$HOSTNAME/g" $CONFIG_SOURCE >$TEMPFILE
+    sed -e "s/__USER__/$USER/g ; s/__HOSTNAME__/$HOST/g" $CONFIG_SOURCE >$TEMPFILE
     ucf --three-way --debconf-ok $TEMPFILE $CONFIG_TARGET
     db_stop
 
@@ -80,7 +80,7 @@ register_admin()
     FLAG="/var/lib/ejabberd/.admin_registered"
     if [ ! -f $FLAG -a -n "$USER" -a -n "$PASSWD" ]; then
         sleep 5
-        ejabberdctl register "$USER" localhost "$PASSWD"
+        ejabberdctl register "$USER" "$HOST" "$PASSWD"
 	touch $FLAG
     fi
 }
