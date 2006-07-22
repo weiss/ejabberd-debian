@@ -10,11 +10,12 @@ ejabberd (1.1.1-5) unstable; urgency=low
   * make bashism explicit
   * minor cleanups in debian/rules
   * renamed some files in debian/
+  * add german translation of the debconf template
 
   [ Sergei Golovan ]
   * use debconf to setup a served hostname
 
- -- Torsten Werner <twerner@debian.org>  Sat, 22 Jul 2006 21:23:27 +0200
+ -- Torsten Werner <twerner@debian.org>  Sat, 22 Jul 2006 22:04:03 +0200
 
 ejabberd (1.1.1-4) unstable; urgency=low
 

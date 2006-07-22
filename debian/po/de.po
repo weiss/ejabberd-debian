@@ -1,0 +1,100 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.1.1-5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-07-22 21:27+0200\n"
+"PO-Revision-Date: 2006-07-22 21:45+0200\n"
+"Last-Translator: Torsten Werner <twerner@debian.org>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: string
+#. Description
+#: ../templates:4
+msgid "The name of the host ejabberd will serve:"
+msgstr "Der Name Ihres Ejabberd-Servers:"
+
+#. Type: string
+#. Description
+#: ../templates:4
+msgid "Please enter the hostname of your Jabber server."
+msgstr "Geben Sie bitte den Namen Ihres Jabberservers an."
+
+#. Type: string
+#. Description
+#: ../templates:9
+msgid "The name of an admin account for ejabberd:"
+msgstr "Der Name eines privilegierten Kontos für Ejabberd:"
+
+#. Type: string
+#. Description
+#: ../templates:9
+msgid ""
+"Please provide the name of an account to administrate the ejabberd server. "
+"After the installation of ejabberd you can use this account to log in with "
+"any Jabber client to do administrative tasks or go to http://hostname:5280/"
+"admin/ and log in with this account to enter the admin interface."
+msgstr ""
+"Geben Sie bitte den Namen für ein Konto an, dass den Ejabberd-Server verwalten "
+"kann. Nach der Installation können Sie mit Hilfe dieses Kontos und irgendeines "
+"Jabber-Clients Verwaltungsaufgaben durchführen oder sich unter "
+"http://hostname:5280/admin/ an der Administratorseite anmelden."
+
+#. Type: string
+#. Description
+#: ../templates:9
+msgid "Leave empty if you don't want to create an admin account automatically."
+msgstr "Lassen Sie das Feld leer, um kein privilegiertes Konto anzulegen."
+
+#. Type: password
+#. Description
+#: ../templates:19
+msgid "The password for the admin account:"
+msgstr "Das Kennwort für das Administratorkonto:"
+
+#. Type: password
+#. Description
+#: ../templates:19
+msgid "Please enter the password for the administrative user."
+msgstr "Geben Sie das Kennwort für den Administrator an."
+
+#. Type: password
+#. Description
+#: ../templates:24
+msgid "The password for the admin account again for verification:"
+msgstr "Wiederholen Sie das Passwort zur Vermeidung von Fehleingaben:"
+
+#. Type: password
+#. Description
+#: ../templates:24
+msgid ""
+"Please reenter the password for the administrative user for verification."
+msgstr "Bitte geben Sie noch einmal das Passwort ein."
+
+#. Type: note
+#. Description
+#: ../templates:29
+msgid "The passwords do not match!"
+msgstr "Die Kennwörter waren nicht identisch!"
+
+#. Type: note
+#. Description
+#: ../templates:29
+msgid "The passwords you have typed do not match. Please try again."
+msgstr "Die Kennwörter waren nicht identisch, bitte versuchen Sie es noch "
+"einmal."
