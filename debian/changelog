@@ -14,8 +14,9 @@ ejabberd (1.1.1-5) unstable; urgency=low
 
   [ Sergei Golovan ]
   * use debconf to setup a served hostname
+  * added russian translation of the debconf template
 
- -- Torsten Werner <twerner@debian.org>  Sat, 22 Jul 2006 22:04:03 +0200
+ -- Torsten Werner <twerner@debian.org>  Sun, 23 Jul 2006 12:12:12 +0400
 
 ejabberd (1.1.1-4) unstable; urgency=low
 
