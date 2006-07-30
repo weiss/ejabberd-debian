@@ -1,8 +1,9 @@
 ejabberd (1.1.1-6) UNRELEASED; urgency=low
 
   * NOT RELEASED YET
+  * add czech translation
 
- -- Torsten Werner <twerner@debian.org>  Mon, 24 Jul 2006 20:52:28 +0200
+ -- Torsten Werner <twerner@debian.org>  Sun, 30 Jul 2006 22:51:21 +0200
 
 ejabberd (1.1.1-5) unstable; urgency=low
 
