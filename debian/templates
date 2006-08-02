@@ -9,8 +9,10 @@ Type: string
 _Description: The name of an admin account for ejabberd:
  Please provide the name of an account to administrate the ejabberd server.
  After the installation of ejabberd you can use this account to log in with any
- Jabber client to do administrative tasks or go to http://hostname:5280/admin/
- and log in with this account to enter the admin interface.
+ Jabber client to do administrative tasks or go to
+ http://${hostname}:5280/admin/ and log in with this account to enter the admin
+ interface. Make sure to enter the full Jabber ID (e.g. '${user}@${hostname}')
+ to log in; otherwise it will fail.
  .
  Leave empty if you don't want to create an admin account automatically.
 

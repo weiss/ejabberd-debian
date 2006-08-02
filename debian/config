@@ -16,15 +16,31 @@ get_passwd()
   fi
 }
 
+get_credentials()
+{
+  db_get ejabberd/user
+  USER=${RET:-admin}
+  db_subst ejabberd/user user "$USER"
+  db_get ejabberd/hostname
+  HOSTNAME=${RET:-hostname}
+  db_subst ejabberd/user hostname "$HOSTNAME"
+  db_input medium ejabberd/user || true
+  db_go || true
+  db_get ejabberd/user
+  if [ -n "$RET" ]; then
+    get_passwd
+  fi
+}
+
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
 db_input medium ejabberd/hostname || true
-db_input medium ejabberd/user || true
 db_go || true
-db_get ejabberd/user
-if [ -n "$RET" ]; then
-  get_passwd
+
+FLAG="/var/lib/ejabberd/.admin_registered"
+if [ ! -f $FLAG ]; then
+  get_credentials
 fi
 
 exit 0

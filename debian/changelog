@@ -1,10 +1,12 @@
-ejabberd (1.1.1-6) UNRELEASED; urgency=low
+ejabberd (1.1.1-6) unstable; urgency=low
 
   * NOT RELEASED YET
   * add czech translation, closes: #380525
   * add dutch translation, closes: #381131
+  * updated debconf question ejabberd/user
+  * fix in debian/control
 
- -- Torsten Werner <twerner@debian.org>  Wed,  2 Aug 2006 13:57:51 +0200
+ -- Torsten Werner <twerner@debian.org>  Wed,  2 Aug 2006 14:36:58 +0200
 
 ejabberd (1.1.1-5) unstable; urgency=low
 
