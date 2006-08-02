@@ -4,7 +4,7 @@ ejabberd (1.1.1-6) unstable; urgency=low
   * add czech translation, closes: #380525
   * add dutch translation, closes: #381131
   * updated debconf question ejabberd/user
-  * fix in debian/control
+  * fix in debian/config
 
  -- Torsten Werner <twerner@debian.org>  Wed,  2 Aug 2006 14:36:58 +0200
 
