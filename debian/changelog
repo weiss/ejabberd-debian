@@ -5,8 +5,10 @@ ejabberd (1.1.1-6) unstable; urgency=low
   * add dutch translation, closes: #381131
   * updated debconf question ejabberd/user
   * fix in debian/config
+  * make a backup of the database when removing or updating the package
+  * remove the actual database when purging
 
- -- Torsten Werner <twerner@debian.org>  Wed,  2 Aug 2006 14:36:58 +0200
+ -- Torsten Werner <twerner@debian.org>  Wed,  2 Aug 2006 15:20:14 +0200
 
 ejabberd (1.1.1-5) unstable; urgency=low
 
