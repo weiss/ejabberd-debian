@@ -39,7 +39,7 @@ msgstr "Пожалуйста, введите имя вашего Jabber-серв
 #. Description
 #: ../templates:9
 msgid "The name of an admin account for ejabberd:"
-msgstr "Имя учетной записи администратора ejabberd:"
+msgstr "Имя учётной записи администратора ejabberd:"
 
 #. Type: string
 #. Description
@@ -53,24 +53,26 @@ msgid ""
 "interface. Make sure to enter the full Jabber ID (e.g. '${user}@"
 "${hostname}') to log in; otherwise it will fail."
 msgstr ""
-"Пожалуйста, введите имя учетной записи администратора серавера ejabberd. "
+"Пожалуйста, введите имя учётной записи администратора сервера ejabberd. "
 "После установки ejabberd вы сможете подключаться к нему, используя эту "
-"учетнуб запись, и администрировать сервер. Также вы сможете использовать "
-"интерфейс администратора по адресу http://hostname:5280/admin/."
+"учетную запись, и администрировать сервер. Также вы сможете использовать "
+"интерфейс администратора по адресу http://${hostname}:5280/admin/. Для входа "
+"необходимо использовать полный Jabber ID ('${user}@${hostname}'), иначе "
+"подключиться к интерфейсу администратора не удастся."
 
 #. Type: string
 #. Description
 #: ../templates:9
 msgid "Leave empty if you don't want to create an admin account automatically."
 msgstr ""
-"Оставьте поле пустым, если не хотите создавать учетную запись администратора "
+"Оставьте поле пустым, если не хотите создавать учётную запись администратора "
 "автоматически."
 
 #. Type: password
 #. Description
 #: ../templates:21
 msgid "The password for the admin account:"
-msgstr "Пароль учетной записи администратора:"
+msgstr "Пароль учётной записи администратора:"
 
 #. Type: password
 #. Description
@@ -89,7 +91,7 @@ msgstr "Повторный ввод пароля администратора д
 #: ../templates:26
 msgid ""
 "Please reenter the password for the administrative user for verification."
-msgstr "Пожалуйста, введите пароль администратора еще раз для проверки."
+msgstr "Пожалуйста, введите пароль администратора ещё раз для проверки."
 
 #. Type: note
 #. Description
@@ -101,4 +103,4 @@ msgstr "Пароли не совпадают!"
 #. Description
 #: ../templates:31
 msgid "The passwords you have typed do not match. Please try again."
-msgstr "Введенные пароли не совпадают. Пожалуйста, попробуйте еще раз."
+msgstr "Введённые пароли не совпадают. Пожалуйста, попробуйте ещё раз."
