@@ -8,8 +8,10 @@ then
     export HOME
 fi
 
+ERL=/usr/bin/erl
 NODE=ejabberd
 CONFIG=/etc/ejabberd/ejabberd.cfg
+INETRC=/etc/ejabberd/inetrc
 LOG=/var/log/ejabberd/ejabberd.log
 SASL_LOG=/var/log/ejabberd/sasl.log
 SPOOL=/var/lib/ejabberd
@@ -30,9 +32,9 @@ do
     esac
 done
 
-exec erl -sname $NODE \
+exec $ERL -sname $NODE \
     -s ejabberd \
-    -kernel inetrc \"/etc/ejabberd/inetrc\" \
+    -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \
     -sasl sasl_error_logger \{file,\"$SASL_LOG\"\} \
     -mnesia dir \"$SPOOL\" \
