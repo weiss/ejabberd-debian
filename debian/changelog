@@ -1,6 +1,7 @@
 ejabberd (1.1.1-6) unstable; urgency=low
 
   * NOT RELEASED YET
+  * add french translation, closes: #381900
   * add czech translation, closes: #380525
   * add dutch translation, closes: #381131
   * updated debconf question ejabberd/user
