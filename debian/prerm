@@ -23,7 +23,6 @@ case "$1" in
 	echo
 	echo The ejabberd database has been backed up to $BACKUP.
 	echo
-	echo $BACKUP > /var/lib/ejabberd/.backup
     ;;
 
     deconfigure)

@@ -16,7 +16,7 @@ case "$1" in
     purge)
         ucf --purge $CONFIG_TARGET
 	rm -f $CONFIG_TARGET
-	chown root:root $(cat /var/lib/ejabberd/.backup)
+	chown root:root /var/tmp/ejabberd-database.*
 	rm -Rf /etc/ejabberd /var/log/ejabberd /var/lib/ejabberd
 	rm -f /etc/default/ejabberd
 	deluser ejabberd 2>/dev/null || true
