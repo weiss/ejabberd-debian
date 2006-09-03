@@ -1,3 +1,10 @@
+ejabberd (1.1.1-7) unstable; urgency=low
+
+  * UNRELEASED
+  * updated french translation, closes: #385811
+
+ -- Torsten Werner <twerner@debian.org>  Sun,  3 Sep 2006 22:11:20 +0200
+
 ejabberd (1.1.1-6) unstable; urgency=low
 
   * add french translation, closes: #381900
