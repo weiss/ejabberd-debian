@@ -1,0 +1,126 @@
+Index: ejabberd-1.1.1/src/mod_muc/mod_muc_log.erl
+===================================================================
+--- ejabberd-1.1.1.orig/src/mod_muc/mod_muc_log.erl
++++ ejabberd-1.1.1/src/mod_muc/mod_muc_log.erl
+@@ -179,10 +179,10 @@
+ 	{false, false} ->
+ 	    ok;
+ 	{false, SubEl} ->
+-	    Message = {body, htmlize(xml:get_tag_cdata(SubEl))},
++	    Message = {body, xml:get_tag_cdata(SubEl)},
+ 	    add_message_to_log(Nick, Message, Room, Opts, State);
+ 	{SubEl, _} ->
+-	    Message = {subject, htmlize(xml:get_tag_cdata(SubEl))},
++	    Message = {subject, xml:get_tag_cdata(SubEl)},
+ 	    add_message_to_log(Nick, Message, Room, Opts, State)
+     end;
+ 
+@@ -247,7 +247,8 @@
+ 	_ -> ok
+     end.
+ 
+-add_message_to_log(Nick, Message, RoomJID, Opts, State) ->
++add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
++    Nick = htmlize(Nick1),
+     #state{out_dir = OutDir,
+ 	   dir_type = DirType,
+ 	   css_file = CSSFile,
+@@ -304,33 +305,33 @@
+ 				 [Nick, ?T("leaves the room")]);
+ 	       {leave, Reason} ->  
+ 		   io_lib:format("<font class=\"ml\">~s ~s: ~s</font><br/>", 
+-				 [Nick, ?T("leaves the room"), Reason]);
++				 [Nick, ?T("leaves the room"), htmlize(Reason)]);
+ 	       {kickban, "307", ""} ->  
+ 		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
+ 				 [Nick, ?T("has been kicked")]);
+ 	       {kickban, "307", Reason} ->  
+ 		   io_lib:format("<font class=\"mk\">~s ~s: ~s</font><br/>", 
+-				 [Nick, ?T("has been kicked"), Reason]);
++				 [Nick, ?T("has been kicked"), htmlize(Reason)]);
+ 	       {kickban, "301", ""} ->  
+ 		   io_lib:format("<font class=\"mb\">~s ~s</font><br/>", 
+ 				 [Nick, ?T("has been banned")]);
+ 	       {kickban, "301", Reason} ->  
+ 		   io_lib:format("<font class=\"mb\">~s ~s: ~s</font><br/>", 
+-				 [Nick, ?T("has been banned"), Reason]);
++				 [Nick, ?T("has been banned"), htmlize(Reason)]);
+ 	       {nickchange, OldNick} ->  
+ 		   io_lib:format("<font class=\"mnc\">~s ~s ~s</font><br/>", 
+ 				 [OldNick, ?T("is now known as"), Nick]);
+ 	       {subject, T} ->  
+ 		   io_lib:format("<font class=\"msc\">~s~s~s</font><br/>", 
+-				 [Nick, ?T(" has set the subject to: "), T]);
++				 [Nick, ?T(" has set the subject to: "), htmlize(T)]);
+ 	       {body, T} ->  
+ 		   case regexp:first_match(T, "^/me\s") of
+ 		       {match, _, _} ->
+ 			   io_lib:format("<font class=\"mne\">~s ~s</font><br/>", 
+-					 [Nick, string:substr(T, 5)]);
++					 [Nick, string:substr(htmlize(T), 5)]);
+ 		       nomatch ->
+ 			   io_lib:format("<font class=\"mn\">&lt;~s&gt;</font> ~s<br/>", 
+-					 [Nick, T])
++					 [Nick, htmlize(T)])
+ 		   end
+ 	   end,
+     {Hour, Minute, Second} = Time,
+@@ -399,19 +400,19 @@
+     fw(F, "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"~s\" lang=\"~s\">", [Lang, Lang]),
+     fw(F, "<head>"),
+     fw(F, "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />"),
+-    fw(F, "<title>~s - ~s</title>", [Room#room.title, Date]),
++    fw(F, "<title>~s - ~s</title>", [htmlize(Room#room.title), Date]),
+     put_header_css(F, CSSFile),
+     put_header_script(F),
+     fw(F, "</head>"),
+     fw(F, "<body>"),
+     {Top_url, Top_text} = Top_link,
+     fw(F, "<div style=\"text-align: right;\"><a style=\"color: #AAAAAA; font-family: monospace; text-decoration: none; font-weight: bold;\" href=\"~s\">~s</a></div>", [Top_url, Top_text]),
+-    fw(F, "<div class=\"roomtitle\"><a class=\"roomtitle\" href=\"xmpp:~s?join\">~s</a></div>", [Room#room.jid, Room#room.title]),
++    fw(F, "<div class=\"roomtitle\">~s</div>", [htmlize(Room#room.title)]),
+     fw(F, "<a class=\"roomjid\" href=\"xmpp:~s?join\">~s</a>", [Room#room.jid, Room#room.jid]),
+     fw(F, "<div class=\"logdate\">~s<span class=\"w3c\"><a class=\"nav\" href=\"~s\">&lt;</a> <a class=\"nav\" href=\".\/\">^</a> <a class=\"nav\" href=\"~s\">&gt;</a></span></div>", [Date, Date_prev, Date_next]),
+-    case {Room#room.subject_author, Room#room.subject} of
++    case {htmlize(Room#room.subject_author), htmlize(Room#room.subject)} of
+ 	{"", ""} -> ok;
+-	{SuA, Su} -> fw(F, "<div class=\"roomsubject\">~s~s~s</div>", [SuA, ?T(" has set the subject to: "), htmlize(Su)])
++	{SuA, Su} -> fw(F, "<div class=\"roomsubject\">~s~s~s</div>", [SuA, ?T(" has set the subject to: "), Su])
+     end,
+     RoomConfig = roomconfig_to_string(Room#room.config, Lang),
+     put_room_config(F, RoomConfig, Lang),
+@@ -436,7 +437,7 @@
+     fw(F, ".mne {color: #AA0099;}"),
+     fw(F, "a.nav {color: #AAAAAA; font-family: monospace; letter-spacing: 3px; text-decoration: none;}"),
+     fw(F, "div.roomtitle {border-bottom: #224466 solid 3pt; margin-left: 20pt;}"),
+-    fw(F, "a.roomtitle {color: #336699; font-size: 24px; font-weight: bold; font-family: sans-serif; letter-spacing: 3px; text-decoration: none;}"),
++    fw(F, "div.roomtitle {color: #336699; font-size: 24px; font-weight: bold; font-family: sans-serif; letter-spacing: 3px; text-decoration: none;}"),
+     fw(F, "a.roomjid {color: #336699; font-size: 24px; font-weight: bold; font-family: sans-serif; letter-spacing: 3px; margin-left: 20pt; text-decoration: none;}"),
+     fw(F, "div.logdate {color: #663399; font-size: 20px; font-weight: bold; font-family: sans-serif; letter-spacing: 2px; border-bottom: #224466 solid 1pt; margin-left:80pt; margin-top:20px;}"),
+     fw(F, "div.roomsubject {color: #336699; font-size: 18px; font-family: sans-serif; margin-left: 80pt; margin-bottom: 10px;}"),
+@@ -485,11 +486,11 @@
+       S2_list).
+ 
+ htmlize2(S1) ->
+-    S2 = element(2, regexp:gsub(S1, "<", "\\&lt;")),
+-    S3 = element(2, regexp:gsub(S2, ">", "\\&gt;")),
+-    S4 = element(2, regexp:gsub(S3, "(http|ftp)://.[^ ]*", "<a href=\"&\">&</a>")),
+-    %element(2, regexp:gsub(S4, "  ", "\\&nbsp;")).
+-    S4.
++    S2 = element(2, regexp:gsub(S1, "\\&", "\\&amp;")),
++    S3 = element(2, regexp:gsub(S2, "<", "\\&lt;")),
++    S4 = element(2, regexp:gsub(S3, ">", "\\&gt;")),
++    S5 = element(2, regexp:gsub(S4, "(http|ftp)://.[^ ]*", "<a href=\"&\">&</a>")),
++    S5.
+ 
+ get_room_info(RoomJID, Opts) ->
+     Title =
+@@ -544,7 +545,7 @@
+ 			       T -> 
+ 				   case Opt of
+ 				       password -> "<div class=\"rcoe\">" ++ OptText ++ "</div>";
+-				       title -> "<div class=\"rcot\">" ++ ?T("Room title") ++ ": \"" ++ T ++ "\"</div>";
++				       title -> "<div class=\"rcot\">" ++ ?T("Room title") ++ ": \"" ++ htmlize(T) ++ "\"</div>";
+ 				       _ -> "\"" ++ T ++ "\""
+ 				   end
+ 			   end,

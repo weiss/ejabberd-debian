@@ -1,3 +1,12 @@
+ejabberd (1.1.1-8) unstable; urgency=low
+
+  [ Sergei Golovan ]
+  * Security fix! Fixed vulnerability in mod_muc_log where users were
+    able to insert an HTML code to MUC weblogs (fix is backported from
+    ejabberd SVN).
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 13 Sep 2006 16:39:47 +0400
+
 ejabberd (1.1.1-7) unstable; urgency=low
 
   * updated french translation, closes: #385811
