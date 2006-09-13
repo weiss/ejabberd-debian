@@ -2,7 +2,17 @@
 #
 # ejabberd        Start/stop ejabberd server
 #
-#
+
+### BEGIN INIT INFO
+# Provides:          ejabberd
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Starts ejabberd jabber server
+# Description:       Starts ejabberd jabber server, an XMPP
+#                    compliant server written in Erlang.
+### END INIT INFO
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 EJABBERD=/usr/sbin/ejabberd

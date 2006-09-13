@@ -4,6 +4,7 @@ ejabberd (1.1.1-8) unstable; urgency=low
   * Security fix! Fixed vulnerability in mod_muc_log where users were
     able to insert an HTML code to MUC weblogs (fix is backported from
     ejabberd SVN).
+  * Added LSB keyword section to init.d script.
 
  -- Torsten Werner <twerner@debian.org>  Wed, 13 Sep 2006 16:39:47 +0400
 
