@@ -1,4 +1,4 @@
-ejabberd (1.1.1-8) unstable; urgency=low
+ejabberd (1.1.1-8) unstable; urgency=medium
 
   [ Sergei Golovan ]
   * Security fix! Fixed vulnerability in mod_muc_log where users were
@@ -6,7 +6,10 @@ ejabberd (1.1.1-8) unstable; urgency=low
     ejabberd SVN).
   * Added LSB keyword section to init.d script.
 
- -- Torsten Werner <twerner@debian.org>  Wed, 13 Sep 2006 16:39:47 +0400
+  [ Torsten Werner ]
+  * setting urgency to medium because of a securetty issue
+
+ -- Torsten Werner <twerner@debian.org>  Thu, 14 Sep 2006 07:20:39 +0200
 
 ejabberd (1.1.1-7) unstable; urgency=low
 
