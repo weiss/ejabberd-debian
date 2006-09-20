@@ -87,13 +87,13 @@ msgstr ""
 "Veuillez indiquer de nouveau le mot de passe de l'utilisateur administrateur "
 "pour vérification."
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:5001
 msgid "The passwords do not match!"
 msgstr "Mots de passe différents"
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."

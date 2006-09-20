@@ -90,13 +90,13 @@ msgid ""
 "Please reenter the password for the administrative user for verification."
 msgstr "Bitte geben Sie noch einmal das Passwort ein."
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords do not match!"
 msgstr "Die Kennwörter waren nicht identisch!"
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords you have typed do not match. Please try again."

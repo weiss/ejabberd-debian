@@ -84,13 +84,13 @@ msgid ""
 msgstr ""
 "Pro ověření prosím zopakujte heslo uživatele se správcovskými oprávněními."
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords do not match!"
 msgstr "Hesla nesouhlasí!"
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords you have typed do not match. Please try again."

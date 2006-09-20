@@ -82,13 +82,13 @@ msgstr "Nogmaals het wachtwoord voor de beheerdersaccount ter controle:"
 msgid "Please reenter the password for the administrative user for verification."
 msgstr "Voer het wachtwoord voor de beheerder nogmaals in ter controle."
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords do not match!"
 msgstr "De wachtwoorden komen niet overeen!"
 
-#. Type: note
+#. Type: error
 #. Description
 #: ../templates:31
 msgid "The passwords you have typed do not match. Please try again."

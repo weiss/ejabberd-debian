@@ -27,7 +27,7 @@ _Description: The password for the admin account again for verification:
  Please reenter the password for the administrative user for verification.
 
 Template: ejabberd/nomatch
-Type: note
+Type: error
 _Description: The passwords do not match!
  The passwords you have typed do not match. Please try again.
 

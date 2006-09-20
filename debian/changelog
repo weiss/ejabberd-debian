@@ -1,3 +1,11 @@
+ejabberd (1.1.1-9) unstable; urgency=low
+
+  [ Sergei Golovan ]
+  * Replaced 'note' type in debconf template ejabberd/nomatch by 'error'
+    since it is more approppriate.
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 20 Sep 2006 22:07:49 +0400
+
 ejabberd (1.1.1-8) unstable; urgency=medium
 
   [ Sergei Golovan ]
