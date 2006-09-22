@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejabberd\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 14:25+0200\n"
-"PO-Revision-Date: 2006-07-30 19:09+0200\n"
+"Report-Msgid-Bugs-To: twerner@debian.org\n"
+"POT-Creation-Date: 2006-09-22 18:18+0200\n"
+"PO-Revision-Date: 2006-09-22 18:24+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,26 +17,25 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "The name of the host ejabberd will serve:"
 msgstr "Jméno počítače, na kterém bude ejabberd sloužit:"
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Please enter the hostname of your Jabber server."
 msgstr "Zadejte prosím jméno počítače vašeho jabberového serveru."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "The name of an admin account for ejabberd:"
 msgstr "Jméno administrátorského účtu pro ejabberd:"
 
 #. Type: string
 #. Description
-#: ../templates:9
-#, fuzzy
+#: ../templates:2001
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -46,39 +45,40 @@ msgid ""
 "${hostname}') to log in; otherwise it will fail."
 msgstr ""
 "Zadejte prosím jméno účtu, který bude spravovat server ejabberd. Po "
-"instalaci daemona ejabberd se můžete na tento účet přihlásit z libovolného "
-"jabberového klienta a vzdáleně tak provádět správcovské úkony. Jinou "
-"možností je webové rozhraní na http://jmenopocitace:5280/admin/, kde se s "
-"tímto účtem můžete přihlásit do správcovského rozhraní."
+"instalaci serveru ejabberd se můžete pomocí tohoto účtu přihlásit z "
+"libovolného jabberového klienta a vzdáleně tak provádět správcovské úkony. "
+"Jinou možností je webové rozhraní na http://${hostname}:5280/admin/, kde se "
+"s tímto účtem (např. '${user}@${hostname}') taktéž můžete přihlásit do "
+"správcovského rozhraní."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
 msgstr ""
 "Jestliže nechcete automaticky vytvořit správcovský účet, ponechte prázdné."
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "The password for the admin account:"
 msgstr "Heslo správcovského účtu:"
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "Please enter the password for the administrative user."
 msgstr "Zadejte prosím heslo uživatele se správcovskými oprávněními."
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid "The password for the admin account again for verification:"
 msgstr "Ověření hesla správcovského účtu:"
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid ""
 "Please reenter the password for the administrative user for verification."
 msgstr ""
@@ -86,12 +86,12 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords do not match!"
 msgstr "Hesla nesouhlasí!"
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr "Zadaná hesla nesouhlasí. Zkuste to prosím znovu."
