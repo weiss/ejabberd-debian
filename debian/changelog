@@ -1,5 +1,6 @@
 ejabberd (1.1.1-9) unstable; urgency=low
 
+  [ Miroslav Kure ]
   * updated czech translation
 
   [ Sergei Golovan ]
