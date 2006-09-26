@@ -1,3 +1,10 @@
+ejabberd (1.1.1-10) unstable; urgency=low
+
+  [ Sergei Golovan ]
+  * added spanish translation
+
+ -- Torsten Werner <twerner@debian.org>  Tue, 26 Sep 2006 09:35:12 +0400
+
 ejabberd (1.1.1-9) unstable; urgency=low
 
   [ Miroslav Kure ]
