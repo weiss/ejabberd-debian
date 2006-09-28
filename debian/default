@@ -2,12 +2,30 @@
 # See erl(3) for more info
 # default options already passed are:
 #   -noshell -detached
+#
 #export ERL_OPTIONS="-heart"
 
+
 # To use more than 1024 connections, you will need to set environment variable ERL_MAX_PORTS:
+#
 #export ERL_MAX_PORTS=1024
+
 
 # To reduce memory usage, you can set environment variable ERL_FULLSWEEP_AFTER:
 # But in this case ejabberd may work slower.
+#
 #export ERL_FULLSWEEP_AFTER=0
+
+
+# The next variable allows to explicitly specify erlang node for ejabberd
+# It can be given in different formats:
+# ERLANG_NODE=ejabberd
+# Lets erlang add hostname to the node (ejabberd uses short name in this case)
+# ERLANG_NODE=ejabberd@hostname
+# Erlang uses node name as is (so make sure that hostname is a real machine
+# hostname or you'll not be able to control ejabberd)
+# ERLANG_NODE=ejabberd@hostname.domainname
+# The same as previous, but erlang will use long hostname (see erl (1) manual for details)
+#
+#export ERLANG_NODE=ejabberd
 

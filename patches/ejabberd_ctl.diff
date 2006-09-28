@@ -2,7 +2,30 @@ Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
 ===================================================================
 --- ejabberd-1.1.1.orig/src/ejabberd_ctl.erl	2006-04-27 00:29:50.000000000 +0200
 +++ ejabberd-1.1.1/src/ejabberd_ctl.erl	2006-05-01 19:24:18.000000000 +0200
-@@ -222,13 +222,14 @@
+@@ -24,7 +24,21 @@
+ start() ->
+     case init:get_plain_arguments() of
+ 	[SNode | Args] ->
+-	    Node = list_to_atom(SNode),
++	    case string:tokens(SNode, "@") of
++		[_Node, _Server] ->
++		    SNode1 = SNode;
++		_ ->
++		    SNode1 = case net_kernel:longnames() of
++				 true ->
++				     SNode ++ "@" ++ inet_db:gethostname() ++
++					      "." ++ inet_db:res_option(domain);
++				 false ->
++				     SNode ++ "@" ++ inet_db:gethostname();
++				 _ ->
++				     SNode
++			     end
++	    end,
++	    Node = list_to_atom(SNode1),
+ 	    Status = case rpc:call(Node, ?MODULE, process, [Args]) of
+ 			 {badrpc, Reason} ->
+ 			     io:format("RPC failed on the node ~p: ~p~n",
+@@ -222,13 +236,14 @@
  		   Desc, NewLine]
  	  end, CmdDescs),
      io:format(
@@ -20,7 +43,7 @@ Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
       ).
  
  print_vhost_usage(Host) ->
-@@ -253,7 +254,7 @@
+@@ -253,7 +268,7 @@
  		   Desc, NewLine]
  	  end, CmdDescs),
      io:format(

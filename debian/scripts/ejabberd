@@ -1,15 +1,14 @@
 #!/bin/sh
 
+ERLANG_NODE=ejabberd
 [ -f /etc/default/ejabberd ] && . /etc/default/ejabberd
 
-if [ -r /var/lib/ejabberd/.erlang.cookie ]
-then
+if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
     HOME=/var/lib/ejabberd
     export HOME
 fi
 
 ERL=/usr/bin/erl
-NODE=ejabberd
 CONFIG=/etc/ejabberd/ejabberd.cfg
 INETRC=/etc/ejabberd/inetrc
 LOG=/var/log/ejabberd/ejabberd.log
@@ -17,13 +16,12 @@ SASL_LOG=/var/log/ejabberd/sasl.log
 SPOOL=/var/lib/ejabberd
 
 ARGS=
-while [ $# -ne 0 ]
-do
+while [ $# -ne 0 ] ; do
     PARAM=$1
     shift
     case $PARAM in
 	--) break ;;
-	--node) NODE=$1; shift ;;
+	--node) ERLANG_NODE=$1; shift ;;
 	--config) CONFIG=$1 ; shift ;;
 	--log) LOG=$1 ; shift ;;
 	--sasl-log) SASL_LOG=$1 ; shift ;;
@@ -32,7 +30,13 @@ do
     esac
 done
 
-exec $ERL -sname $NODE \
+if [ "$ERLANG_NODE" = "${ERLANG_NODE%.*}" ] ; then
+    SNAME=-sname
+else
+    SNAME=-name
+fi
+
+exec $ERL $SNAME $ERLANG_NODE \
     -s ejabberd \
     -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \

@@ -1,28 +1,29 @@
-#!/bin/bash
+#!/bin/sh
 
-if [ -r /var/lib/ejabberd/.erlang.cookie ]
-then
+ERLANG_NODE=ejabberd
+[ -f /etc/default/ejabberd ] && . /etc/default/ejabberd
+
+if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
     HOME=/var/lib/ejabberd
     export HOME
 fi
 
 ERL=/usr/bin/erl
-NODE=ejabberd@`hostname -s`
 
-if [ $# -ne 0 ]
-then
+if [ $# -ne 0 ] ; then
     case $1 in
-	--node)
-	    shift
-	    if [[ $1 == *@* ]]
-	    then
-		NODE=$1
-	    else
-		NODE=$1@`hostname -s`
-	    fi
-	    shift ;;
+	--node) shift ; ERLANG_NODE=$1 ; shift ;;
     esac
 fi
 
-exec $ERL -noinput -sname ejabberdctl -s ejabberd_ctl -extra $NODE "$@"
+if [ "$ERLANG_NODE" = "${ERLANG_NODE%.*}" ] ; then
+    SNAME=-sname
+else
+    SNAME=-name
+fi
+
+exec $ERL $SNAME ejabberdctl \
+    -s ejabberd_ctl \
+    -noinput \
+    -extra $ERLANG_NODE "$@"
 

@@ -1,4 +1,4 @@
-.TH ejabberdctl 8 "24 April 2006" "Version 1.1.1" "ejabberdctl manual page"
+.TH ejabberdctl 8 "27 September 2006" "Version 1.1.2" "ejabberdctl manual page"
 
 .SH NAME
 ejabberd Jabber/XMPP server control interface
@@ -17,9 +17,14 @@ running \fBejabberd\fR daemon.
 .TP
 .BI \-\-node " node"
 Specifies remote erlang node to connect to. Default value is
-\fIejabberd@`hostname -s`\fP. If the node name does not contain symbol \fI@\fP
+\fIejabberd\fP. (\fBejabberdctl\fP also honors ERLANG_NODE
+environment variable, which can be set in /etc/default/ejabberd, see below).
+If the node name does not contain symbol \fI@\fP
 then actual node name becomes \fInode@host\fP where \fIhost\fP is short
-hostname (\fI`hostname -s`\fP).
+hostname (usually it coincides with \fI`hostname -s`\fP). If the node name
+contain symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
+will use so-called long names (see \fBerl\fR(1) manual page and look for
+options \fI-name\fP and \fI-sname\fP for details).
 
 Examples of \fI--node\fP option:
 
@@ -104,14 +109,32 @@ the following:
 .BI registered-users
 List all registered at the ejabberd server users (at virtual host \fIserver\fP).
 
+.SH OPTIONS FILE
+.PP 
+The file \fB/etc/default/ejabberd\fR contains specific options. One of them
+is used by \fBejabberdctl\fP.
+
+.PD 0
+.I ERLANG_NODE
+Use specified string as erlang node of \fBejabberd\fP server to connect. It
+overrides default \fBejabberd\fP node name. The string may take one of the
+following forms: \fBnodename\fP, \fBnodename@hostname\fP or
+\fBnodename@hostname.domainname\fP
+
+.SH FILES
+.PD 0
+.I /etc/default/ejabberd
+default variables
 
 .SH SEE ALSO 
 .PP 
 \fBerl\fR(1), \fBejabberd\fR(8), \fBmnesia\fR(3).
 
 .PP 
-The program documentation is available at \fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
-A copy of the documentation can be found at /usr/share/doc/ejabberd/html/guide.html.
+The program documentation is available at
+\fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+A copy of the documentation can be found at
+/usr/share/doc/ejabberd/html/guide.html.
  
 .SH AUTHORS
 .PP 

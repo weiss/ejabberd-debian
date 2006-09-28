@@ -1,9 +1,18 @@
-ejabberd (1.1.1-10) unstable; urgency=low
+ejabberd (1.1.2-1) unstable; urgency=low
 
   [ Sergei Golovan ]
+  * new upstream release
   * added spanish translation
+  * removed no longer needed mod_muc_log patch 
+  * added variable ERLANG_NODE, which allows to override default
+    ejabberd node, to /etc/default/ejabberd file
+  * changed erlang node selection by ejabberdctl (in some cases
+    `hostname -s` and erlang's view of hostname are different, so
+    let ejabberd_ctl module find hostname), closes: #389635
+  * documented ERLANG_NODE variable in ejabberd and ejabberdctl manual
+    pages
 
- -- Torsten Werner <twerner@debian.org>  Tue, 26 Sep 2006 09:35:12 +0400
+ -- Torsten Werner <twerner@debian.org>  Wed, 27 Sep 2006 23:36:21 +0400
 
 ejabberd (1.1.1-9) unstable; urgency=low
 

@@ -1,4 +1,4 @@
-.TH ejabberd 8 "24 April 2006" "Version 1.1.1" "ejabberd manual page"
+.TH ejabberd 8 "27 September 2006" "Version 1.1.2" "ejabberd manual page"
 
 .SH NAME
 ejabberd \(em Distributed fault-tolerant Jabber/XMPP server 
@@ -40,9 +40,14 @@ main features are:
 .TP
 .BI \-\-node " node"
 Specifies erlang \fInode\fP at which ejabberd server will be run. Default
-node is \fBejabberd\fP. If the node name does not contain symbol @ then
-actual node name becomes \fBnode@hostname\fP where hostname is short host
-name (\fI`hostname -s`\fP).
+node is \fBejabberd\fP (this default node can be also overridden by using
+ERLANG_NODE environment variable in /etc/default/ejabberd, see below).
+If the node name does not contain symbol \fI@\fR then actual node name
+becomes \fBnode@hostname\fP where hostname is short host name (usually it
+coincides with \fI`hostname -s`\fP). If the node name contain symbol \fI@\fR
+and its hostname part is a FQDN then \fBejabberd\fR will use so-called
+long names (see \fBerl\fR(1) manual page and look for options \fI-name\fP
+and \fI-sname\fP for details).
 
 Examples of \fI--node\fP option:
 
@@ -51,7 +56,7 @@ Locally run ejabberd server at node \fIejabberd@`hostname -s`\fP.
 
 .BI ejabberd@otherhost
 Pretend that ejabberd server runs at otherhost at node \fIejabberd@otherhost\fP.
-(Note that none can remotely connect to this node if otherhost is resoved
+(Note that noone can remotely connect to this node if otherhost is resoved
 to other computer IP.)
 
 .BI ejabberd@localhost
@@ -137,6 +142,12 @@ To reduce memory usage when allowing a large number of connections, \fIERL_FULLS
 may be set to 0 by uncommenting the corresponding line into the options file,
 but in this case \fBejabberd\fR may start to work slower.
 
+.TP
+.I ERLANG_NODE
+Use specified string as erlang node. It overrides default \fBejabberd\fP
+node name. The string may take one of the following forms:
+\fBnodename\fP, \fBnodename@hostname\fP or \fBnodename@hostname.domainname\fP
+
 .SH FILES
 .PD 0
 .TP
@@ -152,8 +163,10 @@ default variables
 \fBerl\fR(1), \fBsasl\fR(6), \fBejabberdctl\fR(8). 
 
 .PP 
-The program documentation is available at \fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
-A copy of the documentation can be found at /usr/share/doc/ejabberd/html/guide.html.
+The program documentation is available at
+\fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+A copy of the documentation can be found at
+/usr/share/doc/ejabberd/html/guide.html.
  
 .SH AUTHORS
 .PP 
