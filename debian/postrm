@@ -11,21 +11,25 @@ CONFIG_TARGET=/etc/ejabberd/ejabberd.cfg
 
 case "$1" in
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-        ;;
+    ;;
 
     purge)
-        ucf --purge $CONFIG_TARGET
+	if which ucf >/dev/null ; then
+	    ucf --purge $CONFIG_TARGET
+	fi
 	rm -f $CONFIG_TARGET
 	rm -Rf /etc/ejabberd /var/log/ejabberd /var/lib/ejabberd
 	rm -f /etc/default/ejabberd
-	deluser ejabberd 2>/dev/null || true
-	delgroup ejabberd 2>/dev/null || true
-        ;;
+	if which deluser >/dev/null ; then
+	    deluser ejabberd 2>/dev/null || true
+	    delgroup ejabberd 2>/dev/null || true
+	fi
+    ;;
 
     *)
         echo "postrm called with unknown argument \`$1'" >&2
         exit 1
-        ;;
+    ;;
 esac
 
 # dh_installdeb will replace this with shell code automatically

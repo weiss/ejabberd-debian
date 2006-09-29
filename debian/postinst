@@ -81,7 +81,7 @@ register_admin()
 	echo -n "Waiting for ejabberd to register admin user."
 	cnt=0
 	flag=1
-	while ! /usr/sbin/ejabberdctl vhost "$HOST" registered-users >/dev/null ; do
+	while ! ejabberdctl vhost "$HOST" registered-users >/dev/null ; do
 	    echo -n "."
 	    cnt=`expr $cnt + 1`
 	    if [ $cnt -gt 60 ] ; then
@@ -96,7 +96,7 @@ register_admin()
 
 	echo
 	if [ $flag -eq 1 ] ; then
-	    if ! status=$(/usr/sbin/ejabberdctl register "$USER" "$HOST" "$PASSWD") ; then
+	    if ! status=$(ejabberdctl register "$USER" "$HOST" "$PASSWD") ; then
 		if echo $status | grep -q "already registered" ; then
 		    echo "Admin user \"$USER@$HOST\" is already registered. Password IS NOT changed."
 		else
