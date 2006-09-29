@@ -12,7 +12,8 @@ ejabberd (1.1.2-1) unstable; urgency=low
   * documented ERLANG_NODE variable in ejabberd and ejabberdctl manual
     pages
   * explicitly specify hostname in admin ACL
-  * improved admin user registering in debian/postinst
+  * improved admin user registering in debian/postinst. installation
+    is not interrupted if the user can't be registered, so, closes: #385020
   * only call ucf and deluser on purge when they are available,
     closes: #389756
   * added check for running ejabberd before backup in debian/prerm,
