@@ -11,8 +11,12 @@ ejabberd (1.1.2-1) unstable; urgency=low
     let ejabberd_ctl module find hostname), closes: #389635
   * documented ERLANG_NODE variable in ejabberd and ejabberdctl manual
     pages
+  * explicitly specify hostname in admin ACL
+  * added check for running ejabberd before backup in debian/prerm,
+    closes: #389757
+  * improved admin user registering in debian/postinst
 
- -- Torsten Werner <twerner@debian.org>  Wed, 27 Sep 2006 23:36:21 +0400
+ -- Torsten Werner <twerner@debian.org>  Fri, 29 Sep 2006 19:57:31 +0400
 
 ejabberd (1.1.1-9) unstable; urgency=low
 
