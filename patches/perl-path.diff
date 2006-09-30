@@ -1,7 +1,7 @@
-Index: ejabberd-1.1.1/examples/extauth/check_pass_null.pl
+Index: ejabberd/examples/extauth/check_pass_null.pl
 ===================================================================
---- ejabberd-1.1.1.orig/examples/extauth/check_pass_null.pl	2005-05-25 15:32:03.000000000 +0200
-+++ ejabberd-1.1.1/examples/extauth/check_pass_null.pl	2006-05-01 18:58:40.000000000 +0200
+--- ejabberd.orig/examples/extauth/check_pass_null.pl
++++ ejabberd/examples/extauth/check_pass_null.pl
 @@ -1,4 +1,4 @@
 -#!/usr/local/bin/perl
 +#!/usr/bin/perl

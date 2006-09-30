@@ -1,7 +1,7 @@
-Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
+Index: ejabberd/src/ejabberd_ctl.erl
 ===================================================================
---- ejabberd-1.1.1.orig/src/ejabberd_ctl.erl	2006-04-27 00:29:50.000000000 +0200
-+++ ejabberd-1.1.1/src/ejabberd_ctl.erl	2006-05-01 19:24:18.000000000 +0200
+--- ejabberd.orig/src/ejabberd_ctl.erl
++++ ejabberd/src/ejabberd_ctl.erl
 @@ -24,7 +24,21 @@
  start() ->
      case init:get_plain_arguments() of
@@ -25,7 +25,7 @@ Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
  	    Status = case rpc:call(Node, ?MODULE, process, [Args]) of
  			 {badrpc, Reason} ->
  			     io:format("RPC failed on the node ~p: ~p~n",
-@@ -222,13 +236,14 @@
+@@ -248,13 +262,14 @@
  		   Desc, NewLine]
  	  end, CmdDescs),
      io:format(
@@ -43,7 +43,7 @@ Index: ejabberd-1.1.1/src/ejabberd_ctl.erl
       ).
  
  print_vhost_usage(Host) ->
-@@ -253,7 +268,7 @@
+@@ -279,7 +294,7 @@
  		   Desc, NewLine]
  	  end, CmdDescs),
      io:format(

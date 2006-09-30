@@ -18,8 +18,10 @@ ejabberd (1.1.2-1) unstable; urgency=low
     closes: #389756
   * added check for running ejabberd before backup in debian/prerm,
     closes: #389757
+  * added workaround for centericq users (replaced fetaure-not-implemented
+    error for service-unavailable in session management)
 
- -- Torsten Werner <twerner@debian.org>  Fri, 29 Sep 2006 19:57:31 +0400
+ -- Torsten Werner <twerner@debian.org>  Sat, 30 Sep 2006 18:32:18 +0400
 
 ejabberd (1.1.1-9) unstable; urgency=low
 
