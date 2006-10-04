@@ -1,22 +1,14 @@
-#
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 14:25+0200\n"
+"Report-Msgid-Bugs-To: twerner@debian.org\n"
+"POT-Creation-Date: 2006-10-04 14:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,25 +18,25 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "The name of the host ejabberd will serve:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Please enter the hostname of your Jabber server."
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "The name of an admin account for ejabberd:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -56,43 +48,43 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "The password for the admin account:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "Please enter the password for the administrative user."
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid "The password for the admin account again for verification:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid ""
 "Please reenter the password for the administrative user for verification."
 msgstr ""
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords do not match!"
 msgstr ""
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr ""

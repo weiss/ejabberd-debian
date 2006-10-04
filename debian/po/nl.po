@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nl\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 14:25+0200\n"
+"Report-Msgid-Bugs-To: twerner@debian.org\n"
+"POT-Creation-Date: 2006-10-04 14:20+0200\n"
 "PO-Revision-Date: 2006-08-02 17:34+0200\n"
 "Last-Translator: Sander Devrieze <s.devrieze@pandora.be>\n"
 "Language-Team:  <nl@li.org>\n"
@@ -19,25 +19,25 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "The name of the host ejabberd will serve:"
 msgstr "Hostnaam die ejabberd moet aanbieden:"
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Please enter the hostname of your Jabber server."
 msgstr "Voer de hostnaam van uw Jabber-server in."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "The name of an admin account for ejabberd:"
 msgstr "Naam van een beheerdersaccount voor ejabberd:"
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -49,48 +49,49 @@ msgstr ""
 "Geef de naam op voor een account om ejabberd te beheren. Na de installatie "
 "van ejabberd kunt u met deze account in elke Jabber-client beheerderstaken "
 "uitvoeren of kunt u naar http://${hostname}:5280/admin/ surfen om "
-"beheerderstaken uit te voeren. Let erop dat u de volledige Jabber ID (bv. '${user}@"
-"${hostname}') gebruikt om aan te melden; anders zal het niet lukken."
+"beheerderstaken uit te voeren. Let erop dat u de volledige Jabber ID (bv. "
+"'${user}@${hostname}') gebruikt om aan te melden; anders zal het niet lukken."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
-msgstr "Voer niets in als u niet automatisch een beheerdersaccount wilt aanmaken."
+msgstr ""
+"Voer niets in als u niet automatisch een beheerdersaccount wilt aanmaken."
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "The password for the admin account:"
 msgstr "Wachtwoord voor de beheerdersaccount:"
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "Please enter the password for the administrative user."
 msgstr "Voer het wachtwoord in voor de beheerder."
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid "The password for the admin account again for verification:"
 msgstr "Nogmaals het wachtwoord voor de beheerdersaccount ter controle:"
 
 #. Type: password
 #. Description
-#: ../templates:26
-msgid "Please reenter the password for the administrative user for verification."
+#: ../templates:4001
+msgid ""
+"Please reenter the password for the administrative user for verification."
 msgstr "Voer het wachtwoord voor de beheerder nogmaals in ter controle."
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords do not match!"
 msgstr "De wachtwoorden komen niet overeen!"
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr "De ingevoerde wachtwoorden komen niet overeen. Probeer opnieuw."
-

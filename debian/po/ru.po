@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1-5\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 14:25+0200\n"
+"Report-Msgid-Bugs-To: twerner@debian.org\n"
+"POT-Creation-Date: 2006-10-04 14:20+0200\n"
 "PO-Revision-Date: 2006-07-23 11:45+0400\n"
 "Last-Translator: Sergei Golovan <sgolovan@nes.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,25 +25,25 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "The name of the host ejabberd will serve:"
 msgstr "Имя хоста, которое будет обслуживать ejabberd:"
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Please enter the hostname of your Jabber server."
 msgstr "Пожалуйста, введите имя вашего Jabber-сервера."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "The name of an admin account for ejabberd:"
 msgstr "Имя учётной записи администратора ejabberd:"
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 #, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
@@ -62,7 +62,7 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
 msgstr ""
 "Оставьте поле пустым, если не хотите создавать учётную запись администратора "
@@ -70,37 +70,37 @@ msgstr ""
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "The password for the admin account:"
 msgstr "Пароль учётной записи администратора:"
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "Please enter the password for the administrative user."
 msgstr "Пожалуйста, введите пароль администратора."
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid "The password for the admin account again for verification:"
 msgstr "Повторный ввод пароля администратора для проверки:"
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid ""
 "Please reenter the password for the administrative user for verification."
 msgstr "Пожалуйста, введите пароль администратора ещё раз для проверки."
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords do not match!"
 msgstr "Пароли не совпадают!"
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr "Введённые пароли не совпадают. Пожалуйста, попробуйте ещё раз."

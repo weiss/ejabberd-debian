@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1-5\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 14:25+0200\n"
+"Report-Msgid-Bugs-To: twerner@debian.org\n"
+"POT-Creation-Date: 2006-10-04 14:20+0200\n"
 "PO-Revision-Date: 2006-07-22 21:45+0200\n"
 "Last-Translator: Torsten Werner <twerner@debian.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,25 +25,25 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "The name of the host ejabberd will serve:"
 msgstr "Der Name Ihres Ejabberd-Servers:"
 
 #. Type: string
 #. Description
-#: ../templates:4
+#: ../templates:1001
 msgid "Please enter the hostname of your Jabber server."
 msgstr "Geben Sie bitte den Namen Ihres Jabberservers an."
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "The name of an admin account for ejabberd:"
 msgstr "Der Name eines privilegierten Kontos für Ejabberd:"
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -61,44 +61,44 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../templates:9
+#: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
 msgstr "Lassen Sie das Feld leer, um kein privilegiertes Konto anzulegen."
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "The password for the admin account:"
 msgstr "Das Kennwort für das Administratorkonto:"
 
 #. Type: password
 #. Description
-#: ../templates:21
+#: ../templates:3001
 msgid "Please enter the password for the administrative user."
 msgstr "Geben Sie das Kennwort für den Administrator an."
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid "The password for the admin account again for verification:"
 msgstr "Wiederholen Sie das Passwort zur Vermeidung von Fehleingaben:"
 
 #. Type: password
 #. Description
-#: ../templates:26
+#: ../templates:4001
 msgid ""
 "Please reenter the password for the administrative user for verification."
 msgstr "Bitte geben Sie noch einmal das Passwort ein."
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords do not match!"
 msgstr "Die Kennwörter waren nicht identisch!"
 
 #. Type: error
 #. Description
-#: ../templates:31
+#: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr ""
 "Die Kennwörter waren nicht identisch, bitte versuchen Sie es noch einmal."
