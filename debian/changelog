@@ -20,8 +20,9 @@ ejabberd (1.1.2-1) unstable; urgency=low
     closes: #389757
   * added workaround for centericq users (replaced fetaure-not-implemented
     error for service-unavailable in session management)
+  * backported bugfix for shapers from ejabberd SVN
 
- -- Torsten Werner <twerner@debian.org>  Sat, 30 Sep 2006 18:32:18 +0400
+ -- Torsten Werner <twerner@debian.org>  Wed, 04 Oct 2006 08:00:46 +0400
 
 ejabberd (1.1.1-9) unstable; urgency=low
 

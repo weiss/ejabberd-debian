@@ -1,0 +1,29 @@
+Index: ejabberd/src/shaper.erl
+===================================================================
+--- ejabberd/src/shaper.erl
++++ ejabberd/src/shaper.erl
+@@ -16,7 +16,7 @@
+ 
+ 
+ new(Name) ->
+-    Data = case ejabberd_config:get_global_option({shaper, Name}) of
++    Data = case ejabberd_config:get_global_option({shaper, Name, global}) of
+ 	       undefined ->
+ 		   none;
+ 	       D ->
+Index: ejabberd_config.erl
+===================================================================
+--- ejabberd/src/ejabberd_config.erl
++++ ejabberd/src/ejabberd_config.erl
+@@ -95,8 +95,9 @@
+ 	{access, RuleName, Rules} ->
+ 	    process_host_term(Term, global, State);
+ 	{shaper, Name, Data} ->
+-	    lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
+-			State, State#state.hosts);
++	    %lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
++	    %    	State, State#state.hosts);
++	    process_host_term(Term, global, State);
+ 	{host, Host} ->
+ 	    State;
+ 	{hosts, Hosts} ->
