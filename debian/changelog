@@ -1,9 +1,12 @@
-ejabberd (1.1.2-2) unstable; urgency=low
+ejabberd (1.1.2-2) unstable; urgency=medium
 
   [ Sergei Golovan ]
   * backported bugfix for HTTP-polling from the ejabberd author
 
- -- Torsten Werner <twerner@debian.org>  Thu, 05 Oct 2006 18:19:41 +0400
+  [ Torsten Werner ]
+  * Set urgency to medium.
+
+ -- Torsten Werner <twerner@debian.org>  Sun,  8 Oct 2006 11:32:25 +0200
 
 ejabberd (1.1.2-1) unstable; urgency=low
 
