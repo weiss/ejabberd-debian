@@ -1,3 +1,10 @@
+ejabberd (1.1.2-3) unstable; urgency=low
+
+  * Add patch http_bind.diff, thanks to Matthew Harrell. (Closes: #399560)
+  * Updated debian/control from debian/control.in.
+
+ -- Torsten Werner <twerner@debian.org>  Mon, 20 Nov 2006 20:11:08 +0100
+
 ejabberd (1.1.2-2) unstable; urgency=medium
 
   [ Sergei Golovan ]

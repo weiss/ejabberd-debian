@@ -3,3 +3,4 @@ ejabberd_sm.diff
 perl-path.diff
 shaper.diff
 ejabberd_http_poll.diff
+http_bind.diff -p0
