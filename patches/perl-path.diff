@@ -1,3 +1,6 @@
+ 1) The patch changes path to perl interpreter because in Debian
+    perl is located at /usr/bin
+
 Index: ejabberd/examples/extauth/check_pass_null.pl
 ===================================================================
 --- ejabberd.orig/examples/extauth/check_pass_null.pl

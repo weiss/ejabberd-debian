@@ -1,3 +1,5 @@
+ 1) Simple typo fix from the ejabberd author.
+
 Index: ejabberd/src/ejabberd_ctl.erl
 ===================================================================
 --- ejabberd.orig/src/web/ejabberd_http_poll.erl

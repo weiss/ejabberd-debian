@@ -1,3 +1,13 @@
+ 1) Allows to use node names without hostname. If node name doesn't
+    contain @ then local hostname is added to the end of node name.
+    If erlang is running with -name option then FDQN is added, else
+    only hostname part is added. This patch closes bug #389635
+
+ 2) ejabberdctl script in Debian distribution has slightly different
+    syntax than in upstream. It allows to omit ejabberd node name
+    assuming ejabberd@hostname. The patch changes usage messages to
+    reflect these changes in the syntax.
+
 Index: ejabberd/src/ejabberd_ctl.erl
 ===================================================================
 --- ejabberd.orig/src/ejabberd_ctl.erl

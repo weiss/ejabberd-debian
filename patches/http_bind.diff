@@ -1,3 +1,9 @@
+ 1) Uofficial HTTP Binding support (XEP-0124) patch from
+    Stefan Strigler <steve@zeank.in-berlin.de>.
+    HTTP binding is another XMPP transport (along with TCP, HTTP-poll etc.)
+    See also: http://www.jabber.ru/bugzilla/show_bug.cgi?id=91
+              http://www.xmpp.org/extensions/xep-0124.html
+
 Index: src/ejabberd.cfg.example
 ===================================================================
 --- src/ejabberd.cfg.example.orig	2006-09-27 22:49:59.000000000 +0200

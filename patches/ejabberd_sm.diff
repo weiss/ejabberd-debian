@@ -1,3 +1,9 @@
+ 1) Ejabberd 1.1.2 changed error message, which is sent if the server
+    doesn't understand received query, from <feature-not-implemented/>
+    to <service-unavailable>. While it's recommended by XMPP RFC, it
+    breaks some Jabber clients (centericq is known to fail after the
+    change). The patch restores old error message.
+
 Index: ejabberd/src/ejabberd_sm.erl
 ===================================================================
 --- ejabberd.orig/src/ejabberd_sm.erl

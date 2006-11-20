@@ -1,3 +1,6 @@
+ 1) Without this patch (backported from ejabberd SVN) traffic shapers
+    don't work at all.
+
 Index: ejabberd/src/shaper.erl
 ===================================================================
 --- ejabberd/src/shaper.erl
