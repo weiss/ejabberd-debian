@@ -1,9 +1,10 @@
 ejabberd (1.1.2-4) unstable; urgency=low
 
   [ Sergei Golovan ]
+  * Fixed bug with LDAP support, thanks to Evgeniy Khramtsov. (Closes: #399659)
   * Documented quilt patches in patches/ directory.
 
- -- Torsten Werner <twerner@debian.org>  Tue, 21 Nov 2006 00:05:33 +0300
+ -- Torsten Werner <twerner@debian.org>  Wed, 22 Nov 2006 13:44:13 +0300
 
 ejabberd (1.1.2-3) unstable; urgency=low
 
