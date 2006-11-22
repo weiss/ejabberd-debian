@@ -1,4 +1,4 @@
-ejabberd (1.1.2-4) unstable; urgency=low
+ejabberd (1.1.2-4) unstable; urgency=medium
 
   [ Sergei Golovan ]
   * Fixed bug with LDAP support, thanks to Evgeniy Khramtsov. (Closes: #399659)
