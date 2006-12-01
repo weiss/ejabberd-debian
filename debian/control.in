@@ -2,7 +2,7 @@ Source: ejabberd
 Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
-Build-Depends: @cdbs@, erlang-nox, erlang-dev, grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
+Build-Depends: @cdbs@, erlang-nox, erlang-dev (>= 1:11.b.2-3), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
 Standards-Version: 3.7.2
 
 Package: ejabberd
