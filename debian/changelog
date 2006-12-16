@@ -1,10 +1,16 @@
 ejabberd (1.1.2-5) experimental; urgency=low
 
   * NOT RELEASED YET
+
+  [ Torsten Werner ]
   * Remove redundant Build-Depends.
   * Use erlang-depends for calculating Depends now.
 
- -- Torsten Werner <twerner@debian.org>  Fri,  1 Dec 2006 07:02:48 +0100
+  [ Sergei Golovan ]
+  * Moved patches to debian directory. This fixes cleaning up
+    after build process.
+
+ -- Torsten Werner <twerner@debian.org>  Sat, 16 Dec 2006 19:58:42 +0300
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
