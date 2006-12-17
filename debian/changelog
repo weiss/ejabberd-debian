@@ -5,12 +5,14 @@ ejabberd (1.1.2-5) experimental; urgency=low
   [ Torsten Werner ]
   * Remove redundant Build-Depends.
   * Use erlang-depends for calculating Depends now.
+  * Change email address of Christophe Romain in man page as requested by
+    himself.
 
   [ Sergei Golovan ]
   * Moved patches to debian directory. This fixes cleaning up
     after build process.
 
- -- Torsten Werner <twerner@debian.org>  Sat, 16 Dec 2006 19:58:42 +0300
+ -- Torsten Werner <twerner@debian.org>  Sun, 17 Dec 2006 23:51:20 +0100
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
