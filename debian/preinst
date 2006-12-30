@@ -13,7 +13,6 @@ set -e
 
 case "$1" in
     install)
-	adduser --quiet --system --shell /bin/sh --group --home /var/lib/ejabberd ejabberd
     ;;
 
     upgrade)

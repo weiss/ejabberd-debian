@@ -111,7 +111,8 @@ register_admin()
 
 case "$1" in
     configure|reconfigure)
-    setup_ejabberd
+	adduser --quiet --system --shell /bin/sh --group --home /var/lib/ejabberd ejabberd
+	setup_ejabberd
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

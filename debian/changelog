@@ -11,8 +11,10 @@ ejabberd (1.1.2-5) experimental; urgency=low
   [ Sergei Golovan ]
   * Moved patches to debian directory. This fixes cleaning up
     after build process.
+  * Moved creating user ejabberd from preinst to postinst because preinst
+    cannot rely on existence of adduser package.
 
- -- Torsten Werner <twerner@debian.org>  Sun, 17 Dec 2006 23:51:20 +0100
+ -- Torsten Werner <twerner@debian.org>  Sat, 30 Dec 2006 14:00:22 +0300
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
