@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: 1.1.1-5\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
 "POT-Creation-Date: 2006-10-04 14:20+0200\n"
-"PO-Revision-Date: 2006-07-23 11:45+0400\n"
+"PO-Revision-Date: 2007-01-25 23:46+0600\n"
 "Last-Translator: Sergei Golovan <sgolovan@nes.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,6 @@ msgstr "Имя учётной записи администратора ejabberd
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
