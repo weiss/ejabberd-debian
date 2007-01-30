@@ -1,0 +1,42 @@
+Patch fixes SQL injection bug in mod_roster_odbc and converter from
+Mnesia to ODBC.
+
+Index: ejabberd/src/ejd2odbc.erl
+===================================================================
+--- ejabberd.orig/src/ejd2odbc.erl
++++ ejabberd/src/ejd2odbc.erl
+@@ -290,13 +290,14 @@
+ 	       in	   -> "I";
+ 	       none	   -> "N"
+ 	   end,
++    SAskMessage = ejabberd_odbc:escape(AskMessage),
+     ["("
+      "'", Username, "',"
+      "'", SJID, "',"
+      "'", Nick, "',"
+      "'", SSubscription, "',"
+      "'", SAsk, "',"
+-     "'", AskMessage, "',"
++     "'", SAskMessage, "',"
+      "'N', '', 'item')"].
+ 
+ groups_to_string(#roster{usj = {User, Server, JID},
+Index: ejabberd/src/mod_roster_odbc.erl
+===================================================================
+--- ejabberd.orig/src/mod_roster_odbc.erl
++++ ejabberd/src/mod_roster_odbc.erl
+@@ -821,12 +821,13 @@
+ 	       in	   -> "I";
+ 	       none	   -> "N"
+ 	   end,
++    SAskMessage = ejabberd_odbc:escape(AskMessage),
+     ["'", Username, "',"
+      "'", SJID, "',"
+      "'", Nick, "',"
+      "'", SSubscription, "',"
+      "'", SAsk, "',"
+-     "'", AskMessage, "',"
++     "'", SAskMessage, "',"
+      "'N', '', 'item'"].
+ 
+ groups_to_string(#roster{us = {User, _Server},
