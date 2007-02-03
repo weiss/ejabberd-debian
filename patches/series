@@ -5,3 +5,4 @@ shaper.diff
 ejabberd_http_poll.diff
 eldap.diff
 http_bind.diff -p0
+sql_escape.diff
