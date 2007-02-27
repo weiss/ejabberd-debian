@@ -18,11 +18,13 @@ setup_ejabberd()
     chmod 700 /etc/ejabberd
 
     # The sane is for /var/lib/ejabberd, where the users database is located.
-    install -m 700 -d /var/lib/ejabberd
+    install -d /var/lib/ejabberd
     chown -R ejabberd:ejabberd /var/lib/ejabberd
+    chmod 700 /var/lib/ejabberd
 
     # Ejabberd logs should be readable by users in adm group (see also logrotate script).
-    install -o ejabberd -g adm -m 750 -d /var/log/ejabberd
+    install -o ejabberd -g adm -d /var/log/ejabberd
+    chmod 750 /var/log/ejabberd
 
     # Moving certivicate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
     cd /etc/ssl/certs
