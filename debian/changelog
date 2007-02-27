@@ -18,8 +18,10 @@ ejabberd (1.1.2-5) experimental; urgency=low
   * Backported security fix from SVN (the bug affects ejabberd only if
     users' rosters are stored in relational database, and not in Mnesia,
     which is default).
+  * Removed annoying message about existing SSL certificate.
+  * Fixed users database and logs directory permissions.
 
- -- Torsten Werner <twerner@debian.org>  Tue, 30 Jan 2007 19:26:36 +0300
+ -- Torsten Werner <twerner@debian.org>  Tue, 27 Feb 2007 08:22:10 +0300
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 

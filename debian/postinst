@@ -13,16 +13,18 @@ TEMPFILE=$(mktemp)
 
 setup_ejabberd()
 {
-    # Ejabberd config dir may contain sensitive data, so makig it readable only by ejabberd user.
+    # Ejabberd config dir may contain sensitive data, so making it readable only by ejabberd user.
     chown ejabberd:ejabberd /etc/ejabberd
     chmod 700 /etc/ejabberd
 
-    # The sane is for /var/lib/ejabberd, where the users database is located.
-    install -m 700 -d /var/lib/ejabberd
+    # The same is for /var/lib/ejabberd, where the users database is located.
+    install -d /var/lib/ejabberd
     chown -R ejabberd:ejabberd /var/lib/ejabberd
+    chmod 700 /etc/ejabberd
 
     # Ejabberd logs should be readable by users in adm group (see also logrotate script).
-    install -o ejabberd -g adm -m 750 -d /var/log/ejabberd
+    install -o ejabberd -g adm -d /var/log/ejabberd
+    chmod 750 /etc/ejabberd
 
     # Moving certivicate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
     cd /etc/ssl/certs
@@ -39,10 +41,10 @@ setup_ejabberd()
     ( cd /etc/ejabberd
     if [ -f ejabberd.pem ]
     then
-	echo "You already have /etc/ejabberd/ejabberd.pem"
 	chown ejabberd:ejabberd ejabberd.pem
 	chmod 600 ejabberd.pem
     else
+	echo "Generating SSL certificate /etc/ejabberd/ejabberd.pem..."
 	HOSTNAME=$(hostname -s)
 	DOMAINNAME=$(hostname -d)
 	openssl req -new -x509 -days 365 -nodes -out ejabberd.pem \
