@@ -1,4 +1,4 @@
-ejabberd (1.1.2-6) unstable; urgency=medium
+ejabberd (1.1.2-6) unstable; urgency=high
 
   [ Sergei Golovan ]
   * Fixed users database and logs directoriy permissions (closes: #412583).
