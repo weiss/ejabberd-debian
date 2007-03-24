@@ -20,8 +20,10 @@ ejabberd (1.1.2-5) experimental; urgency=low
     which is default).
   * Removed annoying message about existing SSL certificate.
   * Fixed users database and logs directory permissions.
+  * Fixed references to ejabberd installation and operation guide in manual
+    pages (closes: #416050).
 
- -- Torsten Werner <twerner@debian.org>  Tue, 27 Feb 2007 08:22:10 +0300
+ -- Torsten Werner <twerner@debian.org>  Sat, 24 Mar 2007 23:54:43 +0300
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
