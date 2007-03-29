@@ -14,17 +14,24 @@ TEMPFILE=$(mktemp)
 setup_ejabberd()
 {
     # Ejabberd config dir may contain sensitive data, so making it readable only by ejabberd user.
-    chown ejabberd:ejabberd /etc/ejabberd
-    chmod 700 /etc/ejabberd
+    if ! dpkg-statoverride --list /etc/ejabberd >/dev/null; then
+	chown ejabberd:ejabberd /etc/ejabberd
+	chmod 700 /etc/ejabberd
+    fi
 
     # The same is for /var/lib/ejabberd, where the users database is located.
     install -d /var/lib/ejabberd
-    chown -R ejabberd:ejabberd /var/lib/ejabberd
-    chmod 700 /var/lib/ejabberd
+    if ! dpkg-statoverride --list /var/lib/ejabberd >/dev/null; then
+	chown -R ejabberd:ejabberd /var/lib/ejabberd
+	chmod 700 /var/lib/ejabberd
+    fi
 
     # Ejabberd logs should be readable by users in adm group (see also logrotate script).
-    install -o ejabberd -g adm -d /var/log/ejabberd
-    chmod 750 /var/log/ejabberd
+    install -d /var/log/ejabberd
+    if ! dpkg-statoverride --list /var/log/ejabberd >/dev/null; then
+	chown ejabberd:adm /var/log/ejabberd
+	chmod 750 /var/log/ejabberd
+    fi
 
     # Moving certificate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
     cd /etc/ssl/certs
@@ -39,11 +46,8 @@ setup_ejabberd()
 
     # Making /etc/ejabberd/ejabberd.pem if it does not exist.
     ( cd /etc/ejabberd
-    if [ -f ejabberd.pem ]
+    if [ ! -f ejabberd.pem ]
     then
-	chown ejabberd:ejabberd ejabberd.pem
-	chmod 600 ejabberd.pem
-    else
 	echo "Generating SSL certificate /etc/ejabberd/ejabberd.pem..."
 	HOSTNAME=$(hostname -s)
 	DOMAINNAME=$(hostname -d)
@@ -58,8 +62,10 @@ ejabberd
 root@$HOSTNAME.$DOMAINNAME
 +++
     fi
-    chown ejabberd:ejabberd /etc/ejabberd/ejabberd.pem
-    chmod 600 /etc/ejabberd/ejabberd.pem
+    if ! dpkg-statoverride --list /etc/ejabberd/ejabberd.pem >/dev/null; then
+	chown ejabberd:ejabberd /etc/ejabberd/ejabberd.pem
+	chmod 600 /etc/ejabberd/ejabberd.pem
+    fi
     )
 
     db_get ejabberd/hostname
