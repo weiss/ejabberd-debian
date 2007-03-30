@@ -27,8 +27,11 @@ ejabberd (1.1.2-5) experimental; urgency=low
   * Do not change /etc/ejabberd, /var/lib/ejabberd and /var/log/ejabberd
     ownership and permissions if they are overridden using dpkg-statoverride
     (closes: #416178).
+  * Conditionally source /usr/share/debconf/confmodule in postrm script as
+    debconf isn't an essential package (closes: #416743).
+  * Included Portuguese translation of debconf messages (closes: #416779).
 
- -- Torsten Werner <twerner@debian.org>  Thu, 29 Mar 2007 14:26:07 +0400
+ -- Torsten Werner <twerner@debian.org>  Fri, 30 Mar 2007 22:10:02 +0400
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
