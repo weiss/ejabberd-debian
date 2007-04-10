@@ -1,6 +1,11 @@
-ejabberd (1.1.2-5) experimental; urgency=low
+ejabberd (1.1.2-7) unstable; urgency=low
 
   * NOT RELEASED YET
+
+  * Security fix, mentioned in 1.1.2-5 was backported from SVN and not
+    from 1.1.3, where it is incomplete (the bug affects ejabberd only if
+    users' rosters are stored in relational database, and not in Mnesia,
+    which is default).
 
   [ Torsten Werner ]
   * Remove redundant Build-Depends.
@@ -15,11 +20,7 @@ ejabberd (1.1.2-5) experimental; urgency=low
     cannot rely on existence of adduser package.
   * Added a comment to ejabberd.cfg concerning UTF-8 encoding.
   * Unfuzzied one string in russian debconf translation (closes: #408410).
-  * Backported security fix from SVN (the bug affects ejabberd only if
-    users' rosters are stored in relational database, and not in Mnesia,
-    which is default).
   * Removed annoying message about existing SSL certificate.
-  * Fixed users database and logs directory permissions.
   * Fixed references to ejabberd installation and operation guide in manual
     pages (closes: #416050).
   * Backup ejabberd database on package removal or upgrade to a subdirectory
@@ -32,6 +33,20 @@ ejabberd (1.1.2-5) experimental; urgency=low
   * Included Portuguese translation of debconf messages (closes: #416779).
 
  -- Torsten Werner <twerner@debian.org>  Fri, 30 Mar 2007 22:10:02 +0400
+
+ejabberd (1.1.2-6) unstable; urgency=high
+
+  [ Sergei Golovan ]
+  * Fixed users database and logs directoriy permissions (closes: #412583).
+
+ -- Torsten Werner <twerner@debian.org>  Tue, 27 Feb 2007 08:28:31 +0300
+
+ejabberd (1.1.2-5) unstable; urgency=high
+
+  * apply security fix backported from version 1.1.3
+    (http://ejabberd.jabber.ru/ejabberd-1.1.3); thanks to Sergei
+
+ -- Torsten Werner <twerner@debian.org>  Sat,  3 Feb 2007 23:08:08 +0100
 
 ejabberd (1.1.2-4) unstable; urgency=medium
 
