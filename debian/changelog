@@ -1,4 +1,4 @@
-ejabberd (1.1.2-7) unstable; urgency=low
+ejabberd (1.1.2-8) unstable; urgency=low
 
   * NOT RELEASED YET
 
@@ -12,6 +12,7 @@ ejabberd (1.1.2-7) unstable; urgency=low
   * Use erlang-depends for calculating Depends now.
   * Change email address of Christophe Romain in man page as requested by
     himself.
+  * Move directory 'patches' into directory 'debian'. (Closes: #424193)
 
   [ Sergei Golovan ]
   * Moved patches to debian directory. This fixes cleaning up
@@ -33,6 +34,12 @@ ejabberd (1.1.2-7) unstable; urgency=low
   * Included Portuguese translation of debconf messages (closes: #416779).
 
  -- Torsten Werner <twerner@debian.org>  Fri, 30 Mar 2007 22:10:02 +0400
+
+ejabberd (1.1.2-7) unstable; urgency=low
+
+  * Rebuild the package with newer erlang.
+
+ -- Torsten Werner <twerner@debian.org>  Fri, 13 Apr 2007 20:14:12 +0200
 
 ejabberd (1.1.2-6) unstable; urgency=high
 
