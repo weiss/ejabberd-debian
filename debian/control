@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
 Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 4.2.0), quilt, patchutils (>= 0.2.25), cdbs (>= 0.4.27-1), erlang-nox, erlang-dev (>= 1:11.b.2-3), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
 Standards-Version: 3.7.2
+XS-X-Vcs-Svn: svn+ssh://svn.debian.org/svn/collab-maint/deb-maint/ejabberd/trunk
 
 Package: ejabberd
 Architecture: any

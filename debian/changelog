@@ -2,21 +2,20 @@ ejabberd (1.1.2-8) unstable; urgency=low
 
   * NOT RELEASED YET
 
-  * Security fix, mentioned in 1.1.2-5 was backported from SVN and not
-    from 1.1.3, where it is incomplete (the bug affects ejabberd only if
-    users' rosters are stored in relational database, and not in Mnesia,
-    which is default).
-
   [ Torsten Werner ]
   * Remove redundant Build-Depends.
   * Use erlang-depends for calculating Depends now.
   * Change email address of Christophe Romain in man page as requested by
     himself.
-  * Move directory 'patches' into directory 'debian'. (Closes: #424193)
+  * Add XS-X-Vcs-Svn header to debian/control.
 
   [ Sergei Golovan ]
+  * Security fix, mentioned in 1.1.2-5 was backported from SVN and not
+    from 1.1.3, where it is incomplete (the bug affects ejabberd only if
+    users' rosters are stored in relational database, and not in Mnesia,
+    which is default).
   * Moved patches to debian directory. This fixes cleaning up
-    after build process.
+    after build process. (Closes: #424193)
   * Moved creating user ejabberd from preinst to postinst because preinst
     cannot rely on existence of adduser package.
   * Added a comment to ejabberd.cfg concerning UTF-8 encoding.
@@ -33,7 +32,7 @@ ejabberd (1.1.2-8) unstable; urgency=low
     debconf isn't an essential package (closes: #416743).
   * Included Portuguese translation of debconf messages (closes: #416779).
 
- -- Torsten Werner <twerner@debian.org>  Fri, 30 Mar 2007 22:10:02 +0400
+ -- Torsten Werner <twerner@debian.org>  Fri, 18 May 2007 13:44:53 +0200
 
 ejabberd (1.1.2-7) unstable; urgency=low
 
