@@ -1,6 +1,4 @@
-ejabberd (1.1.2-8) unstable; urgency=low
-
-  * NOT RELEASED YET
+ejabberd (1.1.2-8) unstable; urgency=high
 
   [ Torsten Werner ]
   * Remove redundant Build-Depends.
