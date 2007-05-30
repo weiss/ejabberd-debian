@@ -2,12 +2,12 @@ Source: ejabberd
 Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
-Build-Depends: @cdbs@, erlang-nox, erlang-dev (>= 1:11.b.2-3), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
+Build-Depends: @cdbs@, erlang-nox, erlang-dev (>= 1:11.b.4-4), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
 Standards-Version: 3.7.2
 
 Package: ejabberd
 Architecture: any
-Depends: ${erlang-nox:Depends}, adduser, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
+Depends: ${erlang-nox:Depends}, ${erlang-abi:Depends}, adduser, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl
 Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang
