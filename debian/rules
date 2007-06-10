@@ -25,6 +25,12 @@ CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
 # declares a minimal versioned erlang Depends:
 install/ejabberd::
 	$(RM) $(DEB_DESTDIR)/etc/ejabberd/ejabberd.cfg
+	install -d $(DEB_DESTDIR)$(EJABBERDIR)/include
+	install -m 644 src/*.hrl $(DEB_DESTDIR)$(EJABBERDIR)/include
+	install -m 644 src/*/*.hrl $(DEB_DESTDIR)$(EJABBERDIR)/include
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/ELDAPv3.hrl
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/XmppAddr.hrl
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap.hrl
 	erlang-depends
 
 get-orig-source:

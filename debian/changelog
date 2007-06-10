@@ -1,10 +1,12 @@
-ejabberd (1.1.2-9) unstable; urgency=high
+ejabberd (1.1.2-9) unstable; urgency=low
 
   [ Sergei Golovan ]
   * Added binary package dependency on erlang-abi-* virtual package to
     prevent installation of ejabberd which uses incompatible erlang ABI.
+  * Included ejabberd headers to binary package to make building external
+    modules for ejabberd possible (closes: #428081).
 
- -- Torsten Werner <twerner@debian.org>  Wed, 30 May 2007 20:53:40 +0400
+ -- Torsten Werner <twerner@debian.org>  Sun, 10 Jun 2007 19:19:20 +0400
 
 ejabberd (1.1.2-8) unstable; urgency=high
 
