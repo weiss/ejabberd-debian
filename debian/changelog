@@ -1,3 +1,12 @@
+ejabberd (1.1.2-10) unstable; urgency=low
+
+  [ Sergei Golovan ]
+  * Added Sergei Golovan <sgolovan@debian.org> to uploaders list.
+  * Included experimental Personal Eventing via Pubsub (XEP-0163) support
+    using patch from https://svn.process-one.net/ejabberd-modules/pep/.
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 17 Aug 2007 15:39:14 +0400
+
 ejabberd (1.1.2-9) unstable; urgency=low
 
   [ Sergei Golovan ]

@@ -4,11 +4,11 @@
     breaks some Jabber clients (centericq is known to fail after the
     change). The patch restores old error message.
 
-Index: ejabberd/src/ejabberd_sm.erl
+Index: ejabberd-1.1.2/src/ejabberd_sm.erl
 ===================================================================
---- ejabberd.orig/src/ejabberd_sm.erl
-+++ ejabberd/src/ejabberd_sm.erl
-@@ -555,7 +555,7 @@
+--- ejabberd-1.1.2.orig/src/ejabberd_sm.erl	2007-08-17 15:30:40.000000000 +0400
++++ ejabberd-1.1.2/src/ejabberd_sm.erl	2007-08-17 15:33:34.000000000 +0400
+@@ -570,7 +570,7 @@
  					  From, To, IQ);
  		[] ->
  		    Err = jlib:make_error_reply(

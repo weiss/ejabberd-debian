@@ -2,6 +2,7 @@ Source: ejabberd
 Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
+Uploaders: Sergei Golovan <sgolovan@debian.org>
 Build-Depends: @cdbs@, erlang-nox, erlang-dev (>= 1:11.b.4-4), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev
 Standards-Version: 3.7.2
 

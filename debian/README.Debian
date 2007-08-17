@@ -1,5 +1,5 @@
 The package always makes a backup of the ejabberd database when it is upgraded
-or removed. The backup files are named /var/tmp/ejabberd-database.* .
+or removed. The backup files are stored in /var/backups/ejabberd-* directory.
 
 
 Torsten Werner <twerner@debian.org>       Wed Aug  2 15:40:29 CEST 2006
