@@ -1,3 +1,11 @@
+ejabberd (1.1.2-11) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+  [ Sergei Golovan ]
+  * Fixed debian/watch file.
+
+ -- Sergei Golovan <sgolovan@nes.ru>  Mon, 27 Aug 2007 20:38:16 +0400
+
 ejabberd (1.1.2-10) unstable; urgency=low
 
   [ Sergei Golovan ]
