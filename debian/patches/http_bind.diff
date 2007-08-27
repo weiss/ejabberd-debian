@@ -6,9 +6,9 @@
 
 Index: src/ejabberd.cfg.example
 ===================================================================
---- src/ejabberd.cfg.example.orig	2006-09-27 22:49:59.000000000 +0200
-+++ src/ejabberd.cfg.example	2006-11-20 20:18:16.000000000 +0100
-@@ -129,7 +129,7 @@
+--- src/ejabberd.cfg.example	(Revision 565)
++++ src/ejabberd.cfg.example	(Arbeitskopie)
+@@ -124,7 +124,7 @@
    {5269, ejabberd_s2s_in,  [{shaper, s2s_shaper},
  			    {max_stanza_size, 131072}
  			   ]},
@@ -19,8 +19,8 @@ Index: src/ejabberd.cfg.example
  			     [{password, "secret"}]}]}
 Index: src/web/Makefile.in
 ===================================================================
---- src/web/Makefile.in.orig	2006-09-27 22:49:57.000000000 +0200
-+++ src/web/Makefile.in	2006-11-20 20:18:16.000000000 +0100
+--- src/web/Makefile.in	(Revision 565)
++++ src/web/Makefile.in	(Arbeitskopie)
 @@ -15,7 +15,8 @@
  	$(OUTDIR)/ejabberd_http.beam \
  	$(OUTDIR)/ejabberd_web.beam  \
@@ -33,9 +33,9 @@ Index: src/web/Makefile.in
  
 Index: src/web/ejabberd_http_bind.erl
 ===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ src/web/ejabberd_http_bind.erl	2006-11-20 20:18:16.000000000 +0100
-@@ -0,0 +1,804 @@
+--- src/web/ejabberd_http_bind.erl	(Revision 0)
++++ src/web/ejabberd_http_bind.erl	(Revision 0)
+@@ -0,0 +1,811 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : ejabberd_http_bind.erl
 +%%% Author  : Stefan Strigler <steve@zeank.in-berlin.de>
@@ -789,6 +789,14 @@ Index: src/web/ejabberd_http_bind.erl
 +    case xml_stream:parse_element(Data) of
 +	El when element(1, El) == xmlelement ->
 +	    {xmlelement, Name, Attrs, Els} = El,
++            FixedEls = lists:filter(fun(I) -> 
++                                            case I of 
++                                                {xmlelement, _, _, _} ->
++                                                    true;
++                                                _ ->
++                                                    false
++                                            end
++                                    end, Els),
 +	    ID = xml:get_attr_s("sid",Attrs),
 +	    {RID,_X} = string:to_integer(xml:get_attr_s("rid",Attrs)),
 +	    Key = xml:get_attr_s("key",Attrs),
@@ -802,9 +810,8 @@ Index: src/web/ejabberd_http_bind.erl
 +                                  true ->
 +                                      ok
 +                              end
-+                      end, Els),
-+	    Packet = [xml:element_to_string(E) || E <- Els],
-+            ?DEBUG("ns fixed packet(s): ~s", [Packet]),
++                      end, FixedEls),
++	    Packet = [xml:element_to_string(E) || E <- FixedEls],
 +	    if 
 +		Name /= "body" -> 
 +		    {error, bad_request};
@@ -842,8 +849,8 @@ Index: src/web/ejabberd_http_bind.erl
 +    xml:element_to_string(El) ++ elements_to_string(Els).
 Index: src/web/ejabberd_web.erl
 ===================================================================
---- src/web/ejabberd_web.erl.orig	2006-09-27 22:49:57.000000000 +0200
-+++ src/web/ejabberd_web.erl	2006-11-20 20:18:16.000000000 +0100
+--- src/web/ejabberd_web.erl	(Revision 565)
++++ src/web/ejabberd_web.erl	(Arbeitskopie)
 @@ -49,7 +49,7 @@
  		      {"value", Value}])).
  
@@ -885,8 +892,8 @@ Index: src/web/ejabberd_web.erl
  
 Index: src/web/ejabberd_http.erl
 ===================================================================
---- src/web/ejabberd_http.erl.orig	2006-09-27 22:49:57.000000000 +0200
-+++ src/web/ejabberd_http.erl	2006-11-20 20:18:16.000000000 +0100
+--- src/web/ejabberd_http.erl	(Revision 565)
++++ src/web/ejabberd_http.erl	(Arbeitskopie)
 @@ -30,6 +30,7 @@
  		request_keepalive,
  		request_content_length,
@@ -914,7 +921,7 @@ Index: src/web/ejabberd_http.erl
  				     use_web_admin = UseWebAdmin}])}.
  
  
-@@ -189,6 +192,7 @@
+@@ -185,6 +188,7 @@
  		    #state{sockmod = SockMod,
  			   socket = Socket,
  			   use_http_poll = State#state.use_http_poll,
@@ -922,7 +929,7 @@ Index: src/web/ejabberd_http.erl
  			   use_web_admin = State#state.use_web_admin};
  		_ ->
  		    #state{end_of_request = true}
-@@ -204,6 +208,7 @@
+@@ -200,6 +204,7 @@
  		       request_auth = Auth,
  		       request_lang = Lang,
  		       use_http_poll = UseHTTPPoll,
@@ -930,7 +937,7 @@ Index: src/web/ejabberd_http.erl
  		       use_web_admin = UseWebAdmin} = State) ->
      case (catch url_decode_q_split(Path)) of
  	{'EXIT', _} ->
-@@ -221,7 +226,7 @@
+@@ -217,7 +222,7 @@
  			       q = LQuery,
  			       auth = Auth,
  			       lang = Lang},
@@ -939,7 +946,7 @@ Index: src/web/ejabberd_http.erl
  					  Request) of
  		El when element(1, El) == xmlelement ->
  		    make_xhtml_output(State, 200, [], El);
-@@ -244,6 +249,7 @@
+@@ -240,6 +245,7 @@
  		       sockmod = SockMod,
  		       socket = Socket,
  		       use_http_poll = UseHTTPPoll,
@@ -947,7 +954,7 @@ Index: src/web/ejabberd_http.erl
  		       use_web_admin = UseWebAdmin} = State)
    when is_integer(Len) ->
      case SockMod of
-@@ -271,7 +277,7 @@
+@@ -267,7 +273,7 @@
  			       auth = Auth,
  			       data = Data,
  			       lang = Lang},
@@ -958,8 +965,8 @@ Index: src/web/ejabberd_http.erl
  		    make_xhtml_output(State, 200, [], El);
 Index: src/xml.erl
 ===================================================================
---- src/xml.erl.orig	2006-09-27 22:49:59.000000000 +0200
-+++ src/xml.erl	2006-11-20 20:18:16.000000000 +0100
+--- src/xml.erl	(Revision 565)
++++ src/xml.erl	(Arbeitskopie)
 @@ -18,6 +18,7 @@
  	 get_tag_attr/2, get_tag_attr_s/2,
  	 get_subtag/2,
@@ -985,8 +992,8 @@ Index: src/xml.erl
      Attrs1 = lists:keydelete(Attr, 1, Attrs),
 Index: src/ejabberd_sup.erl
 ===================================================================
---- src/ejabberd_sup.erl.orig	2006-09-27 22:49:59.000000000 +0200
-+++ src/ejabberd_sup.erl	2006-11-20 20:18:16.000000000 +0100
+--- src/ejabberd_sup.erl	(Revision 565)
++++ src/ejabberd_sup.erl	(Arbeitskopie)
 @@ -123,6 +123,14 @@
  	 infinity,
  	 supervisor,

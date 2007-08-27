@@ -2,10 +2,13 @@ ejabberd (1.1.2-10) unstable; urgency=low
 
   [ Sergei Golovan ]
   * Added Sergei Golovan <sgolovan@debian.org> to uploaders list.
+  * Included a fix for IE bug (it sends zero length queries which cause
+    error 404) from http://www.jabber.ru/bugzilla/attachment.cgi?id=205
+    (closes: #428864).
   * Included experimental Personal Eventing via Pubsub (XEP-0163) support
     using patch from https://svn.process-one.net/ejabberd-modules/pep/.
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri, 17 Aug 2007 15:39:14 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Mon, 27 Aug 2007 20:19:43 +0400
 
 ejabberd (1.1.2-9) unstable; urgency=low
 
