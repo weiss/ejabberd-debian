@@ -1,16 +1,7 @@
-Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
+Index: ejabberd-1.1.4/src/ejabberd_c2s.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/ejabberd_c2s.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/ejabberd_c2s.erl	2007-08-17 15:30:40.000000000 +0400
-@@ -3,7 +3,7 @@
- %%% Author  : Alexey Shchepin <alexey@sevcom.net>
- %%% Purpose : Serve C2S connection
- %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
--%%% Id      : $Id: ejabberd_c2s.erl 590 2006-07-28 16:18:50Z mremond $
-+%%% Id      : $Id$
- %%%----------------------------------------------------------------------
- 
- -module(ejabberd_c2s).
+--- ejabberd-1.1.4.orig/src/ejabberd_c2s.erl	2007-08-09 17:04:29.000000000 +0400
++++ ejabberd-1.1.4/src/ejabberd_c2s.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -18,7 +18,8 @@
  	 send_text/2,
  	 send_element/2,
@@ -37,7 +28,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  		pres_last, pres_pri,
  		pres_timestamp,
  		pres_invis = false,
-@@ -107,6 +110,11 @@
+@@ -108,6 +111,11 @@
  get_presence(FsmRef) ->
      gen_fsm:sync_send_all_state_event(FsmRef, {get_presence}, 1000).
  
@@ -49,7 +40,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  %%%----------------------------------------------------------------------
  %%% Callback functions from gen_fsm
  %%%----------------------------------------------------------------------
-@@ -321,6 +329,14 @@
+@@ -322,6 +330,14 @@
  	    {stop, normal, StateData}
      end;
  
@@ -64,7 +55,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  wait_for_stream({xmlstreamerror, _}, StateData) ->
      Header = io_lib:format(?STREAM_HEADER,
  			   ["none", ?MYNAME, " version='1.0'", ""]),
-@@ -888,6 +904,16 @@
+@@ -889,6 +905,16 @@
      Reply = {User, Resource, Show, Status},
      {reply, Reply, StateName, StateData};
  
@@ -81,7 +72,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  handle_sync_event(_Event, _From, StateName, StateData) ->
      Reply = ok,
      {reply, Reply, StateName, StateData}.
-@@ -952,9 +978,13 @@
+@@ -953,9 +979,13 @@
  			process_presence_probe(From, To, NewStateData),
  			{false, Attrs, NewStateData};
  		    "error" ->
@@ -97,7 +88,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  		    "invisible" ->
  			Attrs1 = lists:keydelete("type", 1, Attrs),
  			{true, [{"type", "unavailable"} | Attrs1], StateData};
-@@ -979,32 +1009,42 @@
+@@ -980,32 +1010,42 @@
  			    allow ->
  				LFrom = jlib:jid_tolower(From),
  				LBFrom = jlib:jid_remove_resource(LFrom),
@@ -150,7 +141,7 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  						end
  					end
  				end;
-@@ -1364,8 +1404,12 @@
+@@ -1365,8 +1405,12 @@
  			ejabberd_hooks:run(user_available_hook,
  					   StateData#state.server,
  					   [StateData#state.jid]),
@@ -165,10 +156,10 @@ Index: ejabberd-1.1.2/src/ejabberd_c2s.erl
  			presence_broadcast_first(
  			  From, StateData#state{pres_last = Packet,
  						pres_invis = false
-Index: ejabberd-1.1.2/src/ejabberd_local.erl
+Index: ejabberd-1.1.4/src/ejabberd_local.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/ejabberd_local.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/ejabberd_local.erl	2007-08-17 15:30:40.000000000 +0400
+--- ejabberd-1.1.4.orig/src/ejabberd_local.erl	2006-01-29 07:38:31.000000000 +0300
++++ ejabberd-1.1.4/src/ejabberd_local.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -3,12 +3,12 @@
  %%% Author  : Alexey Shchepin <alexey@sevcom.net>
  %%% Purpose : Route local packets
@@ -267,10 +258,10 @@ Index: ejabberd-1.1.2/src/ejabberd_local.erl
  handle_info({register_iq_handler, Host, XMLNS, Module, Function}, State) ->
      ets:insert(?IQTABLE, {{XMLNS, Host}, Module, Function}),
      catch mod_disco:register_feature(Host, XMLNS),
-Index: ejabberd-1.1.2/src/ejabberd_sm.erl
+Index: ejabberd-1.1.4/src/ejabberd_sm.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/ejabberd_sm.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/ejabberd_sm.erl	2007-08-17 15:30:40.000000000 +0400
+--- ejabberd-1.1.4.orig/src/ejabberd_sm.erl	2006-07-28 20:18:50.000000000 +0400
++++ ejabberd-1.1.4/src/ejabberd_sm.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -3,7 +3,7 @@
  %%% Author  : Alexey Shchepin <alexey@sevcom.net>
  %%% Purpose : Session manager
@@ -318,10 +309,10 @@ Index: ejabberd-1.1.2/src/ejabberd_sm.erl
  		       true ->
  			    ok
  		    end;
-Index: ejabberd-1.1.2/src/jlib.erl
+Index: ejabberd-1.1.4/src/jlib.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/jlib.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/jlib.erl	2007-08-17 15:30:40.000000000 +0400
+--- ejabberd-1.1.4.orig/src/jlib.erl	2006-07-07 12:06:12.000000000 +0400
++++ ejabberd-1.1.4/src/jlib.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -3,12 +3,12 @@
  %%% Author  : Alexey Shchepin <alexey@sevcom.net>
  %%% Purpose : 
@@ -439,10 +430,10 @@ Index: ejabberd-1.1.2/src/jlib.erl
      not_iq.
  
  is_iq_request_type(set) -> true;
-Index: ejabberd-1.1.2/src/mod_caps.erl
+Index: ejabberd-1.1.4/src/mod_caps.erl
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ejabberd-1.1.2/src/mod_caps.erl	2007-08-17 15:30:40.000000000 +0400
++++ ejabberd-1.1.4/src/mod_caps.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -0,0 +1,261 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : mod_caps.erl
@@ -705,10 +696,10 @@ Index: ejabberd-1.1.2/src/mod_caps.erl
 +
 +code_change(_OldVsn, State, _Extra) ->
 +    {ok, State}.
-Index: ejabberd-1.1.2/src/mod_disco.erl
+Index: ejabberd-1.1.4/src/mod_disco.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/mod_disco.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/mod_disco.erl	2007-08-17 15:30:40.000000000 +0400
+--- ejabberd-1.1.4.orig/src/mod_disco.erl	2006-01-19 05:17:31.000000000 +0300
++++ ejabberd-1.1.4/src/mod_disco.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -3,12 +3,12 @@
  %%% Author  : Alexey Shchepin <alexey@sevcom.net>
  %%% Purpose : Service Discovery (JEP-0030) support
@@ -742,10 +733,10 @@ Index: ejabberd-1.1.2/src/mod_disco.erl
   
  get_local_identity(Acc, _From, _To, _Node, _Lang) ->
      Acc.
-Index: ejabberd-1.1.2/src/mod_pubsub/mod_pubsub.erl
+Index: ejabberd-1.1.4/src/mod_pubsub/mod_pubsub.erl
 ===================================================================
---- ejabberd-1.1.2.orig/src/mod_pubsub/mod_pubsub.erl	2007-08-17 15:30:00.000000000 +0400
-+++ ejabberd-1.1.2/src/mod_pubsub/mod_pubsub.erl	2007-08-17 15:30:40.000000000 +0400
+--- ejabberd-1.1.4.orig/src/mod_pubsub/mod_pubsub.erl	2006-09-22 21:01:16.000000000 +0400
++++ ejabberd-1.1.4/src/mod_pubsub/mod_pubsub.erl	2007-09-05 13:46:06.000000000 +0400
 @@ -3,12 +3,12 @@
  %%% Author  : Alexey Shchepin <alexey@sevcom.net>
  %%% Purpose : Pub/sub support (JEP-0060)
@@ -3501,10 +3492,10 @@ Index: ejabberd-1.1.2/src/mod_pubsub/mod_pubsub.erl
  
  
  update_table(Host) ->
-Index: ejabberd-1.1.2/src/jlib-pep.hrl
+Index: ejabberd-1.1.4/src/jlib-pep.hrl
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ejabberd-1.1.2/src/jlib-pep.hrl	2007-08-17 15:30:40.000000000 +0400
++++ ejabberd-1.1.4/src/jlib-pep.hrl	2007-09-05 13:46:06.000000000 +0400
 @@ -0,0 +1,2 @@
 +-define(NS_PUBSUB_ERRORS,"http://jabber.org/protocol/pubsub#errors").
 +-define(NS_CAPS,         "http://jabber.org/protocol/caps").

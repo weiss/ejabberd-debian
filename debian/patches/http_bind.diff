@@ -6,9 +6,9 @@
 
 Index: src/ejabberd.cfg.example
 ===================================================================
---- src/ejabberd.cfg.example	(Revision 565)
-+++ src/ejabberd.cfg.example	(Arbeitskopie)
-@@ -124,7 +124,7 @@
+--- src/ejabberd.cfg.example.orig	2006-06-07 12:38:37.000000000 +0400
++++ src/ejabberd.cfg.example	2007-09-05 13:46:28.000000000 +0400
+@@ -129,7 +129,7 @@
    {5269, ejabberd_s2s_in,  [{shaper, s2s_shaper},
  			    {max_stanza_size, 131072}
  			   ]},
@@ -19,8 +19,8 @@ Index: src/ejabberd.cfg.example
  			     [{password, "secret"}]}]}
 Index: src/web/Makefile.in
 ===================================================================
---- src/web/Makefile.in	(Revision 565)
-+++ src/web/Makefile.in	(Arbeitskopie)
+--- src/web/Makefile.in.orig	2006-02-03 06:28:15.000000000 +0300
++++ src/web/Makefile.in	2007-09-05 13:46:28.000000000 +0400
 @@ -15,7 +15,8 @@
  	$(OUTDIR)/ejabberd_http.beam \
  	$(OUTDIR)/ejabberd_web.beam  \
@@ -33,8 +33,8 @@ Index: src/web/Makefile.in
  
 Index: src/web/ejabberd_http_bind.erl
 ===================================================================
---- src/web/ejabberd_http_bind.erl	(Revision 0)
-+++ src/web/ejabberd_http_bind.erl	(Revision 0)
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ src/web/ejabberd_http_bind.erl	2007-09-05 13:46:28.000000000 +0400
 @@ -0,0 +1,811 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : ejabberd_http_bind.erl
@@ -849,8 +849,8 @@ Index: src/web/ejabberd_http_bind.erl
 +    xml:element_to_string(El) ++ elements_to_string(Els).
 Index: src/web/ejabberd_web.erl
 ===================================================================
---- src/web/ejabberd_web.erl	(Revision 565)
-+++ src/web/ejabberd_web.erl	(Arbeitskopie)
+--- src/web/ejabberd_web.erl.orig	2006-02-06 08:12:54.000000000 +0300
++++ src/web/ejabberd_web.erl	2007-09-05 13:46:28.000000000 +0400
 @@ -49,7 +49,7 @@
  		      {"value", Value}])).
  
@@ -892,8 +892,8 @@ Index: src/web/ejabberd_web.erl
  
 Index: src/web/ejabberd_http.erl
 ===================================================================
---- src/web/ejabberd_http.erl	(Revision 565)
-+++ src/web/ejabberd_http.erl	(Arbeitskopie)
+--- src/web/ejabberd_http.erl.orig	2006-06-02 19:02:39.000000000 +0400
++++ src/web/ejabberd_http.erl	2007-09-05 13:46:28.000000000 +0400
 @@ -30,6 +30,7 @@
  		request_keepalive,
  		request_content_length,
@@ -921,7 +921,7 @@ Index: src/web/ejabberd_http.erl
  				     use_web_admin = UseWebAdmin}])}.
  
  
-@@ -185,6 +188,7 @@
+@@ -189,6 +192,7 @@
  		    #state{sockmod = SockMod,
  			   socket = Socket,
  			   use_http_poll = State#state.use_http_poll,
@@ -929,7 +929,7 @@ Index: src/web/ejabberd_http.erl
  			   use_web_admin = State#state.use_web_admin};
  		_ ->
  		    #state{end_of_request = true}
-@@ -200,6 +204,7 @@
+@@ -204,6 +208,7 @@
  		       request_auth = Auth,
  		       request_lang = Lang,
  		       use_http_poll = UseHTTPPoll,
@@ -937,7 +937,7 @@ Index: src/web/ejabberd_http.erl
  		       use_web_admin = UseWebAdmin} = State) ->
      case (catch url_decode_q_split(Path)) of
  	{'EXIT', _} ->
-@@ -217,7 +222,7 @@
+@@ -221,7 +226,7 @@
  			       q = LQuery,
  			       auth = Auth,
  			       lang = Lang},
@@ -946,7 +946,7 @@ Index: src/web/ejabberd_http.erl
  					  Request) of
  		El when element(1, El) == xmlelement ->
  		    make_xhtml_output(State, 200, [], El);
-@@ -240,6 +245,7 @@
+@@ -244,6 +249,7 @@
  		       sockmod = SockMod,
  		       socket = Socket,
  		       use_http_poll = UseHTTPPoll,
@@ -954,7 +954,7 @@ Index: src/web/ejabberd_http.erl
  		       use_web_admin = UseWebAdmin} = State)
    when is_integer(Len) ->
      case SockMod of
-@@ -267,7 +273,7 @@
+@@ -271,7 +277,7 @@
  			       auth = Auth,
  			       data = Data,
  			       lang = Lang},
@@ -965,8 +965,8 @@ Index: src/web/ejabberd_http.erl
  		    make_xhtml_output(State, 200, [], El);
 Index: src/xml.erl
 ===================================================================
---- src/xml.erl	(Revision 565)
-+++ src/xml.erl	(Arbeitskopie)
+--- src/xml.erl.orig	2006-04-06 03:56:16.000000000 +0400
++++ src/xml.erl	2007-09-05 13:46:28.000000000 +0400
 @@ -18,6 +18,7 @@
  	 get_tag_attr/2, get_tag_attr_s/2,
  	 get_subtag/2,
@@ -992,9 +992,9 @@ Index: src/xml.erl
      Attrs1 = lists:keydelete(Attr, 1, Attrs),
 Index: src/ejabberd_sup.erl
 ===================================================================
---- src/ejabberd_sup.erl	(Revision 565)
-+++ src/ejabberd_sup.erl	(Arbeitskopie)
-@@ -123,6 +123,14 @@
+--- src/ejabberd_sup.erl.orig	2007-08-09 18:24:33.000000000 +0400
++++ src/ejabberd_sup.erl	2007-09-05 13:46:28.000000000 +0400
+@@ -116,6 +116,14 @@
  	 infinity,
  	 supervisor,
  	 [ejabberd_tmp_sup]},
@@ -1009,7 +1009,7 @@ Index: src/ejabberd_sup.erl
      IQSupervisor =
  	{ejabberd_iq_sup,
  	 {ejabberd_tmp_sup, start_link,
-@@ -145,6 +153,7 @@
+@@ -137,6 +145,7 @@
  	   ServiceSupervisor,
  	   HTTPSupervisor,
  	   HTTPPollSupervisor,

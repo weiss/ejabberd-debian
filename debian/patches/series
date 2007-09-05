@@ -1,9 +1,3 @@
 pep.diff
 http_bind.diff -p0
 ejabberd_ctl.diff
-ejabberd_sm.diff
-perl-path.diff
-shaper.diff
-ejabberd_http_poll.diff
-eldap.diff
-sql_escape.diff

@@ -1,10 +1,16 @@
-ejabberd (1.1.2-11) UNRELEASED; urgency=low
+ejabberd (1.1.4-1) unstable; urgency=low
 
-  * NOT RELEASED YET
   [ Sergei Golovan ]
+  * New upstream release.
   * Fixed debian/watch file.
+  * Removed ejabberd_sm.diff patch. This makes ejabberd using recommended
+    error condition <service-unavailable/> instead of
+    <feature-not-implemented/>. There was sufficient time to fix broken
+    clients.
+  * Removed perl-path.diff, shaper.diff, ejabberd_http_poll.diff, eldap.diff,
+    sql_escape.diff patches since they are included into upstream release.
 
- -- Sergei Golovan <sgolovan@nes.ru>  Mon, 27 Aug 2007 20:38:16 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Wed, 05 Sep 2007 14:06:23 +0400
 
 ejabberd (1.1.2-10) unstable; urgency=low
 

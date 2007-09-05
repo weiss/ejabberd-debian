@@ -8,10 +8,10 @@
     assuming ejabberd@hostname. The patch changes usage messages to
     reflect these changes in the syntax.
 
-Index: ejabberd/src/ejabberd_ctl.erl
+Index: ejabberd-1.1.4/src/ejabberd_ctl.erl
 ===================================================================
---- ejabberd.orig/src/ejabberd_ctl.erl
-+++ ejabberd/src/ejabberd_ctl.erl
+--- ejabberd-1.1.4.orig/src/ejabberd_ctl.erl	2006-05-08 01:26:06.000000000 +0400
++++ ejabberd-1.1.4/src/ejabberd_ctl.erl	2007-09-05 13:48:06.000000000 +0400
 @@ -24,7 +24,21 @@
  start() ->
      case init:get_plain_arguments() of
