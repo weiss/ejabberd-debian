@@ -10,8 +10,9 @@ ejabberd (1.1.4-1) unstable; urgency=low
     sql_escape.diff patches since they are included into upstream release.
   * Redefined HOME environment variable to fix Erlang compiler warnings in
     case when HOME points to an existent inaccessible directory.
+  * Bumped debhelper compatibility level to 5.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sun, 09 Sep 2007 12:42:01 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 09 Sep 2007 14:25:16 +0400
 
 ejabberd (1.1.2-10) unstable; urgency=low
 
