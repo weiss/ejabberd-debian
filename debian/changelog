@@ -1,6 +1,5 @@
 ejabberd (1.1.4-1) unstable; urgency=low
 
-  [ Sergei Golovan ]
   * New upstream release.
   * Fixed debian/watch file.
   * Removed ejabberd_sm.diff patch. This makes ejabberd using recommended
