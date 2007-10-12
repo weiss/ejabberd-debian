@@ -9,6 +9,7 @@ if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
 fi
 
 ERL=/usr/bin/erl
+EBIN_DIR=/usr/lib/ejabberd/ebin
 CONFIG=/etc/ejabberd/ejabberd.cfg
 INETRC=/etc/ejabberd/inetrc
 LOG=/var/log/ejabberd/ejabberd.log
@@ -37,7 +38,7 @@ else
 fi
 
 exec $ERL $SNAME $ERLANG_NODE \
-    -pa /usr/lib/ejabberd/ebin \
+    -pa $EBIN_DIR \
     -s ejabberd \
     -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \

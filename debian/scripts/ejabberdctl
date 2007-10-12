@@ -9,6 +9,7 @@ if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
 fi
 
 ERL=/usr/bin/erl
+EBIN_DIR=/usr/lib/ejabberd/ebin
 
 if [ $# -ne 0 ] ; then
     case $1 in
@@ -23,7 +24,7 @@ else
 fi
 
 exec $ERL $SNAME ejabberdctl \
-    -pa /usr/lib/ejabberd/ebin \
+    -pa $EBIN_DIR \
     -s ejabberd_ctl \
     -noinput \
     -extra $ERLANG_NODE "$@"
