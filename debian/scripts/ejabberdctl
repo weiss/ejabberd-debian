@@ -23,6 +23,7 @@ else
 fi
 
 exec $ERL $SNAME ejabberdctl \
+    -pa /usr/lib/ejabberd/ebin \
     -s ejabberd_ctl \
     -noinput \
     -extra $ERLANG_NODE "$@"

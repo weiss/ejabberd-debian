@@ -1,3 +1,12 @@
+ejabberd (1.1.4-2) unstable; urgency=low
+
+  * Moved ejabberd application directory from
+    /usr/lib/erlang/lib/ejabberd-1.1.4 to /usr/lib/ejabberd to avoid conflicts
+    of modules names (specifically, eldap module conflicts with shiiped in Yxa
+    SIP server).
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 12 Oct 2007 10:07:19 +0400
+
 ejabberd (1.1.4-1) unstable; urgency=low
 
   * New upstream release.

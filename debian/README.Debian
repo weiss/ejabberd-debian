@@ -1,6 +1,11 @@
 The package always makes a backup of the ejabberd database when it is upgraded
 or removed. The backup files are stored in /var/backups/ejabberd-* directory.
 
+The package installs ejabberd erlang headers into /usr/lib/ejabberd/include
+directory. To build a module using these headers, as usual include them using
+    -include_lib("ejabberd/include/headername.hrl").
+and compile the module using -pa option to add ejabberd path to a search list
+    erlc -pa /usr/lib/ejabberd/ebin module.erl
 
-Torsten Werner <twerner@debian.org>       Wed Aug  2 15:40:29 CEST 2006
-
+Torsten Werner <twerner@debian.org>,
+Sergei Golovan <sgolovan@debian.org>      Fri, 12 Oct 2007 10:15:30 +0400

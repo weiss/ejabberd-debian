@@ -15,7 +15,7 @@ DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc
 # Not adding breaks roster import for some gateways (specifically JIT)
 #DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc --enable-roster-gateway-workaround
 
-EJABBERDIR := /usr/lib/erlang/lib/ejabberd-$(DEB_UPSTREAM_VERSION)
+EJABBERDIR := /usr/lib/ejabberd
 DEB_MAKE_INSTALL_TARGET := install DESTDIR=$(DEB_DESTDIR) \
 	EJABBERDDIR=$(DEB_DESTDIR)$(EJABBERDIR)           \
 	ETCDIR=$(DEB_DESTDIR)/etc/ejabberd                \

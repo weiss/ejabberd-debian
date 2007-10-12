@@ -37,6 +37,7 @@ else
 fi
 
 exec $ERL $SNAME $ERLANG_NODE \
+    -pa /usr/lib/ejabberd/ebin \
     -s ejabberd \
     -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \
