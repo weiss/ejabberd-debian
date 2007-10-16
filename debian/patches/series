@@ -1,3 +1,4 @@
 pep.diff
 http_bind.diff -p0
 ejabberd_ctl.diff
+db_storage.diff

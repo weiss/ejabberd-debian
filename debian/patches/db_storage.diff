@@ -1,0 +1,104 @@
+Patch by upstream, adopted by Andreas Oberritter <obi@saftware.de>.
+
+[EJAB-152] - Relational databases can be used for modules when using
+non relational authentication
+
+SVN changeset #664 (Fix version: ejabberd-2.0.0):
+* src/ejabberd_rdbms.erl: It is now possible to use ldap or
+internal authentication with some other modules using relationnal
+database storage (EJAB-152). Refactored relational databases
+connections initialisation.
+* src/ejabberd_auth_odbc.erl: Likewise. odbc supervisor startup is now
+delegated to the ejabberd rdbms module.
+* src/ejabberd_app.erl: Likewise.
+
+Index: ejabberd-1.1.4/src/ejabberd_rdbms.erl
+===================================================================
+--- ejabberd-1.1.4.orig/src/ejabberd_rdbms.erl
++++ ejabberd-1.1.4/src/ejabberd_rdbms.erl
+@@ -0,0 +1,54 @@
++%%%----------------------------------------------------------------------
++%%% File    : ejabberd_rdbms.erl
++%%% Author  : Mickael Remond <mickael.remond@process-one.net>
++%%% Purpose : Manage the start of the database modules when needed
++%%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
++%%% Id      : $Id: $
++%%%----------------------------------------------------------------------
++
++-module(ejabberd_rdbms).
++-author('alexey@sevcom.net').
++-svn('$Revision: $ ').
++
++-export([start/0]).
++-include("ejabberd.hrl").
++
++start() ->
++    %% Check if ejabberd has been compiled with ODBC
++    case catch ejabberd_odbc_sup:module_info() of
++	{'EXIT',{undef,_}} ->
++	    ?INFO_MSG("ejabberd has not been compiled with relational database support. Skipping database startup.", []);
++	_ ->
++	    %% If compiled with ODBC, start ODBC on the needed host
++	    start_hosts()
++    end.
++
++%% Start relationnal DB module on the nodes where it is needed
++start_hosts() ->
++    lists:foreach(
++      fun(Host) ->
++	      case needs_odbc(Host) of
++		  true  -> start_odbc(Host);
++		  false -> ok
++	      end
++      end, ?MYHOSTS).
++
++%% Start the ODBC module on the given host
++start_odbc(Host) ->
++    ChildSpec =
++	{gen_mod:get_module_proc(Host, ejabberd_odbc_sup),
++	 {ejabberd_odbc_sup, start_link, [Host]},
++	 temporary,
++	 infinity,
++	 supervisor,
++	 [ejabberd_odbc_sup]},
++    supervisor:start_child(ejabberd_sup, ChildSpec).
++
++%% Returns true if we have configured odbc_server for the given host
++needs_odbc(Host) ->
++    LHost = jlib:nameprep(Host),
++    case ejabberd_config:get_local_option({odbc_server, LHost}) of
++	undefined ->
++	    false;
++	_ -> true
++    end.
+Index: ejabberd-1.1.4/src/ejabberd_auth_odbc.erl
+===================================================================
+--- ejabberd-1.1.4.orig/src/ejabberd_auth_odbc.erl
++++ ejabberd-1.1.4/src/ejabberd_auth_odbc.erl
+@@ -34,14 +34,6 @@
+ %%% API
+ %%%----------------------------------------------------------------------
+ start(Host) ->
+-    ChildSpec =
+-	{gen_mod:get_module_proc(Host, ejabberd_odbc_sup),
+-	 {ejabberd_odbc_sup, start_link, [Host]},
+-	 temporary,
+-	 infinity,
+-	 supervisor,
+-	 [ejabberd_odbc_sup]},
+-    supervisor:start_child(ejabberd_sup, ChildSpec),
+     ejabberd_ctl:register_commands(
+       Host,
+       [{"registered-users", "list all registered users"}],
+Index: ejabberd-1.1.4/src/ejabberd_app.erl
+===================================================================
+--- ejabberd-1.1.4.orig/src/ejabberd_app.erl
++++ ejabberd-1.1.4/src/ejabberd_app.erl
+@@ -29,6 +29,7 @@
+     gen_mod:start(),
+     ejabberd_config:start(),
+     Sup = ejabberd_sup:start_link(),
++    ejabberd_rdbms:start(),
+     ejabberd_auth:start(),
+     cyrsasl:start(),
+     % Profiling

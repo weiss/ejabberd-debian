@@ -1,3 +1,12 @@
+ejabberd (1.1.4-3) unstable; urgency=low
+
+  * Applied a patch by upstream which fixes usage of relational databases in
+    ejabberd modules while using internal or LDAP-based authentication
+    (closes: #446848). The patch was adopted from ejabberd SVN by Andreas
+    Oberritter.
+
+ -- Sergei Golovan <sgolovan@debian.org>  Tue, 16 Oct 2007 10:34:07 +0400
+
 ejabberd (1.1.4-2) unstable; urgency=low
 
   * Moved ejabberd application directory from
