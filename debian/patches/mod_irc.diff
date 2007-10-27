@@ -1,0 +1,16 @@
+Patch by Sergei Golovan <sgolovan@debian.org> fixes checking of an access
+rule in mod_irc.
+
+Index: ejabberd/mod_irc/mod_irc.erl
+===================================================================
+--- ejabberd.orig/mod_irc/mod_irc.erl
++++ ejabberd/mod_irc/mod_irc.erl
+@@ -172,7 +172,7 @@
+     supervisor:delete_child(ejabberd_sup, Proc).
+ 
+ do_route(Host, ServerHost, Access, From, To, Packet, DefEnc) ->
+-    case acl:match_rule(Host, Access, From) of
++    case acl:match_rule(ServerHost, Access, From) of
+ 	allow ->
+ 	    do_route1(Host, ServerHost, From, To, Packet, DefEnc);
+ 	_ ->
