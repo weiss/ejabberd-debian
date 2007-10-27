@@ -1,10 +1,10 @@
 Patch by Sergei Golovan <sgolovan@debian.org> fixes checking of an access
 rule in mod_irc.
 
-Index: ejabberd/mod_irc/mod_irc.erl
+Index: ejabberd/src/mod_irc/mod_irc.erl
 ===================================================================
---- ejabberd.orig/mod_irc/mod_irc.erl
-+++ ejabberd/mod_irc/mod_irc.erl
+--- ejabberd.orig/src/mod_irc/mod_irc.erl
++++ ejabberd/src/mod_irc/mod_irc.erl
 @@ -172,7 +172,7 @@
      supervisor:delete_child(ejabberd_sup, Proc).
  
