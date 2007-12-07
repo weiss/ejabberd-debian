@@ -6,9 +6,14 @@
 #export ERL_OPTIONS="-heart"
 
 
-# To use more than 1024 connections, you will need to set environment variable ERL_MAX_PORTS:
+# ejabberd consumes two or three ports for every connection, either
+# from a client or from another Jabber server. So take this into
+# account when setting this limit.
 #
-#export ERL_MAX_PORTS=1024
+# Default: 1024
+# Maximum: 268435456
+#
+export ERL_MAX_PORTS=10240
 
 
 # To reduce memory usage, you can set environment variable ERL_FULLSWEEP_AFTER:
