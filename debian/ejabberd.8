@@ -1,4 +1,4 @@
-.TH ejabberd 8 "27 September 2006" "Version 1.1.2" "ejabberd manual page"
+.TH ejabberd 8 "26 December 2007" "Version 1.1.4" "ejabberd manual page"
 
 .SH NAME
 ejabberd \(em Distributed fault-tolerant Jabber/XMPP server 
@@ -18,7 +18,7 @@ main features are:
 .TP
 - Distributed: \fBejabberd\fR can run on a cluster of machines
 .TP
-- Fault-tolerant: All the information can be stored on more than one node, nodes can be added or replaced 'on the fly' 
+- Fault-tolerant: All the information can be stored on more than one node, nodes can be added or replaced `on the fly' 
 .TP
 - Built-in Multi-User Chat service 
 .TP
@@ -44,7 +44,7 @@ node is \fBejabberd\fP (this default node can be also overridden by using
 ERLANG_NODE environment variable in /etc/default/ejabberd, see below).
 If the node name does not contain symbol \fI@\fR then actual node name
 becomes \fBnode@hostname\fP where hostname is short host name (usually it
-coincides with \fI`hostname -s`\fP). If the node name contain symbol \fI@\fR
+coincides with \fI\(gahostname -s\(ga\fP). If the node name contain symbol \fI@\fR
 and its hostname part is a FQDN then \fBejabberd\fR will use so-called
 long names (see \fBerl\fR(1) manual page and look for options \fI-name\fP
 and \fI-sname\fP for details).
@@ -52,7 +52,7 @@ and \fI-sname\fP for details).
 Examples of \fI--node\fP option:
 
 .BI ejabberd
-Locally run ejabberd server at node \fIejabberd@`hostname -s`\fP.
+Locally run ejabberd server at node \fIejabberd@\(gahostname -s\(ga\fP.
 
 .BI ejabberd@otherhost
 Pretend that ejabberd server runs at otherhost at node \fIejabberd@otherhost\fP.

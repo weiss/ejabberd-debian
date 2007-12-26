@@ -1,4 +1,4 @@
-.TH ejabberdctl 8 "27 September 2006" "Version 1.1.2" "ejabberdctl manual page"
+.TH ejabberdctl 8 "26 December 2006" "Version 1.1.4" "ejabberdctl manual page"
 
 .SH NAME
 ejabberd Jabber/XMPP server control interface
@@ -21,7 +21,7 @@ Specifies remote erlang node to connect to. Default value is
 environment variable, which can be set in /etc/default/ejabberd, see below).
 If the node name does not contain symbol \fI@\fP
 then actual node name becomes \fInode@host\fP where \fIhost\fP is short
-hostname (usually it coincides with \fI`hostname -s`\fP). If the node name
+hostname (usually it coincides with \fI\(gahostname -s\(ga\fP). If the node name
 contain symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
 will use so-called long names (see \fBerl\fR(1) manual page and look for
 options \fI-name\fP and \fI-sname\fP for details).
@@ -29,7 +29,7 @@ options \fI-name\fP and \fI-sname\fP for details).
 Examples of \fI--node\fP option:
 
 .BI ejabberd
-Connect to locally run ejabberd server at node \fIejabberd@`hostname -s`\fP.
+Connect to locally run ejabberd server at node \fIejabberd@\(gahostname -s\(ga\fP.
 
 .BI ejabberd@otherhost
 Connect to remotely run ejabberd server at node \fIejabberd@otherhost\fP.
