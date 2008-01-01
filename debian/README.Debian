@@ -7,5 +7,25 @@ directory. To build a module using these headers, as usual include them using
 and compile the module using -pa option to add ejabberd path to a search list
     erlc -pa /usr/lib/ejabberd/ebin module.erl
 
+The ejabebrd daemon which is run in init.d script is owned by user ejabberd,
+so it cannot bind to privileged ports (below 1024). The error message in
+/var/log/ejabberd/ejabberd.log looks similar to the following:
+
+E(<0.242.0>:ejabberd_listener:80): Failed to open socket for {443,
+                                                              ejabberd_c2s,
+                                                              [{access,c2s},
+                                                               {max_stanza_size,
+                                                                   65536},
+                                                               starttls,
+                                                               {certfile,
+                                                                   "/etc/ejabberd/ejabberd.pem"},
+                                                               {shaper,
+                                                                   c2s_shaper}]}: eacces
+
+If you want ejabberd to listen for example port 443 you could redirect it to
+port 5222 (the default XMPP port) by a firewall rule. For example:
+
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5222
+
 Torsten Werner <twerner@debian.org>,
-Sergei Golovan <sgolovan@debian.org>      Fri, 12 Oct 2007 10:15:30 +0400
+Sergei Golovan <sgolovan@debian.org>      Tue, 01 Jan 2008 17:03:41 +0300

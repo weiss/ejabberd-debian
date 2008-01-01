@@ -8,8 +8,12 @@ ejabberd (1.1.4-4) unstable; urgency=low
     compression).
   * Fixed shell backquotes in ejabberd and ejabberdctl manual pages. Also
     bumped their versions to 1.1.4.
+  * Added a note about binding to privileged ports to README.Debian.
+  * Fixed a race condition between starting log handler and port listener.
+    Otherwise, error reports about port binding can't get into log file
+    (closes: #458518).
 
- -- Sergei Golovan <sgolovan@debian.org>  Wed, 26 Dec 2007 16:29:15 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Tue, 01 Jan 2008 17:09:57 +0300
 
 ejabberd (1.1.4-3) unstable; urgency=low
 
