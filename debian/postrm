@@ -20,7 +20,7 @@ case "$1" in
 	    ucf --purge $CONFIG_TARGET
 	fi
 	rm -f $CONFIG_TARGET
-	rm -Rf /etc/ejabberd /var/log/ejabberd /var/lib/ejabberd
+	rm -Rf /var/log/ejabberd /var/lib/ejabberd
 	rm -f /etc/default/ejabberd
 	if which deluser >/dev/null ; then
 	    deluser ejabberd 2>/dev/null || true
