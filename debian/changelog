@@ -1,3 +1,9 @@
+ejabberd (2.0.0-2) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 21 Feb 2008 19:42:57 +0300
+
 ejabberd (2.0.0-1) experimental; urgency=low
 
   * New upstream release.
