@@ -1,3 +1,9 @@
+ejabberd (2.0.0-1) experimental; urgency=low
+
+  * New upstream release.
+
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 21 Feb 2008 18:36:46 +0300
+
 ejabberd (1.1.4-6) unstable; urgency=low
 
   * Loosened build dependencies to make backporting to etch easier.
