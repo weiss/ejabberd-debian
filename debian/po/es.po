@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1-5\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
-"POT-Creation-Date: 2006-10-04 14:20+0200\n"
+"POT-Creation-Date: 2008-02-15 10:37+0300\n"
 "PO-Revision-Date: 2006-09-25 23:57+0200\n"
 "Last-Translator: Badlop <badlop@ono.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -33,25 +33,29 @@ msgstr "Nombre del servidor Jabber que ejabberd servirá:"
 #. Type: string
 #. Description
 #: ../templates:1001
-msgid "Please enter the hostname of your Jabber server."
+#, fuzzy
+msgid "Please enter the hostname of your Jabber server (in lowercase)."
 msgstr "Por favor indica el nombre de tu servidor Jabber."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-msgid "The name of an admin account for ejabberd:"
+#, fuzzy
+msgid "The username of an admin account for ejabberd:"
 msgstr "Cuenta de administrador en ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
+#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
 "any Jabber client to do administrative tasks or go to http://"
 "${hostname}:5280/admin/ and log in with this account to enter the admin "
-"interface. Make sure to enter the full Jabber ID (e.g. '${user}@"
-"${hostname}') to log in; otherwise it will fail."
+"interface. Enter the username part here (e.g. ${user}), but use the full "
+"Jabber ID (e.g. ${user}@${hostname}) to log into ejabberd web interface; "
+"otherwise it will fail."
 msgstr ""
 "Por favor indica el nombre deseado para una cuenta de administrador en el "
 "servidor ejabberd. Después de la instalación de ejabberd podrás usar esta "

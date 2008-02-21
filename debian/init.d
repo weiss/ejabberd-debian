@@ -5,8 +5,8 @@
 
 ### BEGIN INIT INFO
 # Provides:          ejabberd
-# Required-Start:    $network
-# Required-Stop:     $network
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Starts ejabberd jabber server

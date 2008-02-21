@@ -2,12 +2,12 @@
 # Copyright (C) 2007
 # This file is distributed under the same license as the ejabberd package.
 # Luísa Lourenço <kikentai@gmail.com>, 2007.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: ejabberd 1.1.2-6\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
-"POT-Creation-Date: 2006-10-04 14:20+0200\n"
+"POT-Creation-Date: 2008-02-15 10:37+0300\n"
 "PO-Revision-Date: 2007-03-28 13:03+0100\n"
 "Last-Translator: Luísa Lourenço <kikentai@gmail.com>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
@@ -24,32 +24,36 @@ msgstr "O nome da máquina que o ejabberd irá servir:"
 #. Type: string
 #. Description
 #: ../templates:1001
-msgid "Please enter the hostname of your Jabber server."
+#, fuzzy
+msgid "Please enter the hostname of your Jabber server (in lowercase)."
 msgstr "Por favor insira o nome da máquina do seu servidor de Jabber."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-msgid "The name of an admin account for ejabberd:"
+#, fuzzy
+msgid "The username of an admin account for ejabberd:"
 msgstr "O nome de uma conta de admin para o ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
+#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
 "any Jabber client to do administrative tasks or go to http://"
 "${hostname}:5280/admin/ and log in with this account to enter the admin "
-"interface. Make sure to enter the full Jabber ID (e.g. '${user}@"
-"${hostname}') to log in; otherwise it will fail."
+"interface. Enter the username part here (e.g. ${user}), but use the full "
+"Jabber ID (e.g. ${user}@${hostname}) to log into ejabberd web interface; "
+"otherwise it will fail."
 msgstr ""
 "Por favor forneça o nome de uma conta para administrar o servidor ejabberd. "
 "Depois da instalação do ejabberd pode usar esta conta para se ligar a "
-"qualquer cliente Jabber para efectuar tarefas administrativas ou ir a "
-"http://${hostname}:5280/admin/ e ligar com esta conta para entrar na "
-"interface de admin. Certifique-se que insere o Jabber ID completo "
-"(p.e. '${user}@${hostname}') para se ligar; caso contrário irá falhar."
+"qualquer cliente Jabber para efectuar tarefas administrativas ou ir a http://"
+"${hostname}:5280/admin/ e ligar com esta conta para entrar na interface de "
+"admin. Certifique-se que insere o Jabber ID completo (p.e. '${user}@"
+"${hostname}') para se ligar; caso contrário irá falhar."
 
 #. Type: string
 #. Description

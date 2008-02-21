@@ -5,3 +5,6 @@ db_storage.diff
 mod_irc.diff
 ssl.diff
 logger.diff
+odbc.diff
+convert.diff
+cert-chain.diff

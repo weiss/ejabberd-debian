@@ -1,8 +1,16 @@
-ejabberd (1.1.4-6) UNRELEASED; urgency=low
+ejabberd (1.1.4-6) unstable; urgency=low
 
-  * NOT RELEASED YET
+  * Loosened build dependencies to make backporting to etch easier.
+  * Added a requirement for $remote_fs into init.d script because ejabberd
+    needs mounted /usr to run.
+  * Added a patch which allows ODBC to work with Erlang R12B.
+  * Clarified debconf messages (closes: #390206).
+  * Added a notice about hostname change to README.Debian and included erlang
+    node conversion utility to the binary package (closes: #457097).
+  * Added a patch which allows to use certificate chain files for encrypted
+    connections (closes: #466676).
 
- -- Sergei Golovan <sgolovan@debian.org>  Sun, 13 Jan 2008 02:12:19 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Wed, 20 Feb 2008 19:26:14 +0300
 
 ejabberd (1.1.4-5) unstable; urgency=low
 
