@@ -1,3 +1,9 @@
+ejabberd (1.1.4-7) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 21 Feb 2008 18:29:55 +0300
+
 ejabberd (1.1.4-6) unstable; urgency=low
 
   * Loosened build dependencies to make backporting to etch easier.
