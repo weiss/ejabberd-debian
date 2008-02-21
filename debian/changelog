@@ -10,7 +10,7 @@ ejabberd (1.1.4-6) unstable; urgency=low
   * Added a patch which allows to use certificate chain files for encrypted
     connections (closes: #466676).
 
- -- Sergei Golovan <sgolovan@debian.org>  Wed, 20 Feb 2008 19:26:14 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 21 Feb 2008 18:21:32 +0300
 
 ejabberd (1.1.4-5) unstable; urgency=low
 
