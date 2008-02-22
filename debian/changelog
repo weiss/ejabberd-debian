@@ -1,3 +1,9 @@
+ejabberd (2.0.0-3) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 22 Feb 2008 17:36:44 +0300
+
 ejabberd (2.0.0-2) experimental; urgency=low
 
   * Saved a little bit of resources by not starting ssl module which isn't
