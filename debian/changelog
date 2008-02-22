@@ -9,8 +9,11 @@ ejabberd (2.0.0-2) experimental; urgency=low
   * Removed useless README and /etc/ejabberd/ejabberdctl.cfg files from the
     binary package (/etc/ejabberd/ejabberdctl.cfg content is moved to
     /etc/default/ejabberd).
+  * Added a patch which makes proxy65 module working with Erlang R12B.
+  * Fixed position of override section in ejabberd.cfg and uncommented proxy65
+    module (with adding restrictive options).
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri, 22 Feb 2008 13:22:19 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 22 Feb 2008 13:51:14 +0300
 
 ejabberd (2.0.0-1) experimental; urgency=low
 
