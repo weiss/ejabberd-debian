@@ -1,2 +1,3 @@
-odbc.diff
-convert.diff
+odbc.patch
+ssl.patch
+convert.patch
