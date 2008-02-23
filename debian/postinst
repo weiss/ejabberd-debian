@@ -13,13 +13,14 @@ TEMPFILE=$(mktemp)
 
 setup_ejabberd()
 {
-    # Ejabberd config dir may contain sensitive data, so making it readable only by ejabberd user.
+    # Ejabberd config dir may contain sensitive data, so making it unreadable by
+    # the world.
     if ! dpkg-statoverride --list /etc/ejabberd >/dev/null; then
-	chown ejabberd:ejabberd /etc/ejabberd
-	chmod 700 /etc/ejabberd
+	chown root:ejabberd /etc/ejabberd
+	chmod 750 /etc/ejabberd
     fi
 
-    # The same is for /var/lib/ejabberd, where the users database is located.
+    # The users database dir /var/lib/ejabberd must be writable by user ejabberd.
     install -d /var/lib/ejabberd
     if ! dpkg-statoverride --list /var/lib/ejabberd >/dev/null; then
 	chown -R ejabberd:ejabberd /var/lib/ejabberd
@@ -63,8 +64,8 @@ root@$HOSTNAME.$DOMAINNAME
 +++
     fi
     if ! dpkg-statoverride --list /etc/ejabberd/ejabberd.pem >/dev/null; then
-	chown ejabberd:ejabberd /etc/ejabberd/ejabberd.pem
-	chmod 600 /etc/ejabberd/ejabberd.pem
+	chown root:ejabberd /etc/ejabberd/ejabberd.pem
+	chmod 640 /etc/ejabberd/ejabberd.pem
     fi
     )
 
