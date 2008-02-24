@@ -1,13 +1,15 @@
 ejabberd (2.0.0-3) experimental; urgency=low
 
   * Increased S2S timeouts. Defaults seems to be too short.
+  * Removed a 5-minute delay between a remote server connect failure and the
+    next connection attempt. It causes more harm than good.
   * Changed ownerchip of ejabberd config directory and SSL certificate to
     root:ejabberd and mode to to make sure they aren't overwritten by running
     ejabberd.
   * Remove an SSL certificate on package purge. It is assumed that it's a
     generated certificate, so the removal is unconditional.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sat, 23 Feb 2008 20:59:47 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 24 Feb 2008 10:40:03 +0300
 
 ejabberd (2.0.0-2) experimental; urgency=low
 
