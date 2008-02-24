@@ -1,3 +1,9 @@
+ejabberd (2.0.0-4) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 24 Feb 2008 20:08:54 +0300
+
 ejabberd (2.0.0-3) experimental; urgency=low
 
   * Increased S2S timeouts. Defaults seems to be too short.
