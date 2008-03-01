@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # define default configuration
-POLL=true
+POLL=false
 SMP=auto
 PROCESSES=250000
 ERL_MAX_PORTS=32000

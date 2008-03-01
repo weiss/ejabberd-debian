@@ -8,9 +8,9 @@
 # The kernel polling option requires support in the kernel.
 # Additionaly, you need to enable this feature while compiling Erlang.
 #
-# Default: true
+# Default: false
 #
-#POLL=true
+#POLL=false
 
 # SMP: SMP support ([enable|auto|disable])
 #
