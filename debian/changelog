@@ -1,3 +1,9 @@
+ejabberd (2.0.0-5) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Mon,  3 Mar 2008 23:16:16 +0300
+
 ejabberd (2.0.0-4) experimental; urgency=low
 
   * Updated French debconf templates translation.
