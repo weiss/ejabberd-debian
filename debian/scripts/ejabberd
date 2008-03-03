@@ -2,7 +2,7 @@
 
 # define default configuration
 POLL=false
-SMP=auto
+SMP=disable
 PROCESSES=250000
 ERL_MAX_PORTS=32000
 ERL_MAX_ETS_TABLES=1400

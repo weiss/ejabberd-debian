@@ -1,8 +1,9 @@
 ejabberd (1.1.4-8) UNRELEASED; urgency=low
 
-  * NOT RELEASED YET
+  * Disabled SMP support in ejabberd by default. It isn't necessary in most
+    cases but can be less reliable.
 
- -- Sergei Golovan <sgolovan@debian.org>  Mon,  3 Mar 2008 20:21:21 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Mon, 03 Mar 2008 22:28:53 +0300
 
 ejabberd (1.1.4-7) unstable; urgency=low
 
