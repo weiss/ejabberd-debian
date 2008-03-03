@@ -1,9 +1,14 @@
 ejabberd (2.0.0-4) experimental; urgency=low
 
-  * Updated French debconf templates translation (closes: #468788).
+  * Updated French debconf templates translation.
   * Disabled epoll by default in /etc/default/ejabberd.
+  * Increased default maximum number of conference room occupants to 500.
+    Given increasing popularity of XMPP old default value 200 is too low.
+  * Disabled SMP support in ejabberd by default. It isn't necessary in most
+    cases but can be less reliable.
+  * Enabled PAM authentication support (yet needs to be refined).
 
- -- Sergei Golovan <sgolovan@debian.org>  Sat, 01 Mar 2008 22:07:52 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Mon, 03 Mar 2008 22:54:48 +0300
 
 ejabberd (2.0.0-3) experimental; urgency=low
 

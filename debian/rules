@@ -9,7 +9,7 @@ include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 export HOME := $(CURDIR)/debian
 DEB_BUILDDIR := $(shell pwd)/src
 DEB_CONFIGURE_SCRIPT := $(DEB_BUILDDIR)/configure
-DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc
+DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc --enable-pam
 # Not sure if we should enable workaround for gateway subscription
 # Adding it breaks XMPP compatibility
 # Not adding breaks roster import for some gateways (specifically JIT)
