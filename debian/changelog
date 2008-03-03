@@ -1,3 +1,9 @@
+ejabberd (1.1.4-8) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Mon,  3 Mar 2008 20:21:21 +0300
+
 ejabberd (1.1.4-7) unstable; urgency=low
 
   * Updated French debconf templates translation (closes: #468788).
