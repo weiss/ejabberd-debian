@@ -1,8 +1,18 @@
 ejabberd (1.1.4-7) unstable; urgency=low
 
   * Updated French debconf templates translation (closes: #468788).
+  * Added a patch which makes downgrading from ejabberd 2.0.0 easier.
+  * Added several new variables to ejabberd script and default settings
+    following upstream.
+  * Added 'debug' option to ejabberdctl script which attaches Erlang shell to
+    already running ejabberd server.
+  * Changed ownership of ejabberd config directory and SSL certificate to
+    root:ejabberd and mode to to make sure they aren't overwritten by running
+    ejabberd.
+  * Remove an SSL certificate on package purge. It is assumed that it's a
+    generated certificate, so the removal is unconditional.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sat, 01 Mar 2008 22:06:39 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Mon, 03 Mar 2008 19:29:54 +0300
 
 ejabberd (1.1.4-6) unstable; urgency=low
 

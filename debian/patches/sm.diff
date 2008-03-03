@@ -1,0 +1,26 @@
+Patch by Sergei Golovan makes downgrading from ejabberd 2.0.0 easier.
+
+Index: ejabberd-1.1.4/src/ejabberd_sm.erl
+===================================================================
+--- ejabberd-1.1.4.orig/src/ejabberd_sm.erl
++++ ejabberd-1.1.4/src/ejabberd_sm.erl
+@@ -606,16 +606,12 @@
+ 
+ update_tables() ->
+     case catch mnesia:table_info(session, attributes) of
+-	[ur, user, node] ->
+-	    mnesia:delete_table(session);
+-	[ur, user, pid] ->
+-	    mnesia:delete_table(session);
+-	[usr, us, pid] ->
+-	    mnesia:delete_table(session);
+ 	[sid, usr, us, priority] ->
+ 	    ok;
+ 	{'EXIT', _} ->
+-	    ok
++	    ok;
++	_ ->
++	    mnesia:delete_table(session)
+     end,
+     case lists:member(presence, mnesia:system_info(tables)) of
+ 	true ->

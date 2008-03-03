@@ -8,3 +8,4 @@ logger.diff
 odbc.diff
 convert.diff
 cert-chain.diff
+sm.diff
