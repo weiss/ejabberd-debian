@@ -9,3 +9,7 @@ odbc.diff
 convert.diff
 cert-chain.diff
 sm.diff
+mod_ctlextra.diff
+shared_roster_push2.diff
+shared_roster_recent.diff
+shared_roster_online.diff

@@ -1,9 +1,13 @@
-ejabberd (1.1.4-8) UNRELEASED; urgency=low
+ejabberd (1.1.4-8) unstable; urgency=low
 
   * Disabled SMP support in ejabberd by default. It isn't necessary in most
     cases but can be less reliable.
+  * Added a few patches to shared roster module and also added mod_ctlextra
+    (a module which offers many more or less useful commands to ejabberdctl)
+    following the discussion in the following thread:
+    http://lists.debian.org/debian-edu/2008/03/msg00017.html
 
- -- Sergei Golovan <sgolovan@debian.org>  Mon, 03 Mar 2008 22:28:53 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Wed, 05 Mar 2008 17:32:30 +0300
 
 ejabberd (1.1.4-7) unstable; urgency=low
 
