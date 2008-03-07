@@ -35,7 +35,7 @@ Index: src/web/ejabberd_http_bind.erl
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
 +++ src/web/ejabberd_http_bind.erl	2007-09-05 13:46:28.000000000 +0400
-@@ -0,0 +1,811 @@
+@@ -0,0 +1,815 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : ejabberd_http_bind.erl
 +%%% Author  : Stefan Strigler <steve@zeank.in-berlin.de>
@@ -547,9 +547,13 @@ Index: src/web/ejabberd_http_bind.erl
 +			   "" ->
 +			       true;
 +			   OldKey ->
-+			       NextKey = string:to_lower(
-+					   hex(binary_to_list(
-+						 crypto:sha(Key)))),
++			       NKey = hex(binary_to_list(crypto:sha(Key))),
++			       NextKey = case catch string:to_lower(NKey) of
++					     {'EXIT', _Reason} ->
++						 httpd_util:to_lower(NKey);
++					     K ->
++						 K
++					 end,
 +			       ?DEBUG("Key/OldKey/NextKey: ~s/~s/~s", 
 +				      [Key, OldKey, NextKey]),
 +			       if
