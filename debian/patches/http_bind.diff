@@ -547,7 +547,7 @@ Index: src/web/ejabberd_http_bind.erl
 +			   "" ->
 +			       true;
 +			   OldKey ->
-+			       NextKey = httpd_util:to_lower(
++			       NextKey = string:to_lower(
 +					   hex(binary_to_list(
 +						 crypto:sha(Key)))),
 +			       ?DEBUG("Key/OldKey/NextKey: ~s/~s/~s", 

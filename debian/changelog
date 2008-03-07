@@ -6,8 +6,10 @@ ejabberd (1.1.4-8) unstable; urgency=low
     (a module which offers many more or less useful commands to ejabberdctl)
     following the discussion in the following thread:
     http://lists.debian.org/debian-edu/2008/03/msg00017.html
+  * Replaced httpd_util:to_lower/1 call by string:to_lower/1 call because the
+    former function is removed in Erlang/OTP R12B.
 
- -- Sergei Golovan <sgolovan@debian.org>  Wed, 05 Mar 2008 17:32:30 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 07 Mar 2008 20:52:11 +0300
 
 ejabberd (1.1.4-7) unstable; urgency=low
 
