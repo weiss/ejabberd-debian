@@ -1,8 +1,12 @@
-ejabberd (2.0.0-5) UNRELEASED; urgency=low
+ejabberd (2.0.0-5) experimental; urgency=low
 
-  * NOT RELEASED YET
+  * Turned unnecessary error messages in mod_caps module into debug messages.
+  * Added a few patches to shared roster module and also added mod_ctlextra
+    (a module which offers many more or less useful commands to ejabberdctl)
+    following the discussion in the following thread:
+    http://lists.debian.org/debian-edu/2008/03/msg00017.html
 
- -- Sergei Golovan <sgolovan@debian.org>  Mon,  3 Mar 2008 23:16:16 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 07 Mar 2008 20:30:07 +0300
 
 ejabberd (2.0.0-4) experimental; urgency=low
 
