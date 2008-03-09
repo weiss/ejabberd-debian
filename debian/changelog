@@ -1,8 +1,9 @@
 ejabberd (2.0.0-6) UNRELEASED; urgency=low
 
-  * NOT RELEASED YET
+  * Replaced a patch for proxy65 module with nicer one (thanks to Evgeniy
+    Khramtsov).
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri,  7 Mar 2008 21:13:10 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 09 Mar 2008 10:08:13 +0300
 
 ejabberd (2.0.0-5) experimental; urgency=low
 

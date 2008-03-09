@@ -1,5 +1,6 @@
-Patch by Sergei Golovan adds function ip_to_bytes to proxy65 module because
-it was removed from Erlang R12B.
+Patch by Evgeniy Khramtsov replaces function inet:ip_to_bytes by inet_parse:ntoa
+in proxy65 module because it was removed from Erlang R12B. Also, it decreases
+buffer sizes (size 65535 is known to confuse users with tight shapers).
 
 --- ejabberd-2.0.0.orig/src/mod_proxy65/mod_proxy65_service.erl
 +++ ejabberd-2.0.0/src/mod_proxy65/mod_proxy65_service.erl
@@ -8,23 +9,20 @@ it was removed from Erlang R12B.
  	         Addr -> Addr
  	     end,
 -    [_ | StrIP] = lists:append([[$. | integer_to_list(X)] || X <- inet:ip_to_bytes(IP)]),
-+    [_ | StrIP] = lists:append([[$. | integer_to_list(X)] || X <- ip_to_bytes(IP)]),
++    StrIP = inet_parse:ntoa(IP),
      StreamAddr = [{"jid", MyHost}, {"host", StrIP}, {"port", integer_to_list(Port)}],
      {IP, #state{myhost      = MyHost,
  		serverhost  = ServerHost,
-@@ -220,3 +220,15 @@
-                 {error, _} -> {127,0,0,1}
-             end
-     end.
-+
-+-define(int16(X), [((X) bsr 8) band 16#ff, (X) band 16#ff]).
-+
-+ip_to_bytes(IP) when size(IP) =:= 4 -> ip4_to_bytes(IP);
-+ip_to_bytes(IP) when size(IP) =:= 8 -> ip6_to_bytes(IP).
-+
-+ip4_to_bytes({A,B,C,D}) ->
-+    [A band 16#ff, B band 16#ff, C band 16#ff, D band 16#ff].
-+
-+ip6_to_bytes({A,B,C,D,E,F,G,H}) ->
-+    [?int16(A), ?int16(B), ?int16(C), ?int16(D),
-+     ?int16(E), ?int16(F), ?int16(G), ?int16(H)].
+--- ejabberd-2.0.0.orig/src/mod_proxy65/mod_proxy65_stream.erl
++++ ejabberd-2.0.0/src/mod_proxy65/mod_proxy65_stream.erl
+@@ -89,8 +89,8 @@
+     process_flag(trap_exit, true),
+     AuthType = gen_mod:get_opt(auth_type, Opts, anonymous),
+     Shaper = gen_mod:get_opt(shaper, Opts, none),
+-    RecvBuf = gen_mod:get_opt(recbuf, Opts, 65535),
+-    SendBuf = gen_mod:get_opt(sndbuf, Opts, 65535),
++    RecvBuf = gen_mod:get_opt(recbuf, Opts, 8192),
++    SendBuf = gen_mod:get_opt(sndbuf, Opts, 8192),
+     TRef = erlang:send_after(?WAIT_TIMEOUT, self(), stop),
+     inet:setopts(Socket, [{active, true}, {recbuf, RecvBuf}, {sndbuf, SendBuf}]),
+     {ok, wait_for_init, #state{host      = Host,
