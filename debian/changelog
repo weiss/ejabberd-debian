@@ -1,4 +1,4 @@
-ejabberd (2.0.0-6~etch1) unstable; urgency=low
+ejabberd (2.0.0-6) unstable; urgency=low
 
   * Replaced a patch for proxy65 module with nicer one (thanks to Evgeniy
     Khramtsov).
