@@ -1,5 +1,6 @@
-Patch by Sergei Golovan adds call to odbc:start() to make ODBC working
-in erlang R12B since ODBC application doesn't start automatically anymore.
+Patch by Sergei Golovan adds call to application:start(odbc) to make ODBC
+working in erlang R12B since ODBC application doesn't start automatically
+anymore.
 
 --- ejabberd-2.0.0.orig/src/odbc/ejabberd_odbc.erl
 +++ ejabberd-2.0.0/src/odbc/ejabberd_odbc.erl
@@ -7,7 +8,7 @@ in erlang R12B since ODBC application doesn't start automatically anymore.
  %% part of init/1
  %% Open an ODBC database connection
  odbc_connect(SQLServer) ->
-+    odbc:start(),
++    application:start(odbc),
      case odbc:connect(SQLServer,[{scrollable_cursors, off}]) of
  	{ok, Ref} ->
  	    erlang:monitor(process, Ref),

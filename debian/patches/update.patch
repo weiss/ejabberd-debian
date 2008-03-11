@@ -1,0 +1,21 @@
+Patch by upstream fixes crash when browsing the Update page in Erlang R12.
+
+Index: ejabberd/src/ejabberd_update.erl
+===================================================================
+--- ejabberd.orig/src/ejabberd_update.erl
++++ ejabberd/src/ejabberd_update.erl
+@@ -55,12 +55,12 @@
+ 	    UpdatedBeams =
+ 		lists:filter(
+ 		  fun(Module) ->
+-			  {ok, {Module, [NewVsn]}} =
++			  {ok, {Module, NewVsn}} =
+ 			      beam_lib:version(code:which(Module)),
+ 			  case code:is_loaded(Module) of
+ 			      {file, _} ->
+ 				  Attrs = Module:module_info(attributes),
+-				  {value, {vsn, [CurVsn]}} =
++				  {value, {vsn, CurVsn}} =
+ 				      lists:keysearch(vsn, 1, Attrs),
+ 				  NewVsn /= CurVsn;
+ 			      false ->

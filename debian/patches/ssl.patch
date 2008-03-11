@@ -12,3 +12,39 @@ ssl module isn't used in ejabberd anymore.
      stringprep_sup:start_link(),
      translate:start(),
      acl:start(),
+Index: ejabberd-1.1.4/src/ejabberd_s2s_in.erl
+===================================================================
+--- ejabberd-1.1.4.orig/src/ejabberd_s2s_in.erl
++++ ejabberd-1.1.4/src/ejabberd_s2s_in.erl
+@@ -50,9 +50,13 @@
+ -include("jlib.hrl").
+ -ifdef(SSL39).
+ -include_lib("ssl/include/ssl_pkix.hrl").
++-define(PKIX1Explicit88, 'OTP-PKIX').
++-define(PKIX1Implicit88, 'OTP-PKIX').
+ -else.
+ -include_lib("ssl/include/PKIX1Explicit88.hrl").
+ -include_lib("ssl/include/PKIX1Implicit88.hrl").
++-define(PKIX1Explicit88, 'PKIX1Explicit88').
++-define(PKIX1Implicit88, 'PKIX1Implicit88').
+ -endif.
+ -include("XmppAddr.hrl").
+ 
+@@ -603,7 +607,7 @@
+     lists:flatmap(
+       fun(#'AttributeTypeAndValue'{type = ?'id-at-commonName',
+ 				   value = Val}) ->
+-	      case 'PKIX1Explicit88':decode('X520CommonName', Val) of
++	      case ?PKIX1Explicit88:decode('X520CommonName', Val) of
+ 		  {ok, {_, D1}} ->
+ 		      D = if
+ 			      is_list(D1) -> D1;
+@@ -637,7 +641,7 @@
+ 			     is_binary(Val) -> Val;
+ 			     true -> Val
+ 			 end,
+-		  case 'PKIX1Implicit88':decode('SubjectAltName', BVal) of
++		  case ?PKIX1Implicit88:decode('SubjectAltName', BVal) of
+ 		      {ok, SANs} ->
+ 			  lists:flatmap(
+ 			    fun({otherName,

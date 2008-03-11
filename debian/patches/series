@@ -4,6 +4,7 @@ proxy.patch
 convert.patch
 s2s.patch
 caps.patch
+update.patch
 mod_ctlextra.patch
 shared_roster_push2.patch
 shared_roster_recent.patch

@@ -1,9 +1,13 @@
-ejabberd (2.0.0-6) UNRELEASED; urgency=low
+ejabberd (2.0.0-6~etch1) unstable; urgency=low
 
   * Replaced a patch for proxy65 module with nicer one (thanks to Evgeniy
     Khramtsov).
+  * Added a patch for S2S module to make STARTTLS working with Erlang R12B.
+  * Added a patch by upstream fixes crash when browsing the Update page in
+    Erlang R12B.
+  * Fixed ODBC patch to work with Erlang R11B also.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sun, 09 Mar 2008 10:08:13 +0300
+ -- Sergei Golovan <sgolovan@debian.org>  Tue, 11 Mar 2008 15:10:42 +0300
 
 ejabberd (2.0.0-5) experimental; urgency=low
 
