@@ -2,7 +2,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 ===================================================================
 --- ejabberd-trunk-quilt.orig/src/mod_shared_roster.erl
 +++ ejabberd-trunk-quilt/src/mod_shared_roster.erl
-@@ -18,6 +18,7 @@
+@@ -19,6 +19,7 @@
  	 process_item/2,
  	 in_subscription/6,
  	 out_subscription/4,
@@ -10,7 +10,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  	 list_groups/1,
  	 create_group/2,
  	 create_group/3,
-@@ -56,7 +57,9 @@ start(Host, _Opts) ->
+@@ -63,7 +64,9 @@ start(Host, _Opts) ->
      ejabberd_hooks:add(roster_get_jid_info, Host,
          	       ?MODULE, get_jid_info, 70),
      ejabberd_hooks:add(roster_process_item, Host,
@@ -18,10 +18,10 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 +        	       ?MODULE, process_item, 50),
 +    ejabberd_hooks:add(user_registered, Host,
 +         	       ?MODULE, user_registered, 50).
-     %ejabberd_hooks:add(remove_user, Host,
-     %    	       ?MODULE, remove_user, 50),
+ %%ejabberd_hooks:add(remove_user, Host,
+ %%    	       ?MODULE, remove_user, 50),
  
-@@ -72,7 +75,9 @@ stop(Host) ->
+@@ -83,7 +86,9 @@ stop(Host) ->
      ejabberd_hooks:delete(roster_get_jid_info, Host,
          		  ?MODULE, get_jid_info, 70),
      ejabberd_hooks:delete(roster_process_item, Host,
@@ -29,14 +29,13 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 +			  ?MODULE, process_item, 50),
 +    ejabberd_hooks:delete(user_registered, Host,
 +			  ?MODULE, user_registered, 50).
-     %ejabberd_hooks:delete(remove_user, Host,
-     %    		  ?MODULE, remove_user, 50),
+ %%ejabberd_hooks:delete(remove_user, Host,
+ %%    		  ?MODULE, remove_user, 50),
  
-@@ -357,3 +361,86 @@ remove_user_from_group(Host, US, Group) 
- 		mnesia:delete_object(R)
+@@ -364,6 +369,89 @@ remove_user_from_group(Host, US, Group) 
  	end,
      mnesia:transaction(F).
-+
+ 
 +user_registered(User, Server) ->
 +    LUser = jlib:nodeprep(User),
 +    LServer = jlib:nameprep(Server),
@@ -119,11 +118,15 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 +ask_to_pending(subscribe) -> out;
 +ask_to_pending(unsubscribe) -> none;
 +ask_to_pending(Ask) -> Ask.
++
+ 
+ %%---------------------
+ %% Web Admin
 Index: ejabberd-trunk-quilt/src/mod_register.erl
 ===================================================================
 --- ejabberd-trunk-quilt.orig/src/mod_register.erl
 +++ ejabberd-trunk-quilt/src/mod_register.erl
-@@ -168,6 +168,8 @@ try_register(User, Server, Password) ->
+@@ -174,6 +174,8 @@ try_register(User, Server, Password) ->
  		allow ->
  		    case ejabberd_auth:try_register(User, Server, Password) of
  			{atomic, ok} ->

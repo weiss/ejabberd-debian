@@ -2,7 +2,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 ===================================================================
 --- ejabberd-trunk-quilt.orig/src/mod_shared_roster.erl
 +++ ejabberd-trunk-quilt/src/mod_shared_roster.erl
-@@ -19,6 +19,8 @@
+@@ -20,6 +20,8 @@
  	 in_subscription/6,
  	 out_subscription/4,
  	 user_registered/2,
@@ -11,7 +11,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  	 list_groups/1,
  	 create_group/2,
  	 create_group/3,
-@@ -54,7 +61,11 @@ start(Host, _Opts) ->
+@@ -66,7 +68,11 @@ start(Host, _Opts) ->
      ejabberd_hooks:add(roster_process_item, Host,
          	       ?MODULE, process_item, 50),
      ejabberd_hooks:add(user_registered, Host,
@@ -21,10 +21,10 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 +         	       ?MODULE, user_available, 50),
 +    ejabberd_hooks:add(unset_presence_hook, Host,
 +         	       ?MODULE, unset_presence, 50).
-     %ejabberd_hooks:add(remove_user, Host,
-     %    	       ?MODULE, remove_user, 50),
+ %%ejabberd_hooks:add(remove_user, Host,
+ %%    	       ?MODULE, remove_user, 50),
  
-@@ -77,7 +83,11 @@ stop(Host) ->
+@@ -88,7 +94,11 @@ stop(Host) ->
      ejabberd_hooks:delete(roster_process_item, Host,
  			  ?MODULE, process_item, 50),
      ejabberd_hooks:delete(user_registered, Host,
@@ -34,10 +34,10 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
 +			  ?MODULE, user_available, 50),
 +    ejabberd_hooks:delete(unset_presence_hook, Host,
 +			  ?MODULE, unset_presence, 50).
-     %ejabberd_hooks:delete(remove_user, Host,
-     %    		  ?MODULE, remove_user, 50),
+ %%ejabberd_hooks:delete(remove_user, Host,
+ %%    		  ?MODULE, remove_user, 50),
  
-@@ -339,6 +349,9 @@ get_recent_users(Host, Days) ->
+@@ -350,6 +360,9 @@ get_recent_users(Host, Days) ->
      %% Apply the function to every user in the list
      lists:filter(F, Users).
  
@@ -47,7 +47,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  get_group_users(Host, Group) ->
      case get_group_opt(Host, Group, all_users, false) of
  	true ->
-@@ -352,6 +365,12 @@ get_group_users(Host, Group) ->
+@@ -363,6 +376,12 @@ get_group_users(Host, Group) ->
  	Days when is_integer(Days) ->
              get_recent_users(Host, Days)
      end ++
@@ -60,7 +60,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
      get_group_explicit_users(Host, Group).
  
  get_group_explicit_users(Host, Group) ->
-@@ -370,7 +389,8 @@ get_special_users_groups(Host) ->
+@@ -381,7 +400,8 @@ get_special_users_groups(Host) ->
      lists:filter(
        fun(Group) ->
  	get_group_opt(Host, Group, all_users, false) orelse
@@ -70,7 +70,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
        list_groups(Host)).
  
  get_user_displayed_groups(US) ->
-@@ -432,6 +452,102 @@ user_registered(User, Server) ->
+@@ -443,6 +463,102 @@ user_registered(User, Server) ->
  		end, USs)
        end, DisplayedGroups).
  
@@ -173,19 +173,15 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  
  push_item(User, Server, From, Item) ->
      ejabberd_sm:route(jlib:make_jid("", "", ""),
-Index: ejabberd-trunk-quilt/src/web/ejabberd_web_admin.erl
-===================================================================
---- ejabberd-trunk-quilt.orig/src/web/ejabberd_web_admin.erl
-+++ ejabberd-trunk-quilt/src/web/ejabberd_web_admin.erl
-@@ -2619,6 +2619,7 @@ shared_roster_group(Host, Group, Query, 
+@@ -608,6 +724,7 @@ shared_roster_group(Host, Group, Query, 
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
      RecentUsersDays = get_opt(GroupOpts, recent_users_days, 0),
 +    OnlineUsers = get_opt(GroupOpts, online_users, false),
-     Disabled = false,
+     %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -2519,6 +2636,12 @@ shared_roster_group(Host, Group, Query, 
+@@ -624,6 +741,12 @@ shared_roster_group(Host, Group, Query, 
  	    true ->
  		[]
  	end ++
@@ -198,7 +194,7 @@ Index: ejabberd-trunk-quilt/src/web/ejabberd_web_admin.erl
  	[[us_to_list(Member), $\n] || Member <- Members],
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      FGroup =
-@@ -2604,6 +2727,8 @@ shared_roster_group_parse_query(Host, Gr
+@@ -709,6 +832,8 @@ shared_roster_group_parse_query(Host, Gr
  				  USs;
  			      "@recent@" ->
  				  USs;
@@ -207,7 +203,7 @@ Index: ejabberd-trunk-quilt/src/web/ejabberd_web_admin.erl
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -2624,11 +2749,16 @@ shared_roster_group_parse_query(Host, Gr
+@@ -729,11 +854,16 @@ shared_roster_group_parse_query(Host, Gr
  		    true -> [{recent_users_days, 7}];
  		    false -> []
  		end,

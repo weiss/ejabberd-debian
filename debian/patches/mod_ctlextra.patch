@@ -1,19 +1,19 @@
-Index: ejabberd/src/ejabberd.app
+Index: ejabberd-1.1.2/src/ejabberd.app
 ===================================================================
---- ejabberd.orig/src/ejabberd.app
-+++ ejabberd/src/ejabberd.app
-@@ -29,6 +29,7 @@
- 	     jd2ejd,
+--- ejabberd-1.1.2.orig/src/ejabberd.app	2007-05-17 14:10:57.841460038 +0100
++++ ejabberd-1.1.2/src/ejabberd.app	2007-05-17 14:12:40.269114170 +0100
+@@ -30,6 +30,7 @@
  	     jlib,
+ 	     mod_caps,
  	     mod_configure,
 +	     mod_ctlextra,
  	     mod_disco,
  	     mod_echo,
  	     mod_last,
-Index: ejabberd/src/mod_ctlextra.erl
+Index: ejabberd-1.1.2/src/mod_ctlextra.erl
 ===================================================================
---- ejabberd.orig/src/mod_ctlextra.erl
-+++ ejabberd/src/mod_ctlextra.erl
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ ejabberd-1.1.2/src/mod_ctlextra.erl	2007-05-17 14:13:32.743034771 +0100
 @@ -0,0 +1,731 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : mod_ctlextra.erl

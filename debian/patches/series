@@ -1,15 +1,11 @@
-pep.diff
-http_bind.diff -p0
-ejabberd_ctl.diff
-db_storage.diff
-mod_irc.diff
-ssl.diff
-logger.diff
-odbc.diff
-convert.diff
-cert-chain.diff
-sm.diff
-mod_ctlextra.diff
-shared_roster_push2.diff
-shared_roster_recent.diff
-shared_roster_online.diff
+odbc.patch
+ssl.patch
+proxy.patch
+convert.patch
+s2s.patch
+caps.patch
+update.patch
+mod_ctlextra.patch
+shared_roster_push2.patch
+shared_roster_recent.patch
+shared_roster_online.patch

@@ -1,0 +1,16 @@
+Patch by Sergei Golovan turns unnecessary error messages into debug messages.
+
+--- ejabberd-2.0.0.orig/src/mod_caps.erl
++++ ejabberd-2.0.0/src/mod_caps.erl
+@@ -251,9 +251,9 @@
+ 	    end;
+ 	{error, _} ->
+ 	    gen_server:cast(self(), visit_feature_queries),
+-	    ?ERROR_MSG("Error IQ reponse IQ from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
++	    ?DEBUG("Error IQ reponse IQ from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
+ 	{result, _} ->
+-	    ?ERROR_MSG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
++	    ?DEBUG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
+ 	_ ->
+ 	    %% Can't do anything about errors
+ 	    ok
