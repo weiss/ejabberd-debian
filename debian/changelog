@@ -21,7 +21,7 @@ ejabberd (2.0.0-5) experimental; urgency=low
 
 ejabberd (2.0.0-4) experimental; urgency=low
 
-  * Updated French debconf templates translation.
+  * Updated French debconf templates translation (closes: #468788).
   * Disabled epoll by default in /etc/default/ejabberd.
   * Increased default maximum number of conference room occupants to 500.
     Given increasing popularity of XMPP old default value 200 is too low.
