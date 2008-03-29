@@ -11,17 +11,19 @@
 #
 #    Developers do not need to manually edit POT or PO files.
 #
+# Torsten Werner <twerner@debian.org>, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: 1.1.1-5\n"
+"Project-Id-Version: ejabberd 2.0.0-6\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
 "POT-Creation-Date: 2008-02-15 10:37+0300\n"
-"PO-Revision-Date: 2006-07-22 21:45+0200\n"
+"PO-Revision-Date: 2008-03-29 12:37+0100\n"
 "Last-Translator: Torsten Werner <twerner@debian.org>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: debian-l10n-german <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #. Type: string
 #. Description
@@ -32,21 +34,20 @@ msgstr "Der Name Ihres Ejabberd-Servers:"
 #. Type: string
 #. Description
 #: ../templates:1001
-#, fuzzy
 msgid "Please enter the hostname of your Jabber server (in lowercase)."
-msgstr "Geben Sie bitte den Namen Ihres Jabberservers an."
+msgstr ""
+"Geben Sie bitte den Namen Ihres Jabberservers (nur "
+"Kleinbuchstaben) an."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid "The username of an admin account for ejabberd:"
-msgstr "Der Name eines privilegierten Kontos für Ejabberd:"
+msgstr "Der Loginname eines privilegierten Kontos für Ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -59,9 +60,10 @@ msgstr ""
 "Geben Sie bitte den Namen für ein Konto an, dass den Ejabberd-Server "
 "verwalten kann. Nach der Installation können Sie mit Hilfe dieses Kontos und "
 "irgendeines Jabber-Clients Verwaltungsaufgaben durchführen oder sich unter "
-"http://{hostname}:5280/admin/ an der Administratorseite anmelden. Beachten "
-"Sie, dass Sie dabei eine vollständige Jabber ID (z.B. '${user}@${hostname}') "
-"benutzen, da ansonsten die Anmeldung nicht funktionieren wird."
+"http://{hostname}:5280/admin/ an der Administratorseite anmelden. Geben "
+"Sie hier nur den Loginnamen an, aber beachten Sie, dass Sie am "
+"Webinterface die vollständige Jabber ID (z.B. '${user}@${hostname}') "
+"eingeben, da ansonsten die Anmeldung nicht funktionieren wird."
 
 #. Type: string
 #. Description
@@ -90,8 +92,7 @@ msgstr "Wiederholen Sie das Passwort zur Vermeidung von Fehleingaben:"
 #. Type: password
 #. Description
 #: ../templates:4001
-msgid ""
-"Please reenter the password for the administrative user for verification."
+msgid "Please reenter the password for the administrative user for verification."
 msgstr "Bitte geben Sie noch einmal das Passwort ein."
 
 #. Type: error
@@ -104,5 +105,5 @@ msgstr "Die Kennwörter waren nicht identisch!"
 #. Description
 #: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
-msgstr ""
-"Die Kennwörter waren nicht identisch, bitte versuchen Sie es noch einmal."
+msgstr "Die Kennwörter waren nicht identisch, bitte versuchen Sie es noch einmal."
+

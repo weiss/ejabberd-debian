@@ -1,8 +1,12 @@
 ejabberd (2.0.0-7) UNRELEASED; urgency=low
 
+  [ Sergei Golovan ]
   * NOT RELEASED YET
 
- -- Sergei Golovan <sgolovan@debian.org>  Tue, 11 Mar 2008 21:49:13 +0300
+  [ Torsten Werner ]
+  * Updated german debconf templates translation.
+
+ -- Torsten Werner <twerner@debian.org>  Sat, 29 Mar 2008 12:42:56 +0100
 
 ejabberd (2.0.0-6) unstable; urgency=low
 
