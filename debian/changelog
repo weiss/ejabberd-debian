@@ -1,12 +1,16 @@
 ejabberd (2.0.0-7) UNRELEASED; urgency=low
 
   [ Sergei Golovan ]
-  * NOT RELEASED YET
+  * Installed eldap.hrl header. It is necessary to build some external modules
+    for ejabberd.
+  * Moved headers which are in subdirectories of src directory to
+    corresponding subdirectory of /usr/lib/ejabberd/include/ as they are
+    usually included with subdirectory prepended.
 
   [ Torsten Werner ]
   * Updated german debconf templates translation.
 
- -- Torsten Werner <twerner@debian.org>  Sat, 29 Mar 2008 12:42:56 +0100
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 24 Apr 2008 22:23:58 +0400
 
 ejabberd (2.0.0-6) unstable; urgency=low
 

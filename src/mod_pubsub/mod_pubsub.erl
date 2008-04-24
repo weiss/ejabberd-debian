@@ -350,7 +350,7 @@ disco_sm_items(Acc, _From, To, [], _Lang) ->
     %% TODO, use iq_disco_items(Host, [], From)
     Host = To#jid.lserver,
     LJID = jlib:jid_tolower(jlib:jid_remove_resource(To)),
-    case tree_action(Host, get_nodes, [Host]) of
+    case tree_action(Host, get_nodes, [LJID]) of
 	[] ->
 	    Acc;
 	Nodes ->
@@ -359,7 +359,7 @@ disco_sm_items(Acc, _From, To, [], _Lang) ->
 			_ -> []
 		    end,
 	    NodeItems = lists:map(
-			  fun(Node) ->
+			  fun(#pubsub_node{nodeid = {_, Node}}) ->
 				  {xmlelement, "item",
 				   [{"jid", jlib:jid_to_string(LJID)},
 				    {"node", node_to_string(Node)}],
@@ -372,7 +372,10 @@ disco_sm_items(Acc, _From, To, Node, _Lang) ->
     %% TODO, use iq_disco_items(Host, Node, From)
     Host = To#jid.lserver,
     LJID = jlib:jid_tolower(jlib:jid_remove_resource(To)),
-    case get_items(Host, Node) of
+    case get_items(LJID, Node) of
+	%% Returning items in a disco#items query is unreasonable
+	_ ->
+	    Acc;
 	[] ->
 	    Acc;
 	AllItems ->
@@ -381,7 +384,7 @@ disco_sm_items(Acc, _From, To, Node, _Lang) ->
 			_ -> []
 		    end,
 	    NodeItems = lists:map(
-			  fun(#pubsub_item{itemid = Id}) ->
+			  fun(#pubsub_item{itemid = {Id, _}}) ->
 				  %% "jid" is required by XEP-0030, and
 				  %% "node" is forbidden by XEP-0060.
 				  {xmlelement, "item",

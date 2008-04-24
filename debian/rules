@@ -31,10 +31,11 @@ install/ejabberd::
 	$(RM) $(DEB_DESTDIR)/etc/ejabberd/ejabberdctl.cfg
 	install -d $(DEB_DESTDIR)$(EJABBERDIR)/include
 	install -m 644 src/*.hrl $(DEB_DESTDIR)$(EJABBERDIR)/include
-	install -m 644 src/*/*.hrl $(DEB_DESTDIR)$(EJABBERDIR)/include
-	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/ELDAPv3.hrl
+	for f in src/*/*.hrl ; do \
+	    install -D -m 644 $$f $(DEB_DESTDIR)$(EJABBERDIR)/include/$$(basename $$(dirname $$f))/$$(basename $$f) ; \
+	done
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap/ELDAPv3.hrl
 	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/XmppAddr.hrl
-	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap.hrl
 	erlang-depends
 
 get-orig-source:
