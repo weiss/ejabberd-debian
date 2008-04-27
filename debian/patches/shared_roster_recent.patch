@@ -1,8 +1,6 @@
-Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
-===================================================================
---- ejabberd-trunk-quilt.orig/src/mod_shared_roster.erl
-+++ ejabberd-trunk-quilt/src/mod_shared_roster.erl
-@@ -284,7 +284,7 @@ get_user_groups(US) ->
+--- ejabberd-2.0.0.orig/src/mod_shared_roster.erl
++++ ejabberd-2.0.0/src/mod_shared_roster.erl
+@@ -302,7 +302,7 @@
  	    [Group || #sr_user{group_host = {Group, H}} <- Rs, H == Host];
  	_ ->
  	    []
@@ -11,7 +9,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  
  is_group_enabled(Host, Group) ->
      case catch mnesia:dirty_read(sr_group, {Group, Host}) of
-@@ -307,13 +307,63 @@ get_group_opt(Host, Group, Opt, Default)
+@@ -325,13 +325,63 @@
  	    false
      end.
  
@@ -76,7 +74,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  
  get_group_explicit_users(Host, Group) ->
      case catch mnesia:dirty_index_read(
-@@ -327,9 +377,11 @@ get_group_explicit_users(Host, Group) ->
+@@ -345,9 +395,11 @@
  get_group_name(Host, Group) ->
      get_group_opt(Host, Group, name, Group).
  
@@ -90,7 +88,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
        list_groups(Host)).
  
  get_user_displayed_groups(US) ->
-@@ -555,6 +607,7 @@ shared_roster_group(Host, Group, Query, 
+@@ -573,6 +625,7 @@
      Name = get_opt(GroupOpts, name, ""),
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
@@ -98,7 +96,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -564,7 +617,14 @@ shared_roster_group(Host, Group, Query, 
+@@ -582,7 +635,14 @@
  		"@all@\n";
  	    true ->
  		[]
@@ -114,7 +112,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      FGroup =
  	?XAE("table", [],
-@@ -647,6 +707,8 @@ shared_roster_group_parse_query(Host, Gr
+@@ -665,6 +725,8 @@
  			  case SJID of
  			      "@all@" ->
  				  USs;
@@ -123,7 +121,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -661,10 +723,17 @@ shared_roster_group_parse_query(Host, Gr
+@@ -679,10 +741,17 @@
  		    true -> [{all_users, true}];
  		    false -> []
  		end,

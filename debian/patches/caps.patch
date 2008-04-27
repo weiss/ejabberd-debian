@@ -2,7 +2,7 @@ Patch by Sergei Golovan turns unnecessary error messages into debug messages.
 
 --- ejabberd-2.0.0.orig/src/mod_caps.erl
 +++ ejabberd-2.0.0/src/mod_caps.erl
-@@ -251,9 +251,9 @@
+@@ -252,9 +252,9 @@
  	    end;
  	{error, _} ->
  	    gen_server:cast(self(), visit_feature_queries),

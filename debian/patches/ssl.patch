@@ -1,21 +1,7 @@
-Patch by Sergei Golovan removes unnecessary call to ssl:start() because
-ssl module isn't used in ejabberd anymore.
+Patch by Sergei Golovan fixes S2S to work with R12B also.
 
---- ejabberd-2.0.0.orig/src/ejabberd_app.erl
-+++ ejabberd-2.0.0/src/ejabberd_app.erl
-@@ -39,7 +39,7 @@
-     randoms:start(),
-     db_init(),
-     sha:start(),
--    catch ssl:start(),
-+%%  catch ssl:start(),
-     stringprep_sup:start_link(),
-     translate:start(),
-     acl:start(),
-Index: ejabberd-1.1.4/src/ejabberd_s2s_in.erl
-===================================================================
---- ejabberd-1.1.4.orig/src/ejabberd_s2s_in.erl
-+++ ejabberd-1.1.4/src/ejabberd_s2s_in.erl
+--- ejabberd-2.0.0.orig/src/ejabberd_s2s_in.erl
++++ ejabberd-2.0.0/src/ejabberd_s2s_in.erl
 @@ -50,9 +50,13 @@
  -include("jlib.hrl").
  -ifdef(SSL39).

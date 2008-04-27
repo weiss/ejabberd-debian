@@ -1,8 +1,6 @@
-Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
-===================================================================
---- ejabberd-trunk-quilt.orig/src/mod_shared_roster.erl
-+++ ejabberd-trunk-quilt/src/mod_shared_roster.erl
-@@ -19,6 +19,7 @@
+--- ejabberd-2.0.0.orig/src/mod_shared_roster.erl
++++ ejabberd-2.0.0/src/mod_shared_roster.erl
+@@ -37,6 +37,7 @@
  	 process_item/2,
  	 in_subscription/6,
  	 out_subscription/4,
@@ -10,7 +8,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  	 list_groups/1,
  	 create_group/2,
  	 create_group/3,
-@@ -63,7 +64,9 @@ start(Host, _Opts) ->
+@@ -81,7 +82,9 @@
      ejabberd_hooks:add(roster_get_jid_info, Host,
          	       ?MODULE, get_jid_info, 70),
      ejabberd_hooks:add(roster_process_item, Host,
@@ -21,7 +19,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  %%ejabberd_hooks:add(remove_user, Host,
  %%    	       ?MODULE, remove_user, 50),
  
-@@ -83,7 +86,9 @@ stop(Host) ->
+@@ -101,7 +104,9 @@
      ejabberd_hooks:delete(roster_get_jid_info, Host,
          		  ?MODULE, get_jid_info, 70),
      ejabberd_hooks:delete(roster_process_item, Host,
@@ -32,7 +30,7 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  %%ejabberd_hooks:delete(remove_user, Host,
  %%    		  ?MODULE, remove_user, 50),
  
-@@ -364,6 +369,89 @@ remove_user_from_group(Host, US, Group) 
+@@ -382,6 +387,89 @@
  	end,
      mnesia:transaction(F).
  
@@ -122,11 +120,9 @@ Index: ejabberd-trunk-quilt/src/mod_shared_roster.erl
  
  %%---------------------
  %% Web Admin
-Index: ejabberd-trunk-quilt/src/mod_register.erl
-===================================================================
---- ejabberd-trunk-quilt.orig/src/mod_register.erl
-+++ ejabberd-trunk-quilt/src/mod_register.erl
-@@ -174,6 +174,8 @@ try_register(User, Server, Password) ->
+--- ejabberd-2.0.0.orig/src/mod_register.erl
++++ ejabberd-2.0.0/src/mod_register.erl
+@@ -192,6 +192,8 @@
  		allow ->
  		    case ejabberd_auth:try_register(User, Server, Password) of
  			{atomic, ok} ->

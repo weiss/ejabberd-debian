@@ -6,11 +6,12 @@ ejabberd (2.0.0-7) UNRELEASED; urgency=low
   * Moved headers which are in subdirectories of src directory to
     corresponding subdirectory of /usr/lib/ejabberd/include/ as they are
     usually included with subdirectory prepended.
+  * Included a patch which adds LDAPS support (closes: #477918).
 
   [ Torsten Werner ]
   * Updated german debconf templates translation.
 
- -- Sergei Golovan <sgolovan@debian.org>  Thu, 24 Apr 2008 22:23:58 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 27 Apr 2008 17:05:09 +0400
 
 ejabberd (2.0.0-6) unstable; urgency=low
 
