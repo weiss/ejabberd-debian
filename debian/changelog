@@ -7,12 +7,17 @@ ejabberd (2.0.0-7) UNRELEASED; urgency=low
     corresponding subdirectory of /usr/lib/ejabberd/include/ as they are
     usually included with subdirectory prepended.
   * Included a patch which adds LDAPS support (closes: #477918).
+  * Added an additional info on how to use ejabberd headers to README.Debian.
+  * Changed section in doc-base registration file to Net.
+  * Don't use HOSTNAME variable in postinstall script to prevent confusion
+    with the same bash standard environment variable.
+  * Removed empty preinstall maintainer script.
 
   [ Torsten Werner ]
   * Updated german debconf templates translation.
   * Update Vcs headers in debian/control.
 
- -- Torsten Werner <twerner@debian.org>  Mon, 28 Apr 2008 23:19:05 +0200
+ -- Sergei Golovan <sgolovan@debian.org>  Mon, 05 May 2008 10:26:19 +0400
 
 ejabberd (2.0.0-6) unstable; urgency=low
 

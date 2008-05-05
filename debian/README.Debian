@@ -9,6 +9,10 @@ directory. To build a module using these headers, as usual include them using
 and compile the module using -pa option to add ejabberd path to a search list
     erlc -pa /usr/lib/ejabberd/ebin module.erl
 
+Alternatively, include headers as
+    -include("headername.hrl").
+and add option -I /usr/lib/ejabberd/include to erlc command line.
+
 
 The ejabberd daemon which is run in init.d script is owned by user ejabberd,
 so it cannot bind to privileged ports (below 1024). The error message in

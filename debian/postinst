@@ -50,17 +50,17 @@ setup_ejabberd()
     if [ ! -f ejabberd.pem ]
     then
 	echo "Generating SSL certificate /etc/ejabberd/ejabberd.pem..."
-	HOSTNAME=$(hostname -s)
-	DOMAINNAME=$(hostname -d)
+	EHOSTNAME=$(hostname -s)
+	EDOMAINNAME=$(hostname -d)
 	openssl req -new -x509 -days 365 -nodes -out ejabberd.pem \
 		    -keyout ejabberd.pem > /dev/null 2>&1 <<+++
 .
 .
 .
-$DOMAINNAME
-$HOSTNAME
+$EDOMAINNAME
+$EHOSTNAME
 ejabberd
-root@$HOSTNAME.$DOMAINNAME
+root@$EHOSTNAME.$EDOMAINNAME
 +++
     fi
     if ! dpkg-statoverride --list /etc/ejabberd/ejabberd.pem >/dev/null; then

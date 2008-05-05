@@ -1,8 +1,6 @@
-Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
-
 --- ejabberd-2.0.0.orig/src/eldap/eldap.erl
 +++ ejabberd-2.0.0/src/eldap/eldap.erl
-@@ -35,6 +35,10 @@
+@@ -35,6 +35,13 @@
  
  %%% Modified by Evgeniy Khramtsov <xram@jabber.ru>
  %%% Implemented queue for bind() requests to prevent pending binds.
@@ -10,10 +8,13 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
 +%%% Modified by Thomas Baden <roo@ham9.net> 2008 April 6th
 +%%% Added LDAPS support, modeled off jungerl eldap.erl version.
 +%%% NOTICE: STARTTLS is not yet supported.
++%%%
++%%% Modified by Andy Harb <Ahmad.N.Abou-Harb@jpl.nasa.gov>
++%%% modified to work with ejabberd-2.0.0
  %%% --------------------------------------------------------------------
  -vc('$Id: eldap.erl 1113 2007-12-24 13:57:53Z mremond $ ').
  
-@@ -75,16 +79,21 @@
+@@ -75,16 +82,21 @@
  -include("eldap.hrl").
  
  -define(LDAP_VERSION, 3).
@@ -36,7 +37,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  		fd = null,     % Socket filedescriptor.
  		rootdn = "",   % Name of the entry to bind as
  		passwd,        % Password for (above) entry
-@@ -93,7 +102,9 @@
+@@ -93,7 +105,9 @@
  		bind_timer,    % Ref to bind timeout
  		dict,          % dict holding operation params and results
  		bind_q,        % Queue for bind() requests
@@ -47,7 +48,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  	       }).
  
  %%%----------------------------------------------------------------------
-@@ -382,6 +393,31 @@
+@@ -382,6 +396,33 @@
  	{error, Reason} ->
  	    {stop, Reason}
      end;
@@ -62,6 +63,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
 +			id = 0,
 +			log = Log,
 +			dict = dict:new(),
++			bind_q = queue:new(),
 +			use_tls = true,
 +			debug_level = 0}, 0};
 +		{starttls, TCPPort} ->
@@ -72,6 +74,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
 +			id = 0,
 +			log = Log,
 +			dict = dict:new(),
++			bind_q = queue:new(),
 +			use_starttls = true,
 +			debug_level = 0}, 0}
 +	end;
@@ -79,7 +82,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  init({Hosts, Port, Rootdn, Passwd, Log}) ->
      {ok, connecting, #eldap{hosts = Hosts,
  			    port = Port,
-@@ -454,6 +490,10 @@
+@@ -454,6 +495,10 @@
  %%          {next_state, NextStateName, NextStateData, Timeout} |
  %%          {stop, Reason, NewStateData}                         
  %%----------------------------------------------------------------------
@@ -90,7 +93,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  handle_event(close, _StateName, S) ->
      gen_tcp:close(S#eldap.fd),
      {stop, closed, S};
-@@ -500,11 +540,13 @@
+@@ -500,11 +545,13 @@
  %%
  %% Packets arriving in various states
  %%
@@ -107,7 +110,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
      cancel_timer(S#eldap.bind_timer),
      case catch recvd_wait_bind_response(Data, S) of
  	bound                -> {next_state, active, S};
-@@ -516,8 +558,11 @@
+@@ -516,8 +563,11 @@
  				{next_state, connecting, S#eldap{fd = null}}
      end;
  
@@ -121,7 +124,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
      case catch recvd_packet(Data, S) of
  	{reply, Reply, To, NewS} -> gen_fsm:reply(To, Reply),
  				    {next_state, StateName, NewS};
-@@ -526,9 +571,10 @@
+@@ -526,9 +576,10 @@
  	{error, _Reason}          -> {next_state, StateName, S}
      end;
  
@@ -134,7 +137,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  		cancel_timer(Timer)
  	end,
      dict:map(F, S#eldap.dict),
-@@ -536,8 +582,9 @@
+@@ -536,8 +587,9 @@
      {next_state, connecting, S#eldap{fd = null,
  				     dict = dict:new(), bind_q=queue:new()}};
  
@@ -146,7 +149,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
      {next_state, Fsm_state, S};
  %%
  %% Timers
-@@ -591,7 +638,8 @@
+@@ -591,7 +643,8 @@
  			     protocolOp = {Name, Request}},
      log2("~p~n",[{Name, Request}], S),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
@@ -156,7 +159,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
      Timer = erlang:start_timer(?CMD_TIMEOUT, self(), {cmd_timeout, Id}),
      New_dict = dict:store(Id, [{Timer, From, Name}], S#eldap.dict),
      {ok, S#eldap{id = Id,
-@@ -841,10 +889,33 @@
+@@ -841,10 +894,26 @@
  %%-----------------------------------------------------------------------
  %% Connect to next server in list and attempt to bind to it.
  %%-----------------------------------------------------------------------
@@ -170,14 +173,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
 +		ssl:seed("bkrlnateqqo" ++ integer_to_list(X));
 +		true -> true
 +	end,
-+	{ok, Fd} = ssl:connect(Host, State#eldap.port, [{verify,0}|Opts]),
-+	if Vsn >= "5.3" ->
-+		%% In R9C, but not in R9B
-+		{ok, Cert} = ssl:peercert(Fd, [ssl, subject]),
-+		io:fwrite("ssl_connect: peer cert:~n~p~n", [Cert]);
-+		true -> io:fwrite("ssl_connect succeded~n", [])
-+	end,
-+	{ok, Fd}.
++	ssl:connect(Host, State#eldap.port, [{verify,0}|Opts]).
 +
  connect_bind(S) ->
      Host = next_host(S#eldap.host, S#eldap.hosts),
@@ -192,7 +188,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  	{ok, Socket} ->
  	    case bind_request(Socket, S) of
  		{ok, NewS} ->
-@@ -865,6 +936,11 @@
+@@ -865,6 +934,11 @@
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
@@ -204,7 +200,7 @@ Patch by Thomas Baden adds LDAPS (LDAP over SSL) support.
  bind_request(Socket, S) ->
      Id = bump_id(S),
      Req = #'BindRequest'{version        = S#eldap.version,
-@@ -874,7 +950,7 @@
+@@ -874,7 +948,7 @@
  			     protocolOp = {bindRequest, Req}},
      log2("Message:~p~n",[Message], S),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
