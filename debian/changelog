@@ -9,9 +9,9 @@ ejabberd (2.0.0-7) unstable; urgency=low
   * Included a patch which adds LDAPS support and added {ldap_encrypt} and
     {ldap_port} example options to ejabberd config file (closes: #477918).
   * Added an additional info on how to use ejabberd headers to README.Debian.
-  * Changed section in doc-base registration file to Net.
-  * Don't use HOSTNAME variable in postinstall script to prevent confusion
-    with the same bash standard environment variable.
+  * Changed section in doc-base registration file to Network/Communication.
+  * Don't use HOSTNAME variable in postinstall and debconf config scripts to
+    prevent confusion with the same bash standard environment variable.
   * Removed empty preinstall maintainer script.
   * Fixed minus signs in ejabberd and ejabberdctl manual pages.
   * Updated Russian debconf templates translation.

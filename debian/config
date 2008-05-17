@@ -22,8 +22,8 @@ get_credentials()
   USER=${RET:-admin}
   db_subst ejabberd/user user "$USER"
   db_get ejabberd/hostname
-  HOSTNAME=${RET:-hostname}
-  db_subst ejabberd/user hostname "$HOSTNAME"
+  HOST=${RET:-hostname}
+  db_subst ejabberd/user hostname "$HOST"
   db_input medium ejabberd/user || true
   db_go || true
   db_get ejabberd/user
