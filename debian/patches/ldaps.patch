@@ -1,5 +1,124 @@
---- ejabberd-2.0.0.orig/src/eldap/eldap.erl
-+++ ejabberd-2.0.0/src/eldap/eldap.erl
+diff --git a/doc/guide.tex b/doc/guide.tex
+index 293ed81..e2f3d5e 100644
+--- a/doc/guide.tex
++++ b/doc/guide.tex
+@@ -1662,12 +1662,15 @@ Parameters:
+ \begin{description}
+ \titem{ldap\_server} \ind{options!ldap\_server}IP address or dns name of your
+ LDAP server. This option is required.
++\titem{ldap\_encrypt} \ind{options!ldap\_encrypt}Type of connection encryption to the LDAP server.
++Allowed values are: \term{none}, \term{tls}.
++Note that STARTTLS is not supported.
++The default value is: \term{none}.
+ \titem{ldap\_port} \ind{options!ldap\_port}Port to connect to your LDAP server.
+-  The initial default value is~389, so it is used when nothing is set into the 
+-configuration file. 
++Default port is~389 if encryption is disabled; and 636 if encryption is enabled.
+ If you configure a value, it is stored in \ejabberd{}'s database. 
+ Then, if you remove that value from the configuration file, 
+-the value previously stored in the database will be used instead of the default 389.
++the value previously stored in the database will be used instead of the default port.
+ \titem{ldap\_rootdn} \ind{options!ldap\_rootdn}Bind DN. The default value
+   is~\term{""} which means `anonymous connection'.
+ \titem{ldap\_password} \ind{options!ldap\_password}Bind password. The default
+@@ -1729,14 +1732,18 @@ You can authenticate users against an LDAP directory. Available options are:
+ Let's say \term{ldap.example.org} is the name of our LDAP server. We have
+ users with their passwords in \term{"ou=Users,dc=example,dc=org"} directory.
+ Also we have addressbook, which contains users emails and their additional
+-infos in \term{"ou=AddressBook,dc=example,dc=org"} directory.  Corresponding
+-authentication section should looks like this:
++infos in \term{"ou=AddressBook,dc=example,dc=org"} directory.
++The connection to the LDAP server is encrypted using TLS,
++and using the custom port 6336.
++Corresponding authentication section should looks like this:
+ 
+ \begin{verbatim}
+   %% authentication method
+   {auth_method, ldap}.
+   %% DNS name of our LDAP server
+   {ldap_servers, ["ldap.example.org"]}.
++  {ldap_encrypt, tls}.
++  {ldap_port, 6336}.
+   %% Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
+   {ldap_rootdn, "cn=Manager,dc=example,dc=org"}.
+   {ldap_password, "secret"}.
+diff --git a/src/ejabberd.cfg.example b/src/ejabberd.cfg.example
+index faa8f78..cdda25e 100644
+--- a/src/ejabberd.cfg.example
++++ b/src/ejabberd.cfg.example
+@@ -224,17 +224,26 @@
+ %% List of LDAP servers:
+ %%{ldap_servers, ["localhost"]}.    
+ %%
+-%% LDAP attribute that holds user ID:
+-%%{ldap_uids, [{"mail", "%u@mail.example.org"}]}. 
++%% Encryption of connection to LDAP servers:
++%%{ldap_encrypt, tls}.
+ %%
+-%% Search base of LDAP directory:
+-%%{ldap_base, "dc=example,dc=com"}. 
++%% Port connect to LDAP server:
++%%{ldap_port, 636}.
+ %%
+ %% LDAP manager:
+-%%{ldap_rootdn, "dc=example,dc=com"}. 
++%%{ldap_rootdn, "dc=example,dc=com"}.
+ %%
+ %% Password to LDAP manager:
+-%%{ldap_password, "******"}. 
++%%{ldap_password, "******"}.
++%%
++%% Search base of LDAP directory:
++%%{ldap_base, "dc=example,dc=com"}.
++%%
++%% LDAP attribute that holds user ID:
++%%{ldap_uids, [{"mail", "%u@mail.example.org"}]}.
++%%
++%% LDAP filter:
++%%{ldap_filter, "(objectClass=shadowAccount)"}.
+ 
+ %%
+ %% Anonymous login support:
+diff --git a/src/ejabberd_auth_ldap.erl b/src/ejabberd_auth_ldap.erl
+index d9f5450..fe142d2 100644
+--- a/src/ejabberd_auth_ldap.erl
++++ b/src/ejabberd_auth_ldap.erl
+@@ -24,6 +24,10 @@
+ %%%
+ %%%----------------------------------------------------------------------
+ 
++%%% Modified by Thomas Baden <roo@ham9.net> 2008 April 6th
++%%% Added {ldap_encrypt, none|tls|starttls} configuration option.
++%%% NOTICE: STARTTLS is not yet supported.
++
+ -module(ejabberd_auth_ldap).
+ -author('alexey@process-one.net').
+ 
+@@ -350,9 +354,18 @@ parse_options(Host) ->
+ 		   undefined -> [];
+ 		   Backups -> Backups
+ 		   end,
++    Encryption = ejabberd_config:get_local_option({ldap_encrypt, Host}),
+     LDAPPort = case ejabberd_config:get_local_option({ldap_port, Host}) of
+-		   undefined -> 389;
+-		   P -> P
++		   undefined -> case Encryption of
++				    tls -> {Encryption, ?LDAPS_PORT};
++				    starttls -> {Encryption, ?LDAP_PORT};
++				    _ -> ?LDAP_PORT
++				end;
++		   P -> case Encryption of
++			    tls -> {Encryption, P};
++			    starttls -> {Encryption, P};
++			    _ -> P
++			end
+ 	       end,
+     RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
+ 		 undefined -> "";
+diff --git a/src/eldap/eldap.erl b/src/eldap/eldap.erl
+index b473326..5c47a24 100644
+--- a/src/eldap/eldap.erl
++++ b/src/eldap/eldap.erl
 @@ -35,6 +35,13 @@
  
  %%% Modified by Evgeniy Khramtsov <xram@jabber.ru>
@@ -9,19 +128,12 @@
 +%%% Added LDAPS support, modeled off jungerl eldap.erl version.
 +%%% NOTICE: STARTTLS is not yet supported.
 +%%%
-+%%% Modified by Andy Harb <Ahmad.N.Abou-Harb@jpl.nasa.gov>
-+%%% modified to work with ejabberd-2.0.0
++%%% Modified by Andy Harb <Ahmad.N.Abou-Harb@jpl.nasa.gov> 2008 April 28th
++%%% Modified to work with ejabberd-2.0.0
  %%% --------------------------------------------------------------------
  -vc('$Id: eldap.erl 1113 2007-12-24 13:57:53Z mremond $ ').
  
-@@ -75,16 +82,21 @@
- -include("eldap.hrl").
- 
- -define(LDAP_VERSION, 3).
-+-define(LDAP_PORT, 389).
-+-define(LDAPS_PORT, 636).
- -define(RETRY_TIMEOUT, 5000).
- -define(BIND_TIMEOUT, 10000).
+@@ -80,11 +87,14 @@
  -define(CMD_TIMEOUT, 100000).
  -define(MAX_TRANSACTION_ID, 65535).
  -define(MIN_TRANSACTION_ID, 0).
@@ -33,11 +145,11 @@
  		hosts,	       % Possible hosts running LDAP servers
  		host = null,   % Connected Host LDAP server
 -		port = 389 ,   % The LDAP server port
-+		port = ?LDAP_PORT ,   % The LDAP server port
++		port,          % The LDAP server port
  		fd = null,     % Socket filedescriptor.
  		rootdn = "",   % Name of the entry to bind as
  		passwd,        % Password for (above) entry
-@@ -93,7 +105,9 @@
+@@ -93,7 +103,9 @@
  		bind_timer,    % Ref to bind timeout
  		dict,          % dict holding operation params and results
  		bind_q,        % Queue for bind() requests
@@ -48,69 +160,74 @@
  	       }).
  
  %%%----------------------------------------------------------------------
-@@ -382,6 +396,33 @@
+@@ -382,6 +394,36 @@ init([]) ->
  	{error, Reason} ->
  	    {stop, Reason}
      end;
 +
 +init({Hosts, Port, Rootdn, Passwd, Log}) when is_tuple(Port) ->
-+	case Port of
-+		{tls, TLSPort} ->
-+		{ok, connecting, #eldap{hosts = Hosts,
-+			port = TLSPort,
-+			rootdn = Rootdn,
-+			passwd = Passwd,
-+			id = 0,
-+			log = Log,
-+			dict = dict:new(),
-+			bind_q = queue:new(),
-+			use_tls = true,
-+			debug_level = 0}, 0};
-+		{starttls, TCPPort} ->
-+		{ok, connecting, #eldap{hosts = Hosts,
-+			port = TCPPort,
-+			rootdn = Rootdn,
-+			passwd = Passwd,
-+			id = 0,
-+			log = Log,
-+			dict = dict:new(),
-+			bind_q = queue:new(),
-+			use_starttls = true,
-+			debug_level = 0}, 0}
-+	end;
++    %% The connection must be encrypted
++    %% Start the SSL server if it wasn't already started
++    catch ssl:start(),
++    case Port of
++	{tls, TLSPort} ->
++	    {ok, connecting, #eldap{hosts = Hosts,
++				    port = TLSPort,
++				    rootdn = Rootdn,
++				    passwd = Passwd,
++				    id = 0,
++				    log = Log,
++				    dict = dict:new(),
++				    bind_q = queue:new(),
++				    use_tls = true,
++				    debug_level = 0}, 0};
++	{starttls, TCPPort} ->
++	    {ok, connecting, #eldap{hosts = Hosts,
++				    port = TCPPort,
++				    rootdn = Rootdn,
++				    passwd = Passwd,
++				    id = 0,
++				    log = Log,
++				    dict = dict:new(),
++				    bind_q = queue:new(),
++				    use_starttls = true,
++				    debug_level = 0}, 0}
++    end;
 +
  init({Hosts, Port, Rootdn, Passwd, Log}) ->
      {ok, connecting, #eldap{hosts = Hosts,
  			    port = Port,
-@@ -454,6 +495,10 @@
+@@ -454,6 +496,10 @@ active_bind(Event, From, S) ->
  %%          {next_state, NextStateName, NextStateData, Timeout} |
  %%          {stop, Reason, NewStateData}                         
  %%----------------------------------------------------------------------
 +handle_event(close, _StateName, S) when S#eldap.use_tls == true ->
-+	ssl:close(S#eldap.fd),
-+	{stop, closed, S};
++    ssl:close(S#eldap.fd),
++    {stop, closed, S};
 +
  handle_event(close, _StateName, S) ->
      gen_tcp:close(S#eldap.fd),
      {stop, closed, S};
-@@ -500,11 +545,13 @@
+@@ -500,11 +546,15 @@ handle_sync_event(_Event, _From, StateName, S) ->
  %%
  %% Packets arriving in various states
  %%
 -handle_info({tcp, _Socket, Data}, connecting, S) ->
 -    log1("eldap. tcp packet received when disconnected!~n~p~n", [Data], S),
-+handle_info({Tag, _Socket, Data}, connecting, S) when Tag == tcp;
-+		Tag == ssl ->
++handle_info({Tag, _Socket, Data}, connecting, S)
++  when Tag == tcp;
++       Tag == ssl ->
 +    log1("eldap. ~p packet received when disconnected!~n~p~n", [Tag, Data], S),
      {next_state, connecting, S};
  
 -handle_info({tcp, _Socket, Data}, wait_bind_response, S) ->
-+handle_info({Tag, _Socket, Data}, wait_bind_response, S) when Tag == tcp;
-+		Tag == ssl ->
++handle_info({Tag, _Socket, Data}, wait_bind_response, S)
++  when Tag == tcp;
++       Tag == ssl ->
      cancel_timer(S#eldap.bind_timer),
      case catch recvd_wait_bind_response(Data, S) of
  	bound                -> {next_state, active, S};
-@@ -516,8 +563,11 @@
+@@ -516,8 +566,11 @@ handle_info({tcp, _Socket, Data}, wait_bind_response, S) ->
  				{next_state, connecting, S#eldap{fd = null}}
      end;
  
@@ -118,89 +235,86 @@
 -  when StateName==active; StateName==active_bind ->
 +handle_info({Tag, _Socket, Data}, StateName, S)
 +  when StateName==active, Tag == tcp;
-+		StateName==active, Tag == ssl;
-+		StateName==active_bind, Tag == tcp;
-+		StateName==active_bind, Tag == ssl ->
++       StateName==active, Tag == ssl;
++       StateName==active_bind, Tag == tcp;
++       StateName==active_bind, Tag == ssl ->
      case catch recvd_packet(Data, S) of
  	{reply, Reply, To, NewS} -> gen_fsm:reply(To, Reply),
  				    {next_state, StateName, NewS};
-@@ -526,9 +576,10 @@
+@@ -526,9 +579,11 @@ handle_info({tcp, _Socket, Data}, StateName, S)
  	{error, _Reason}          -> {next_state, StateName, S}
      end;
  
 -handle_info({tcp_closed, _Socket}, _All_fsm_states, S) ->
-+handle_info({Tag, _Socket}, _All_fsm_states, S) when Tag == tcp_closed;
-+		Tag == ssl_closed ->
++handle_info({Tag, _Socket}, _All_fsm_states, S)
++  when Tag == tcp_closed;
++       Tag == ssl_closed ->
      F = fun(_Id, [{Timer, From, _Name}|_]) ->
 -		gen_fsm:reply(From, {error, tcp_closed}),
 +		gen_fsm:reply(From, {error, Tag}),
  		cancel_timer(Timer)
  	end,
      dict:map(F, S#eldap.dict),
-@@ -536,8 +587,9 @@
+@@ -536,8 +591,10 @@ handle_info({tcp_closed, _Socket}, _All_fsm_states, S) ->
      {next_state, connecting, S#eldap{fd = null,
  				     dict = dict:new(), bind_q=queue:new()}};
  
 -handle_info({tcp_error, _Socket, Reason}, Fsm_state, S) ->
 -    log1("eldap received tcp_error: ~p~nIn State: ~p~n", [Reason, Fsm_state], S),
-+handle_info({Tag, _Socket, Reason}, Fsm_state, S) when Tag == tcp_error;
-+		Tag == ssl_error ->
++handle_info({Tag, _Socket, Reason}, Fsm_state, S)
++  when Tag == tcp_error;
++       Tag == ssl_error ->
 +    log1("eldap received ~p: ~p~nIn State: ~p~n", [Tag, Reason, Fsm_state], S),
      {next_state, Fsm_state, S};
  %%
  %% Timers
-@@ -591,7 +643,8 @@
+@@ -591,7 +648,8 @@ send_command(Command, From, S) ->
  			     protocolOp = {Name, Request}},
      log2("~p~n",[{Name, Request}], S),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
 -    ok = gen_tcp:send(S#eldap.fd, Bytes),
 +%   ok = gen_tcp:send(S#eldap.fd, Bytes),
-+	ok = do_send(S#eldap.fd, S, Bytes),
++    ok = do_send(S#eldap.fd, S, Bytes),
      Timer = erlang:start_timer(?CMD_TIMEOUT, self(), {cmd_timeout, Id}),
      New_dict = dict:store(Id, [{Timer, From, Name}], S#eldap.dict),
      {ok, S#eldap{id = Id,
-@@ -841,10 +894,26 @@
+@@ -841,10 +899,21 @@ polish([], Res, Ref) ->
  %%-----------------------------------------------------------------------
  %% Connect to next server in list and attempt to bind to it.
  %%-----------------------------------------------------------------------
 +do_connect(Host, State, Opts) when State#eldap.use_tls == false ->
-+	gen_tcp:connect(Host, State#eldap.port, Opts);
++    gen_tcp:connect(Host, State#eldap.port, Opts);
 +do_connect(Host, State, Opts) when State#eldap.use_tls == true ->
-+	Vsn = erlang:system_info(version),
-+	if Vsn >= "5.3" ->
-+		%% In R9C, but not in R9B
-+		{_,_,X} = erlang:now(),
-+		ssl:seed("bkrlnateqqo" ++ integer_to_list(X));
-+		true -> true
-+	end,
-+	ssl:connect(Host, State#eldap.port, [{verify,0}|Opts]).
++    {_,_,X} = erlang:now(),
++    ssl:seed("bkrlnateqqo" ++ integer_to_list(X)),
++    ssl:connect(Host, State#eldap.port, [{verify,0}|Opts]).
 +
  connect_bind(S) ->
      Host = next_host(S#eldap.host, S#eldap.hosts),
 -    TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
 -    case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
 +    TcpOpts = case S#eldap.use_tls of
-+		true -> [{packet, asn1}, {active, true}, binary];
-+		_ -> [{packet, asn1}, {active, true}, {keepalive, true}, binary]
-+	end,
-+%   case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
-+	case do_connect(Host, S, TcpOpts) of
++		  true -> [{packet, asn1}, {active, true}, binary];
++		  _ -> [{packet, asn1}, {active, true}, {keepalive, true}, binary]
++	      end,
++    %% case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
++    case do_connect(Host, S, TcpOpts) of
  	{ok, Socket} ->
  	    case bind_request(Socket, S) of
  		{ok, NewS} ->
-@@ -865,6 +934,11 @@
+@@ -865,6 +934,11 @@ connect_bind(S) ->
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
 +do_send(Socket, State, Bytes) when State#eldap.use_tls == false ->
-+	gen_tcp:send(Socket, Bytes);
++    gen_tcp:send(Socket, Bytes);
 +do_send(Socket, State, Bytes) when State#eldap.use_tls == true ->
-+	ssl:send(Socket, Bytes).
++    ssl:send(Socket, Bytes).
 +
  bind_request(Socket, S) ->
      Id = bump_id(S),
      Req = #'BindRequest'{version        = S#eldap.version,
-@@ -874,7 +948,7 @@
+@@ -874,7 +948,7 @@ bind_request(Socket, S) ->
  			     protocolOp = {bindRequest, Req}},
      log2("Message:~p~n",[Message], S),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
@@ -209,54 +323,36 @@
      {ok, S#eldap{id = Id}}.
  
  %% Given last tried Server, find next one to try
---- ejabberd-2.0.0.orig/src/ejabberd_auth_ldap.erl
-+++ ejabberd-2.0.0/src/ejabberd_auth_ldap.erl
-@@ -24,6 +24,10 @@
+diff --git a/src/eldap/eldap.hrl b/src/eldap/eldap.hrl
+index 75f6f76..e46658d 100644
+--- a/src/eldap/eldap.hrl
++++ b/src/eldap/eldap.hrl
+@@ -19,6 +19,9 @@
  %%%
  %%%----------------------------------------------------------------------
  
-+%%% Modified by Thomas Baden <roo@ham9.net> 2008 April 6th
-+%%% Added {ldap_encrypt, [tls|starttls|none]} configuration option
-+%%% NOTICE: STARTTLS is not yet supported.
++-define(LDAP_PORT, 389).
++-define(LDAPS_PORT, 636).
 +
- -module(ejabberd_auth_ldap).
- -author('alexey@process-one.net').
- 
-@@ -350,9 +354,18 @@
- 		   undefined -> [];
- 		   Backups -> Backups
- 		   end,
-+	Encryption = ejabberd_config:get_local_option({ldap_encrypt, Host}),
-     LDAPPort = case ejabberd_config:get_local_option({ldap_port, Host}) of
--		   undefined -> 389;
--		   P -> P
-+		   undefined -> case Encryption of
-+					tls -> {Encryption, 636};
-+					starttls -> {Encryption, 389};
-+					_ -> 389
-+				end;
-+		   P -> case Encryption of
-+					tls -> {Encryption, P};
-+					starttls -> {Encryption, P};
-+					_ -> P
-+				end
- 	       end,
-     RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
- 		 undefined -> "";
---- ejabberd-2.0.0.orig/src/mod_vcard_ldap.erl
-+++ ejabberd-2.0.0/src/mod_vcard_ldap.erl
+ -record(eldap_search, {scope = wholeSubtree,
+ 		       base = [],
+ 		       filter,
+diff --git a/src/mod_vcard_ldap.erl b/src/mod_vcard_ldap.erl
+index 2b5e7fa..63b8a22 100644
+--- a/src/mod_vcard_ldap.erl
++++ b/src/mod_vcard_ldap.erl
 @@ -24,6 +24,10 @@
  %%%
  %%%----------------------------------------------------------------------
  
 +%%% Modified by Thomas Baden <roo@ham9.net> 2008 April 6th
-+%%% Added {ldap_encrypt, [tls|starttls|none]} configuration option
++%%% Added {ldap_encrypt, none|tls|starttls} configuration option.
 +%%% NOTICE: STARTTLS is not yet supported.
 +
  -module(mod_vcard_ldap).
  -author('alexey@process-one.net').
  
-@@ -673,13 +677,27 @@
+@@ -673,13 +677,26 @@ parse_options(Host, Opts) ->
  			  ejabberd_config:get_local_option({ldap_servers, Host});
  		      Backups -> Backups
  		  end,
@@ -267,27 +363,26 @@
 -			   P -> P
 -		       end;
 -		   P -> P
-+	Encryption = case gen_mod:get_opt(ldap_encrypt, Opts, undefined) of
-+			undefined ->
-+				ejabberd_config:get_local_option({ldap_encrypt, Host});
-+			LDE -> LDE
-+		end,
-+	LDAPPortOpt = case gen_mod:get_opt(ldap_port, Opts, undefined) of
-+			undefined -> ejabberd_config:get_local_option({ldap_port, Host});
-+			POpt -> POpt
-+		end,
-+
++    Encryption = case gen_mod:get_opt(ldap_encrypt, Opts, undefined) of
++		     undefined ->
++			 ejabberd_config:get_local_option({ldap_encrypt, Host});
++		     LDE -> LDE
++		 end,
++    LDAPPortOpt = case gen_mod:get_opt(ldap_port, Opts, undefined) of
++		      undefined -> ejabberd_config:get_local_option({ldap_port, Host});
++		      POpt -> POpt
++		  end,
 +    LDAPPort = case LDAPPortOpt of
-+			undefined -> case Encryption of
-+				tls -> {Encryption, 636};
-+				starttls -> {Encryption, 389};
-+				_ -> 389
++		   undefined -> case Encryption of
++				    tls -> {Encryption, ?LDAPS_PORT};
++				    starttls -> {Encryption, ?LDAP_PORT};
++				    _ -> ?LDAP_PORT
 +				end;
-+			P -> case Encryption of
-+				tls -> {Encryption, P};
-+				starttls -> {Encryption, P};
-+				_ -> P
-+				end
++		   P -> case Encryption of
++			    tls -> {Encryption, P};
++			    starttls -> {Encryption, P};
++			    _ -> P
++			end
  	       end,
      LDAPBase = case gen_mod:get_opt(ldap_base, Opts, undefined) of
  		   undefined ->
