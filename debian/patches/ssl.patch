@@ -1,5 +1,18 @@
-Patch by Sergei Golovan fixes S2S to work with R12B also.
+Patch by Sergei Golovan fixes S2S to work with R12B also,
+and removes unnecessary call to ssl:start() because
+ssl module isn't used in ejabberd anymore.
 
+--- ejabberd-2.0.0.orig/src/ejabberd_app.erl
++++ ejabberd-2.0.0/src/ejabberd_app.erl
+@@ -39,7 +39,7 @@
+     randoms:start(),
+     db_init(),
+     sha:start(),
+-    catch ssl:start(),
++%%  catch ssl:start(),
+     stringprep_sup:start_link(),
+     translate:start(),
+     acl:start(),
 --- ejabberd-2.0.0.orig/src/ejabberd_s2s_in.erl
 +++ ejabberd-2.0.0/src/ejabberd_s2s_in.erl
 @@ -50,9 +50,13 @@
