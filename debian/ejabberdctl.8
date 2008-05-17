@@ -5,7 +5,7 @@ ejabberdctl \(em a control interface of ejabberd Jabber/XMPP server
 
 .SH SYNOPSIS
 .PP 
-\fBejabberdctl\fR \fI[--node node] [vhost server] command [options]\fP
+\fBejabberdctl\fR \fI[\-\-node node] [vhost server] command [options]\fP
 
 .SH DESCRIPTION
 .PP 
@@ -21,15 +21,15 @@ Specifies remote erlang node to connect to. Default value is
 environment variable, which can be set in /etc/default/ejabberd, see below).
 If the node name does not contain symbol \fI@\fP
 then actual node name becomes \fInode@host\fP where \fIhost\fP is short
-hostname (usually it coincides with \fI\(gahostname -s\(ga\fP). If the node name
+hostname (usually it coincides with \fI\(gahostname \-s\(ga\fP). If the node name
 contain symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
 will use so-called long names (see \fBerl\fR(1) manual page and look for
-options \fI-name\fP and \fI-sname\fP for details).
+options \fI\-name\fP and \fI\-sname\fP for details).
 
-Examples of \fI--node\fP option:
+Examples of \fI\-\-node\fP option:
 
 .BI ejabberd
-Connect to locally run ejabberd server at node \fIejabberd@\(gahostname -s\(ga\fP.
+Connect to locally run ejabberd server at node \fIejabberd@\(gahostname \-s\(ga\fP.
 
 .BI ejabberd@otherhost
 Connect to remotely run ejabberd server at node \fIejabberd@otherhost\fP.
@@ -59,7 +59,7 @@ Stops the ejabberd server.
 .BI restart
 Restarts the ejabberd server.
 .TP
-.BI reopen-log
+.BI reopen\-log
 Force the ejabberd server to reopen its log file.
 .TP
 .BI register " user server password"
@@ -75,7 +75,7 @@ Backup user database of the ejabberd server to file \fIfilepath\fP.
 .BI restore " filepath"
 Restore user database of the ejabberd server from backup file \fIfilepath\fP.
 .TP
-.BI install-fallback " filepath"
+.BI install\-fallback " filepath"
 Install a backup to \fIfilepath\fP as fallback. The fallback will be
 used to restore the database at the next start-up.
 .TP
@@ -85,32 +85,32 @@ Dump user database of the ejabberd server to text file \fIfilepath\fP.
 .BI load " filepath"
 Restore user database of the ejabberd server from text file \fIfilepath\fP.
 .TP
-.BI import-file " filepath"
+.BI import\-file " filepath"
 Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
 \fIfilepath\fP is \fI.../example.org/user.xml\fP then imported username will be
 \fIuser\fP and it will be imported to virtual server \fIexample.org\fP.
 .TP
-.BI import-dir " directorypath"
+.BI import\-dir " directorypath"
 Import user data from jabberd 1.4 spool directory \fIdirectorypath\fP. Directory
 name should be the name of virtual server to import users.
 .TP
-.BI delete-expired-messages
+.BI delete\-expired\-messages
 Delete expired offline messages from ejabberd database.
 .TP
-.BI user-resources " user server"
+.BI user\-resources " user server"
 List all connected resources of user \fIuser@server\fP.
 .TP
-.BI connected-users-number
+.BI connected\-users\-number
 Report number of established users' sessions.
 .TP
-.BI connected-users
+.BI connected\-users
 List all established users' sessions.
 
 .PP
 If there are \fIvhost server\fP options then the \fIcommand\fP can be
 the following:
 .TP
-.BI registered-users
+.BI registered\-users
 List all registered at the ejabberd server users (at virtual host \fIserver\fP).
 
 .SH OPTIONS FILE
@@ -136,7 +136,7 @@ default variables
 
 .PP 
 The program documentation is available at
-\fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+\fIhttp://www.process\-one.net/en/projects/ejabberd/\fP. 
 A copy of the documentation can be found at
 /usr/share/doc/ejabberd/guide.html.
  
@@ -151,6 +151,5 @@ the terms of the GNU General Public License, Version 2 any
 later version published by the Free Software Foundation. 
 .PP 
 On Debian systems, the complete text of the GNU General Public 
-License can be found in /usr/share/common-licenses/GPL. 
-
+License can be found in /usr/share/common\-licenses/GPL. 
 

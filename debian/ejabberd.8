@@ -5,7 +5,7 @@ ejabberd \(em a distributed fault-tolerant Jabber/XMPP server
 
 .SH SYNOPSIS
 .PP 
-\fBejabberd\fR \fI[options] [--] [erlang_options]\fP
+\fBejabberd\fR \fI[options] [\-\-] [erlang_options]\fP
 
 .SH DESCRIPTION
 .PP 
@@ -14,27 +14,23 @@ ejabberd \(em a distributed fault-tolerant Jabber/XMPP server
 main features are: 
 .PD 0
 .TP
-- XMPP-compliant 
+\(em XMPP-compliant 
 .TP
-- Distributed: \fBejabberd\fR can run on a cluster of machines
+\(em Distributed: \fBejabberd\fR can run on a cluster of machines
 .TP
-- Fault-tolerant: All the information can be stored on more than one node, nodes can be added or replaced `on the fly' 
+\(em Fault-tolerant: All the information can be stored on more than one node, nodes can be added or replaced `on the fly' 
 .TP
-- Built-in Multi-User Chat service 
+\(em Built-in Multi-User Chat service 
 .TP
-- Built-in IRC transport 
+\(em Built-in IRC transport 
 .TP
-- Built-in Publish-Subscribe service 
+\(em Built-in Publish-Subscribe service 
 .TP
-- Built-in Jabber User Directory service based on users vCards 
+\(em Built-in Jabber User Directory service based on users vCards 
 .TP
-- SSL support 
+\(em SSL support 
 .TP
-- Support for JEP-0030 (Service Discovery) 
-.TP
-- Support for JEP-0039 (Statistics Gathering) 
-.TP
-- Support for xml:lang
+\(em Support for internationalized user messages
 
 .SH OPTIONS
 .TP
@@ -44,15 +40,15 @@ node is \fBejabberd\fP (this default node can be also overridden by using
 ERLANG_NODE environment variable in /etc/default/ejabberd, see below).
 If the node name does not contain symbol \fI@\fR then actual node name
 becomes \fBnode@hostname\fP where hostname is short host name (usually it
-coincides with \fI\(gahostname -s\(ga\fP). If the node name contain symbol \fI@\fR
+coincides with \fI\(gahostname \-s\(ga\fP). If the node name contain symbol \fI@\fR
 and its hostname part is a FQDN then \fBejabberd\fR will use so-called
-long names (see \fBerl\fR(1) manual page and look for options \fI-name\fP
-and \fI-sname\fP for details).
+long names (see \fBerl\fR(1) manual page and look for options \fI\-name\fP
+and \fI\-sname\fP for details).
 
-Examples of \fI--node\fP option:
+Examples of \fI\-\-node\fP option:
 
 .BI ejabberd
-Locally run ejabberd server at node \fIejabberd@\(gahostname -s\(ga\fP.
+Locally run ejabberd server at node \fIejabberd@\(gahostname \-s\(ga\fP.
 
 .BI ejabberd@otherhost
 Pretend that ejabberd server runs at otherhost at node \fIejabberd@otherhost\fP.
@@ -87,13 +83,13 @@ interpreter options.
 Some useful options are:
 .br
 .sp
-.BI -detached
+.BI \-detached
     Starts the Erlang system detached from the system console.
 .br
-.BI -heart
+.BI \-heart
     Starts heart beat monitoring of the Erlang system.
 .br
-.BI -noinput
+.BI \-noinput
     Ensures that the Erlang system never tries to read any input.
 
 .SH CONFIGURATION FILE
@@ -164,14 +160,14 @@ default variables
 
 .PP 
 The program documentation is available at
-\fIhttp://www.process-one.net/en/projects/ejabberd/\fP. 
+\fIhttp://www.process\-one.net/en/projects/ejabberd/\fP. 
 A copy of the documentation can be found at
 /usr/share/doc/ejabberd/guide.html.
  
 .SH AUTHORS
 .PP 
 This manual page was adapted by Christophe Romain
-<christophe.romain@process-one.net> and Sergei Golovan <sgolovan@nes.ru> for
+<christophe.romain@process\-one.net> and Sergei Golovan <sgolovan@nes.ru> for
 the \fBDebian\fP system (but may be used by others) from the \fBejabberd\fP
 documentation written by Alexey Shchepin <alexey@sevcom.net>.
 
@@ -180,6 +176,5 @@ the terms of the GNU General Public License, Version 2 any
 later version published by the Free Software Foundation. 
 .PP 
 On Debian systems, the complete text of the GNU General Public 
-License can be found in /usr/share/common-licenses/GPL. 
-
+License can be found in /usr/share/common\-licenses/GPL. 
 
