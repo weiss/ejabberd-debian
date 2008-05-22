@@ -1,16 +1,22 @@
 Patch by Sergei Golovan turns unnecessary error messages into debug messages.
 
---- ejabberd-2.0.0.orig/src/mod_caps.erl
-+++ ejabberd-2.0.0/src/mod_caps.erl
-@@ -252,9 +252,9 @@
+--- ejabberd-2.0.1.orig/src/mod_caps.erl
++++ ejabberd-2.0.1/src/mod_caps.erl
+@@ -248,7 +248,7 @@
+ 		      end),
+ 		    gen_server:cast(self(), visit_feature_queries);
+ 		error ->
+-		    ?ERROR_MSG("ID '~s' matches no query", [ID])
++		    ?DEBUG("ID '~s' matches no query", [ID])
  	    end;
  	{error, _} ->
- 	    gen_server:cast(self(), visit_feature_queries),
--	    ?ERROR_MSG("Error IQ reponse IQ from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
-+	    ?DEBUG("Error IQ reponse IQ from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
- 	{result, _} ->
--	    ?ERROR_MSG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
-+	    ?DEBUG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
- 	_ ->
- 	    %% Can't do anything about errors
- 	    ok
+ 	    %% XXX: if we get error, we cache empty feature not to probe the client continuously
+@@ -262,7 +262,7 @@
+ 		      end),
+ 		    gen_server:cast(self(), visit_feature_queries);
+ 		error ->
+-		    ?ERROR_MSG("ID '~s' matches no query", [ID])
++		    ?DEBUG("ID '~s' matches no query", [ID])
+ 	    end;
+ 	    %gen_server:cast(self(), visit_feature_queries),
+ 	    %?DEBUG("Error IQ reponse from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);

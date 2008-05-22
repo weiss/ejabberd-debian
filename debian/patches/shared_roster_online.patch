@@ -1,5 +1,5 @@
---- ejabberd-2.0.0.orig/src/mod_shared_roster.erl
-+++ ejabberd-2.0.0/src/mod_shared_roster.erl
+--- ejabberd-2.0.1.orig/src/mod_shared_roster.erl
++++ ejabberd-2.0.1/src/mod_shared_roster.erl
 @@ -38,6 +38,8 @@
  	 in_subscription/6,
  	 out_subscription/4,
@@ -11,9 +11,9 @@
  	 create_group/3,
 @@ -84,7 +86,11 @@
      ejabberd_hooks:add(roster_process_item, Host,
-         	       ?MODULE, process_item, 50),
+ 		       ?MODULE, process_item, 50),
      ejabberd_hooks:add(user_registered, Host,
--         	       ?MODULE, user_registered, 50).
+-		       ?MODULE, user_registered, 50).
 +         	       ?MODULE, user_registered, 50),
 +    ejabberd_hooks:add(user_available_hook, Host,
 +         	       ?MODULE, user_available, 50),
@@ -35,7 +35,7 @@
  %%ejabberd_hooks:delete(remove_user, Host,
  %%    		  ?MODULE, remove_user, 50),
  
-@@ -368,6 +378,9 @@
+@@ -376,6 +386,9 @@
      %% Apply the function to every user in the list
      lists:filter(F, Users).
  
@@ -45,7 +45,7 @@
  get_group_users(Host, Group) ->
      case get_group_opt(Host, Group, all_users, false) of
  	true ->
-@@ -381,6 +394,12 @@
+@@ -389,6 +402,12 @@
  	Days when is_integer(Days) ->
              get_recent_users(Host, Days)
      end ++
@@ -57,21 +57,35 @@
 +    end ++
      get_group_explicit_users(Host, Group).
  
+ get_group_users(_User, Host, Group, GroupOpts) ->
+@@ -404,6 +423,12 @@
+ 	Days when is_integer(Days) ->
+             get_recent_users(Host, Days)
+     end ++
++    case proplists:get_value(online_users, GroupOpts,false) of
++	true ->
++	    get_online_users(Host);
++	false ->
++	    []
++    end ++
+     get_group_explicit_users(Host, Group).
+ 
  get_group_explicit_users(Host, Group) ->
-@@ -399,7 +418,8 @@
+@@ -425,7 +450,8 @@
      lists:filter(
        fun(Group) ->
- 	get_group_opt(Host, Group, all_users, false) orelse
--	get_group_opt(Host, Group, recent_users_days, 0) > 0 end,
-+	get_group_opt(Host, Group, recent_users_days, 0) > 0 orelse
-+	get_group_opt(Host, Group, online_users, false) end,
+ 	      get_group_opt(Host, Group, all_users, false) orelse
+-	      get_group_opt(Host, Group, recent_users_days, 0) > 0
++	      get_group_opt(Host, Group, recent_users_days, 0) > 0 orelse
++	      get_group_opt(Host, Group, online_users, false)
+       end,
        list_groups(Host)).
  
- get_user_displayed_groups(US) ->
-@@ -461,6 +481,102 @@
- 		end, USs)
-       end, DisplayedGroups).
- 
+@@ -516,6 +542,103 @@
+ 			push_item(U, S, jlib:make_jid("", S, ""), Item)
+ 		end, get_group_users(LUser, LServer, Group, GroupOpts))
+       end, lists:usort(SpecialGroups++UserGroups)).
++ 
 +%% get a roster item for a contact from a particular user's
 +%% perspective, considering both normal and shared roster items
 +%% FIXME: is there a more efficient way to do this?
@@ -169,9 +183,9 @@
 +	ok
 +    end.
  
- push_item(User, Server, From, Item) ->
-     ejabberd_sm:route(jlib:make_jid("", "", ""),
-@@ -626,6 +742,7 @@
+ push_item(_User, _Server, _From, none) ->
+     ok;
+@@ -683,6 +806,7 @@
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
      RecentUsersDays = get_opt(GroupOpts, recent_users_days, 0),
@@ -179,7 +193,7 @@
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -642,6 +759,12 @@
+@@ -699,6 +823,12 @@
  	    true ->
  		[]
  	end ++
@@ -192,7 +206,7 @@
  	[[us_to_list(Member), $\n] || Member <- Members],
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      FGroup =
-@@ -727,6 +850,8 @@
+@@ -784,6 +914,8 @@
  				  USs;
  			      "@recent@" ->
  				  USs;
@@ -201,7 +215,7 @@
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -747,11 +872,16 @@
+@@ -804,11 +936,16 @@
  		    true -> [{recent_users_days, 7}];
  		    false -> []
  		end,

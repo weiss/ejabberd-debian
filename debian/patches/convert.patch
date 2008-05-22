@@ -1,5 +1,5 @@
 --- /dev/null
-+++ ejabberd-2.0.0/src/mnesia_convert.erl
++++ ejabberd-2.0.1/src/mnesia_convert.erl
 @@ -0,0 +1,46 @@
 +-module(mnesia_convert).
 +-export([change_node_name/4]).
@@ -7,11 +7,11 @@
 +change_node_name(From, To, Source, Target) ->
 +	Switch =
 +		fun
-+			(Node) when Node == From -> 
++			(Node) when Node == From ->
 +				io:format("     - Replacing nodename: '~p' with: '~p'~n", [From, To]),
 +				To;
 +			(Node) when Node == To -> throw({error, already_exists});
-+			(Node) -> 
++			(Node) ->
 +				io:format("     - Node: '~p' will not be modified (it is not '~p')~n", [Node, From]),
 +				Node
 +		end,
@@ -33,7 +33,7 @@
 +				OptSwitch =
 +					fun({Key, Val}) ->
 +						case lists:member(Key, Keys) of
-+							true -> 
++							true ->
 +								io:format("   + Checking key: '~p'~n", [Key]),
 +								{Key, lists:map(Switch, Val)};
 +							false-> {Key, Val}

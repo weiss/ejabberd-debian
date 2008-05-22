@@ -1,20 +1,8 @@
-Patch by Evgeniy Khramtsov replaces function inet:ip_to_bytes by inet_parse:ntoa
-in proxy65 module because it was removed from Erlang R12B. Also, it decreases
-buffer sizes (size 65535 is known to confuse users with tight shapers).
+Patch by Evgeniy Khramtsov decreases proxy65 buffer sizes (size 65535 is known
+to confuse users with tight shapers).
 
---- ejabberd-2.0.0.orig/src/mod_proxy65/mod_proxy65_service.erl
-+++ ejabberd-2.0.0/src/mod_proxy65/mod_proxy65_service.erl
-@@ -201,7 +201,7 @@
- 	         none -> get_proxy_or_domainip(ServerHost, MyHost);
- 	         Addr -> Addr
- 	     end,
--    [_ | StrIP] = lists:append([[$. | integer_to_list(X)] || X <- inet:ip_to_bytes(IP)]),
-+    StrIP = inet_parse:ntoa(IP),
-     StreamAddr = [{"jid", MyHost}, {"host", StrIP}, {"port", integer_to_list(Port)}],
-     {IP, #state{myhost      = MyHost,
- 		serverhost  = ServerHost,
---- ejabberd-2.0.0.orig/src/mod_proxy65/mod_proxy65_stream.erl
-+++ ejabberd-2.0.0/src/mod_proxy65/mod_proxy65_stream.erl
+--- ejabberd-2.0.1.orig/src/mod_proxy65/mod_proxy65_stream.erl
++++ ejabberd-2.0.1/src/mod_proxy65/mod_proxy65_stream.erl
 @@ -89,8 +89,8 @@
      process_flag(trap_exit, true),
      AuthType = gen_mod:get_opt(auth_type, Opts, anonymous),

@@ -1,5 +1,5 @@
---- ejabberd-2.0.0.orig/src/ejabberd.app
-+++ ejabberd-2.0.0/src/ejabberd.app
+--- ejabberd-2.0.1.orig/src/ejabberd.app
++++ ejabberd-2.0.1/src/ejabberd.app
 @@ -70,6 +70,7 @@
  	     mod_caps,
  	     mod_configure2,
@@ -9,7 +9,7 @@
  	     mod_echo,
  	     mod_http_bind,
 --- /dev/null
-+++ ejabberd-2.0.0/src/mod_ctlextra.erl
++++ ejabberd-2.0.1/src/mod_ctlextra.erl
 @@ -0,0 +1,731 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : mod_ctlextra.erl
@@ -59,7 +59,7 @@
 +		{"srg-delete group host", "delete the group"},
 +		{"srg-user-add user server group host", "add user@server to group on host"},
 +		{"srg-user-del user server group host", "delete user@server from group on host"},
-+			
++
 +		% mod_vcard
 +		{"vcard-get user host data [data2]", "get data from the vCard of the user"},
 +		{"vcard-set user host data [data2] content", "set data to content on the vCard"},
@@ -133,7 +133,7 @@
 +		{export_roster, roster},
 +		{export_vcard, vcard},
 +		{export_vcard_search, vcard_search}],
-+	Export = fun({TableFun, Table}) -> 
++	Export = fun({TableFun, Table}) ->
 +		Filename = filename:join([Output, atom_to_list(Table)++".txt"]),
 +		io:format("Trying to export Mnesia table '~p' on server '~s' to file '~s'~n", [Table, Server, Filename]),
 +		catch ejd2odbc:TableFun(Server, Filename)
@@ -285,7 +285,7 @@
 +
 +ctl_process(_Val, ["killsession", User, Server, Resource]) ->
 +    ejabberd_router:route(
-+        jlib:make_jid("", "", ""), 
++        jlib:make_jid("", "", ""),
 +        jlib:make_jid(User, Server, Resource),
 +        {xmlelement, "broadcast", [], [{exit, "killed"}]}),
 +    ?STATUS_SUCCESS;
@@ -358,8 +358,8 @@
 +		_ ->
 +			fun(A, B) -> A == B end
 +	end,
-+	[{User, Server, Resource, Priority, stringize(Status_text)} 
-+	 || {{User, Resource, Status, Status_text}, Server, Priority} <- Sessions4, 
++	[{User, Server, Resource, Priority, stringize(Status_text)}
++	 || {{User, Resource, Status, Status_text}, Server, Priority} <- Sessions4,
 +	 apply(Fstatus, [Status, Status_required])].
 +
 +% Make string more print-friendly
@@ -460,7 +460,7 @@
 +vcard_set2(User, Server, R, Data) ->
 +	% Get old vcard
 +	A4 = case mnesia:dirty_read(vcard, {User, Server}) of
-+		[] -> 
++		[] ->
 +			[R];
 +		[{_, _, A1}] ->
 +			{_, _, _, A2} = A1,
@@ -504,12 +504,12 @@
 +						% get his age
 +						Sec = TimeStamp_now - TimeStamp,
 +						% If he is
-+						if 
-+							% younger than SecOlder: 
++						if
++							% younger than SecOlder:
 +							Sec < SecOlder ->
 +								% do nothing
 +								false;
-+							% older: 
++							% older:
 +							true ->
 +								% remove the user
 +								ejabberd_auth:remove_user(LUser, LServer),
@@ -661,7 +661,7 @@
 +
 +	Rooms_to_delete_full = fill_serverhost(Rooms_to_delete, ServerHost),
 +
-+	Delete = fun({N, H, SH}) -> 
++	Delete = fun({N, H, SH}) ->
 +		mod_muc:room_destroyed(H, N, SH),
 +		mod_muc:forget_room(H, N)
 +	end,
@@ -710,8 +710,8 @@
 +	end,
 +
 +	case {Persistent, Just_created, Num_users, Have_history, seconds_to_days(Last)} of
-+		{true, false, 0, _, Last_days} 
-+		when Last_days > Last_allowed -> 
++		{true, false, 0, _, Last_days}
++		when Last_days > Last_allowed ->
 +			true;
 +		_ ->
 +			false
@@ -723,9 +723,9 @@
 +get_room_names(Host) ->
 +	Get_room_names = fun(Room_reg, Names) ->
 +		case {Host, Room_reg#muc_online_room.name_host} of
-+			{Host, {Name1, Host}} -> 
++			{Host, {Name1, Host}} ->
 +				[{Name1, Host} | Names];
-+			{global, {Name1, Host1}} -> 
++			{global, {Name1, Host1}} ->
 +				[{Name1, Host1} | Names];
 +			_ ->
 +				Names
