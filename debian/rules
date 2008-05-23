@@ -40,5 +40,6 @@ install/ejabberd::
 
 get-orig-source:
 	dh_testdir
-	wget -O ../ejabberd_$(DEB_UPSTREAM_VERSION).orig.tar.gz http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION).tar.gz
+	wget -O ../ejabberd_$(DEB_UPSTREAM_VERSION).orig.tar.gz \
+		http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION)_2.tar.gz
 

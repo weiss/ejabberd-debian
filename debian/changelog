@@ -2,8 +2,10 @@ ejabberd (2.0.1-1) unstable; urgency=low
 
   * New upstream bugfix release.
   * Refreshed patches, removed those which were included into upstream.
+  * Fixed debian/watch to cover current release version (with _2 suffix).
+  * Added _2 suffix to get-orig-source target in debian/rules.
 
- -- Sergei Golovan <sgolovan@debian.org>  Thu, 22 May 2008 17:30:36 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 23 May 2008 15:03:33 +0400
 
 ejabberd (2.0.0-7) unstable; urgency=low
 
