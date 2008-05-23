@@ -97,6 +97,28 @@ name should be the name of virtual server to import users.
 .BI delete\-expired\-messages
 Delete expired offline messages from ejabberd database.
 .TP
+.BI delete\-old\-messages " n"
+Delete offline messages older than \fIn\fP days from ejabberd database.
+.TP
+.BI mnesia info
+Show some information about the Mnesia system (see \fBmnesia\fP(3), function
+\fIinfo\fP).
+.TP
+.BI mnesia
+Show all information about the Mnesia system, such as transaction statistics,
+db_nodes, and configuration parameters (see \fBmnesia\fP(3), function
+system_info).
+.TP
+.BI mnesia " key"
+Show information about the Mnesia system according to \fIkey\fP specified
+(see \fBmnesia\fP(3), function system_info for valid \fIkey\fP values).
+.TP
+.BI incoming\-s2s\-number
+Print number of incoming server-to-server connections to the node.
+.TP
+.BI outgoing\-s2s\-number
+Print number of outgoing server-to-server connections from the node.
+.TP
 .BI user\-resources " user server"
 List all connected resources of user \fIuser@server\fP.
 .TP
@@ -112,6 +134,103 @@ the following:
 .TP
 .BI registered\-users
 List all registered at the ejabberd server users (at virtual host \fIserver\fP).
+
+.PP
+An optional module \fBmod_ctlextra\fP adds a number of other commands. They are:
+.TP
+.BI compile " file"
+Compile erlang source file \fIfile\fP.
+.TP
+.BI load\-config " file"
+Load config from \fIfile\fP. Note that loading config to a database doesn't mean
+reloading server. For example it's impossible to add/remove virtual hosts
+without server restart.
+.TP
+.BI remove\-node " nodename"
+Remove an ejabberd node \fInodename\fP from the Mnesia database cluster.
+.TP
+.BI delete\-older\-users " days"
+Delete users that have not logged in the last \fIdays\fP.
+.TP
+.BI set\-password " user server password"
+Set password for user \fIuser@server\fP to \fIpassword\fP.
+.TP
+.BI export2odbc " server outputdir"
+Export Mnesia tables on \fIserver\fP to files in \fIoutputdir\fP directory
+for subsequent import to a relational database system.
+.TP
+.BI delete\-older\-messages " days"
+Delete offline messages older than \fIdays\fP.
+.TP
+.BI srg\-create " group host name description display"
+Create shared roster group \fIgroup\fP at server \fIhost\fP with displayed name
+\fIname\fP, description \fIdescription\fP and displayed groups \fIdisplay\fP.
+.TP
+.BI srg\-delete " group host"
+Delete shared roster group \fIgroup\fP from server \fIhost\fP.
+.TP
+.BI srg\-user\-add " user server group host"
+Add user \fIuser@server\fP to group \fIgroup\fP at server \fIhost\fP.
+.TP
+.BI srg\-user\-del " user server group host"
+Delete user \fIuser@server\fP from group \fIgroup\fP at server \fIhost\fP.
+.TP
+.BI vcard\-get " user host data [data2]"
+Get data from the vCard of \fIuser@host\fP. \fIdata\fP (and optional \fIdata2\fP)
+is a vCard node. For example \fIdata\fP may be \fBFN\fP or \fBNICKNAME\fP.
+For retrieving email address use \fBEMAIL USERID\fP. Other options can be obtained
+from XEP-0054 (http://www.xmpp.org/extensions/xep\-0054.html).
+.TP
+.BI vcard\-set " user host data [data2] content"
+Set data to content for \fIuser@host\fP vCard. \fIdata\fP (and optional \fIdata2\fP)
+has the same meaning as for \fBvcard\-get\fP command.
+.TP
+.BI muc\-purge " days"
+Destroy MUC rooms with zero activity (no messages in history) in the last
+\fIdays\fP days.
+.TP
+.BI muc\-online\-rooms
+Print the list of existing MUC rooms.
+.TP
+.BI add\-rosteritem " user1 server1 user2 server2 nick group subs"
+Add \fIuser2@server2\fP to \fIuser1@server1\fP's roster. 
+.TP
+.BI pushroster " file user server"
+Push template roster in file \fIfile\fP to \fIuser@server\fP. The file contents
+must use the following format:
+.sp
+.nf
+[{"bob", "example.org", "Bob's group", "Bob's nickname"},
+ {"mart", "example.org", "workers", "Mart"},
+ {"Rich", "example.org", "bosses", "Rich"}].
+.fi
+.TP
+.BI pushroster\-all " file"
+Push template roster in file to all users listed in the file \fIfile\fP itself.
+The file contents must be in the same format as for \fBpushroster\fP command.
+.TP
+.BI push\-alltoall " server group"
+Adds all the users at server \fIserver\fP to each other's roster using group \fIgroup\fP.
+.TP
+.BI status\-list " status"
+Print the list of currently logged users with status \fIstatus\fP. Status can be either
+\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
+\fBdnd\fP.
+.TP
+.BI status\-num " status"
+Print the number of currently logged users with status \fIstatus\fP. Status can be either
+\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
+\fBdnd\fP.
+.TP
+.BI stats registeredusers
+Print the number of currently registered users.
+.TP
+.BI stats onlineusers
+Print the number of currently logged users.
+.TP
+.BI killsession " user server resource"
+Kill user \fIuser@server/resource\fP session.
+
 
 .SH OPTIONS FILE
 .PP 

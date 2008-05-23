@@ -4,8 +4,12 @@ ejabberd (2.0.1-1) unstable; urgency=low
   * Refreshed patches, removed those which were included into upstream.
   * Fixed debian/watch to cover current release version (with _2 suffix).
   * Added _2 suffix to get-orig-source target in debian/rules.
+  * Fixed mod_ctlextra to work with ejabberd 2.0.1 (changed session record
+    definition).
+  * Added new ejabberdctl commands (both new in 2.0.1 and in mod_ctlextra)
+    to ejabberdctl manual page.
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri, 23 May 2008 15:03:33 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Sat, 24 May 2008 00:37:21 +0400
 
 ejabberd (2.0.0-7) unstable; urgency=low
 

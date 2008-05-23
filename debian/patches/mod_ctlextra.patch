@@ -36,7 +36,7 @@
 +-include("ejabberd_ctl.hrl").
 +-include("jlib.hrl").
 +
-+-record(session, {sid, usr, us, priority}). % copied from ejabberd_sm.erl
++-record(session, {sid, usr, us, priority, info}). % copied from ejabberd_sm.erl
 +
 +start(Host, _Opts) ->
 +	ejabberd_ctl:register_commands([
