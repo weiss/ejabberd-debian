@@ -40,6 +40,25 @@ start()
     su $EJABBERDUSER -c "$EJABBERD -noshell -detached"
 }
 
+stop()
+{
+    if ctl stop ; then
+	cnt=0
+	sleep 1
+	while ctl status ; do
+	    echo -n .
+	    cnt=`expr $cnt + 1`
+	    if [ $cnt -gt 60 ] ; then
+		echo -n " failed"
+		break
+	    fi
+	    sleep 1
+	done
+    else
+	echo -n " failed"
+    fi
+}
+
 case "$1" in
     start)
 	echo -n "Starting jabber server: $NAME"
@@ -52,21 +71,7 @@ case "$1" in
     stop)
 	echo -n "Stopping jabber server: $NAME"
 	if ctl status ; then
-	    if ctl stop ; then
-		cnt=0
-		sleep 1
-		while ctl status ; do
-		    echo -n .
-		    cnt=`expr $cnt + 1`
-		    if [ $cnt -gt 60 ] ; then
-			echo -n " failed"
-			break
-		    fi
-		    sleep 1
-		done
-	    else
-		echo -n " failed"
-	    fi
+	    stop
 	else
 	    echo -n " already stopped"
 	fi
@@ -74,14 +79,15 @@ case "$1" in
     restart|force-reload)
 	echo -n "Restarting jabber server: $NAME"
 	if ctl status ; then
-	    ctl restart
+	    stop
+	    start
 	else
 	    echo -n " is not running. Starting $NAME"
 	    start
 	fi
     ;;
     *)
-	echo "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
 	exit 1
     ;;
 esac

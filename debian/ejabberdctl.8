@@ -16,9 +16,8 @@ running \fBejabberd\fR daemon.
 .SH OPTIONS
 .TP
 .BI \-\-node " node"
-Specifies remote erlang node to connect to. Default value is
-\fIejabberd\fP. (\fBejabberdctl\fP also honors ERLANG_NODE
-environment variable, which can be set in /etc/default/ejabberd, see below).
+Specifies remote Erlang node to connect to. Default value is
+\fIejabberd\fP.
 If the node name does not contain symbol \fI@\fP
 then actual node name becomes \fInode@host\fP where \fIhost\fP is short
 hostname (usually it coincides with \fI\(gahostname \-s\(ga\fP). If the node name
@@ -37,6 +36,9 @@ Connect to remotely run ejabberd server at node \fIejabberd@otherhost\fP.
 .BI ejabberd@localhost
 Connect to locally run ejabberd server at node \fIejabberd@localhost\fP.
 
+ejabberdctl honors ERLANG_NODE environment variable from /etc/default/ejabberd,
+see below.
+
 .TP
 .BI vhost " server"
 Specifies that \fIcommand\fP should be executed for virtual host \fIserver\fP.
@@ -51,13 +53,15 @@ Attaches an interactive Erlang shell to a running ejabberd server. To detach it
 press Ctrl+G, q, <Return>.
 .TP
 .BI status
-Requests status of the ejabberd server.
+Requests status of the Erlang virtual machine where ejabberd server is running.
 .TP
 .BI stop
-Stops the ejabberd server.
+Stops the ejabberd server and Erlang virtual machine.
 .TP
 .BI restart
-Restarts the ejabberd server.
+Restarts the ejabberd server inside Erlang virtual machine. Note that if you want
+to change VM options (enable/disable kernel poll or SMP, increase number of ports
+or database tables) you have to stop ejabberd completely and then start it again.
 .TP
 .BI reopen\-log
 Force the ejabberd server to reopen its log file.
@@ -135,11 +139,27 @@ the following:
 .BI registered\-users
 List all registered at the ejabberd server users (at virtual host \fIserver\fP).
 
+.SH EXTRA OPTIONS
 .PP
-An optional module \fBmod_ctlextra\fP adds a number of other commands. They are:
+An optional module \fBmod_ctlextra\fP adds a number of other commands.
+.PP
+To enable the additional commands add it to \fB{modules}\fP
+section of ejabberd config file and make it looking as the following:
+.sp
+.nf
+{modules,
+ [
+  ...
+  {mod_ctlextra, []},
+  ...
+ ]}.
+.fi
+.PP
+The new options are:
+
 .TP
 .BI compile " file"
-Compile erlang source file \fIfile\fP.
+Compile Erlang source file \fIfile\fP.
 .TP
 .BI load\-config " file"
 Load config from \fIfile\fP. Note that loading config to a database doesn't mean
@@ -231,6 +251,22 @@ Print the number of currently logged users.
 .BI killsession " user server resource"
 Kill user \fIuser@server/resource\fP session.
 
+.SH
+.PP
+ejabberdctl starts distributed Erlang node \fIejabberddebug\fP (if run with
+\fBdebug\fP option) or \fIejabberdctl\fP (if run with any other options).
+If the ejabberd server's node name to connect to includes FDQN as a hostname
+Erlang option \fI\-name\fP is used. Otherwise ejabberdctl uses short names
+(\fI\-sname\fP option).
+
+.PP
+Note that ejabberdctl does not append hostname to its own node name leaving
+this to Erlang emulator. It usually follows \fI\(gahostname \-f\(ga\fP to
+find a hostname if long names are used or \fI\(gahostname \-s\(ga\fP in case
+of short names, but may fail in case of unusual networking settings. A known
+case of failure is using long names when \fI\(gahostname \-f\(ga\fP doesn't
+return FDQN. If ejabberdctl cannot create Erlang node then it cannot control
+ejabberd server.
 
 .SH OPTIONS FILE
 .PP 
@@ -239,10 +275,10 @@ is used by \fBejabberdctl\fP.
 
 .PD 0
 .I ERLANG_NODE
-Use specified string as erlang node of \fBejabberd\fP server to connect. It
+Use specified string as Erlang node of \fBejabberd\fP server to connect. It
 overrides default \fBejabberd\fP node name. The string may take one of the
 following forms: \fBnodename\fP, \fBnodename@hostname\fP or
-\fBnodename@hostname.domainname\fP
+\fBnodename@hostname.domainname\fP.
 
 .SH FILES
 .PD 0

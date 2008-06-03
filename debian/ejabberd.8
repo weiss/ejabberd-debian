@@ -9,9 +9,10 @@ ejabberd \(em a distributed fault-tolerant Jabber/XMPP server
 
 .SH DESCRIPTION
 .PP 
-\fBejabberd\fR is a distributed fault-tolerant Jabber/XMPP server written in Erlang. 
+\fBejabberd\fR is a distributed fault-tolerant Jabber/XMPP server written in
+Erlang. 
 
-main features are: 
+Its main features are:
 .PD 0
 .TP
 \(em XMPP-compliant 
@@ -35,9 +36,8 @@ main features are:
 .SH OPTIONS
 .TP
 .BI \-\-node " node"
-Specifies erlang \fInode\fP at which ejabberd server will be run. Default
-node is \fBejabberd\fP (this default node can be also overridden by using
-ERLANG_NODE environment variable in /etc/default/ejabberd, see below).
+Specifies Erlang \fInode\fP at which ejabberd server will be run. Default
+node is \fBejabberd\fP.
 If the node name does not contain symbol \fI@\fR then actual node name
 becomes \fBnode@hostname\fP where hostname is short host name (usually it
 coincides with \fI\(gahostname \-s\(ga\fP). If the node name contain symbol \fI@\fR
@@ -59,22 +59,36 @@ to other computer IP.)
 Locally run ejabberd server at node \fIejabberd@localhost\fP. Only nodes
 running at the same host can connect to this node.
 
+.BI ejabberd@hostname.domainname
+Using \fI\-name\fP Erlang option, run ejabberd server at long-name node
+\fIejabberd@hostname.domainname\fP. To be able to control this server instance
+\fIhostname.domainname\fP must resolve (either by DNS or via /etc/hosts) to
+the server's IP.
+
+.PP
+The default node can be overridden by defining ERLANG_NODE environment variable
+in /etc/default/ejabberd, see below.
+
 .TP
 .BI \-\-config " config\-file"
 Specifies an alternate \fIconfig\-file\fP to be parsed at startup, rather
 than the default (\fB/etc/ejabberd/ejabberd.cfg\fP).
+
 .TP
 .BI \-\-spool " spool\-dir"
 Specifies an alternate \fIspool\-dir\fP to store user database instead of
 the default (\fB/var/lib/ejabberd\fP).
+
 .TP
 .BI \-\-log " log\-file"
 Log Jabber events to specified \fIlog\-file\fP rather than to the default
 (\fB/var/log/ejabberd/ejabberd.log\fP).
+
 .TP
 .BI \-\-sasl\-log " sasl\-log\-file"
 Log SASL (System Application Support Libraries) events to specified
 \fIsasl\-log\-file\fP rather than to the default (\fB/var/log/ejabberd/sasl.log\fP).
+
 .TP
 .I erlang_options
 Other options (and all options following \fB\-\-\fR) are passed directly to
@@ -123,9 +137,29 @@ The file \fB/etc/default/ejabberd\fR contains specific options.
 
 .PD 0
 .TP
-.I ERL_OPTIONS
-With this option, parameters can be passed to \fBErlang\fR interpretor. See
-\fBErlang\fR documentation for more details on interpreter options.
+.I POLL
+If set to true this variable enables kernel polling which can reduce CPU
+load on a system with a high number of users.
+This option requires support in the kernel and in Erlang emulator.
+
+.TP
+.I SMP
+Enables or disables SMP support in Erlang emulator. Valid values are disable
+(default), auto, and enable.
+.br
+.sp
+Explanation in Erlang/OTP documentation:
+
+.BI enable:
+Starts the Erlang runtime system with SMP support enabled. This
+may fail if no runtime system with SMP support is available.
+.br
+.BI auto:
+Starts the Erlang runtime system with SMP support enabled if it
+is available and more than one logical processor are detected.
+.br
+.BI disable:
+Starts a runtime system without SMP support.
 
 .TP
 .I ERL_MAX_PORTS
@@ -133,9 +167,26 @@ To use more than 1024 connections (default value), \fIERL_MAX_PORTS\fP should be
 to the number of connections needed.
 
 .TP
+.I PROCESSES
+Specifies the maximum number of Erlang processes to use. Default value is 250000.
+Maximum value is 268435456. Ejabberd uses up to three processes per user or
+server connection.
+
+.TP
+.I ERL_MAX_ETS_TABLES
+Sets the maximum number of ETS and Mnesia tables. Default value is 1400 which
+should be sufficient for a sever without many custom modules. If a message
+** Too many db tables ** appears in ejabberd log files then increase this number.
+
+.TP
+.I ERL_OPTIONS
+With this option, parameters can be passed to \fBErlang\fR interpretor. See
+\fBErlang\fR documentation for more details on interpreter options.
+
+.TP
 .I ERL_FULLSWEEP_AFTER
 To reduce memory usage when allowing a large number of connections, \fIERL_FULLSWEEP_AFTER\fP
-may be set to 0 by uncommenting the corresponding line into the options file,
+may be set to 0 in the options file,
 but in this case \fBejabberd\fR may start to work slower.
 
 .TP
@@ -154,9 +205,21 @@ default configuration file
 .I /etc/default/ejabberd
 default variables
 
+.SH BUGS
+.PP
+Ejabberd uses distributed Erlang mode to work properly. This means that on start it
+connects to \fBepmd\fP (Erlang port mapping daemon) which is listening at port 4369
+and tries to register ejabberd node name. If the connection fails (known failure
+reasons are unavailability of a loopback interface or firewall issues) Erlang emulator
+fails to start with not very clear error message. If there's already started Erlang
+node with the same name (\fIejabberd\fP by default) then ejabberd will also fail with
+a cryptic error message (in which one can find words \fI{error,duplicate_name}\fP).
+Another possible case when ejabberd cannot start is incorrect permissions of
+\fI/var/lib/ejabberd\fP directory (it must be writable by user ejabberd).
+
 .SH SEE ALSO 
 .PP 
-\fBerl\fR(1), \fBsasl\fR(6), \fBejabberdctl\fR(8). 
+\fBerl\fR(1), \fBsasl\fR(6), \fBejabberdctl\fR(8), \fBepmd\fR. 
 
 .PP 
 The program documentation is available at

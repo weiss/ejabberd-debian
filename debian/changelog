@@ -2,14 +2,21 @@ ejabberd (2.0.1-1) unstable; urgency=low
 
   * New upstream bugfix release.
   * Refreshed patches, removed those which were included into upstream.
+  * Added _2 suffix to get-orig-source target in debian/rules (temporarily).
   * Fixed debian/watch to cover current release version (with _2 suffix).
-  * Added _2 suffix to get-orig-source target in debian/rules.
   * Fixed mod_ctlextra to work with ejabberd 2.0.1 (changed session record
     definition).
   * Added new ejabberdctl commands (both new in 2.0.1 and in mod_ctlextra)
     to ejabberdctl manual page.
+  * Changed restart branch in init.d script to perform full Erlang VM stop
+    and start again (this allows to apply changes in /etc/default/ejabberd
+    if any during ejabberd restart).
+  * Clarified -sname and -name Erlang option usage by ejabberd and ejabberdctl
+    in their manual pages (closes: #482904).
+  * Added BUGS section to ejabberd manual page with a short description of
+    the most common cases of ejabberd start failures (closes: #481819).
 
- -- Sergei Golovan <sgolovan@debian.org>  Sat, 24 May 2008 00:37:21 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Tue, 03 Jun 2008 10:55:46 +0400
 
 ejabberd (2.0.0-7) unstable; urgency=low
 
