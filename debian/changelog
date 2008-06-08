@@ -1,3 +1,9 @@
+ejabberd (2.0.1-2) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Sun,  8 Jun 2008 17:02:35 +0400
+
 ejabberd (2.0.1-1) unstable; urgency=low
 
   * New upstream bugfix release.
