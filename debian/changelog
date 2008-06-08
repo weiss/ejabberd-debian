@@ -16,7 +16,7 @@ ejabberd (2.0.1-1) unstable; urgency=low
   * Added BUGS section to ejabberd manual page with a short description of
     the most common cases of ejabberd start failures (closes: #481819).
 
- -- Sergei Golovan <sgolovan@debian.org>  Tue, 03 Jun 2008 10:55:46 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Sun, 08 Jun 2008 16:32:18 +0400
 
 ejabberd (2.0.0-7) unstable; urgency=low
 
