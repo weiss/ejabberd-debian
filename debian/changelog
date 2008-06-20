@@ -1,8 +1,10 @@
-ejabberd (2.0.1-2) UNRELEASED; urgency=low
+ejabberd (2.0.1-2) unstable; urgency=low
 
-  * NOT RELEASED YET
+  * Improved a patch which removes message rejecting intervals for
+    server-to-server recipients.
+  * Bumped standards version to 3.8.0.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sun,  8 Jun 2008 17:02:35 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 20 Jun 2008 10:07:29 +0400
 
 ejabberd (2.0.1-1) unstable; urgency=low
 

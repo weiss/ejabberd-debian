@@ -3,6 +3,17 @@ delay between remote server connection attempts after a falure (in case of
 server is down it would be reasonable, but what happens much more often is a
 network split when the delay is inadmissible).
 
+--- ejabberd-2.0.1.orig/src/ejabberd_s2s_in.erl
++++ ejabberd-2.0.1/src/ejabberd_s2s_in.erl
+@@ -352,7 +352,7 @@
+             case {ejabberd_s2s:allow_host(To, From),
+                   lists:member(LTo, ejabberd_router:dirty_get_all_domains())} of
+                 {true, true} ->
+-		    ejabberd_s2s_out:terminate_if_waiting_delay(To, From),
++		    %%ejabberd_s2s_out:terminate_if_waiting_delay(To, From),
+ 		    ejabberd_s2s_out:start(To, From,
+ 					   {verify, self(),
+ 					    Key, StateData#state.streamid}),
 --- ejabberd-2.0.1.orig/src/ejabberd_s2s_out.erl
 +++ ejabberd-2.0.1/src/ejabberd_s2s_out.erl
 @@ -92,7 +92,7 @@
