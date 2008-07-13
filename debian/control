@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
 Uploaders: Sergei Golovan <sgolovan@debian.org>
-Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 5), quilt, patchutils (>= 0.2.25), cdbs (>= 0.4.27-1), erlang-nox, erlang-dev (>= 1:11.b.2), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev
+Build-Depends: debhelper (>= 5), quilt, patchutils (>= 0.2.25), cdbs (>= 0.4.27), erlang-nox, erlang-dev (>= 1:11.b.2), grep-dctrl, libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev
 Standards-Version: 3.8.0
 Homepage: http://www.process-one.net/en/projects/ejabberd/ 
 Vcs-Svn: svn+ssh://svn.debian.org/svn/collab-maint/deb-maint/ejabberd/trunk

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejabberd 1.1.2-6\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
-"POT-Creation-Date: 2008-02-15 10:37+0300\n"
+"POT-Creation-Date: 2008-06-24 11:21+0000\n"
 "PO-Revision-Date: 2007-03-28 13:03+0100\n"
 "Last-Translator: Luísa Lourenço <kikentai@gmail.com>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
@@ -24,21 +24,18 @@ msgstr "O nome da máquina que o ejabberd irá servir:"
 #. Type: string
 #. Description
 #: ../templates:1001
-#, fuzzy
 msgid "Please enter the hostname of your Jabber server (in lowercase)."
-msgstr "Por favor insira o nome da máquina do seu servidor de Jabber."
+msgstr "Por favor insira o nome da máquina do seu servidor de Jabber (em minúsculas)."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid "The username of an admin account for ejabberd:"
 msgstr "O nome de uma conta de admin para o ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
