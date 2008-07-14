@@ -13,10 +13,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 1.1.1-5\n"
+"Project-Id-Version: 2.0.1-2\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
 "POT-Creation-Date: 2008-02-15 10:37+0300\n"
-"PO-Revision-Date: 2007-01-25 23:46+0600\n"
+"PO-Revision-Date: 2008-06-14 23:43+0400\n"
 "Last-Translator: Sergei Golovan <sgolovan@nes.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -32,21 +32,18 @@ msgstr "Имя хоста, которое будет обслуживать ejab
 #. Type: string
 #. Description
 #: ../templates:1001
-#, fuzzy
 msgid "Please enter the hostname of your Jabber server (in lowercase)."
 msgstr "Пожалуйста, введите имя вашего Jabber-сервера."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid "The username of an admin account for ejabberd:"
 msgstr "Имя учётной записи администратора ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
