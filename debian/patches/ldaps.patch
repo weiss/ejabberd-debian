@@ -183,8 +183,7 @@
  init({Hosts, Port, Rootdn, Passwd}) ->
      {ok, connecting, #eldap{hosts = Hosts,
  			    port = Port,
-@@ -445,8 +480,8 @@
- %%          {next_state, NextStateName, NextStateData, Timeout} |
+@@ -446,7 +483,7 @@
  %%          {stop, Reason, NewStateData}                         
  %%----------------------------------------------------------------------
  handle_event(close, _StateName, S) ->
@@ -193,7 +192,7 @@
      {stop, closed, S};
  
  handle_event(process_bind_q, active_bind, #eldap{bind_q=Q} = S) ->
-@@ -488,11 +527,15 @@
+@@ -488,11 +525,15 @@
  %%
  %% Packets arriving in various states
  %%
@@ -211,7 +210,7 @@
      cancel_timer(S#eldap.bind_timer),
      case catch recvd_wait_bind_response(Data, S) of
  	bound                -> {next_state, active, S};
-@@ -504,8 +547,11 @@
+@@ -504,8 +545,11 @@
  				{next_state, connecting, S#eldap{fd = null}}
      end;
  
@@ -225,7 +224,7 @@
      case catch recvd_packet(Data, S) of
  	{reply, Reply, To, NewS} -> gen_fsm:reply(To, Reply),
  				    {next_state, StateName, NewS};
-@@ -514,11 +560,14 @@
+@@ -514,11 +558,14 @@
  	{error, _Reason}          -> {next_state, StateName, S}
      end;
  
@@ -242,7 +241,7 @@
  		cancel_timer(Timer)
  	end,
      dict:map(F, S#eldap.dict),
-@@ -527,10 +575,12 @@
+@@ -527,10 +574,12 @@
  						 bind_q=queue:new()}),
      {next_state, NextState, NewS};
  
@@ -258,7 +257,7 @@
      %% cause request is probably lost....
      {next_state, Fsm_state, S};
  
-@@ -586,7 +636,7 @@
+@@ -586,7 +635,7 @@
  			     protocolOp = {Name, Request}},
      ?DEBUG("~p~n",[{Name, Request}]),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
@@ -267,7 +266,7 @@
      ok ->
  	Timer = erlang:start_timer(?CMD_TIMEOUT, self(), {cmd_timeout, Id}),
  	New_dict = dict:store(Id, [{Timer, From, Name}], S#eldap.dict),
-@@ -784,7 +834,7 @@
+@@ -784,7 +833,7 @@
      end.
  
  close_and_retry(S) ->
@@ -276,7 +275,7 @@
      retry_connect().
  
  retry_connect() ->
-@@ -841,9 +891,12 @@
+@@ -841,9 +890,12 @@
  %%-----------------------------------------------------------------------
  connect_bind(S) ->
      Host = next_host(S#eldap.host, S#eldap.hosts),
@@ -291,7 +290,7 @@
  	{ok, Socket} ->
  	    case bind_request(Socket, S) of
  		{ok, NewS} ->
-@@ -854,7 +907,7 @@
+@@ -854,7 +906,7 @@
  							bind_timer = Timer}};
  		{error, Reason} ->
  		    ?ERROR_MSG("LDAP bind failed on ~s:~p~nReason: ~p", [Host, S#eldap.port, Reason]),
@@ -300,7 +299,7 @@
  		    retry_connect(),
  		    {ok, connecting, S#eldap{host = Host}}
  	    end;
-@@ -864,6 +917,21 @@
+@@ -864,6 +916,21 @@
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
@@ -322,7 +321,7 @@
  bind_request(Socket, S) ->
      Id = bump_id(S),
      Req = #'BindRequest'{version        = S#eldap.version,
-@@ -873,7 +943,7 @@
+@@ -873,7 +940,7 @@
  			     protocolOp = {bindRequest, Req}},
      ?DEBUG("Bind Request Message:~p~n",[Message]),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
