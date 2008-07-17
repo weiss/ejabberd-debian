@@ -150,7 +150,7 @@
  	}).
  
  %%%----------------------------------------------------------------------
-@@ -375,6 +386,30 @@
+@@ -375,6 +386,32 @@
  	{error, Reason} ->
  	    {stop, Reason}
      end;
@@ -158,6 +158,8 @@
 +    %% The connection must be encrypted
 +    %% Start the SSL server if it wasn't already started
 +    catch ssl:start(),
++    {X1,X2,X3} = erlang:now(),
++    ssl:seed(integer_to_list(X1) ++ integer_to_list(X2) ++ integer_to_list(X3)),
 +    case Port of
 +	{tls, TLSPort} ->
 +	    {ok, connecting, #eldap{hosts = Hosts,
@@ -181,14 +183,10 @@
  init({Hosts, Port, Rootdn, Passwd}) ->
      {ok, connecting, #eldap{hosts = Hosts,
  			    port = Port,
-@@ -445,8 +480,12 @@
+@@ -445,8 +480,8 @@
  %%          {next_state, NextStateName, NextStateData, Timeout} |
  %%          {stop, Reason, NewStateData}                         
  %%----------------------------------------------------------------------
-+handle_event(close, _StateName, S) when S#eldap.use_tls == true ->
-+    ssl:close(S#eldap.fd),
-+    {stop, closed, S};
-+
  handle_event(close, _StateName, S) ->
 -    gen_tcp:close(S#eldap.fd),
 +    do_close(S#eldap.fd, S),
@@ -301,15 +299,13 @@
  		    retry_connect(),
  		    {ok, connecting, S#eldap{host = Host}}
  	    end;
-@@ -864,6 +917,23 @@
+@@ -864,6 +917,21 @@
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
 +do_connect(Host, State, Opts) when State#eldap.use_tls == false ->
 +    gen_tcp:connect(Host, State#eldap.port, Opts);
 +do_connect(Host, State, Opts) when State#eldap.use_tls == true ->
-+    {_,_,X} = erlang:now(),
-+    ssl:seed("bkrlnateqqo" ++ integer_to_list(X)),
 +    ssl:connect(Host, State#eldap.port, [{verify,0}|Opts]).
 +
 +do_close(Socket, State) when State#eldap.use_tls == false ->
