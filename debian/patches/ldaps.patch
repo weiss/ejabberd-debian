@@ -225,7 +225,7 @@
      case catch recvd_packet(Data, S) of
  	{reply, Reply, To, NewS} -> gen_fsm:reply(To, Reply),
  				    {next_state, StateName, NewS};
-@@ -514,11 +560,13 @@
+@@ -514,11 +560,14 @@
  	{error, _Reason}          -> {next_state, StateName, S}
      end;
  
@@ -235,6 +235,7 @@
 +       Tag == ssl_closed ->
      ?WARNING_MSG("LDAP server closed the connection: ~s:~p~nIn State: ~p",
  	  [S#eldap.host, S#eldap.port ,Fsm_state]),
++    catch do_close(S#eldap.fd, S),
      F = fun(_Id, [{Timer, From, _Name}|_]) ->
 -		gen_fsm:reply(From, {error, tcp_closed}),
 +		gen_fsm:reply(From, {error, Tag}),
