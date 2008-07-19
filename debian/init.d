@@ -38,6 +38,17 @@ start()
 {
     cd /var/lib/ejabberd
     su $EJABBERDUSER -c "$EJABBERD -noshell -detached"
+
+    cnt=0
+    while ! (ctl status || test $? = 1) ; do
+	echo -n .
+	cnt=`expr $cnt + 1`
+	if [ $cnt -ge 60 ] ; then
+	    echo -n " failed"
+	    break
+	fi
+	sleep 1
+    done
 }
 
 stop()
@@ -45,10 +56,10 @@ stop()
     if ctl stop ; then
 	cnt=0
 	sleep 1
-	while ctl status ; do
+	while ctl status || test $? = 1 ; do
 	    echo -n .
 	    cnt=`expr $cnt + 1`
-	    if [ $cnt -gt 60 ] ; then
+	    if [ $cnt -ge 60 ] ; then
 		echo -n " failed"
 		break
 	    fi

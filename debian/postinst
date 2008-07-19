@@ -87,33 +87,41 @@ root@$EHOSTNAME.$EDOMAINNAME
 register_admin()
 {
     if [ -n "$USER" -a -n "$PASSWD" ]; then
-	echo -n "Waiting for ejabberd to register admin user."
-	cnt=0
-	flag=1
-	while ! ejabberdctl vhost "$HOST" registered-users >/dev/null ; do
-	    echo -n "."
-	    cnt=`expr $cnt + 1`
-	    if [ $cnt -gt 60 ] ; then
-		echo
-		echo "Can't register admin user \"$USER@$HOST\"."
-		echo -n "Probably ejabberd is configured for serving another hostname."
-		flag=0
-		break
-	    fi
-	    sleep 1
-	done
+	echo -n "Waiting for ejabberd to register admin user"
 
-	echo
-	if [ $flag -eq 1 ] ; then
-	    if ! status=$(ejabberdctl register "$USER" "$HOST" "$PASSWD") ; then
-		if echo $status | grep -q "already registered" ; then
-		    echo "Admin user \"$USER@$HOST\" is already registered. Password IS NOT changed."
-		else
+	if /usr/sbin/ejabberdctl status >/dev/null || test $? = 1 ; then
+	    # Ejabberd is starting ($? = 1) or running ($? = 0) already.
+	    cnt=0
+	    flag=1
+	    while ! /usr/sbin/ejabberdctl status >/dev/null ; do
+		echo -n "."
+		cnt=`expr $cnt + 1`
+		if [ $cnt -ge 60 ] ; then
+		    echo
 		    echo "Can't register admin user \"$USER@$HOST\"."
+		    echo -n "Ejabberd is starting too long."
+		    flag=0
+		    break
 		fi
-	    else
-		echo "Admin user \"$USER@$HOST\" is registered successfully."
+		sleep 1
+	    done
+
+	    echo
+	    if [ $flag -eq 1 ] ; then
+		if ! status=$(/usr/sbin/ejabberdctl register "$USER" "$HOST" "$PASSWD") ; then
+		    if echo $status | grep -q "already registered" ; then
+			echo "Admin user \"$USER@$HOST\" is already registered. Password IS NOT changed."
+		    else
+			echo "Can't register admin user \"$USER@$HOST\"."
+		    fi
+		else
+		    echo "Admin user \"$USER@$HOST\" is registered successfully."
+		fi
 	    fi
+	else
+	    echo
+	    echo "Can't register admin user \"$USER@$HOST\"."
+	    echo "Ejabberd server is not started."
 	fi
     fi
 }
