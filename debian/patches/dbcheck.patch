@@ -1,0 +1,20 @@
+Patch by Sergei Golovan fixes relational DB module checking (it crashed if
+ODBC is configured in eabberd.cfg).
+
+--- ejabberd-2.0.1.orig/src/ejabberd_check.erl
++++ ejabberd-2.0.1/src/ejabberd_check.erl
+@@ -86,8 +86,12 @@
+ 		    case check_odbc_option(
+ 			   ejabberd_config:get_local_option(
+ 			     {auth_method, Domain})) of
+-			true -> [element(1, DB)|Acc];
+-			_ -> Acc
++			true ->
++			    if	is_tuple(DB) -> [element(1, DB)|Acc];
++				true -> Acc
++			    end;
++			_ ->
++			    Acc
+ 		    end
+ 	    end,
+ 	    [], Domains),
