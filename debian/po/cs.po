@@ -1,14 +1,14 @@
 # Czech translation of ejabberd debconf messages
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the ejabberd package.
-# Miroslav Kure <kurem@debian.cz>, 2006.
+# Miroslav Kure <kurem@debian.cz>, 2006, 2008.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejabberd\n"
 "Report-Msgid-Bugs-To: twerner@debian.org\n"
 "POT-Creation-Date: 2008-02-15 10:37+0300\n"
-"PO-Revision-Date: 2006-09-22 18:24+0200\n"
+"PO-Revision-Date: 2008-07-26 18:50+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -24,21 +24,19 @@ msgstr "Jméno počítače, na kterém bude ejabberd sloužit:"
 #. Type: string
 #. Description
 #: ../templates:1001
-#, fuzzy
 msgid "Please enter the hostname of your Jabber server (in lowercase)."
-msgstr "Zadejte prosím jméno počítače vašeho jabberového serveru."
+msgstr ""
+"Zadejte prosím jméno počítače vašeho jabberového serveru (malými písmeny)."
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid "The username of an admin account for ejabberd:"
 msgstr "Jméno administrátorského účtu pro ejabberd:"
 
 #. Type: string
 #. Description
 #: ../templates:2001
-#, fuzzy
 msgid ""
 "Please provide the name of an account to administrate the ejabberd server. "
 "After the installation of ejabberd you can use this account to log in with "
@@ -48,12 +46,14 @@ msgid ""
 "Jabber ID (e.g. ${user}@${hostname}) to log into ejabberd web interface; "
 "otherwise it will fail."
 msgstr ""
-"Zadejte prosím jméno účtu, který bude spravovat server ejabberd. Po "
+"Zadejte prosím jméno účtu, který bude spravovat ejabberd server. Po "
 "instalaci serveru ejabberd se můžete pomocí tohoto účtu přihlásit z "
 "libovolného jabberového klienta a vzdáleně tak provádět správcovské úkony. "
 "Jinou možností je webové rozhraní na http://${hostname}:5280/admin/, kde se "
-"s tímto účtem (např. '${user}@${hostname}') taktéž můžete přihlásit do "
-"správcovského rozhraní."
+"s tímto účtem (např. „${user}@${hostname}“) taktéž můžete přihlásit do "
+"správcovského rozhraní. (Zde zadejte pouze uživatelskou část (např. ${user}), "
+"ale pro přihlášení do webového rozhraní používejte kompletní ID včetně jména "
+"serveru.)"
 
 #. Type: string
 #. Description
