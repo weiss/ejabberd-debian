@@ -4,8 +4,10 @@ ejabberd (2.0.1-4) unstable; urgency=low
   * Removed unneeded package grep-dctrl from build-dependencies (a call to
     erlang-depends has replaced it long time ago).
   * Updated Czech debconf templates translation (closes: #492495).
+  * Added a unique suffix to ejabberdctl nodes to allow several commands to
+    run in parallel.
 
- -- Sergei Golovan <sgolovan@debian.org>  Sat, 26 Jul 2008 21:17:43 +0400
+ -- Sergei Golovan <sgolovan@debian.org>  Tue, 29 Jul 2008 20:55:00 +0400
 
 ejabberd (2.0.1-3) unstable; urgency=low
 

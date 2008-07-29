@@ -27,6 +27,8 @@ else
     SNAME=-name
 fi
 
+SUFFIX=$(date +%s%N)
+
 case $1 in
     debug)
 	shift
@@ -38,12 +40,12 @@ case $1 in
 	echo "Attaching Erlang shell to node $ERLANG_NODE."
 	echo "To detach it, press: Ctrl+G, q, Return"
 	echo ""
-	exec $ERL $SNAME ejabberddebug \
+	exec $ERL $SNAME ejabberddebug$SUFFIX \
 	    -remsh $ERLANG_NODE \
 	    "$@"
     ;;
     *)
-	exec $ERL $SNAME ejabberdctl \
+	exec $ERL $SNAME ejabberdctl$SUFFIX \
 	    -pa $EBIN_DIR \
 	    -s ejabberd_ctl \
 	    -noinput \
