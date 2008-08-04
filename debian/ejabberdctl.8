@@ -64,7 +64,12 @@ to change VM options (enable/disable kernel poll or SMP, increase number of port
 or database tables) you have to stop ejabberd completely and then start it again.
 .TP
 .BI reopen\-log
-Force the ejabberd server to reopen its log file.
+Force the ejabberd server to reopen its log
+file (\fI/var/log/ejabberd/ejabberd.log\fP by default).
+.TP
+.BI reopen\-weblog
+If module mod_http_fileserver is loaded then force the ejabberd server to reopen
+its weblog file.
 .TP
 .BI register " user server password"
 Register user \fIuser\fP with password \fIpassword\fP at ejabberd virtual
