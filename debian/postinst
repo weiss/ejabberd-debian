@@ -50,8 +50,8 @@ setup_ejabberd()
     if [ ! -f ejabberd.pem ]
     then
 	echo "Generating SSL certificate /etc/ejabberd/ejabberd.pem..."
-	EHOSTNAME=$(hostname -s)
-	EDOMAINNAME=$(hostname -d)
+	EHOSTNAME=$(hostname -s 2>/dev/null || echo localhost)
+	EDOMAINNAME=$(hostname -d 2>/dev/null || echo localdomain)
 	openssl req -new -x509 -days 365 -nodes -out ejabberd.pem \
 		    -keyout ejabberd.pem > /dev/null 2>&1 <<+++
 .
