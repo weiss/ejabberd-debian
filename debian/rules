@@ -36,6 +36,7 @@ install/ejabberd::
 	done
 	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap/ELDAPv3.hrl
 	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/XmppAddr.hrl
+	rmdir $(DEB_DESTDIR)$(EJABBERDIR)/db
 	erlang-depends
 
 get-orig-source:
