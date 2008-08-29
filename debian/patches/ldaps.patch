@@ -1,6 +1,6 @@
---- ejabberd-2.0.1.orig/doc/guide.tex
-+++ ejabberd-2.0.1/doc/guide.tex
-@@ -1710,12 +1710,15 @@
+--- ejabberd-2.0.2.orig/doc/guide.tex
++++ ejabberd-2.0.2/doc/guide.tex
+@@ -1760,12 +1760,15 @@
  \begin{description}
  \titem{ldap\_servers} \ind{options!ldap\_server}List of IP addresses or DNS names of your
  LDAP servers. This option is required.
@@ -19,7 +19,7 @@
  \titem{ldap\_rootdn} \ind{options!ldap\_rootdn}Bind DN. The default value
    is~\term{""} which means `anonymous connection'.
  \titem{ldap\_password} \ind{options!ldap\_password}Bind password. The default
-@@ -1777,14 +1780,18 @@
+@@ -1840,14 +1843,18 @@
  Let's say \term{ldap.example.org} is the name of our LDAP server. We have
  users with their passwords in \term{"ou=Users,dc=example,dc=org"} directory.
  Also we have addressbook, which contains users emails and their additional
@@ -31,17 +31,17 @@
 +Corresponding authentication section should looks like this:
  
  \begin{verbatim}
-   %% authentication method
-   {auth_method, ldap}.
-   %% DNS name of our LDAP server
-   {ldap_servers, ["ldap.example.org"]}.
-+  {ldap_encrypt, tls}.
-+  {ldap_port, 6336}.
-   %% Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
-   {ldap_rootdn, "cn=Manager,dc=example,dc=org"}.
-   {ldap_password, "secret"}.
---- ejabberd-2.0.1.orig/src/ejabberd.cfg.example
-+++ ejabberd-2.0.1/src/ejabberd.cfg.example
+ %% Authentication method
+ {auth_method, ldap}.
+ %% DNS name of our LDAP server
+ {ldap_servers, ["ldap.example.org"]}.
++{ldap_encrypt, tls}.
++{ldap_port, 6336}.
+ %% Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
+ {ldap_rootdn, "cn=Manager,dc=example,dc=org"}.
+ {ldap_password, "secret"}.
+--- ejabberd-2.0.2.orig/src/ejabberd.cfg.example
++++ ejabberd-2.0.2/src/ejabberd.cfg.example
 @@ -224,17 +224,26 @@
  %% List of LDAP servers:
  %%{ldap_servers, ["localhost"]}.    
@@ -75,8 +75,8 @@
  
  %%
  %% Anonymous login support:
---- ejabberd-2.0.1.orig/src/ejabberd_auth_ldap.erl
-+++ ejabberd-2.0.1/src/ejabberd_auth_ldap.erl
+--- ejabberd-2.0.2.orig/src/ejabberd_auth_ldap.erl
++++ ejabberd-2.0.2/src/ejabberd_auth_ldap.erl
 @@ -24,6 +24,10 @@
  %%%
  %%%----------------------------------------------------------------------
@@ -109,8 +109,8 @@
  	       end,
      RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
  		 undefined -> "";
---- ejabberd-2.0.1.orig/src/eldap/eldap.erl
-+++ ejabberd-2.0.1/src/eldap/eldap.erl
+--- ejabberd-2.0.2.orig/src/eldap/eldap.erl
++++ ejabberd-2.0.2/src/eldap/eldap.erl
 @@ -42,6 +42,12 @@
  %%% Modified by Mickael Remond <mremond@process-one.net>
  %%% Now use ejabberd log mechanism
@@ -330,8 +330,8 @@
  	ok -> {ok, S#eldap{id = Id}};
  	Error -> Error
      end.
---- ejabberd-2.0.1.orig/src/eldap/eldap.hrl
-+++ ejabberd-2.0.1/src/eldap/eldap.hrl
+--- ejabberd-2.0.2.orig/src/eldap/eldap.hrl
++++ ejabberd-2.0.2/src/eldap/eldap.hrl
 @@ -19,6 +19,9 @@
  %%%
  %%%----------------------------------------------------------------------
@@ -342,8 +342,8 @@
  -record(eldap_search, {scope = wholeSubtree,
  		       base = [],
  		       filter,
---- ejabberd-2.0.1.orig/src/mod_vcard_ldap.erl
-+++ ejabberd-2.0.1/src/mod_vcard_ldap.erl
+--- ejabberd-2.0.2.orig/src/mod_vcard_ldap.erl
++++ ejabberd-2.0.2/src/mod_vcard_ldap.erl
 @@ -24,6 +24,10 @@
  %%%
  %%%----------------------------------------------------------------------

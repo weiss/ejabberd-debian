@@ -1,8 +1,8 @@
 Patch by Evgeniy Khramtsov decreases proxy65 buffer sizes (size 65535 is known
 to confuse users with tight shapers).
 
---- ejabberd-2.0.1.orig/src/mod_proxy65/mod_proxy65_stream.erl
-+++ ejabberd-2.0.1/src/mod_proxy65/mod_proxy65_stream.erl
+--- ejabberd-2.0.2.orig/src/mod_proxy65/mod_proxy65_stream.erl
++++ ejabberd-2.0.2/src/mod_proxy65/mod_proxy65_stream.erl
 @@ -89,8 +89,8 @@
      process_flag(trap_exit, true),
      AuthType = gen_mod:get_opt(auth_type, Opts, anonymous),

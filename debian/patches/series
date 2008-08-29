@@ -7,5 +7,3 @@ mod_ctlextra.patch
 shared_roster_recent.patch
 shared_roster_online.patch
 ldaps.patch
-dbcheck.patch
-web.patch
