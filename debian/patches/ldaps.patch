@@ -275,22 +275,16 @@
      retry_connect().
  
  retry_connect() ->
-@@ -841,9 +890,12 @@
- %%-----------------------------------------------------------------------
- connect_bind(S) ->
+@@ -843,7 +892,7 @@
      Host = next_host(S#eldap.host, S#eldap.hosts),
--    TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
-+    TcpOpts = case S#eldap.use_tls of
-+		  true -> [{packet, asn1}, {active, true}, binary];
-+		  _ -> [{packet, asn1}, {active, true}, {keepalive, true}, binary]
-+	      end,
+     TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
      ?INFO_MSG("LDAP connection on ~s:~p", [Host, S#eldap.port]),
 -    case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
 +    case do_connect(Host, S, TcpOpts) of
  	{ok, Socket} ->
  	    case bind_request(Socket, S) of
  		{ok, NewS} ->
-@@ -854,7 +906,7 @@
+@@ -854,7 +903,7 @@
  							bind_timer = Timer}};
  		{error, Reason} ->
  		    ?ERROR_MSG("LDAP bind failed on ~s:~p~nReason: ~p", [Host, S#eldap.port, Reason]),
@@ -299,7 +293,7 @@
  		    retry_connect(),
  		    {ok, connecting, S#eldap{host = Host}}
  	    end;
-@@ -864,6 +916,21 @@
+@@ -864,6 +913,21 @@
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
@@ -321,7 +315,7 @@
  bind_request(Socket, S) ->
      Id = bump_id(S),
      Req = #'BindRequest'{version        = S#eldap.version,
-@@ -873,7 +940,7 @@
+@@ -873,7 +937,7 @@
  			     protocolOp = {bindRequest, Req}},
      ?DEBUG("Bind Request Message:~p~n",[Message]),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
