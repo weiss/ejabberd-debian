@@ -1,3 +1,9 @@
+ejabberd (2.0.2-3) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 12 Sep 2008 20:37:02 +0400
+
 ejabberd (2.0.2-2) experimental; urgency=low
 
   * Added option {keepalive, true} to ssl socket in LDAPS support patch.
