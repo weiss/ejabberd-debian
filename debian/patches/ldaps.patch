@@ -281,7 +281,7 @@
      Host = next_host(S#eldap.host, S#eldap.hosts),
 -    TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
 +    TcpOpts = case S#eldap.use_tls of
-+		  true -> [{packet, asn1}, {active, true}, binary];
++		  true -> [{packet, asn1}, {active, true}, {keepalive, true}, binary];
 +		  _ -> [{packet, asn1}, {active, true}, {keepalive, true}, binary]
 +	      end,
      ?INFO_MSG("LDAP connection on ~s:~p", [Host, S#eldap.port]),
