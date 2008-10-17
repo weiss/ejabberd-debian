@@ -1,3 +1,9 @@
+ejabberd (2.0.1-6) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 17 Oct 2008 12:52:37 +0400
+
 ejabberd (2.0.1-5) unstable; urgency=low
 
   * Added Brazilian Portuguese debconf templates translation
