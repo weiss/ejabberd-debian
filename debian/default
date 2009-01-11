@@ -68,6 +68,9 @@
 # ejabberd is started from an init.d script options -noshell and -detached are
 # added implicitly. See erl(1) for more info.
 #
+# It might be useful to add "-pa /usr/local/lib/ejabberd/ebin" if you
+# want to add local modules in this path.
+#
 # Default: empty
 #
 #ERL_OPTIONS=""

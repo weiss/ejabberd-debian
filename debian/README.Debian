@@ -74,5 +74,12 @@ Then use file /tmp/ejabberd_at_newhostname.backup to restore ejabberd database
 as it is described in ejabberdctl manual page.
 
 
+You can add extra options to the erl command line like
+
+  -pa /usr/local/lib/ejabberd/ebin
+
+by adding them to ERL_OPTIONS in /etc/default/ejabberd.
+
+
 Torsten Werner <twerner@debian.org>,
 Sergei Golovan <sgolovan@debian.org>      Fri, 15 Feb 2008 10:23:59 +0300
