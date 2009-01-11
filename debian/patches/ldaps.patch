@@ -1,5 +1,7 @@
---- ejabberd-2.0.2.orig/doc/guide.tex
-+++ ejabberd-2.0.2/doc/guide.tex
+Index: ejabberd-2.0.2/doc/guide.tex
+===================================================================
+--- ejabberd-2.0.2.orig/doc/guide.tex	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/doc/guide.tex	2009-01-11 17:05:10.000000000 +0100
 @@ -1760,12 +1760,15 @@
  \begin{description}
  \titem{ldap\_servers} \ind{options!ldap\_server}List of IP addresses or DNS names of your
@@ -40,8 +42,10 @@
  %% Bind to LDAP server as "cn=Manager,dc=example,dc=org" with password "secret"
  {ldap_rootdn, "cn=Manager,dc=example,dc=org"}.
  {ldap_password, "secret"}.
---- ejabberd-2.0.2.orig/src/ejabberd.cfg.example
-+++ ejabberd-2.0.2/src/ejabberd.cfg.example
+Index: ejabberd-2.0.2/src/ejabberd.cfg.example
+===================================================================
+--- ejabberd-2.0.2.orig/src/ejabberd.cfg.example	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/src/ejabberd.cfg.example	2009-01-11 17:05:10.000000000 +0100
 @@ -224,17 +224,26 @@
  %% List of LDAP servers:
  %%{ldap_servers, ["localhost"]}.    
@@ -75,8 +79,10 @@
  
  %%
  %% Anonymous login support:
---- ejabberd-2.0.2.orig/src/ejabberd_auth_ldap.erl
-+++ ejabberd-2.0.2/src/ejabberd_auth_ldap.erl
+Index: ejabberd-2.0.2/src/ejabberd_auth_ldap.erl
+===================================================================
+--- ejabberd-2.0.2.orig/src/ejabberd_auth_ldap.erl	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/src/ejabberd_auth_ldap.erl	2009-01-11 17:05:10.000000000 +0100
 @@ -24,6 +24,10 @@
  %%%
  %%%----------------------------------------------------------------------
@@ -109,8 +115,10 @@
  	       end,
      RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
  		 undefined -> "";
---- ejabberd-2.0.2.orig/src/eldap/eldap.erl
-+++ ejabberd-2.0.2/src/eldap/eldap.erl
+Index: ejabberd-2.0.2/src/eldap/eldap.erl
+===================================================================
+--- ejabberd-2.0.2.orig/src/eldap/eldap.erl	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/src/eldap/eldap.erl	2009-01-11 17:05:10.000000000 +0100
 @@ -42,6 +42,12 @@
  %%% Modified by Mickael Remond <mremond@process-one.net>
  %%% Now use ejabberd log mechanism
@@ -275,16 +283,22 @@
      retry_connect().
  
  retry_connect() ->
-@@ -843,7 +892,7 @@
+@@ -841,9 +890,12 @@
+ %%-----------------------------------------------------------------------
+ connect_bind(S) ->
      Host = next_host(S#eldap.host, S#eldap.hosts),
-     TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
+-    TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
++    TcpOpts = case S#eldap.use_tls of
++		  true -> [{packet, asn1}, {active, true}, {keepalive, true}, binary];
++		  _ -> [{packet, asn1}, {active, true}, {keepalive, true}, binary]
++	      end,
      ?INFO_MSG("LDAP connection on ~s:~p", [Host, S#eldap.port]),
 -    case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
 +    case do_connect(Host, S, TcpOpts) of
  	{ok, Socket} ->
  	    case bind_request(Socket, S) of
  		{ok, NewS} ->
-@@ -854,7 +903,7 @@
+@@ -854,7 +906,7 @@
  							bind_timer = Timer}};
  		{error, Reason} ->
  		    ?ERROR_MSG("LDAP bind failed on ~s:~p~nReason: ~p", [Host, S#eldap.port, Reason]),
@@ -293,7 +307,7 @@
  		    retry_connect(),
  		    {ok, connecting, S#eldap{host = Host}}
  	    end;
-@@ -864,6 +913,21 @@
+@@ -864,6 +916,21 @@
  	    {ok, connecting, S#eldap{host = Host}}
      end.
  
@@ -315,7 +329,7 @@
  bind_request(Socket, S) ->
      Id = bump_id(S),
      Req = #'BindRequest'{version        = S#eldap.version,
-@@ -873,7 +937,7 @@
+@@ -873,7 +940,7 @@
  			     protocolOp = {bindRequest, Req}},
      ?DEBUG("Bind Request Message:~p~n",[Message]),
      {ok, Bytes} = asn1rt:encode('ELDAPv3', 'LDAPMessage', Message),
@@ -324,8 +338,10 @@
  	ok -> {ok, S#eldap{id = Id}};
  	Error -> Error
      end.
---- ejabberd-2.0.2.orig/src/eldap/eldap.hrl
-+++ ejabberd-2.0.2/src/eldap/eldap.hrl
+Index: ejabberd-2.0.2/src/eldap/eldap.hrl
+===================================================================
+--- ejabberd-2.0.2.orig/src/eldap/eldap.hrl	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/src/eldap/eldap.hrl	2009-01-11 17:05:10.000000000 +0100
 @@ -19,6 +19,9 @@
  %%%
  %%%----------------------------------------------------------------------
@@ -336,8 +352,10 @@
  -record(eldap_search, {scope = wholeSubtree,
  		       base = [],
  		       filter,
---- ejabberd-2.0.2.orig/src/mod_vcard_ldap.erl
-+++ ejabberd-2.0.2/src/mod_vcard_ldap.erl
+Index: ejabberd-2.0.2/src/mod_vcard_ldap.erl
+===================================================================
+--- ejabberd-2.0.2.orig/src/mod_vcard_ldap.erl	2008-08-27 11:37:52.000000000 +0200
++++ ejabberd-2.0.2/src/mod_vcard_ldap.erl	2009-01-11 17:05:10.000000000 +0100
 @@ -24,6 +24,10 @@
  %%%
  %%%----------------------------------------------------------------------

@@ -1,8 +1,9 @@
-ejabberd (2.0.2-3) UNRELEASED; urgency=low
+ejabberd (2.0.2-3) experimental; urgency=low
 
   * NOT RELEASED YET
+  * Merge changes from version 2.0.1-5 from unstable.
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri, 12 Sep 2008 20:37:02 +0400
+ -- Torsten Werner <twerner@debian.org>  Sun, 11 Jan 2009 16:48:27 +0100
 
 ejabberd (2.0.2-2) experimental; urgency=low
 
@@ -21,6 +22,20 @@ ejabberd (2.0.2-1) experimental; urgency=low
     a reference SSL certificate which is to be replaced by a proper one.
 
  -- Sergei Golovan <sgolovan@debian.org>  Fri, 29 Aug 2008 21:15:26 +0400
+
+ejabberd (2.0.1-5) unstable; urgency=low
+
+  * Added Brazilian Portuguese debconf templates translation
+    (closes: #501751).
+  * Protected hostname -s and hostname -d calls in postinst script to prevent
+    its failure in case when hostname is incorrectly configured. It's harmless
+    to replace hostname by "localhost" because it's used only for generating
+    a reference SSL certificate which is to be replaced by a proper one.
+  * Added option {keepalive, true} to ssl socket in LDAPS support patch.
+    This helps not to loose long-term connections to LDAPS server (thanks
+    to Alex Mauer for a suggestion).
+
+ -- Sergei Golovan <sgolovan@debian.org>  Fri, 10 Oct 2008 09:48:34 +0400
 
 ejabberd (2.0.1-4) unstable; urgency=low
 
