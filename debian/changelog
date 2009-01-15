@@ -1,3 +1,9 @@
+ejabberd (2.0.3-1) experimental; urgency=low
+
+  * New upstream release.
+
+ -- Sergei Golovan <sgolovan@debian.org>  Thu, 15 Jan 2009 19:44:58 +0300
+
 ejabberd (2.0.2-3) experimental; urgency=low
 
   * Merge changes from version 2.0.1-5 from unstable.

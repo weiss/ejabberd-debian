@@ -1,5 +1,5 @@
---- ejabberd-2.0.2.orig/src/ejabberd.app
-+++ ejabberd-2.0.2/src/ejabberd.app
+--- ejabberd-2.0.3.orig/src/ejabberd.app
++++ ejabberd-2.0.3/src/ejabberd.app
 @@ -70,6 +70,7 @@
  	     mod_caps,
  	     mod_configure2,
@@ -9,7 +9,7 @@
  	     mod_echo,
  	     mod_http_bind,
 --- /dev/null
-+++ ejabberd-2.0.2/src/mod_ctlextra.erl
++++ ejabberd-2.0.3/src/mod_ctlextra.erl
 @@ -0,0 +1,886 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : mod_ctlextra.erl

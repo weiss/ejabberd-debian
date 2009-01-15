@@ -1,8 +1,8 @@
 Patch by Sergei Golovan turns unnecessary error messages into debug messages.
 
---- ejabberd-2.0.2.orig/src/mod_caps.erl
-+++ ejabberd-2.0.2/src/mod_caps.erl
-@@ -250,7 +250,7 @@
+--- ejabberd-2.0.3.orig/src/mod_caps.erl
++++ ejabberd-2.0.3/src/mod_caps.erl
+@@ -303,7 +303,7 @@
  		      end),
  		    gen_server:cast(self(), visit_feature_queries);
  		error ->
@@ -11,7 +11,7 @@ Patch by Sergei Golovan turns unnecessary error messages into debug messages.
  	    end;
  	{error, _} ->
  	    %% XXX: if we get error, we cache empty feature not to probe the client continuously
-@@ -264,7 +264,7 @@
+@@ -317,7 +317,7 @@
  		      end),
  		    gen_server:cast(self(), visit_feature_queries);
  		error ->

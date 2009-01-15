@@ -3,8 +3,8 @@ delay between remote server connection attempts after a falure (in case of
 server is down it would be reasonable, but what happens much more often is a
 network split when the delay is inadmissible).
 
---- ejabberd-2.0.2.orig/src/ejabberd_s2s_in.erl
-+++ ejabberd-2.0.2/src/ejabberd_s2s_in.erl
+--- ejabberd-2.0.3.orig/src/ejabberd_s2s_in.erl
++++ ejabberd-2.0.3/src/ejabberd_s2s_in.erl
 @@ -352,7 +352,7 @@
              case {ejabberd_s2s:allow_host(To, From),
                    lists:member(LTo, ejabberd_router:dirty_get_all_domains())} of
@@ -14,18 +14,18 @@ network split when the delay is inadmissible).
  		    ejabberd_s2s_out:start(To, From,
  					   {verify, self(),
  					    Key, StateData#state.streamid}),
---- ejabberd-2.0.2.orig/src/ejabberd_s2s_out.erl
-+++ ejabberd-2.0.2/src/ejabberd_s2s_out.erl
-@@ -92,7 +92,7 @@
+--- ejabberd-2.0.3.orig/src/ejabberd_s2s_out.erl
++++ ejabberd-2.0.3/src/ejabberd_s2s_out.erl
+@@ -93,7 +93,7 @@
  %% Only change this value if you now what your are doing:
  -define(FSMLIMITS,[]).
  %% -define(FSMLIMITS, [{max_queue, 2000}]).
 --define(FSMTIMEOUT, 30000).
 +-define(FSMTIMEOUT, 60000).
  
- %% Maximum delay to wait before retrying to connect after a failed attempt.
- %% Specified in miliseconds. Default value is 5 minutes.
-@@ -223,8 +223,8 @@
+ %% We do not block on send anymore.
+ -define(TCP_SEND_TIMEOUT, 15000).
+@@ -227,8 +227,8 @@
  	{error, _Reason} ->
  	    ?INFO_MSG("s2s connection: ~s -> ~s (remote server not found)",
  		      [StateData#state.myname, StateData#state.server]),

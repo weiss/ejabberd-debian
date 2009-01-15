@@ -1,5 +1,5 @@
 --- /dev/null
-+++ ejabberd-2.0.2/src/mnesia_convert.erl
++++ ejabberd-2.0.3/src/mnesia_convert.erl
 @@ -0,0 +1,46 @@
 +-module(mnesia_convert).
 +-export([change_node_name/4]).
