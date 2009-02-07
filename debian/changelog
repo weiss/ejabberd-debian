@@ -1,8 +1,9 @@
-ejabberd (2.0.1-6) UNRELEASED; urgency=low
+ejabberd (2.0.1-6) unstable; urgency=high
 
-  * NOT RELEASED YET
+  * Add backported patch pubsub_upgrade_tables.patch that fixes the broken
+    upgrade of ejabberd from Etch. (Closes: #507615)
 
- -- Sergei Golovan <sgolovan@debian.org>  Fri, 17 Oct 2008 12:52:37 +0400
+ -- Torsten Werner <twerner@debian.org>  Sat, 07 Feb 2009 20:02:20 +0100
 
 ejabberd (2.0.1-5) unstable; urgency=low
 

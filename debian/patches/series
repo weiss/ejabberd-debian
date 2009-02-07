@@ -9,3 +9,4 @@ shared_roster_online.patch
 ldaps.patch
 dbcheck.patch
 web.patch
+pubsub_upgrade_tables.patch
