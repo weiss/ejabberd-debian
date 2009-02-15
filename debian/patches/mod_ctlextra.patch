@@ -1,5 +1,5 @@
---- ejabberd-2.0.1.orig/src/ejabberd.app
-+++ ejabberd-2.0.1/src/ejabberd.app
+--- ejabberd-2.0.3.orig/src/ejabberd.app
++++ ejabberd-2.0.3/src/ejabberd.app
 @@ -70,6 +70,7 @@
  	     mod_caps,
  	     mod_configure2,
@@ -9,7 +9,7 @@
  	     mod_echo,
  	     mod_http_bind,
 --- /dev/null
-+++ ejabberd-2.0.1/src/mod_ctlextra.erl
++++ ejabberd-2.0.3/src/mod_ctlextra.erl
 @@ -0,0 +1,886 @@
 +%%%----------------------------------------------------------------------
 +%%% File    : mod_ctlextra.erl
@@ -144,7 +144,7 @@
 +	      {export_roster, roster},
 +	      {export_vcard, vcard},
 +	      {export_vcard_search, vcard_search}],
-+    Export = fun({TableFun, Table}) -> 
++    Export = fun({TableFun, Table}) ->
 +		     Filename = filename:join([Output, atom_to_list(Table)++".txt"]),
 +		     io:format("Trying to export Mnesia table '~p' on server '~s' to file '~s'~n", [Table, Server, Filename]),
 +		     Res = (catch ejd2odbc:TableFun(Server, Filename)),
@@ -214,12 +214,12 @@
 +ctl_process(_Val, ["srg-get-info", Group, Host]) ->
 +    Opts = mod_shared_roster:get_group_opts(Host,Group),
 +    [io:format("~s: ~p~n", [Title, Value]) || {Title , Value} <- Opts],
-+    
++
 +    Members = mod_shared_roster:get_group_explicit_users(Host,Group),
-+    Members_string = [ " " ++ jlib:jid_to_string(jlib:make_jid(MUser, MServer, "")) 
++    Members_string = [ " " ++ jlib:jid_to_string(jlib:make_jid(MUser, MServer, ""))
 +		       || {MUser, MServer} <- Members],
 +    io:format("members:~s~n", [Members_string]),
-+    
++
 +    ?STATUS_SUCCESS;
 +
 +ctl_process(_Val, ["add-rosteritem", LocalUser, LocalServer, RemoteUser, RemoteServer, Nick, Group, Subs]) ->
@@ -285,19 +285,19 @@
 +			  end,
 +			  [],
 +			  Options_list),
-+    
++
 +    Subs = [list_to_atom(S)
-+	    || S <- proplists:get_value("subs", 
-+					Options_prop_list, 
++	    || S <- proplists:get_value("subs",
++					Options_prop_list,
 +					["none", "from", "to", "both"])],
 +    Asks = [list_to_atom(S)
-+	    || S <- 
++	    || S <-
 +		   proplists:get_value("ask",
-+				       Options_prop_list, 
++				       Options_prop_list,
 +				       ["none", "out", "in"])],
 +    User = proplists:get_value("user", Options_prop_list, ["*", "*@*"]),
 +    Contact = proplists:get_value("contact", Options_prop_list, ["*", "*@*"]),
-+    
++
 +    case rosteritem_purge({Subs, Asks, User, Contact}) of
 +	{atomic, ok} ->
 +	    ?STATUS_SUCCESS;
@@ -460,8 +460,8 @@
 +		  _ ->
 +		      fun(A, B) -> A == B end
 +	      end,
-+    [{User, Server, Resource, Priority, stringize(Status_text)} 
-+     || {{User, Resource, Status, Status_text}, Server, Priority} <- Sessions4, 
++    [{User, Server, Resource, Priority, stringize(Status_text)}
++     || {{User, Resource, Status, Status_text}, Server, Priority} <- Sessions4,
 +	apply(Fstatus, [Status, Status_required])].
 +
 +%% Make string more print-friendly
@@ -502,10 +502,10 @@
 +    ToS = jlib:jid_to_string(LJID),
 +    ItemJIDS = jlib:jid_to_string(RJID),
 +    GroupXML = {xmlelement, "group", [], [{xmlcdata, Group}]},
-+    Item = {xmlelement, "item", 
++    Item = {xmlelement, "item",
 +	    [{"jid", ItemJIDS},
 +	     {"name", Nick},
-+	     {"subscription", Subscription}], 
++	     {"subscription", Subscription}],
 +	    [GroupXML]},
 +    Query = {xmlelement, "query", [{"xmlns", ?NS_ROSTER}], [Item]},
 +    Packet = {xmlelement, "iq", [{"type", "set"}, {"to", ToS}], [Query]},
@@ -655,7 +655,7 @@
 +
 +
 +%%-----------------------------
-+%% Push Roster from file 
++%% Push Roster from file
 +%%-----------------------------
 +
 +pushroster(File, User, Server) ->
@@ -705,7 +705,7 @@
 +		      false -> no_value;
 +		      Elem -> xml:get_tag_cdata(Elem)
 +		  end;
-+	      [] -> 
++	      [] ->
 +		  no_vcard
 +	  end,
 +    {ok, Res}.
@@ -730,7 +730,7 @@
 +	     [A1] ->
 +		 {_, _, _, A2} = A1,
 +		 update_vcard_els(Data, Content, A2);
-+	     [] -> 
++	     [] ->
 +		 update_vcard_els(Data, Content, [])
 +	 end,
 +
@@ -789,12 +789,12 @@
 +				%% get his age
 +				Sec = TimeStamp_now - TimeStamp,
 +				%% If he is
-+				if 
-+				    %% younger than SecOlder: 
++				if
++				    %% younger than SecOlder:
 +				    Sec < SecOlder ->
 +					%% do nothing
 +					false;
-+				    %% older: 
++				    %% older:
 +				    true ->
 +					%% remove the user
 +					ejabberd_auth:remove_user(LUser, LServer),
@@ -876,14 +876,14 @@
 +	{none, Grouped_Ps} = lists:foldl(
 +		fun(P, {State, Res}) ->
 +			case State of
-+				none -> 
++				none ->
 +					case P of
 +						[Char | PTail]->
 +							{building, [PTail | Res]};
 +						_ ->
 +							{none, [P | Res]}
 +					end;
-+				building -> 
++				building ->
 +					[ResHead | ResTail] = Res,
 +					case lists:last(P) of
 +						Char ->

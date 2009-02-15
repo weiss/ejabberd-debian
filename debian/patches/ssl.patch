@@ -1,8 +1,8 @@
 Patch by Sergei Golovan removes unnecessary call to ssl:start() because
 ssl module isn't used in ejabberd anymore (LDAP module will start ssl itself).
 
---- ejabberd-2.0.1.orig/src/ejabberd_app.erl
-+++ ejabberd-2.0.1/src/ejabberd_app.erl
+--- ejabberd-2.0.3.orig/src/ejabberd_app.erl
++++ ejabberd-2.0.3/src/ejabberd_app.erl
 @@ -44,7 +44,7 @@
      randoms:start(),
      db_init(),
@@ -10,5 +10,5 @@ ssl module isn't used in ejabberd anymore (LDAP module will start ssl itself).
 -    catch ssl:start(),
 +%%  catch ssl:start(),
      stringprep_sup:start_link(),
+     start(),
      translate:start(),
-     acl:start(),

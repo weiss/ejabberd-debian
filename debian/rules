@@ -36,10 +36,11 @@ install/ejabberd::
 	done
 	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap/ELDAPv3.hrl
 	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/XmppAddr.hrl
+	rmdir $(DEB_DESTDIR)$(EJABBERDIR)/db
 	erlang-depends
 
 get-orig-source:
 	dh_testdir
 	wget -O ../ejabberd_$(DEB_UPSTREAM_VERSION).orig.tar.gz \
-		http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION)_2.tar.gz
+		http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION).tar.gz
 
