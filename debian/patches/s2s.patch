@@ -3,8 +3,10 @@ delay between remote server connection attempts after a falure (in case of
 server is down it would be reasonable, but what happens much more often is a
 network split when the delay is inadmissible).
 
---- ejabberd-2.0.3.orig/src/ejabberd_s2s_in.erl
-+++ ejabberd-2.0.3/src/ejabberd_s2s_in.erl
+Index: ejabberd-2.0.5/src/ejabberd_s2s_in.erl
+===================================================================
+--- ejabberd-2.0.5.orig/src/ejabberd_s2s_in.erl	2009-04-01 17:23:52.000000000 +0200
++++ ejabberd-2.0.5/src/ejabberd_s2s_in.erl	2009-04-05 22:51:20.000000000 +0200
 @@ -352,7 +352,7 @@
              case {ejabberd_s2s:allow_host(To, From),
                    lists:member(LTo, ejabberd_router:dirty_get_all_domains())} of
@@ -14,8 +16,10 @@ network split when the delay is inadmissible).
  		    ejabberd_s2s_out:start(To, From,
  					   {verify, self(),
  					    Key, StateData#state.streamid}),
---- ejabberd-2.0.3.orig/src/ejabberd_s2s_out.erl
-+++ ejabberd-2.0.3/src/ejabberd_s2s_out.erl
+Index: ejabberd-2.0.5/src/ejabberd_s2s_out.erl
+===================================================================
+--- ejabberd-2.0.5.orig/src/ejabberd_s2s_out.erl	2009-04-01 17:23:51.000000000 +0200
++++ ejabberd-2.0.5/src/ejabberd_s2s_out.erl	2009-04-05 22:51:20.000000000 +0200
 @@ -93,7 +93,7 @@
  %% Only change this value if you now what your are doing:
  -define(FSMLIMITS,[]).

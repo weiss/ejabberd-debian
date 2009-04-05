@@ -1,6 +1,8 @@
---- ejabberd-2.0.3.orig/src/mod_shared_roster.erl
-+++ ejabberd-2.0.3/src/mod_shared_roster.erl
-@@ -414,13 +414,63 @@
+Index: ejabberd-2.0.5/src/mod_shared_roster.erl
+===================================================================
+--- ejabberd-2.0.5.orig/src/mod_shared_roster.erl	2009-04-01 17:23:51.000000000 +0200
++++ ejabberd-2.0.5/src/mod_shared_roster.erl	2009-04-05 22:52:54.000000000 +0200
+@@ -439,13 +439,63 @@
  	    false
      end.
  
@@ -65,7 +67,7 @@
  
  get_group_users(_User, Host, Group, GroupOpts) ->
      case proplists:get_value(all_users, GroupOpts, false) of
-@@ -428,7 +478,14 @@
+@@ -453,7 +503,14 @@
  	    ejabberd_auth:get_vh_registered_users(Host);
  	false ->
  	    []
@@ -81,7 +83,7 @@
  
  %% @spec (Host::string(), Group::string()) -> [{User::string(), Server::string()}]
  get_group_explicit_users(Host, Group) ->
-@@ -450,7 +507,8 @@
+@@ -475,7 +532,8 @@
  get_special_users_groups(Host) ->
      lists:filter(
        fun(Group) ->
@@ -91,7 +93,7 @@
        end,
        list_groups(Host)).
  
-@@ -778,6 +836,7 @@
+@@ -803,6 +861,7 @@
      Name = get_opt(GroupOpts, name, ""),
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
@@ -99,7 +101,7 @@
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -787,7 +846,14 @@
+@@ -812,7 +871,14 @@
  		"@all@\n";
  	    true ->
  		[]
@@ -115,7 +117,7 @@
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      FGroup =
  	?XAE("table", [],
-@@ -870,6 +936,8 @@
+@@ -895,6 +961,8 @@
  			  case SJID of
  			      "@all@" ->
  				  USs;
@@ -124,7 +126,7 @@
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -884,10 +952,17 @@
+@@ -909,10 +977,17 @@
  		    true -> [{all_users, true}];
  		    false -> []
  		end,
