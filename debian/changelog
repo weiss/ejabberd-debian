@@ -1,6 +1,9 @@
 ejabberd (2.0.5-1.1) unstable; urgency=low
 
-  * Non-maintainer upload to fix compatibility with Erlang/OTP R13B.
+  * Non-maintainer upload to fix compatibility with Erlang/OTP R13B
+    (dynamic_compile_loglevel.patch added).
+  * Raise requirement for the erlang-dev package version to >= 1:13b
+    to simplify transition of Debian to Erlang/OTP R13B.
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Tue, 05 May 2009 09:20:16 +0000
 
