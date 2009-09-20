@@ -1,6 +1,5 @@
 convert.patch
 s2s.patch
-caps.patch
 mod_ctlextra.patch
 shared_roster_recent.patch
 shared_roster_online.patch
