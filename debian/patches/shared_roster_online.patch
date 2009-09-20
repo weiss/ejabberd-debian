@@ -1,7 +1,5 @@
-Index: ejabberd-2.0.5/src/mod_shared_roster.erl
-===================================================================
---- ejabberd-2.0.5.orig/src/mod_shared_roster.erl	2009-04-05 22:51:20.000000000 +0200
-+++ ejabberd-2.0.5/src/mod_shared_roster.erl	2009-04-05 22:51:20.000000000 +0200
+--- a/src/mod_shared_roster.erl	2009-09-20 20:51:32.000000000 +0400
++++ b/src/mod_shared_roster.erl	2009-09-20 20:52:04.000000000 +0400
 @@ -39,6 +39,8 @@
  	 out_subscription/4,
  	 register_user/2,
@@ -83,7 +81,7 @@ Index: ejabberd-2.0.5/src/mod_shared_roster.erl
        end,
        list_groups(Host)).
  
-@@ -664,6 +690,103 @@
+@@ -689,6 +715,103 @@
  			push_roster_item(U, S, LUser, LServer, GroupName, Subscription)
  		end, get_group_users(LUser, LServer, Group, GroupOpts))
        end, lists:usort(SpecialGroups++UserGroups)).
@@ -187,7 +185,7 @@ Index: ejabberd-2.0.5/src/mod_shared_roster.erl
  
  push_user_to_displayed(LUser, LServer, Group, Subscription) ->
      GroupsOpts = groups_with_opts(LServer),
-@@ -862,6 +985,7 @@
+@@ -887,6 +1010,7 @@
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
      RecentUsersDays = get_opt(GroupOpts, recent_users_days, 0),
@@ -195,7 +193,7 @@ Index: ejabberd-2.0.5/src/mod_shared_roster.erl
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -878,6 +1002,12 @@
+@@ -903,6 +1027,12 @@
  	    true ->
  		[]
  	end ++
@@ -207,8 +205,8 @@ Index: ejabberd-2.0.5/src/mod_shared_roster.erl
 +	end ++
  	[[us_to_list(Member), $\n] || Member <- Members],
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
-     FGroup =
-@@ -963,6 +1093,8 @@
+     DescNL = length(element(2, regexp:split(Description, "\n"))),
+@@ -989,6 +1119,8 @@
  				  USs;
  			      "@recent@" ->
  				  USs;
@@ -217,7 +215,7 @@ Index: ejabberd-2.0.5/src/mod_shared_roster.erl
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -983,11 +1115,16 @@
+@@ -1009,11 +1141,16 @@
  		    true -> [{recent_users_days, 7}];
  		    false -> []
  		end,
