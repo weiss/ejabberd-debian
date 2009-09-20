@@ -29,7 +29,7 @@ Index: ejabberd-2.0.5/src/ejabberd_s2s_out.erl
  
  %% We do not block on send anymore.
  -define(TCP_SEND_TIMEOUT, 15000).
-@@ -227,8 +227,8 @@
+@@ -229,8 +229,8 @@
  	{error, _Reason} ->
  	    ?INFO_MSG("s2s connection: ~s -> ~s (remote server not found)",
  		      [StateData#state.myname, StateData#state.server]),
