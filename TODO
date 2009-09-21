@@ -1,0 +1,37 @@
+* Use upstream ejabberdctl.cfg as /etc/default/ejabberd.
+  Requires patching, see the master branch.
+  Also ensure that the config is safe w.r.t. proxy65 etc,
+  def. log level match etc (compate to the current one).
+
+* Re-check whether the upstream startup files would do
+  better than current.
+  The current have some nice ideas but they
+  a) deviate from upstream
+  b) artifically constructing node names for ejabberdctl
+     provokes the atom list overflow of the ejabberd host
+     in certain scenarious; no robust workaround is known yet.
+
+* Update README.Debian:
+  o Restructure, add headings and leading TOC.
+  o A note on database drivers.
+  o A note on epam binary permissions and stat-override.
+
+* Write the NEWS file:
+  o Mention ejabberdctl commands that were renamed.
+  o sasl.log rename.
+  o Mnesia spool reloaction (check first).
+
+* Update ejabberdctl.8 to match the recent ejabberdctl.
+
+
+Low priority
+============
+
+* Write PID file by default, create /var/run/ejabberd.
+
+* Think of supporting the "live" rc-file target
+  to deviate from upstream a bit less (this actually
+  should be an argument to ejabberd script).
+
+* Do we need the separate ejabberd script at all?
+
