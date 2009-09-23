@@ -1,11 +1,46 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
 
-DESTDIR=$(CURDIR)/debian/ejabberd
+#DEB_AUTO_UPDATE_DEBIAN_CONTROL := true
 
-%:
-	dh --with quilt --sourcedirectory=src $@
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 
-override_dh_auto_configure:
-	dh_auto_configure -- --enable-odbc --enable-pam
+export HOME := $(CURDIR)/debian
+DEB_BUILDDIR := $(shell pwd)/src
+DEB_CONFIGURE_SCRIPT := $(DEB_BUILDDIR)/configure
+DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc --enable-pam
+# Not sure if we should enable workaround for gateway subscription
+# Adding it breaks XMPP compatibility
+# Not adding breaks roster import for some gateways (specifically JIT)
+#DEB_CONFIGURE_EXTRA_FLAGS := --enable-odbc --enable-roster-gateway-workaround
+
+DEB_INSTALL_DOCS_ALL :=
+
+EJABBERDIR := /usr/lib/ejabberd
+DEB_MAKE_INSTALL_TARGET := install DESTDIR=$(DEB_DESTDIR) \
+	EJABBERDDIR=$(DEB_DESTDIR)$(EJABBERDIR)           \
+	ETCDIR=$(DEB_DESTDIR)/etc/ejabberd                \
+	LOGDIR=$(DEB_DESTDIR)/var/log/ejabberd
+
+CFLAGS := -I `ls -d /usr/lib/erlang/erts-*`/include/
+
+# declares a minimal versioned erlang Depends:
+install/ejabberd::
+	$(RM) $(DEB_DESTDIR)/etc/ejabberd/ejabberd.cfg
+	$(RM) $(DEB_DESTDIR)/etc/ejabberd/ejabberdctl.cfg
+	install -d $(DEB_DESTDIR)$(EJABBERDIR)/include
+	install -m 644 src/*.hrl $(DEB_DESTDIR)$(EJABBERDIR)/include
+	for f in src/*/*.hrl ; do \
+	    install -D -m 644 $$f $(DEB_DESTDIR)$(EJABBERDIR)/include/$$(basename $$(dirname $$f))/$$(basename $$f) ; \
+	done
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/eldap/ELDAPv3.hrl
+	rm -f $(DEB_DESTDIR)$(EJABBERDIR)/include/XmppAddr.hrl
+	rmdir $(DEB_DESTDIR)$(EJABBERDIR)/db
+	erlang-depends
+
+get-orig-source:
+	dh_testdir
+	wget -O ../ejabberd_$(DEB_UPSTREAM_VERSION).orig.tar.gz \
+		http://www.process-one.net/en/projects/ejabberd/download/$(DEB_UPSTREAM_VERSION)/ejabberd-$(DEB_UPSTREAM_VERSION).tar.gz
 
