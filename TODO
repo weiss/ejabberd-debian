@@ -23,6 +23,8 @@
 
 * Update ejabberdctl.8 to match the recent ejabberdctl.
 
+* Why do we suggest libunix-syslog-perl?
+
 
 Low priority
 ============
