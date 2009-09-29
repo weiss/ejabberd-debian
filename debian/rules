@@ -40,7 +40,6 @@ clean: unpatch
 	dh_testroot
 	rm -f build-stamp configure-stamp
 
-	# Add here commands to clean up after the build process.
 	dh_auto_clean $(AUTO_OPTS)
 
 	dh_clean 
@@ -51,8 +50,6 @@ install: build
 	dh_prep  
 	dh_installdirs
 
-	# Add here commands to install the package into debian/ejabberd.
-	#$(MAKE) DESTDIR=$(CURDIR)/debian/ejabberd install
 	dh_auto_install $(AUTO_OPTS)
 
 	# Remove unused upstream config files:
