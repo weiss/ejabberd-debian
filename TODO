@@ -11,6 +11,12 @@
      provokes the atom list overflow of the ejabberd host
      in certain scenarious; no robust workaround is known yet.
 
+  On the other hand, upstream scripts:
+  a) more cumbersome;
+  b) kill epmd;
+  c) don't draw dots while waiting for ejabberd to start/stop;
+  d) Show nag screens on debug and live targets.
+
 * Update README.Debian:
   o Restructure, add headings and leading TOC.
   o A note on database drivers.
@@ -22,6 +28,34 @@
   o Mnesia spool reloaction (check first).
 
 * Update ejabberdctl.8 to match the recent ejabberdctl.
+
+* Fix get-orig-source target -- Process-One seems to
+  publish the source tarballs in other place these days.
+
+* Better parsing of FIREWALL_WINDOW:
+  a) make it robust against invalid input.
+  b) allow open ranges like 123- and -234.
+
+* Think of implementing /usr/share/ejabberd/common
+  which would be sourced by both ejabberdctl and
+  ejabberd and processed/constructed certain options.
+  Also it seems that the upstream's approach with
+  having just one file both for startup and control
+  isn't that bad, as current packaging leads to some
+  code duplication in scripts.
+
+* In debconf code, check if the user name contains
+  the "@" character and if it is, does the part of
+  the username to the right of it equals to the
+  provided hostname. If both conditions hold,
+  extract the real username and proceed, otherwise
+  complain. At the current state it's possible to
+  enter an invalid username and several users
+  tripped over this issue.
+
+* Implement processing of standard Debian build options
+  to allow parallel builds (has to be tested) and
+  builds with gcc code optimizations turned off.
 
 * Why do we suggest libunix-syslog-perl?
 
