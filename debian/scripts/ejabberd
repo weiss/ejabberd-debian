@@ -12,7 +12,15 @@ if [ -f /etc/default/ejabberd ] ; then
     . /etc/default/ejabberd
 fi
 
-ERLANG_OPTS="+K $POLL -smp $SMP +P $PROCESSES"
+if [ "$FIREWALL_WINDOW" = "" ] ; then
+    KERNEL_OPTS=""
+else
+    KERNEL_OPTS="-kernel \
+	inet_dist_listen_min ${FIREWALL_WINDOW%-*} \
+	inet_dist_listen_max ${FIREWALL_WINDOW#*-}"
+fi
+
+ERLANG_OPTS="+K $POLL -smp $SMP +P $PROCESSES $KERNEL_OPTS"
 
 if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
     HOME=/var/lib/ejabberd
