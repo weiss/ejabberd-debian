@@ -1,26 +1,14 @@
-* Use upstream ejabberdctl.cfg as /etc/default/ejabberd.
-  Requires patching, see the master branch.
-  Also ensure that the config is safe w.r.t. proxy65 etc,
-  def. log level match etc (compate to the current one).
-
-* Re-check whether the upstream startup files would do
-  better than current.
-  The current have some nice ideas but they
-  a) deviate from upstream
-  b) artifically constructing node names for ejabberdctl
-     provokes the atom list overflow of the ejabberd host
-     in certain scenarious; no robust workaround is known yet.
-
-  On the other hand, upstream scripts:
-  a) more cumbersome;
-  b) kill epmd;
-  c) don't draw dots while waiting for ejabberd to start/stop;
-  d) Show nag screens on debug and live targets.
+* Add comments (and commented out examples) to the
+  clauses in the "LISTENING PORTS" config file section
+  explaining how to enable IPv6 on a port.
 
 * Update README.Debian:
   o Restructure, add headings and leading TOC.
-  o A note on database drivers.
+  o A note on database drivers (possibly include
+    the suggestion by Gerfried Fuchs about usage
+    of PostrgeSQL via ODBC drivers).
   o A note on epam binary permissions and stat-override.
+  o A note on enabling IPv6 (?).
 
 * Write the NEWS file:
   o Mention ejabberdctl commands that were renamed.
@@ -31,6 +19,19 @@
 
 * Fix get-orig-source target -- Process-One seems to
   publish the source tarballs in other place these days.
+
+* Remove/rename or comment the "restart" ejabberdctl target
+  as it behaves differently compared to the same named
+  rc-script tagret.
+
+* Rename sasl.log to erlang.log, as upstream did.
+  Possibly requires adjusting the logrotate script.
+  Requires mentioning in the NEWS file.
+
+* Upstream changelog mentioned that the mnesia files
+  are now located in a subdirectory named after the
+  host (or node?); currently there are no signs of this,
+  needs further investigation.
 
 * Better parsing of FIREWALL_WINDOW:
   a) make it robust against invalid input.
@@ -70,4 +71,27 @@ Low priority
   should be an argument to ejabberd script).
 
 * Do we need the separate ejabberd script at all?
+
+
+For reference
+=============
+
+* Use upstream ejabberdctl.cfg as /etc/default/ejabberd.
+  Requires patching, see the master branch.
+  Also ensure that the config is safe w.r.t. proxy65 etc,
+  def. log level match etc (compate to the current one).
+
+* Re-check whether the upstream startup files would do
+  better than current.
+  The current have some nice ideas but they
+  a) deviate from upstream
+  b) artifically constructing node names for ejabberdctl
+     provokes the atom list overflow of the ejabberd host
+     in certain scenarious; no robust workaround is known yet.
+
+  On the other hand, upstream scripts:
+  a) more cumbersome;
+  b) kill epmd;
+  c) don't draw dots while waiting for ejabberd to start/stop;
+  d) Show nag screens on debug and live targets.
 
