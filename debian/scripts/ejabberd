@@ -35,11 +35,13 @@ LOG=/var/log/ejabberd/ejabberd.log
 SASL_LOG=/var/log/ejabberd/sasl.log
 SPOOL=/var/lib/ejabberd
 ERL_CRASH_DUMP=/var/log/ejabberd/erl_crash.dump
+EJABBERD_PID_PATH=/var/run/ejabberd/ejabberd.pid
 
 export ERL_CRASH_DUMP
 export ERL_MAX_PORTS
 export ERL_MAX_ETS_TABLES
 export ERL_FULLSWEEP_AFTER
+export EJABBERD_PID_PATH
 
 
 ARGS=

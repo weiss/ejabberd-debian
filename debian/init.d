@@ -17,6 +17,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 EJABBERD=/usr/sbin/ejabberd
 EJABBERDCTL=/usr/sbin/ejabberdctl
+EJABBERDRUN=/var/run/ejabberd
 EJABBERDUSER=ejabberd
 NAME=ejabberd
 
@@ -36,6 +37,15 @@ ctl()
 
 start()
 {
+    if [ ! -d $EJABBERDRUN ]; then
+        mkdir -p $EJABBERDRUN
+        if [ $? -ne 0 ]; then
+            echo -n " failed"
+            return
+        fi
+        chmod 0755 $EJABBERDRUN
+        chown ejabberd:ejabberd $EJABBERDRUN
+    fi
     cd /var/lib/ejabberd
     su $EJABBERDUSER -c "$EJABBERD -noshell -detached"
 

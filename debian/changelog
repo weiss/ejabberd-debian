@@ -1,6 +1,6 @@
 ejabberd (2.1.0rc1-1) unstable; urgency=low
 
-  * New upstream release.
+  * New upstream release (Closes: #519858).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 20 Sep 2009 20:07:51 +0400
 
