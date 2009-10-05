@@ -1,4 +1,4 @@
-.TH ejabberdctl 8 "08 June 2008" "Version 2.0.1" "ejabberdctl manual page"
+.TH ejabberdctl 8 "04 October 2009" "Version 2.1.0 RC1" "ejabberdctl manual page"
 
 .SH NAME
 ejabberdctl \(em a control interface of ejabberd Jabber/XMPP server
@@ -42,7 +42,18 @@ see below.
 .TP
 .BI vhost " server"
 Specifies that \fIcommand\fP should be executed for virtual host \fIserver\fP.
-There are only few commands that require \fIvhost\fP argument.
+There are only few commands that require \fIvhost\fP argument;
+those commands are explicitly mentioned below as vhost-only.
+
+.SH COMMANDS
+
+.PP
+Some commands to \fBejabberdctl\fR are single words, like \fBstatus\fR,
+and some are multi-word, like \fBreopen-log\fR; to join the adjacent
+words of the multi-word commands you can use either the underline ("_")
+symbol or the minus sign ("-") or a mixture of them, so all the following
+forms are valid: \fBstatus_list_host\fR, \fBstatus-list-host\fR,
+\fBstatus_list-host\fR.
 
 .PP
 If there are no \fIvhost server\fP options then the \fIcommand\fP can be any
@@ -146,16 +157,21 @@ List all registered at the ejabberd server users (at virtual host \fIserver\fP).
 
 .SH EXTRA OPTIONS
 .PP
-An optional module \fBmod_ctlextra\fP adds a number of other commands.
+An optional module \fBmod_admin_extra\fP adds a number of other commands.
 .PP
-To enable the additional commands add it to \fB{modules}\fP
-section of ejabberd config file and make it looking as the following:
+While it is enabled by default, you might want to check it is actually
+enabled in the configuration file (especially if you're upgrading
+from pre-2.1 series of ejabberd).
+.PP
+To enable these additional commands add mod_admin_extra to the
+\fB{modules}\fP section of ejabberd config file and make it
+looking as the following:
 .sp
 .nf
 {modules,
  [
   ...
-  {mod_ctlextra, []},
+  {mod_admin_extra, []},
   ...
  ]}.
 .fi
@@ -325,15 +341,24 @@ ejabberd server.
 
 .SH OPTIONS FILE
 .PP 
-The file \fB/etc/default/ejabberd\fR contains specific options. One of them
-is used by \fBejabberdctl\fP.
+The file \fB/etc/default/ejabberd\fR contains specific options. Two of them
+are used by \fBejabberdctl\fP.
 
-.PD 0
-.I ERLANG_NODE
+.TP
+.BI ERLANG_NODE
 Use specified string as Erlang node of \fBejabberd\fP server to connect. It
 overrides default \fBejabberd\fP node name. The string may take one of the
 following forms: \fBnodename\fP, \fBnodename@hostname\fP or
 \fBnodename@hostname.domainname\fP.
+
+.TP
+.BI FIREWALL_WINDOW
+Use the specified range of ports to communicate with the other Erlang
+nodes (namely, with the target Erlang node running ejabberd).
+This can be useful when the system running the target node has restricted
+firewall setup allowing only a certain range of ports to be used by
+the Erlang nodes for communication; in this case, you should specify
+that range of ports in the \fBFIREWALL_WINDOW\fR setting.
 
 .SH FILES
 .PD 0
