@@ -77,8 +77,6 @@ or database tables) you have to stop ejabberd completely and then start it again
 .BI reopen\-log
 Force the ejabberd server to reopen its log
 file (\fI/var/log/ejabberd/ejabberd.log\fP by default).
-.TP
-.BI reopen\-weblog
 If module mod_http_fileserver is loaded then force the ejabberd server to reopen
 its weblog file.
 .TP
@@ -105,6 +103,22 @@ Dump user database of the ejabberd server to text file \fIfilepath\fP.
 .BI load " filepath"
 Restore user database of the ejabberd server from text file \fIfilepath\fP.
 .TP
+.BI dump\-table " file table"
+Dump the specified database \fItable\fR to the specified text \fIfile\fR.
+.TP
+.BI export\-piefxis " dir"
+Export data of all users registered on all virtual hosts of the server
+to a set of PIEFXIS files (XEP-0227) which will be stored
+in the directory \fIdir\fR.
+.TP
+.BI export\-piefxis\-host " dir host"
+Export data of all the users registered on the specified
+virtual host \fIhost\fR to a set of PIEFXIS files (XEP-0227)
+which will be stored in the directory \fIdir\fR.
+.TP
+.BI import\-piefxis " file"
+Import users' data from a PIEFXIS file (XEP-0227) \fIfile\fR.
+.TP
 .BI import\-file " filepath"
 Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
 \fIfilepath\fP is \fI.../example.org/user.xml\fP then imported username will be
@@ -113,6 +127,18 @@ Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
 .BI import\-dir " directorypath"
 Import user data from jabberd 1.4 spool directory \fIdirectorypath\fP. Directory
 name should be the name of virtual server to import users.
+.TP
+.BI mnesia\-change\-nodename " oldnodename newnodename oldbackup newbackup"
+Reads the backup file \fIoldbackup\fR (which should have been created
+using the \fBejabberdctl backup\fR command) and writes its contents
+to the file \fInewbackup\fR while replacing in it all occurences of the
+Erlang node name \fIoldnodename\fR with the \fInewnodename\fR.
+.IP
+This should be used to "migrate" the ejabberd database to the new
+hostname of the machine on which ejabberd runs in case this hostname
+is about to change. This is because ejabberd is actually served
+by an Erlang node which is bound to the name of the physical host
+to provide for clustering.
 .TP
 .BI delete\-expired\-messages
 Delete expired offline messages from ejabberd database.
@@ -147,6 +173,9 @@ Report number of established users' sessions.
 .TP
 .BI connected\-users
 List all established users' sessions.
+.TP
+.BI get\-loglevel
+Reports the log level (an integer number) ejabberd is operating on.
 
 .PP
 If there are \fIvhost server\fP options then the \fIcommand\fP can be
