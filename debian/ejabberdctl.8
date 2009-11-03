@@ -141,14 +141,16 @@ by an Erlang node which is bound to the name of the physical host
 to provide for clustering.
 .TP
 .BI rename\-default\-nodeplugin
-Since release 2.0.5 and up to release 2.1.0, the implementation
-of Publish-Subscribe (pubsub) in ejabberd used a special plugin
-named "default" to manage ...
+Since release 2.0.0 and up to release 2.1.0, the implementation
+of publish-subscribe (pubsub) in ejabberd used a plugin
+named "node_default" as the default node plugin.
 Starting from release 2.1.0 this functionality is provided by the
 new plugin named "hometree".
-As the pubsub database might retain references to the old name of his
-plugin, "default", this command can be used to upgrade the pubsub
-database, changing all these references to the new name \- "hometree".
+In the case of upgrading from an older version of ejabberd,
+its pubsub database might retain references to the old name of this
+plugin, "node_default", and this command can be used to upgrade
+the pubsub database, changing all these references to the
+new name \- "hometree".
 .IP
 Note that ejabberd automatically runs this command if you update from
 an ejabberd release 2.0.5 or older.
