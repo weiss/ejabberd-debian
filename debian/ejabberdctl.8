@@ -13,7 +13,7 @@ ejabberdctl \(em a control interface of ejabberd Jabber/XMPP server
 It is designed to help the administrator control the functioning of the
 running \fBejabberd\fR daemon.
 .PP
-This commands must be run by a superuser.
+This command must be run by a superuser.
 
 .SH OPTIONS
 .TP
@@ -22,10 +22,11 @@ Specifies remote Erlang node to connect to. Default value is
 \fIejabberd\fP.
 If the node name does not contain a symbol \fI@\fP
 then the actual node name becomes \fInode@host\fP where \fIhost\fP is short
-hostname (usually it coincides with \fI\(gahostname \-s\(ga\fP). If the node name
-contains a symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
-will use so-called long names (see \fBerl\fR(1) manual page and look for
-options \fI\-name\fP and \fI\-sname\fP for details).
+hostname (usually it coincides with \fI\(gahostname \-s\(ga\fP).
+If the node name contains a symbol \fI@\fR and its hostname part
+is a FQDN then \fBejabberd\fR will use so-called long names
+(see \fBerl\fR(1) manual page and look for options \fI\-name\fP
+and \fI\-sname\fP for details).
 
 Examples of \fI\-\-node\fP option:
 
@@ -38,8 +39,8 @@ Connect to remotely run ejabberd server at node \fIejabberd@otherhost\fP.
 .BI ejabberd@localhost
 Connect to locally run ejabberd server at node \fIejabberd@localhost\fP.
 
-ejabberdctl honors ERLANG_NODE environment variable from /etc/default/ejabberd,
-see below.
+ejabberdctl honors \fBERLANG_NODE\fR environment variable from
+/etc/default/ejabberd, see below.
 
 .TP
 .BI \-\-auth " user host password"
@@ -93,7 +94,7 @@ in the pattern from being interpreted by the shell.
 .TP
 .BI debug
 Attaches an interactive Erlang shell to a running ejabberd server. To detach it
-press Ctrl+G, q, <Return>.
+press Ctrl+G, then input a character "q" and hit <Return>.
 .TP
 .BI status
 Requests status of the Erlang virtual machine where ejabberd server is running.
@@ -397,22 +398,23 @@ Print number of logged users (at virtual host \fIserver\fP).
 .BI ban\-account " username [reason]"
 Ban account: kick sessions and change password (at virtual host \fIserver\fP).
 
-.SH
-.PP
-ejabberdctl starts distributed Erlang node \fIejabberddebug\fP (if run with
-\fBdebug\fP option) or \fIejabberdctl\fP (if run with any other options).
-If the ejabberd server's node name to connect to includes FDQN as a hostname
-Erlang option \fI\-name\fP is used. Otherwise ejabberdctl uses short names
-(\fI\-sname\fP option).
+.SH NOTES
 
 .PP
-Note that ejabberdctl does not append hostname to its own node name leaving
-this to Erlang emulator. It usually follows \fI\(gahostname \-f\(ga\fP to
-find a hostname if long names are used or \fI\(gahostname \-s\(ga\fP in case
-of short names, but may fail in case of unusual networking settings. A known
-case of failure is using long names when \fI\(gahostname \-f\(ga\fP doesn't
-return FDQN. If ejabberdctl cannot create Erlang node then it cannot control
-ejabberd server.
+\fBejabberdctl\fR starts distributed Erlang node \fIejabberddebug\fP (if run
+with \fBdebug\fP option) or \fIejabberdctl\fP (if run with any other options).
+If the ejabberd server's node name to connect to includes FDQN as a hostname
+Erlang option \fI\-name\fP is used. Otherwise \fBejabberdctl\fR uses short
+names (\fI\-sname\fP option).
+
+.PP
+Note that \fBejabberdctl\fR does not append hostname to its own node name
+leaving this to Erlang emulator. It usually follows \fI\(gahostname \-f\(ga\fP
+to find a hostname if long names are used or \fI\(gahostname \-s\(ga\fP in
+case of short names, but may fail in case of unusual networking settings. A
+known case of failure is using long names when \fI\(gahostname \-f\(ga\fP
+doesn't return FDQN. If \fRejabberdctl\fR cannot create Erlang node then it
+cannot control ejabberd server.
 
 .SH OPTIONS FILE
 .PP 
