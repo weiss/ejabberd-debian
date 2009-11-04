@@ -1,11 +1,4 @@
 * Update ejabberdctl.8 to match the recent ejabberdctl.
-  * Describe the "help" basic command.
-  * Figure out how to best describe the "rename-default-nodeplugin"
-    command and what is it all about.
-  * Figure out what's with "vhost mode": current ejabberdctl man
-    provides certain top-level syntax for specifying vhost commands
-    while it seems that the upstream ejabberdctl does not do this.
-    Looks like this change might warrant some lines in the NEWS file.
   * Add description for those mod_admin_extra commands not found
     in mod_ctlextra.
 
@@ -23,6 +16,9 @@
 
 * Write the NEWS file:
   o Mention ejabberdctl commands that were renamed.
+  o Mention change in ejabberdctl calling convention
+    (no "vhost server" anymore, "registere-users"
+    is now called in a different way).
   o sasl.log rename.
   o Mnesia spool reloaction (check first).
 

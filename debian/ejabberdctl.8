@@ -5,23 +5,25 @@ ejabberdctl \(em a control interface of ejabberd Jabber/XMPP server
 
 .SH SYNOPSIS
 .PP 
-\fBejabberdctl\fR \fI[\-\-node node] [vhost server] command [options]\fP
+\fBejabberdctl\fR \fI[\-\-node nodename] [\-\-auth user host password] [command [options]]\fP
 
 .SH DESCRIPTION
 .PP 
 \fBejabberdctl\fR  is a front end to the ejabberd Jabber/XMPP server.
 It is designed to help the administrator control the functioning of the
 running \fBejabberd\fR daemon.
+.PP
+This commands must be run by a superuser.
 
 .SH OPTIONS
 .TP
-.BI \-\-node " node"
+.BI \-\-node " nodename"
 Specifies remote Erlang node to connect to. Default value is
 \fIejabberd\fP.
-If the node name does not contain symbol \fI@\fP
-then actual node name becomes \fInode@host\fP where \fIhost\fP is short
+If the node name does not contain a symbol \fI@\fP
+then the actual node name becomes \fInode@host\fP where \fIhost\fP is short
 hostname (usually it coincides with \fI\(gahostname \-s\(ga\fP). If the node name
-contain symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
+contains a symbol \fI@\fR and its hostname part is a FQDN then \fBejabberd\fR
 will use so-called long names (see \fBerl\fR(1) manual page and look for
 options \fI\-name\fP and \fI\-sname\fP for details).
 
@@ -40,10 +42,8 @@ ejabberdctl honors ERLANG_NODE environment variable from /etc/default/ejabberd,
 see below.
 
 .TP
-.BI vhost " server"
-Specifies that \fIcommand\fP should be executed for virtual host \fIserver\fP.
-There are only few commands that require \fIvhost\fP argument;
-those commands are explicitly mentioned below as vhost-only.
+.BI \-\-auth " user host password"
+\fBTODO\fR write desctiption.
 
 .SH COMMANDS
 
@@ -56,8 +56,34 @@ forms are valid: \fBstatus_list_host\fR, \fBstatus-list-host\fR,
 \fBstatus_list-host\fR.
 
 .PP
-If there are no \fIvhost server\fP options then the \fIcommand\fP can be any
-of the following:
+When run without any \fIcommand\fP specified, \fBejabberdctl\fR
+prints the list of available commands and their short descriptions.
+
+.PP
+The following commands can be used:
+.TP
+.BI help " [\-\-tags [tag] | PATTERN]"
+The \fBhelp\fR command without any options does the same thing
+as running \fBejabberdctl\fR without any command specified \(em it
+prints the list of available commands along with their short descriptions.
+.IP
+The \fI\-\-tags\fP option specified alone makes the \fBhelp\fR command
+print the list of supported "help tags" which group \fBejabberdctl\fR
+commands on the basis of their purpose (such as debugging commands,
+backup commands etc).
+.IP
+The \fI\-\-tags\fP option specified with a tag \fItag\fP makes the
+\fBhelp\fR command print the list of commands associated wih
+the help tag \fItag\fP along with their short descriptions.
+.IP
+If the \fBhelp\fR command is followed by a word other than "\-\-tags",
+this word is interpreted as a pattern specifying a set of commands
+to print the help on.
+In this pattern, a "*" character matches any number of characters,
+including zero, and a "?" character matches any single character.
+Note that when running \fBejabberdctl\fR with this form of the
+\fBhelp\fR command from the shell, you have to protect the characters
+in the pattern from being interpreted by the shell.
 .TP
 .BI debug
 Attaches an interactive Erlang shell to a running ejabberd server. To detach it
@@ -191,15 +217,12 @@ Report number of established users' sessions.
 .BI connected\-users
 List all established users' sessions.
 .TP
+.BI registered\-users " server"
+List all the users registered on the ejabberd server
+at the virtual host \fIserver\fP.
+.TP
 .BI get\-loglevel
 Reports the log level (an integer number) ejabberd is operating on.
-
-.PP
-If there are \fIvhost server\fP options then the \fIcommand\fP can be
-the following:
-.TP
-.BI registered\-users
-List all registered at the ejabberd server users (at virtual host \fIserver\fP).
 
 .SH EXTRA OPTIONS
 .PP
