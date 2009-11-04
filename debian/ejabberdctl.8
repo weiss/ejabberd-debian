@@ -43,7 +43,13 @@ see below.
 
 .TP
 .BI \-\-auth " user host password"
-\fBTODO\fR write desctiption.
+If restriction of access to \fBejabberdctl\fR commands is configured
+(see the "Restrict Execution with AccessCommands" section in the
+Installation and Operation Guide), this option must be used to
+authenticate the entity requesting execution of the command.
+\fIuser\fP and \fIhost\fP are the respective parts of the entity JID
+and \fIpassword\fP is either a plain text password to authenticate
+that JID or the MD5 hash of that password.
 
 .SH COMMANDS
 
