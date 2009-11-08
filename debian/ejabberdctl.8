@@ -252,6 +252,130 @@ looking as the following:
  ]}.
 .fi
 .PP
+The new commands are:
+
+.TP
+.BI add_rosteritem " localuser localserver user server nick group subs"
+Add to the roster of user \fIlocaluser\fP on server \fIlocalserver\fP
+a new entry for user \fIuser\fP on server \fIserver\fP,
+assign nickname \fInick\fP to it,
+place this entry to the group \fIgroup\fP...
+.IP
+\fBTODO\fR what's "subs"?
+
+.TP
+.BI delete_rosteritem " localuser localserver user server"
+Delete from the roster of the user \fIlocaluser\fP on the server
+\fIlocalserver\fP an entry for the JID \fIuser\fP@\fIserver\fP.
+
+.TP
+.BI ban_account " user host reason"
+Ban the user \fIuser\fP registered on the virtual host \fIhost\fP.
+This is done by kicking their active sessions with the reason
+\fIreason\fP and replacing their password with a randomly
+generated one.
+
+.TP
+.BI kick_session " user host resource reason"
+Kick the session opened by the user \fIuser\fP registered
+on the virtual host \fIhost\fP
+and having the resource \fIresource\fP bound to it
+providing the reason \fIreason\fP.
+
+.TP
+.BI change_password " user host newpass"
+Change password of the user \fIuser\fP registered on the
+virtual host \fIhost\fP to \fInewpass\fP.
+
+.TP
+.BI check_account " user host"
+Check whether the user \fIuser\fP is registered
+on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR what is returned in either of possible cases?
+
+.TP
+.BI check_password " user host password"
+Check whether the user \fIuser\fP registered on the
+virtual host \fIhost\fP has password \fIpassword\fP.
+.IP
+\fBTODO\fR what is returned in either of possible cases?
+
+.TP
+.BI check_password_hash " user host passwordhash hashmethod"
+Check whether the user \fIuser\fP registered on the
+virtual host \fIhost\fP has a password, the hash of which,
+calculated using the \fIhashmethod\fP is equal
+to the hash \fIpasswordhash\fP.
+.IP
+\fBTODO\fR what is returned in either of possible cases?
+
+.TP
+.BI compile " file"
+Compile and reload the Erlang source code file \fIfile\fP.
+
+.TP
+.BI load_config " file"
+Load ejabberd configuration from the file \fIfile\fP.
+
+.TP
+.BI delete_old_users " days"
+Delete accounts and all related data of users who did not
+log on the server for \fIdays\fP days.
+
+.TP
+.BI delete_old_users_vhost " host days"
+Delete accounts and all related data of users
+registered on the virtual host \fIhost\fP
+who did not log on the server for \fIdays\fP days.
+
+.TP
+.BI export2odbc " host path"
+Export Mnesia database tables keeping the data for the virtual
+host \fIhost\fP to a set of text files created under
+the specified directory \fIpath\fP.
+.IP
+\fBTODO\fR does path must exist?
+
+.TP
+.BI get_cookie
+Print the cookie used by the Erlang node which runs ejabberd
+instance \fBejabberdctl\fR controls.
+.IP
+\fBTODO\fR verify the statement above.
+
+.TP
+.BI get_roster " user host"
+Print the roster of the user \fIuser\fP registered
+on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR in what format?
+
+.TP
+.BI get_vcard " user host name"
+Print the contents of the field \fIname\fP
+of a vCard belonging to the user \fIuser\fP
+registered on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR in what format?
+What it vCard is not set?
+
+.TP
+.BI get_vcard2 " user host name subname"
+Print the contents of the subfield \fIsubfield\fP
+of the field \fIname\fP
+of a vCard belonging to the user \fIuser\fP
+registered on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR same as for get_vcard
+
+.TP
+.BI num_active_users " host days"
+Print number of users registered on the virtual host \fIhost\fP
+who logged on the server at least once during the last
+\fIdays\fP days.
+
+.PP
 The new options are:
 
 .TP
