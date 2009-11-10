@@ -251,17 +251,24 @@ looking as the following:
   ...
  ]}.
 .fi
+
+.PP
+Most of additional commands possess extended descriptions
+which can be printed using
+\fBejabberdctl help\fR \fIcommand\fP
+
 .PP
 The new commands are:
 
 .TP
-.BI add_rosteritem " localuser localserver user server nick group subs"
-Add to the roster of user \fIlocaluser\fP on server \fIlocalserver\fP
-a new entry for user \fIuser\fP on server \fIserver\fP,
-assign nickname \fInick\fP to it,
-place this entry to the group \fIgroup\fP...
-.IP
-\fBTODO\fR what's "subs"?
+.BI add_rosteritem " localuser localserver user server nick group subscription"
+Add to the roster of the user \fIlocaluser\fP
+registered on the virtual host \fIlocalserver\fP
+a new entry for the user \fIuser\fP on the server \fIserver\fP,
+assign the nickname \fInick\fP to it,
+place this entry to the group \fIgroup\fP
+and set its subscription type to \fIsubscription\fP
+which is one of "none", "from", "to" or "both".
 
 .TP
 .BI delete_rosteritem " localuser localserver user server"
@@ -289,26 +296,25 @@ virtual host \fIhost\fP to \fInewpass\fP.
 
 .TP
 .BI check_account " user host"
-Check whether the user \fIuser\fP is registered
-on the virtual host \fIhost\fP.
-.IP
-\fBTODO\fR what is returned in either of possible cases?
+Exit with code 0 if the user \fIuser\fP is registered
+on the virtual host \fIhost\fP,
+exit with code 1 otherwise.
 
 .TP
 .BI check_password " user host password"
-Check whether the user \fIuser\fP registered on the
-virtual host \fIhost\fP has password \fIpassword\fP.
-.IP
-\fBTODO\fR what is returned in either of possible cases?
+Exit with code 0 the user \fIuser\fP registered on the
+virtual host \fIhost\fP has password \fIpassword\fP,
+exit with code 1 otherwise.
 
 .TP
 .BI check_password_hash " user host passwordhash hashmethod"
-Check whether the user \fIuser\fP registered on the
+Exit with code 0 if the user \fIuser\fP registered on the
 virtual host \fIhost\fP has a password, the hash of which,
 calculated using the \fIhashmethod\fP is equal
-to the hash \fIpasswordhash\fP.
+to the hash \fIpasswordhash\fP;
+exit with code 1 otherwise.
 .IP
-\fBTODO\fR what is returned in either of possible cases?
+Allowed hashing methods are "md5" and "sha" (for SHA-1).
 
 .TP
 .BI compile " file"
@@ -333,9 +339,7 @@ who did not log on the server for \fIdays\fP days.
 .BI export2odbc " host path"
 Export Mnesia database tables keeping the data for the virtual
 host \fIhost\fP to a set of text files created under
-the specified directory \fIpath\fP.
-.IP
-\fBTODO\fR does path must exist?
+the specified directory \fIpath\fP, which must exist.
 
 .TP
 .BI get_cookie
@@ -349,16 +353,20 @@ instance \fBejabberdctl\fR controls.
 Print the roster of the user \fIuser\fP registered
 on the virtual host \fIhost\fP.
 .IP
-\fBTODO\fR in what format?
+The information printed is a series of lines each representing
+one roster entry; each line consist of four fields separated
+by tab characters representing, in this order,
+the JID of an entry, its nickname, subscription type
+and group.
 
 .TP
 .BI get_vcard " user host name"
 Print the contents of the field \fIname\fP
 of a vCard belonging to the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
-.IP
-\fBTODO\fR in what format?
-What it vCard is not set?
+If this field is not set of the user did not create
+their vCard, and empty string is printed (that is,
+containing only the line break).
 
 .TP
 .BI get_vcard2 " user host name subname"
@@ -366,14 +374,53 @@ Print the contents of the subfield \fIsubfield\fP
 of the field \fIname\fP
 of a vCard belonging to the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
-.IP
-\fBTODO\fR same as for get_vcard
+If this field is not set of the user did not create
+their vCard, and empty string is printed (that is,
+containing only the line break).
 
 .TP
 .BI num_active_users " host days"
 Print number of users registered on the virtual host \fIhost\fP
 who logged on the server at least once during the last
 \fIdays\fP days.
+
+.TP
+.BI num_resources " user host"
+Print the number of resources (that is, active sessions)
+the user \fIuser\fP registered on the virtual host \fIhost\fP
+currently has.
+
+.TP
+.BI resource_num " user host num"
+Print the resource of a session number \fInum\fP
+the user \fIuser\fP registered on the virtual host \fIhost\fP
+has currently open.
+.IP
+\fBTODO\fR what base num has? does it relate to num_resources?
+
+.TP
+.BI process_rosteritems " action subs asks users contacts"
+\fBTODO\fP need more info
+
+.TP
+.BI push_alltoall " host group"
+All entries for all the users registered on the virtual host \fIhost\fP
+to the rosters of all the users registered on this virtual host.
+The created entries are assigned to the roster group \fIgroup\fP.
+.IP
+\fBTODO\fR does each user get the entry for theirselves?
+
+.TP
+.BI push_roster " file user host"
+Push items from the file \fIfile\fP to the roster
+of the user \fIuser\fP
+registered on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR format?
+
+.TP
+.BI push_roster_all " file"
+\fBTODO\fR format? all users on all vhosts?
 
 .PP
 The new options are:
