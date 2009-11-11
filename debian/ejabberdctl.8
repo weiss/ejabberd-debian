@@ -469,6 +469,48 @@ to the (local or remote) JID \fIto\fP containing
 the body \fIbody\fP and subject \fIsubject\fP.
 Both bare and full JIDs are supported.
 
+.TP
+.BI srg\-create " group host name description display"
+Create a new shared roster group \fIgroup\fP
+on the virtual host \fIhost\fP
+with displayed name \fIname\fP,
+description \fIdescription\fP and displayed groups \fIdisplay\fP.
+.IP
+\fBTODO\fR what format of \fIdisplay\fP?
+
+.TP
+.BI srg\-delete " group host"
+Delete the shared roster group \fIgroup\fP
+from the virtual host \fIhost\fP.
+
+.TP
+.BI srg\-user\-add " user server group host"
+Add an entry for the JID \fIuser\fP@\fIserver\fP
+to the group \fIgroup\fP on the virtual host \fIhost\fP.
+
+.TP
+.BI srg\-user\-del " user server group host"
+Delete an entry for the JID \fIuser\fP@\fIserver\fP
+from the group \fIgroup\fP on the virtual host \fIhost\fP.
+
+.TP
+.BI srg\-list " host"
+List the shared roster groups on the virtual host \fIhost\fP.
+
+.TP
+.BI srg\-get\-info " group host"
+Print info on the shared roster group \fIgroup\fP
+on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR what format?
+
+.TP
+.BI srg\-get\-members " group host"
+Print members of the shared roster group \fIgroup\fP
+on the virtual host \fIhost\fP.
+.IP
+\fBTODO\fR what format?
+
 .PP
 The new options are:
 
@@ -496,25 +538,6 @@ for subsequent import to a relational database system.
 .TP
 .BI delete\-older\-messages " days"
 Delete offline messages older than \fIdays\fP.
-.TP
-.BI srg\-create " group host name description display"
-Create shared roster group \fIgroup\fP at server \fIhost\fP with displayed name
-\fIname\fP, description \fIdescription\fP and displayed groups \fIdisplay\fP.
-.TP
-.BI srg\-delete " group host"
-Delete shared roster group \fIgroup\fP from server \fIhost\fP.
-.TP
-.BI srg\-user\-add " user server group host"
-Add user \fIuser@server\fP to group \fIgroup\fP at server \fIhost\fP.
-.TP
-.BI srg\-user\-del " user server group host"
-Delete user \fIuser@server\fP from group \fIgroup\fP at server \fIhost\fP.
-.TP
-.BI srg\-list\-groups " host"
-List the shared roster groups at server \fIhost\fP.
-.TP
-.BI srg\-get\-info " group host"
-Get info on the group \fIgroup\fP at server \fIhost\fP.
 .TP
 .BI vcard\-get " user host data [data2]"
 Get data from the vCard of \fIuser@host\fP. \fIdata\fP (and optional \fIdata2\fP)
