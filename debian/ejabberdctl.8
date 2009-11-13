@@ -511,6 +511,79 @@ on the virtual host \fIhost\fP.
 .IP
 \fBTODO\fR what format?
 
+.TP 
+.BI stats " topic"
+Print statistics on the topic \fItopic\fP.
+The valid topics and their meaning are:
+.IP
+.BI registeredusers
+Print the number of users registered on the server.
+.IP
+.BI onlineusers
+Print the number of users currently logged into the server.
+.IP
+.BI onlineusersnode
+Print the number of users logged into the server
+which are served by the current ejabberd Erlang node.
+.IP
+.BI uptimeseconds
+Print the uptime of the current ejabberd Erlang node, in seconds.
+
+.TP
+.BI stats\-host " host topic"
+Print statistics on the topic \fItopic\fP
+for the virtual host \fIhost\fP.
+The valid topics and their meaning are:
+.IP
+.BI registeredusers
+Print the number of users registered on the host \fIhost\fP.
+.IP
+.BI onlineusers
+Print the number of users currently logged into the server,
+which are registered on the host \fIhost\fP.
+
+.TP
+.BI status_list " status"
+Print the users currently logged into the server
+and having the presence status \fIstatus\fP.
+The entries are printed one per line;
+each entry consists of the four fields separated by
+tab characters, in this order: the node part of the
+user's JID, the host part of the user's JID,
+the user's session resource,
+the priority of the user's session
+and the user's status description.
+.IP
+The \fIstatus\fP parameter can take the following values:
+"available", "away", "xa", "dnd" and "chat".
+
+.TP
+.BI status_list_host " host status"
+Print the users currently logged into the server
+which are registered on the virtual host \fIhost\fP
+and have the presence status \fIstatus\fP.
+.IP
+The available values for the \fIstatus\fP parameter
+and the format of the output data are the same
+as of the \fBstatus\-list\fR subcommand.
+
+.TP
+.BI status_num " status"
+Print the number of users currently logged into the server
+and having the presence status \fIstatus\fP.
+.IP
+The available values for the \fIstatus\fP parameter
+are the same as of the \fBstatus\-list\fR subcommand.
+
+.TP
+.BI status\-num\-host " host status"
+Print the number of users currently logged into the server
+which are registered on the virtual host \fIhost\fP
+and have the presence status \fIstatus\fP.
+.IP
+The available values for the \fIstatus\fP parameter
+are the same as of the \fBstatus\-list\fR subcommand.
+
 .PP
 The new options are:
 
@@ -583,28 +656,6 @@ The file contents must be in the same format as for \fBpushroster\fP command.
 .BI push\-alltoall " server group"
 Adds all the users at server \fIserver\fP to each other's roster using group \fIgroup\fP.
 .TP
-.BI status\-list " status"
-Print the list of currently logged users with status \fIstatus\fP. Status can be either
-\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
-\fBdnd\fP.
-.TP
-.BI status\-num " status"
-Print the number of currently logged users with status \fIstatus\fP. Status can be either
-\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
-\fBdnd\fP.
-.TP
-.BI "stats registeredusers"
-Print the number of currently registered users.
-.TP
-.BI "stats onlineusers"
-Print the number of currently logged users.
-.TP
-.BI "stats onlineusersnode"
-Print the number of currently logged users in the ejabberd node.
-.TP
-.BI "stats uptime\-seconds"
-Print the uptime of ejabberd node in seconds.
-.TP
 .BI get\-cookie
 Get the Erlang cookie of this node.
 .TP
@@ -617,24 +668,6 @@ one of the following:
 .TP
 .BI num\-active\-users " days"
 Print number of users active in the last \fIdays\fP days (at virtual host \fIserver\fP).
-.TP
-.BI status\-list " status"
-Print the list of currently logged to virtual host \fIserver\fP users with
-status \fIstatus\fP. Status can be either
-\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
-\fBdnd\fP.
-.TP
-.BI status\-num " status"
-Print the number of currently logged to virtual host \fIserver\fP users with
-status \fIstatus\fP. Status can be either
-\fBall\fP or one of the following: \fBavailable\fP, \fBchat\fP, \fBaway\fP, \fBxa\fP,
-\fBdnd\fP.
-.TP
-.BI "stats registeredusers"
-Print number of registered users (at virtual host \fIserver\fP).
-.TP
-.BI "stats onlineusers"
-Print number of logged users (at virtual host \fIserver\fP).
 .TP
 .BI ban\-account " username [reason]"
 Ban account: kick sessions and change password (at virtual host \fIserver\fP).
@@ -698,6 +731,7 @@ A copy of the documentation can be found at
 This manual page was adapted by Sergei Golovan <sgolovan@nes.ru> for 
 the \fBDebian\fP system (but may be used by others) from the
 \fBejabberd\fP documentation written by Alexey Shchepin <alexey@sevcom.net>.
+Updated by Konstantin Khomoutov <flatworm@users.sourceforge.net>.
 
 Permission is granted to copy, distribute and/or modify this document under 
 the terms of the GNU General Public License, Version 2 any  
