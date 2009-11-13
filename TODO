@@ -1,7 +1,3 @@
-* Update ejabberdctl.8 to match the recent ejabberdctl.
-  * Add description for those mod_admin_extra commands not found
-    in mod_ctlextra.
-
 * Add comments (and commented out examples) to the
   clauses in the "LISTENING PORTS" config file section
   explaining how to enable IPv6 on a port.

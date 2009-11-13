@@ -202,7 +202,7 @@ Show some information about the Mnesia system (see \fBmnesia\fP(3), function
 .TP
 .BI mnesia
 Show all information about the Mnesia system, such as transaction statistics,
-db_nodes, and configuration parameters (see \fBmnesia\fP(3), function
+database nodes, and configuration parameters (see \fBmnesia\fP(3), function
 system_info).
 .TP
 .BI mnesia " key"
@@ -261,7 +261,7 @@ which can be printed using
 The new commands are:
 
 .TP
-.BI add_rosteritem " localuser localserver user server nick group subscription"
+.BI add\-rosteritem " localuser localserver user server nick group subscription"
 Add to the roster of the user \fIlocaluser\fP
 registered on the virtual host \fIlocalserver\fP
 a new entry for the user \fIuser\fP on the server \fIserver\fP,
@@ -271,43 +271,43 @@ and set its subscription type to \fIsubscription\fP
 which is one of "none", "from", "to" or "both".
 
 .TP
-.BI delete_rosteritem " localuser localserver user server"
+.BI delete\-rosteritem " localuser localserver user server"
 Delete from the roster of the user \fIlocaluser\fP on the server
 \fIlocalserver\fP an entry for the JID \fIuser\fP@\fIserver\fP.
 
 .TP
-.BI ban_account " user host reason"
+.BI ban\-account " user host reason"
 Ban the user \fIuser\fP registered on the virtual host \fIhost\fP.
 This is done by kicking their active sessions with the reason
 \fIreason\fP and replacing their password with a randomly
 generated one.
 
 .TP
-.BI kick_session " user host resource reason"
+.BI kick\-session " user host resource reason"
 Kick the session opened by the user \fIuser\fP registered
 on the virtual host \fIhost\fP
 and having the resource \fIresource\fP bound to it
 providing the reason \fIreason\fP.
 
 .TP
-.BI change_password " user host newpass"
+.BI change\-password " user host newpass"
 Change password of the user \fIuser\fP registered on the
 virtual host \fIhost\fP to \fInewpass\fP.
 
 .TP
-.BI check_account " user host"
+.BI check\-account " user host"
 Exit with code 0 if the user \fIuser\fP is registered
 on the virtual host \fIhost\fP,
 exit with code 1 otherwise.
 
 .TP
-.BI check_password " user host password"
+.BI check\-password " user host password"
 Exit with code 0 the user \fIuser\fP registered on the
 virtual host \fIhost\fP has password \fIpassword\fP,
 exit with code 1 otherwise.
 
 .TP
-.BI check_password_hash " user host passwordhash hashmethod"
+.BI check\-password\-hash " user host passwordhash hashmethod"
 Exit with code 0 if the user \fIuser\fP registered on the
 virtual host \fIhost\fP has a password, the hash of which,
 calculated using the \fIhashmethod\fP is equal
@@ -321,16 +321,22 @@ Allowed hashing methods are "md5" and "sha" (for SHA-1).
 Compile and reload the Erlang source code file \fIfile\fP.
 
 .TP
-.BI load_config " file"
+.BI load\-config " file"
 Load ejabberd configuration from the file \fIfile\fP.
+.IP
+Note that loading config to a database does not mean
+reloading the server \(em for example it's impossible
+to add/remove virtual hosts without server restart.
+In fact, only ACLs, access rules and a few global options
+are applied upon reloading.
 
 .TP
-.BI delete_old_users " days"
+.BI delete\-old\-users " days"
 Delete accounts and all related data of users who did not
 log on the server for \fIdays\fP days.
 
 .TP
-.BI delete_old_users_vhost " host days"
+.BI delete\-old\-users\-vhost " host days"
 Delete accounts and all related data of users
 registered on the virtual host \fIhost\fP
 who did not log on the server for \fIdays\fP days.
@@ -342,14 +348,14 @@ host \fIhost\fP to a set of text files created under
 the specified directory \fIpath\fP, which must exist.
 
 .TP
-.BI get_cookie
+.BI get\-cookie
 Print the cookie used by the Erlang node which runs ejabberd
 instance \fBejabberdctl\fR controls.
 .IP
 \fBTODO\fR verify the statement above.
 
 .TP
-.BI get_roster " user host"
+.BI get\-roster " user host"
 Print the roster of the user \fIuser\fP registered
 on the virtual host \fIhost\fP.
 .IP
@@ -360,24 +366,27 @@ the JID of an entry, its nickname, subscription type
 and group.
 
 .TP
-.BI push_roster " file user host"
+.BI push\-roster " file user host"
 Push items from the file \fIfile\fP to the roster
 of the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
 .IP
 The format of file containing roster items is the same
-as used for output by the \fBget_roster\fR command.
+as used for output by the \fBget\-roster\fR command.
+.IP
+\fBTODO\fR recheck, manpage entries for mod_ctlextra
+mentioned other format.
 
 .TP
-.BI push_roster_all " file"
+.BI push\-roster\-all " file"
 .IP
 The format of file containing roster items is the same
-as used for output by the \fBget_roster\fR command.
+as used for output by the \fBget\-roster\fR command.
 .IP
 \fBTODO\fR all users on all vhosts?
 
 .TP
-.BI push_alltoall " host group"
+.BI push\-alltoall " host group"
 All entries for all the users registered on the virtual host \fIhost\fP
 to the rosters of all the users registered on this virtual host.
 The created entries are assigned to the roster group \fIgroup\fP.
@@ -385,20 +394,26 @@ The created entries are assigned to the roster group \fIgroup\fP.
 \fBTODO\fR does each user get the entry for theirselves?
 
 .TP
-.BI process_rosteritems " action subs asks users contacts"
+.BI process\-rosteritems " action subs asks users contacts"
 \fBTODO\fP need more info
 
 .TP
-.BI get_vcard " user host name"
+.BI get\-vcard " user host name"
 Print the contents of the field \fIname\fP
 of a vCard belonging to the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
 If this field is not set of the user did not create
 their vCard, and empty string is printed (that is,
 containing only the line break).
+.IP
+For example \fIname\fP can be "FN" or "NICKNAME"
+For retrieving email address use "EMAIL USERID".
+Names and descriptions of other supported fields
+can be obtained from the XEP-0054 document
+(http://www.xmpp.org/extensions/xep\-0054.html).
 
 .TP
-.BI get_vcard2 " user host name subname"
+.BI get\-vcard2 " user host name subname"
 Print the contents of the subfield \fIsubname\fP
 of the field \fIname\fP
 of a vCard belonging to the user \fIuser\fP
@@ -408,31 +423,31 @@ their vCard, and empty string is printed (that is,
 containing only the line break).
 
 .TP
-.BI set_vcard " user host name content"
+.BI set\-vcard " user host name content"
 Set the field \fIname\fP to the string \fIcontent\fP
 in the vCard of the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
 
 .TP
-.BI set_vcard2 " user host name subname content"
+.BI set\-vcard2 " user host name subname content"
 Set the subfield \fIsubname\fP
 of the field \fIname\fP to the string \fIcontent\fP
 in the vCard of the user \fIuser\fP
 registered on the virtual host \fIhost\fP.
 
 .TP
-.BI set_nickname " user host nickname"
+.BI set\-nickname " user host nickname"
 Set the "nickname" field in the vCard of the user \fIuser\fP
 registered on the virtual host \fIhost\fP to \fInickname\fP.
 
 .TP
-.BI num_active_users " host days"
+.BI num\-active\-users " host days"
 Print number of users registered on the virtual host \fIhost\fP
 who logged on the server at least once during the last
 \fIdays\fP days.
 
 .TP
-.BI num_resources " user host"
+.BI num\-resources " user host"
 Print the number of resources (that is, active sessions)
 the user \fIuser\fP registered on the virtual host \fIhost\fP
 currently has.
@@ -440,7 +455,7 @@ If the specified user has no active sessions,
 print the string "0".
 
 .TP
-.BI resource_num " user host num"
+.BI resource\-num " user host num"
 Print the resource of a session number \fInum\fP
 the user \fIuser\fP registered on the virtual host \fIhost\fP
 has currently open.
@@ -451,19 +466,19 @@ the number of sessions opened by the user, an error message
 is printed.
 
 .TP
-.BI remove_node " node"
-Remove Erlang node \fInode\fP from the Mnesia clustering
-configuration.
+.BI remove\-node " node"
+Remove the Erlang node \fInode\fP from the Mnesia
+database cluster.
 
 .TP
-.BI send_message_chat " from to body"
+.BI send\-message\-chat " from to body"
 Send a message of type "chat" from the JID \fIfrom\fP
 to the (local or remote) JID \fIto\fP containing
 the body \fIbody\fP.
 Both bare and full JIDs are supported.
 
 .TP
-.BI send_message_headline " from to subject body"
+.BI send\-message\-headline " from to subject body"
 Send a message of type "headline" from the JID \fIfrom\fP
 to the (local or remote) JID \fIto\fP containing
 the body \fIbody\fP and subject \fIsubject\fP.
@@ -543,7 +558,7 @@ Print the number of users currently logged into the server,
 which are registered on the host \fIhost\fP.
 
 .TP
-.BI status_list " status"
+.BI status\-list " status"
 Print the users currently logged into the server
 and having the presence status \fIstatus\fP.
 The entries are printed one per line;
@@ -558,7 +573,7 @@ The \fIstatus\fP parameter can take the following values:
 "available", "away", "xa", "dnd" and "chat".
 
 .TP
-.BI status_list_host " host status"
+.BI status\-list\-host " host status"
 Print the users currently logged into the server
 which are registered on the virtual host \fIhost\fP
 and have the presence status \fIstatus\fP.
@@ -568,7 +583,7 @@ and the format of the output data are the same
 as of the \fBstatus\-list\fR subcommand.
 
 .TP
-.BI status_num " status"
+.BI status\-num " status"
 Print the number of users currently logged into the server
 and having the presence status \fIstatus\fP.
 .IP
@@ -584,43 +599,6 @@ and have the presence status \fIstatus\fP.
 The available values for the \fIstatus\fP parameter
 are the same as of the \fBstatus\-list\fR subcommand.
 
-.PP
-The new options are:
-
-.TP
-.BI compile " file"
-Compile Erlang source file \fIfile\fP.
-.TP
-.BI load\-config " file"
-Load config from \fIfile\fP. Note that loading config to a database doesn't mean
-reloading server. For example it's impossible to add/remove virtual hosts
-without server restart.
-.TP
-.BI remove\-node " nodename"
-Remove an ejabberd node \fInodename\fP from the Mnesia database cluster.
-.TP
-.BI delete\-older\-users " days"
-Delete users that have not logged in the last \fIdays\fP.
-.TP
-.BI set\-password " user server password"
-Set password for user \fIuser@server\fP to \fIpassword\fP.
-.TP
-.BI export2odbc " server outputdir"
-Export Mnesia tables on \fIserver\fP to files in \fIoutputdir\fP directory
-for subsequent import to a relational database system.
-.TP
-.BI delete\-older\-messages " days"
-Delete offline messages older than \fIdays\fP.
-.TP
-.BI vcard\-get " user host data [data2]"
-Get data from the vCard of \fIuser@host\fP. \fIdata\fP (and optional \fIdata2\fP)
-is a vCard node. For example \fIdata\fP may be \fBFN\fP or \fBNICKNAME\fP.
-For retrieving email address use \fBEMAIL USERID\fP. Other options can be obtained
-from XEP-0054 (http://www.xmpp.org/extensions/xep\-0054.html).
-.TP
-.BI vcard\-set " user host data [data2] content"
-Set data to content for \fIuser@host\fP vCard. \fIdata\fP (and optional \fIdata2\fP)
-has the same meaning as for \fBvcard\-get\fP command.
 \" .TP
 \" .BI muc\-purge " days"
 \" Destroy MUC rooms with zero activity (no messages in history) in the last
@@ -628,49 +606,23 @@ has the same meaning as for \fBvcard\-get\fP command.
 \" .TP
 \" .BI muc\-online\-rooms
 \" Print the list of existing MUC rooms.
-.TP
-.BI add\-rosteritem " user1 server1 user2 server2 nick group subs"
-Add \fIuser2@server2\fP to \fIuser1@server1\fP's roster.
-Option \fIsubs\fP must be one of the \fInone\fP, \fIfrom\fP, or \fIboth\fP.
-.TP
-.BI rem\-rosteritem " user1 server1 user2 server2"
-Remove \fIuser2@server2\fP from \fIuser1@server1\fP's roster. 
-.TP
-.BI rosteritem\-purge " [options]"
-Purge all roster items that match filtering options.
-.TP
-.BI pushroster " file user server"
-Push template roster in file \fIfile\fP to \fIuser@server\fP. The file contents
-must use the following format:
-.sp
-.nf
-[{"bob", "example.org", "Bob's group", "Bob's nickname"},
- {"mart", "example.org", "workers", "Mart"},
- {"Rich", "example.org", "bosses", "Rich"}].
-.fi
-.TP
-.BI pushroster\-all " file"
-Push template roster in file to all users listed in the file \fIfile\fP itself.
-The file contents must be in the same format as for \fBpushroster\fP command.
-.TP
-.BI push\-alltoall " server group"
-Adds all the users at server \fIserver\fP to each other's roster using group \fIgroup\fP.
-.TP
-.BI get\-cookie
-Get the Erlang cookie of this node.
-.TP
-.BI killsession " user server resource"
-Kill user \fIuser@server/resource\fP session.
 
-.PP
-If there are \fIvhost server\fP options then the \fIcommand\fP can be
-one of the following:
-.TP
-.BI num\-active\-users " days"
-Print number of users active in the last \fIdays\fP days (at virtual host \fIserver\fP).
-.TP
-.BI ban\-account " username [reason]"
-Ban account: kick sessions and change password (at virtual host \fIserver\fP).
+\" entries related to mod_ctlextra (2.0.x series):
+
+\".TP
+\".BI pushroster " file user server"
+\"Push template roster in file \fIfile\fP to \fIuser@server\fP. The file contents
+\"must use the following format:
+\".sp
+\".nf
+\"[{"bob", "example.org", "Bob's group", "Bob's nickname"},
+\" {"mart", "example.org", "workers", "Mart"},
+\" {"Rich", "example.org", "bosses", "Rich"}].
+\".fi
+\".TP
+\".BI pushroster\-all " file"
+\"Push template roster in file to all users listed in the file \fIfile\fP itself.
+\"The file contents must be in the same format as for \fBpushroster\fP command.
 
 .SH NOTES
 
