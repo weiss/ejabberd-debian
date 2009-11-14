@@ -1,0 +1,9 @@
+ejabberd (2.1.0rc1-1) unstable; urgency=low
+
+  Calling convention of the ejabberdctl program was changed.
+  Also some of its commands were renamed or removed,
+  or their calling convention was changed due to switching
+  to another ejabberd module providing a set of additional commands.
+  See README.Debian for details.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sat, 14 Nov 2009 03:26:28 +0300

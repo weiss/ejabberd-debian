@@ -10,13 +10,30 @@
   o A note on epam binary permissions and stat-override.
   o A note on enabling IPv6 (?).
 
-* Write the NEWS file:
+  Also provide extended description of the things
+  mentioned in the NEWS file:
+
   o Mention ejabberdctl commands that were renamed.
   o Mention change in ejabberdctl calling convention
     (no "vhost server" anymore, "registere-users"
     is now called in a different way).
   o sasl.log rename.
   o Mnesia spool reloaction (check first).
+
+  ejabberdctl changes:
+    set-password -> change-password
+    delete\-older\-messages -> delete-old-messages
+    delete\-older\-users -> delete_old_users
+    vcard-get -> get_vcard, get_vcard2
+    vcard-set -> set_vcard, set_vcard2
+    rem_rosteritem -> delete_rosteritem
+    killsession -> kick-session
+    rosteritem_purge -> none
+
+    vhost-specifics:
+      ban_account -> same
+      num_active_users -> same
+      + some other command from the ejabberdctl itself
 
 * Fix get-orig-source target -- Process-One seems to
   publish the source tarballs in other place these days.
