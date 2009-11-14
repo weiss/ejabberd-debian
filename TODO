@@ -1,3 +1,6 @@
+* Fix (or withdraw) s2s.patch.
+  Massage other patches so that they apply cleanly.
+
 * Add comments (and commented out examples) to the
   clauses in the "LISTENING PORTS" config file section
   explaining how to enable IPv6 on a port.
