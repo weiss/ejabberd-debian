@@ -1,11 +1,22 @@
 Table of contents
 =================
 
-...
+1. Running.
+1.1. Using privileged TCP ports
+1.2. Custom options for Erlang emulator
+1.3. Backups
+1.4. Using IPv6
+2. Hostname issues
+3. PAM authentication
+4. Using DBMS for data storage
+5. External modules
 
 
-I. Running
+1. Running
 ==========
+
+1.1. Using privileged TCP ports
+-------------------------------
 
 The ejabberd daemon which is run in init.d script is owned by user ejabberd,
 so it cannot bind to privileged ports (below 1024). The error message in
@@ -29,6 +40,9 @@ port 5222 (the default XMPP port) by a firewall rule. For example:
 iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5222
 
 
+1.2. Custom options for Erlang emulator
+---------------------------------------
+
 You can add extra options to the erl command line like
 
   -pa /usr/local/lib/ejabberd/ebin
@@ -36,13 +50,34 @@ You can add extra options to the erl command line like
 by adding them to ERL_OPTIONS in /etc/default/ejabberd.
 
 
+1.3. Backups
+------------
+
 The package always makes a backup of the ejabberd database if it's running
 when it is upgraded or removed. The backup files are stored in
 /var/backups/ejabberd-<timestamp>.* directory.
 
 
-Hostname issues
-===============
+1.4. Using IPv6
+---------------
+
+IPv6 is not enabled by default for any network activity in ejabberd.
+This is because with the current state of ejabberd code it's impossible
+to fall back to IPv4 if IPv6 is unavailable, and hence enabling IPv6
+by default would immediately break things for users with IPv6 disabled
+(see http://bugs.debian.org/503313 for more details).
+
+You have two methods of enabling IPv6:
+* Add the "inet6" atom to the configuration clauses describing
+  c2s and s2s listeners.
+* Specify and IPv6 address for the "ip" option in the configuration
+  of a listener, like {ip, "::"} -- ejabberd is able to deduce the
+  protocol family from an IP address it parses and enable the appropriate
+  mode on the socket such an IP address is configured for.
+
+
+2. Hostname issues
+===================
 
 The ejabberd daemon uses Erlang database Mnesia. Even if it's configured for
 using ODBC it uses Mnesia for some data (privacy lists et.) and runtime tasks
@@ -82,8 +117,8 @@ Then use file /tmp/ejabberd_at_newhostname.backup to restore ejabberd database
 as it is described in ejabberdctl manual page.
 
 
-PAM authentication
-==================
+3. PAM authentication
+=======================
 
 Ejabberd uses "/usr/lib/ejabberd/priv/bin/epam" binary as a helper
 program to perform PAM authentication.
@@ -123,8 +158,8 @@ dpkg-statoverride --add root ejabberd 04754 /usr/lib/ejabberd/priv/bin/epam
 are able to elevate their privileges by executing this program.)
 
 
-Using DBMS for data storage
-===========================
+4. Using DBMS for data storage
+===============================
 
 The ejabberd Installation and Operation Guide mentions that ejabberd
 is able to use various DBMS engines to manage most of ejabberd's data,
@@ -160,8 +195,8 @@ Note that it appears that currently the only way to use Microsoft SQL
 Server as a database backend is via ODBC (and the FreeTDS ODBC driver).
 
 
-External modules
-================
+5. External modules
+===================
 
 The package installs ejabberd Erlang headers into /usr/lib/ejabberd/include
 directory. To build a module using these headers, as usual include them using
