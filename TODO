@@ -1,70 +1,9 @@
 * Fix (or withdraw) s2s.patch.
   Massage other patches so that they apply cleanly.
 
-* Add comments (and commented out examples) to the
-  clauses in the "LISTENING PORTS" config file section
-  explaining how to enable IPv6 on a port.
+* Fix lintian warnings where possible.
 
-* Update README.Debian:
-  o Restructure, add headings and leading TOC.
-  o A note on database drivers (possibly include
-    the suggestion by Gerfried Fuchs about usage
-    of PostrgeSQL via ODBC drivers).
-  o A note on epam binary permissions and stat-override.
-  o A note on enabling IPv6 (?).
-
-  Also provide extended description of the things
-  mentioned in the NEWS file:
-
-  o Mention ejabberdctl commands that were renamed.
-  o Mention change in ejabberdctl calling convention
-    (no "vhost server" anymore, "registere-users"
-    is now called in a different way).
-  o sasl.log rename.
-  o Mnesia spool reloaction (check first).
-
-  ejabberdctl changes:
-    set-password -> change-password
-    delete\-older\-messages -> delete-old-messages
-    delete\-older\-users -> delete_old_users
-    vcard-get -> get_vcard, get_vcard2
-    vcard-set -> set_vcard, set_vcard2
-    rem_rosteritem -> delete_rosteritem
-    killsession -> kick-session
-    rosteritem_purge -> none
-
-    vhost-specifics:
-      ban_account -> same
-      num_active_users -> same
-      + some other command from the ejabberdctl itself
-
-* Fix get-orig-source target -- Process-One seems to
-  publish the source tarballs in other place these days.
-
-* Remove/rename or comment the "restart" ejabberdctl target
-  as it behaves differently compared to the same named
-  rc-script tagret.
-
-* Rename sasl.log to erlang.log, as upstream did.
-  Possibly requires adjusting the logrotate script.
-  Requires mentioning in the NEWS file.
-
-* Upstream changelog mentioned that the mnesia files
-  are now located in a subdirectory named after the
-  host (or node?); currently there are no signs of this,
-  needs further investigation.
-
-* Better parsing of FIREWALL_WINDOW:
-  a) make it robust against invalid input.
-  b) allow open ranges like 123- and -234.
-
-* Think of implementing /usr/share/ejabberd/common
-  which would be sourced by both ejabberdctl and
-  ejabberd and processed/constructed certain options.
-  Also it seems that the upstream's approach with
-  having just one file both for startup and control
-  isn't that bad, as current packaging leads to some
-  code duplication in scripts.
+* Why do we suggest libunix-syslog-perl?
 
 * In debconf code, check if the user name contains
   the "@" character and if it is, does the part of
@@ -79,19 +18,35 @@
   to allow parallel builds (has to be tested) and
   builds with gcc code optimizations turned off.
 
-* Why do we suggest libunix-syslog-perl?
+* Better parsing of FIREWALL_WINDOW:
+  a) make it robust against invalid input.
+  b) allow open ranges like 123- and -234.
+
+* Add comments (and commented out examples) to the
+  clauses in the "LISTENING PORTS" config file section
+  explaining how to enable IPv6 on a port.
+
+* Fix get-orig-source target -- Process-One seems to
+  publish the source tarballs in other place these days.
+
+* Upstream changelog mentioned that the mnesia files
+  are now located in a subdirectory named after the
+  host (or node?); currently there are no signs of this,
+  needs further investigation.
 
 
 Low priority
 ============
 
-* Write PID file by default, create /var/run/ejabberd.
+* Think of implementing /usr/share/ejabberd/common
+  which would be sourced by both ejabberdctl and
+  ejabberd and processed/constructed certain options.
+  Also it seems that the upstream's approach with
+  having just one file both for startup and control
+  isn't that bad, as current packaging leads to some
+  code duplication in scripts.
 
-* Think of supporting the "live" rc-file target
-  to deviate from upstream a bit less (this actually
-  should be an argument to ejabberd script).
-
-* Do we need the separate ejabberd script at all?
+  Do we need the separate ejabberd script at all?
 
 
 For reference
