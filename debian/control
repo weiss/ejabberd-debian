@@ -3,8 +3,8 @@ Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
 Uploaders: Gerfried Fuchs <rhonda@debian.at>
-Build-Depends: debhelper (>= 5), quilt, erlang-nox, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev
-Standards-Version: 3.8.2
+Build-Depends: debhelper (>= 7), quilt, erlang-nox, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev
+Standards-Version: 3.8.3
 Homepage: http://www.process-one.net/en/projects/ejabberd/
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/ejabberd/trunk
 Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/ejabberd/trunk/
