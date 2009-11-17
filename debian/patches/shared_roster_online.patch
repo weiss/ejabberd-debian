@@ -1,4 +1,9 @@
-Must be applied after shared_roster_recent.patch
+Implements the "@online@" shared roster group invented by the OLPC project.
+This group lists the users who are online on the user's virtual host.
+
+See http://wiki.laptop.org/go/Ejabberd_Configuration
+
+This patch must be applied after shared_roster_recent.patch
 as it depends on the functionality provided by that patch.
 
 --- a/src/mod_shared_roster.erl	2009-09-20 20:51:32.000000000 +0400

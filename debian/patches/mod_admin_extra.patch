@@ -1,3 +1,11 @@
+Adds the mod_admin_extra module to ejabberd.
+This module extends the functionality provided by ejabberdctl
+by adding several new commands.
+
+The code is taken from the ProcessOne repository:
+https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
+(trunk, revision 976).
+
 diff --git a/src/ejabberd.app b/src/ejabberd.app
 index e0e943e..f017015 100644
 --- a/src/ejabberd.app

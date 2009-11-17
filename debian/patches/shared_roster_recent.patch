@@ -1,3 +1,8 @@
+Implements the "@recent@" shared roster group invented by the OLPC project.
+This group lists the users who have active sessions during the last 7 days.
+
+See http://wiki.laptop.org/go/Ejabberd_Configuration
+
 diff --git a/src/mod_shared_roster.erl b/src/mod_shared_roster.erl
 index 4d323b7..6622496 100644
 --- a/src/mod_shared_roster.erl
