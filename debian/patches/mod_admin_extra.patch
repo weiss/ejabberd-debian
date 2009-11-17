@@ -10,18 +10,6 @@ index e0e943e..f017015 100644
  	     node_buddy,
  	     node_club,
  	     node_default,
-diff --git a/src/ejabberd.cfg.example b/src/ejabberd.cfg.example
-index 71d112e..4db44b2 100644
---- a/src/ejabberd.cfg.example
-+++ b/src/ejabberd.cfg.example
-@@ -482,6 +482,7 @@
-   {mod_announce, [{access, announce}]}, % recommends mod_adhoc
-   {mod_caps,     []},
-   {mod_configure,[]}, % requires mod_adhoc
-+  {mod_admin_extra, []},
-   {mod_disco,    []},
-   %%{mod_echo,   [{host, "echo.localhost"}]},
-   {mod_irc,      []},
 diff --git a/src/mod_admin_extra.erl b/src/mod_admin_extra.erl
 new file mode 100644
 index 0000000..9f3ca14
