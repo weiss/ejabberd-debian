@@ -12,6 +12,7 @@ Table of contents
 5. External modules
 6. Upgrading from 2.0.x series
 6.1 Changes in ejabberdctl program
+6.2 Changes in logging
 
 
 1. Running
@@ -284,6 +285,17 @@ to operate on as their extra argument:
   "ban-account"
   "num-active-users"
   "registered-users"
+
+6.2 Changes in logging
+----------------------
+
+Erlang emulator log was renamed from "sasl.log" to "erlang.log"
+to remove confusion (some people interpreted "sasl" as standing for
+"Simple Authentication and Security Layer" instead of Erlang runtime's
+logging mechanism).
+
+The "--sasl-log" command-line option of the ejabberd program was renamed
+to "--erlang-log" to match the change above.
 
 
 Authors

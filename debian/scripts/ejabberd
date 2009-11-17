@@ -32,7 +32,7 @@ EBIN_DIR=/usr/lib/ejabberd/ebin
 CONFIG=/etc/ejabberd/ejabberd.cfg
 INETRC=/etc/ejabberd/inetrc
 LOG=/var/log/ejabberd/ejabberd.log
-SASL_LOG=/var/log/ejabberd/sasl.log
+ERLANG_LOG=/var/log/ejabberd/erlang.log
 SPOOL=/var/lib/ejabberd
 ERL_CRASH_DUMP=/var/log/ejabberd/erl_crash.dump
 EJABBERD_PID_PATH=/var/run/ejabberd/ejabberd.pid
@@ -53,7 +53,7 @@ while [ $# -ne 0 ] ; do
 	--node) ERLANG_NODE=$1; shift ;;
 	--config) CONFIG=$1 ; shift ;;
 	--log) LOG=$1 ; shift ;;
-	--sasl-log) SASL_LOG=$1 ; shift ;;
+	--erlang-log) ERLANG_LOG=$1 ; shift ;;
 	--spool) SPOOL=$1 ; shift ;;
 	*) ARGS="$ARGS $PARAM" ;;
     esac
@@ -70,7 +70,7 @@ exec $ERL $SNAME $ERLANG_NODE \
     -s ejabberd \
     -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \
-    -sasl sasl_error_logger \{file,\"$SASL_LOG\"\} \
+    -sasl sasl_error_logger \{file,\"$ERLANG_LOG\"\} \
     -mnesia dir \"$SPOOL\" \
     $ERLANG_OPTS $ERL_OPTIONS $ARGS "$@"
 
