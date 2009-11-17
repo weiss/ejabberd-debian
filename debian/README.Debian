@@ -10,6 +10,8 @@ Table of contents
 3. PAM authentication
 4. Using DBMS for data storage
 5. External modules
+6. Upgrading from 2.0.x series
+6.1 Changes in ejabberdctl program
 
 
 1. Running
@@ -225,6 +227,63 @@ For the location proposed, you will probably want to add
 
 to that variable. See the erl(1) manual page for more info on the "-pa"
 Erlang emnulator command line option.
+
+
+6. Upgrading from 2.0.x series
+==============================
+
+Certain changes were made in version 2.1.0 which are incompatible with
+2.0.x series packaged in Debian.
+
+While upgrading of the database should occur fully automatically,
+there are changes in the infrastructure, which you might need to
+take into account,
+
+6.1 Changes in ejabberdctl program
+----------------------------------
+
+1) The calling format of the ejabberdctl program was changed:
+   a special prefix "vhost HOSTNAME" which selected operation on the
+   specified virtual host was dropped; now previously vhost-specific
+   commands gained one extra argument specifying a virtual host
+   (such as "ban-users") or come in pairs, such as "delete-old-users"
+   with "delete-old-users-vhost".
+
+2) Some ejabberdctl commands were renamed (see below).
+
+3) ejabberd in Debian was shipped with the mod_ctlextra module which
+   provided several advanced commands for the ejabberdctl program.
+   mod_ctlextra is not supported since 2.1.0 anymore and so it was replaced
+   my its successor, mod_admin_extra. This resulted in renaming of several
+   commands previously provided by mod_ctlextra.
+
+   Note that for mod_admin_extra module to be loaded, it must be mentioned
+   in the appropriate section of the ejabberd configuration file.
+   As this file is not upgraded automatically, make sure you have replaced
+   the request to load mod_ctlextra with the request to load mod_admin_extra.
+   Refer to the ejabberdctl(8) manual page for more details.
+
+The summary of changes in ejabberdctl commands is given below.
+
+Renamed:
+  "set-password" to "change-password";
+  "delete-older-messages" to "delete-old-messages";
+  "delete-older-users" to "delete-old-users";
+  "rem-rosteritem" to "delete-rosteritem";
+  "killsession" to "kick-session";
+
+Renamed with calling convention changed:
+  "vcard-get" to "get-vcard" and "get-vcard2";
+  "vcard-set" to "set-vcard" and "set-vcard2";
+
+Deleted:
+  "rosteritem-purge"
+
+Virtual-host specific commands which now accept a virtual host
+to operate on as their extra argument:
+  "ban_account"
+  "num-active-users"
+  "registered-users"
 
 
 Authors
