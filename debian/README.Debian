@@ -272,7 +272,7 @@ Renamed:
   "rem-rosteritem" to "delete-rosteritem";
   "killsession" to "kick-session";
 
-Renamed with calling convention changed:
+Renamed and calling convention changed:
   "vcard-get" to "get-vcard" and "get-vcard2";
   "vcard-set" to "set-vcard" and "set-vcard2";
 
@@ -281,7 +281,7 @@ Deleted:
 
 Virtual-host specific commands which now accept a virtual host
 to operate on as their extra argument:
-  "ban_account"
+  "ban-account"
   "num-active-users"
   "registered-users"
 
