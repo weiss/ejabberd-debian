@@ -35,7 +35,7 @@ ctl()
     su $EJABBERDUSER -c "$EJABBERDCTL $action" >/dev/null
 }
 
-start()
+mkrundir()
 {
     if [ ! -d $EJABBERDRUN ]; then
         mkdir -p $EJABBERDRUN
@@ -46,6 +46,12 @@ start()
         chmod 0755 $EJABBERDRUN
         chown ejabberd:ejabberd $EJABBERDRUN
     fi
+}
+
+start()
+{
+    mkrundir
+
     cd /var/lib/ejabberd
     su $EJABBERDUSER -c "$EJABBERD -noshell -detached"
 
@@ -80,6 +86,19 @@ stop()
     fi
 }
 
+live()
+{
+    mkrundir
+
+    echo '*******************************************************'
+    echo '* To quit, press Ctrl-g then enter q and press Return *'
+    echo '*******************************************************'
+    echo
+
+    cd /var/lib/ejabberd
+    exec su $EJABBERDUSER -c "$EJABBERD"
+}
+
 case "$1" in
     start)
 	echo -n "Starting jabber server: $NAME"
@@ -107,8 +126,15 @@ case "$1" in
 	    start
 	fi
     ;;
+    live)
+	if ctl status ; then
+	    echo -n "ejabberd is already running"
+	else
+	    live
+	fi
+    ;;
     *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|restart|force-reload|live}" >&2
 	exit 1
     ;;
 esac
