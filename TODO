@@ -1,3 +1,15 @@
+* captcha.sh currently uses bashimshs, namely,
+  the special variable "RANDOM".
+  We should either:
+  * Add bash to suggests and add a patch which will
+    change the shell in its shebang to /bin/bash
+  * Rework it to be runnable in dash.
+    The way to generate a random number could be
+    od -A n -t u2 -N 2 /dev/random
+    for instance.
+  In either case it seems like we should add
+  imagemagick to the suggests clause.
+
 * Fix lintian warnings where possible.
 
 * In debconf code, check if the user name contains
