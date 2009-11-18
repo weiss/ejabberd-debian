@@ -13,7 +13,8 @@ ejabberdctl \(em a control interface of ejabberd Jabber/XMPP server
 It is designed to help the administrator control the functioning of the
 running \fBejabberd\fR daemon.
 .PP
-This command must be run by a superuser.
+This command must be run either by a superuser or by the user \fBejabberd\fP,
+otherwise it will fail to start or to connect to the ejabberd instance.
 
 .SH OPTIONS
 .TP
