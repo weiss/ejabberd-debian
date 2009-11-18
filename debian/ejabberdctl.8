@@ -351,8 +351,6 @@ the specified directory \fIpath\fP, which must exist.
 .BI get\-cookie
 Print the cookie used by the Erlang node which runs ejabberd
 instance \fBejabberdctl\fR controls.
-.IP
-\fBTODO\fR verify the statement above.
 
 .TP
 .BI get\-roster " user host"
@@ -373,29 +371,22 @@ registered on the virtual host \fIhost\fP.
 .IP
 The format of file containing roster items is the same
 as used for output by the \fBget\-roster\fR command.
-.IP
-\fBTODO\fR recheck, manpage entries for mod_ctlextra
-mentioned other format.
 
 .TP
 .BI push\-roster\-all " file"
 .IP
 The format of file containing roster items is the same
 as used for output by the \fBget\-roster\fR command.
-.IP
-\fBTODO\fR all users on all vhosts?
 
 .TP
 .BI push\-alltoall " host group"
 All entries for all the users registered on the virtual host \fIhost\fP
 to the rosters of all the users registered on this virtual host.
 The created entries are assigned to the roster group \fIgroup\fP.
-.IP
-\fBTODO\fR does each user get the entry for theirselves?
 
 .TP
 .BI process\-rosteritems " action subs asks users contacts"
-\fBTODO\fP need more info
+\fBFIXME\fP no information available. Do not use.
 
 .TP
 .BI get\-vcard " user host name"
@@ -490,8 +481,6 @@ Create a new shared roster group \fIgroup\fP
 on the virtual host \fIhost\fP
 with displayed name \fIname\fP,
 description \fIdescription\fP and displayed groups \fIdisplay\fP.
-.IP
-\fBTODO\fR what format of \fIdisplay\fP?
 
 .TP
 .BI srg\-delete " group host"
@@ -516,15 +505,11 @@ List the shared roster groups on the virtual host \fIhost\fP.
 .BI srg\-get\-info " group host"
 Print info on the shared roster group \fIgroup\fP
 on the virtual host \fIhost\fP.
-.IP
-\fBTODO\fR what format?
 
 .TP
 .BI srg\-get\-members " group host"
 Print members of the shared roster group \fIgroup\fP
 on the virtual host \fIhost\fP.
-.IP
-\fBTODO\fR what format?
 
 .TP 
 .BI stats " topic"

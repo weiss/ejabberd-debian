@@ -32,6 +32,34 @@
   needs further investigation.
 
 
+ejabberdctl.8 tasks
+===================
+
+* get-cookie
+  Verify the claim made about its functionality.
+
+* push-roster
+  recheck, manpage entries for mod_ctlextra mentioned other format.
+
+* push-roster-all
+  all users on all vhosts?
+
+* push-alltoall
+  does each user get the entry for theirselves?
+
+* process-rosteritems
+  need more info
+
+* srg-create
+  what format of "display"?
+
+* srg-get-info " group host"
+  what format?
+
+* srg-get-members " group host"
+  what format?
+
+
 Low priority
 ============
 
