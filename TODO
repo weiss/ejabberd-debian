@@ -1,6 +1,3 @@
-* Fix (or withdraw) s2s.patch.
-  Massage other patches so that they apply cleanly.
-
 * Fix lintian warnings where possible.
 
 * Why do we suggest libunix-syslog-perl?
