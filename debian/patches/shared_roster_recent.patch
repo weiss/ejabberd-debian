@@ -1,5 +1,6 @@
 Implements the "@recent@" shared roster group invented by the OLPC project.
-This group lists the users who have active sessions during the last 7 days.
+This group lists the users who had active sessions during the last 7 days
+or are online now.
 
 See http://wiki.laptop.org/go/Ejabberd_Configuration
 
