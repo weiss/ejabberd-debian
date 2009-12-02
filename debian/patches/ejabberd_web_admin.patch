@@ -1,0 +1,18 @@
+This patch replaces a call to re:replace/4, appeared in Erlang/OTP R12B-4
+with a call to regexp:sub/3 restoring the compatibility with older
+Erlang/OTP releases thus making it simpler to backport ejabberd to Etch.
+
+This change was introduced in revision 2771,
+branch http://svn.process-one.net/ejabberd/branches/ejabberd-2.1.x
+
+--- a/rc/web/ejabberd_web_admin.erl	(revision 2770)
++++ b/src/web/ejabberd_web_admin.erl	(revision 2771)
+@@ -1947,7 +1947,7 @@
+     end;
+ 
+ get_node(global, Node, ["backup"], Query, Lang) ->
+-    HomeDir = re:replace(filename:nativename(os:cmd("echo $HOME")), "\n", "", [{return, list}]),
++    {ok, HomeDir, _} = regexp:sub(filename:nativename(os:cmd("echo $HOME")), "\n", ""),
+     ResS = case node_backup_parse_query(Node, Query) of
+ 	       nothing -> [];
+ 	       ok -> [?XREST("Submitted")];
