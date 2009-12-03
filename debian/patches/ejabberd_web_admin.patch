@@ -1,18 +1,26 @@
 This patch replaces a call to re:replace/4, appeared in Erlang/OTP R12B-4
-with a call to regexp:sub/3 restoring the compatibility with older
+with a code using different approach, restoring the compatibility with older
 Erlang/OTP releases thus making it simpler to backport ejabberd to Etch.
 
-This change was introduced in revision 2771,
+This changeset was introduced in revisions 2771, 2773 on the
 branch http://svn.process-one.net/ejabberd/branches/ejabberd-2.1.x
 
---- a/rc/web/ejabberd_web_admin.erl	(revision 2770)
-+++ b/src/web/ejabberd_web_admin.erl	(revision 2771)
-@@ -1947,7 +1947,7 @@
+The first stable version containing the fix is 2.1.1.
+
+--- a/src/web/ejabberd_web_admin.erl	(revision 2768)
++++ b/src/web/ejabberd_web_admin.erl	(revision 2775)
+@@ -1947,7 +1947,13 @@
      end;
  
  get_node(global, Node, ["backup"], Query, Lang) ->
 -    HomeDir = re:replace(filename:nativename(os:cmd("echo $HOME")), "\n", "", [{return, list}]),
-+    {ok, HomeDir, _} = regexp:sub(filename:nativename(os:cmd("echo $HOME")), "\n", ""),
++    HomeDirRaw = case {os:getenv("HOME"), os:type()} of
++	{EnvHome, _} when is_list(EnvHome) -> EnvHome;
++	{false, win32} -> "C:/";
++	{false, {win32, _Osname}} -> "C:/";
++	{false, _} -> "/tmp/"
++    end,
++    HomeDir = filename:nativename(HomeDirRaw),
      ResS = case node_backup_parse_query(Node, Query) of
  	       nothing -> [];
  	       ok -> [?XREST("Submitted")];
