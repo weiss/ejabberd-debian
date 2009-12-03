@@ -5,3 +5,4 @@ captcha.patch
 ejabberd_web_admin.patch
 http-poll-web-page.patch
 piefxis-vhost-export.patch
+vcard-reqs-forwarding.patch
