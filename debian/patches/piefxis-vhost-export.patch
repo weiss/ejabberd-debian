@@ -1,0 +1,68 @@
+This patch enables generation of the main XML file
+when exporting data of a virtual host into PIEFXIS format.
+
+This issue is tracked upstream as EJAB-1098.
+
+This changeset was introduced in revisions 2753,
+branch http://svn.process-one.net/ejabberd/branches/ejabberd-2.1.x
+
+The first stable version containing the fix is 2.1.1.
+
+--- a/src/ejabberd_piefxis.erl	(revision 2752)
++++ b/src/ejabberd_piefxis.erl	(revision 2753)
+@@ -212,7 +212,7 @@
+ 		   El),
+ 	    ok;
+ 	{atomic, exists} ->
+-	    ?INFO_MSG("User ~p@~p already exists, using stored profile...~n",
++	    io:format("Account ~s@~s already exists, updating it...~n",
+ 		      [User, Domain]),
+ 	    io:format(""),
+ 	    ok = exmpp_xml:foreach(
+@@ -417,10 +417,10 @@
+ 
+ %%%==================================
+ 
+-%%%% Export server
++%%%% Export hosts
+ 
+-%% @spec (Dir::string()) -> ok
+-export_server(Dir) ->
++%% @spec (Dir::string(), Hosts::[string()]) -> ok
++export_hosts(Dir, Hosts) ->
+     try_start_exmpp(),
+ 
+     FnT = make_filename_template(),
+@@ -430,7 +430,6 @@
+     print(Fd, make_piefxis_xml_head()),
+     print(Fd, make_piefxis_server_head()),
+ 
+-    Hosts = ?MYHOSTS,
+     FilesAndHosts = [{make_host_filename(FnT, Host), Host} || Host <- Hosts],
+     [print(Fd, make_xinclude(FnH)) || {FnH, _Host} <- FilesAndHosts],
+ 
+@@ -443,14 +442,20 @@
+     ok.
+ 
+ %%%==================================
++%%%% Export server
++
++%% @spec (Dir::string()) -> ok
++export_server(Dir) ->
++    Hosts = ?MYHOSTS,
++    export_hosts(Dir, Hosts).
++
++%%%==================================
+ %%%% Export host
+ 
+ %% @spec (Dir::string(), Host::string()) -> ok
+ export_host(Dir, Host) ->
+-    try_start_exmpp(),
+-    FnT = make_filename_template(),
+-    FnH = make_host_filename(FnT, Host),
+-    export_host(Dir, FnH, Host).
++    Hosts = [Host],
++    export_hosts(Dir, Hosts).
+ 
+ %% @spec (Dir::string(), Fn::string(), Host::string()) -> ok
+ export_host(Dir, FnH, Host) ->

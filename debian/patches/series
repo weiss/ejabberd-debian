@@ -4,3 +4,4 @@ shared_roster_online.patch
 captcha.patch
 ejabberd_web_admin.patch
 http-poll-web-page.patch
+piefxis-vhost-export.patch
