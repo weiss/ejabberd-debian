@@ -21,11 +21,13 @@ fi
 
 ERL=/usr/bin/erl
 EBIN_DIR=/usr/lib/ejabberd/ebin
+SUFFIX=''
 
 if [ $# -ne 0 ] ; then
     case $1 in
 	--) shift; break ;;
 	--node) shift ; ERLANG_NODE=$1 ; shift ;;
+	--concurrent) shift; SUFFIX=$$ ;;
     esac
 fi
 
@@ -34,8 +36,6 @@ if [ "$ERLANG_NODE" = "${ERLANG_NODE%.*}" ] ; then
 else
     SNAME=-name
 fi
-
-SUFFIX=$(date +%s%N)
 
 case $1 in
     debug)

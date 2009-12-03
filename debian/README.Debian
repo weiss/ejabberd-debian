@@ -286,6 +286,31 @@ to operate on as their extra argument:
   "num-active-users"
   "registered-users"
 
+4) The ejabberdctl program was changed not to generate unique node names
+   by default for the Erlang process it starts; to enable generation
+   of unique node names you now has to pass the "--concurrent" command-line
+   option to the ejabberdctl program.
+
+   This was made to prevent overflows of atom table in the ejabberd process
+   which may occur if ejabberdctl is started many times during the ejabberd
+   process lifetime, which is not uncommon on some high-profile sites.
+   Now, ejabberdctl assumes you take care of ensuring all invocations of
+   ejabberdctl are done in a sequence and uses constant names for the nodes
+   of the Erlang processes it starts.
+
+   If you can not (or don't want to) guarantee sequential invocations,
+   pass the "--concurrent" command-line option to the ejabberdctl program.
+   In this case, it will append the PID of the shell process executing the
+   ejabberdctl code to the node name of the Erlang process ejabberdctl starts.
+   This will inevitably grow the ejabberd process's atom table but the maximum
+   theoretical number of the entries added will be no more than twice the
+   maximum number of unique PIDs configured for the system (kernel.pid_max
+   sysctl variable).
+
+   See http://lists.jabber.ru/pipermail/ejabberd/2009-September/005337.html
+   and http://lists.jabber.ru/pipermail/ejabberd/2009-November/005456.html
+   threads for more info on this issue.
+
 6.2 Changes in logging
 ----------------------
 
