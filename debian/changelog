@@ -1,8 +1,40 @@
 ejabberd (2.1.0-1) unstable; urgency=low
 
   * New upstream release (Closes: #519858).
+    This also adds support for LDAPS upstream (Closes: #526145).
+  * Do not depend on cdbs anymore, port debian/rules to dh+quilt,
+    remove build dependency on patchutils.
+  * Bump debhelper version to 7, standards base to 3.8.3
+  * Depend on erlang R13B.
+  * Recommend imagemagick (for captcha support).
+  * Remove deprecated patches (ssl.patch patch, dynamic_compile_loglevel.patch,
+    ldaps.patch, update.patch, proxy.patch, caps.patch, convert.patch, s2s.patch).
+  * Replace mod_ctlextra with mod_admin_extra.
+  * Use upstream's inetrc file.
+  * Bring debian/ejabberd.cfg and ejabberdctl in sync with upstream.
+  * Update ejabberdctl manual page.
+  * Provide NEWS file.
+  * Rework README.Debian:
+    * Group all information into sections.
+    * Describe issues with epam binary (Closes: #502791).
+    * Discuss how to use DBMS backends (Closes: #540915, #507144).
+    * Discuss upgrading from 2.0.x series.
+  * Implement PID file management (Closes: #519858).
+  * Make logrotate process all files matching "*.log".
+  * Improve init script:
+    * Make init script LSB-compliant.
+    * Implement "live" target which allows to run ejabberd in foreground.
+  * Make captcha.sh use bash explicitly.
+  * Rework node-generation for ejabberdctl to fix ejabberd's atom table
+    overflows while preserving the possibility to run several versions
+    of ejabberdctl concurrently as before.
+  * Add webadmin patch restoring compat with Erlang/OTP <= R12B-4.
+  * Integrate upstream patch for EJAB-1106.
+  * Add upstream patch for EJAB-1098.
+  * Add upstream patch for EJAB-1045.
+  * Add Konstantin Khomoutov to uploaders.
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sat, 14 Nov 2009 03:51:16 +0300
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 04 Dec 2009 02:29:15 +0300
 
 ejabberd (2.0.5-2) unstable; urgency=low
 
