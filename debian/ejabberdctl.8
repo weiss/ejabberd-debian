@@ -140,19 +140,6 @@ Restore user database of the ejabberd server from text file \fIfilepath\fP.
 .BI dump\-table " file table"
 Dump the specified database \fItable\fR to the specified text \fIfile\fR.
 .TP
-.BI export\-piefxis " dir"
-Export data of all users registered on all virtual hosts of the server
-to a set of PIEFXIS files (XEP-0227) which will be stored
-in the directory \fIdir\fR.
-.TP
-.BI export\-piefxis\-host " dir host"
-Export data of all the users registered on the specified
-virtual host \fIhost\fR to a set of PIEFXIS files (XEP-0227)
-which will be stored in the directory \fIdir\fR.
-.TP
-.BI import\-piefxis " file"
-Import users' data from a PIEFXIS file (XEP-0227) \fIfile\fR.
-.TP
 .BI import\-file " filepath"
 Import user data from jabberd 1.4 spool file \fIfilepath\fP. For example, if
 \fIfilepath\fP is \fI.../example.org/user.xml\fP then imported username will be
@@ -231,6 +218,27 @@ at the virtual host \fIserver\fP.
 .TP
 .BI get\-loglevel
 Reports the log level (an integer number) ejabberd is operating on.
+
+.SS EXPORTING DATA TO PIEFXIS (XEP-0227) FORMAT
+
+.PP
+The commands described in this section require availability of the
+\fBexmpp\fR library which is not shipped with ejabberd.
+Your can download its source code from \fIhttp://exmpp.org\fP.
+
+.TP
+.BI export\-piefxis " dir"
+Export data of all users registered on all virtual hosts of the server
+to a set of PIEFXIS files which will be stored
+in the directory \fIdir\fR.
+.TP
+.BI export\-piefxis\-host " dir host"
+Export data of all the users registered on the specified
+virtual host \fIhost\fR to a set of PIEFXIS files
+which will be stored in the directory \fIdir\fR.
+.TP
+.BI import\-piefxis " file"
+Import users' data from a PIEFXIS file \fIfile\fR.
 
 .SH EXTRA OPTIONS
 .PP
