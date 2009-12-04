@@ -8,7 +8,8 @@ ejabberd (2.1.0-1) unstable; urgency=low
   * Depend on erlang R13B.
   * Recommend imagemagick (for captcha support).
   * Remove deprecated patches (ssl.patch patch, dynamic_compile_loglevel.patch,
-    ldaps.patch, update.patch, proxy.patch, caps.patch, convert.patch, s2s.patch).
+    ldaps.patch, update.patch, proxy.patch, caps.patch, convert.patch,
+    s2s.patch).
   * Replace mod_ctlextra with mod_admin_extra.
   * Use upstream's inetrc file.
   * Bring debian/ejabberd.cfg and ejabberdctl in sync with upstream.
