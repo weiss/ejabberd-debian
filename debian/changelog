@@ -34,6 +34,8 @@ ejabberd (2.1.0-1) unstable; urgency=low
   * Add upstream patch for EJAB-1098.
   * Add upstream patch for EJAB-1045.
   * Add Konstantin Khomoutov to uploaders.
+  * Add Japanese debconf translation (thanks to Hideki Yamane)
+    (Closes: #558071).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 04 Dec 2009 02:29:15 +0300
 
