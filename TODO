@@ -9,6 +9,8 @@
   enter an invalid username and several users
   tripped over this issue.
 
+* Do we need to build-depend on po-debconf as po-debconf(7) suggests?
+
 * Implement processing of standard Debian build options
   to allow parallel builds (has to be tested) and
   builds with gcc code optimizations turned off.
@@ -21,13 +23,9 @@
   clauses in the "LISTENING PORTS" config file section
   explaining how to enable IPv6 on a port.
 
-* Fix get-orig-source target -- Process-One seems to
-  publish the source tarballs in other place these days.
-
-* Upstream changelog mentioned that the mnesia files
-  are now located in a subdirectory named after the
-  host (or node?); currently there are no signs of this,
-  needs further investigation.
+* Seems like git-orig-source doesn't catch
+  RC releases. Might be it would be cool to train
+  it to find them.
 
 
 ejabberdctl.8 tasks
