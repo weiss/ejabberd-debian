@@ -9,8 +9,6 @@
   enter an invalid username and several users
   tripped over this issue.
 
-* Do we need to build-depend on po-debconf as po-debconf(7) suggests?
-
 * Implement processing of standard Debian build options
   to allow parallel builds (has to be tested) and
   builds with gcc code optimizations turned off.
