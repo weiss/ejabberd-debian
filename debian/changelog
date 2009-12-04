@@ -3,7 +3,7 @@ ejabberd (2.1.0-1) unstable; urgency=low
   * New upstream release (Closes: #519858).
     This also adds support for LDAPS upstream (Closes: #526145).
   * Do not depend on cdbs anymore, port debian/rules to dh+quilt,
-    remove build dependency on patchutils.
+    remove build dependency on patchutils, use erlang-depends.
   * Bump debhelper version to 7, standards base to 3.8.3
   * Depend on erlang R13B.
   * Recommend imagemagick (for captcha support).
@@ -11,7 +11,7 @@ ejabberd (2.1.0-1) unstable; urgency=low
     ldaps.patch, update.patch, proxy.patch, caps.patch, convert.patch,
     s2s.patch).
   * Replace mod_ctlextra with mod_admin_extra.
-  * Use upstream's inetrc file.
+  * Use upstream inetrc file.
   * Bring debian/ejabberd.cfg and ejabberdctl in sync with upstream.
   * Update ejabberdctl manual page.
   * Provide NEWS file.
@@ -29,7 +29,7 @@ ejabberd (2.1.0-1) unstable; urgency=low
   * Rework node-generation for ejabberdctl to fix ejabberd's atom table
     overflows while preserving the possibility to run several versions
     of ejabberdctl concurrently as before.
-  * Add webadmin patch restoring compat with Erlang/OTP <= R12B-4.
+  * Add webadmin patch restoring compatibility with Erlang/OTP <= R12B-4.
   * Integrate upstream patch for EJAB-1106.
   * Add upstream patch for EJAB-1098.
   * Add upstream patch for EJAB-1045.
