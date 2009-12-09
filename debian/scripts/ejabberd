@@ -8,6 +8,10 @@ ERL_MAX_PORTS=32000
 ERL_MAX_ETS_TABLES=1400
 ERLANG_NODE=ejabberd
 
+# Location of the guide.html, for the web administration interface:
+EJABBERD_DOC_PATH=/usr/share/doc/ejabberd
+export EJABBERD_DOC_PATH
+
 if [ -f /etc/default/ejabberd ] ; then
     . /etc/default/ejabberd
 fi
