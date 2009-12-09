@@ -3,13 +3,13 @@ interface when TLS is enabled for the HTTP listener.
 
 This issue is tracked upstream as EJAB-1119.
 
-This changeset was introduced in revision 2790,
+This changeset was introduced in revisions 2790, 2792 in
 branch http://svn.process-one.net/ejabberd/branches/ejabberd-2.1.x
 
 The first stable version containing the fix is 2.1.1.
 
 --- a/src/web/ejabberd_http.erl	(revision 2789)
-+++ b/src/web/ejabberd_http.erl	(revision 2790)
++++ b/src/web/ejabberd_http.erl	(revision 2792)
 @@ -35,6 +35,9 @@
  	 receive_headers/1,
  	 url_encode/1]).
@@ -32,3 +32,19 @@ The first stable version containing the fix is 2.1.1.
      TLSEnabled = lists:member(tls, Opts),
      TLSOpts = lists:filter(fun({certfile, _}) -> true;
  			      (_) -> false
+@@ -129,11 +135,10 @@
+     ?DEBUG("S: ~p~n", [RequestHandlers]),
+ 
+     ?INFO_MSG("started: ~p", [{SockMod1, Socket1}]),
+-    {ok, proc_lib:spawn_link(ejabberd_http,
+-			     receive_headers,
+-			     [#state{sockmod = SockMod1,
+-				     socket = Socket1,
+-				     request_handlers = RequestHandlers}])}.
++    State = #state{sockmod = SockMod1,
++                   socket = Socket1,
++                   request_handlers = RequestHandlers},
++    receive_headers(State).
+ 
+ 
+ become_controller(_Pid) ->
