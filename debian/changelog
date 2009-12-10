@@ -1,3 +1,20 @@
+ejabberd (2.1.0-2) unstable; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Set EJABBERD_DOC_PATH in the ejabberd script
+  * Pull the following patches from upstream:
+    - routing-speedup.patch: Speeds up routing of messages (EJAB-1114)
+    - mod-pubsub-odbc.patch: Fixes service discovery browsing with PEP-capable
+      clients (EJAB-1115)
+    - req-starttls-zlib-clash.patch: Fix failure of the c2s listener
+      (EJAB-1118, closes: 559727)
+    - http-tls-leaks.patch: Fix memory and port leaks in web administration
+      interface (EJAB-1119, closes: #547306)
+    - multiple-pep-last-items.patch: Do not send PEP last items multiple
+      times (EJAB-1116)
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Thu, 10 Dec 2009 23:45:09 +0100
+
 ejabberd (2.1.0-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
