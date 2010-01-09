@@ -1,13 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_register.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Inband registration support
-%%% Created :  8 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_register.erl 590 2006-07-28 16:18:50Z mremond $
+%%% Created :  8 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_register).
--author('alexey@sevcom.net').
+-author('alexey@process-one.net').
 
 -behaviour(gen_mod).
 
@@ -82,6 +100,12 @@ process_iq(From, To,
 					ok ->
 					    IQ#iq{type = result,
 						  sub_el = [SubEl]};
+					%% TODO FIXME: This piece of
+					%% code does not work since
+					%% the code have been changed
+					%% to allow several auth
+					%% modules.  lists:foreach can
+					%% only return ok:
 					not_allowed ->
 					    IQ#iq{type = error,
 						  sub_el =
@@ -186,7 +210,7 @@ try_register(User, Server, Password) ->
 
 send_welcome_message(JID) ->
     Host = JID#jid.lserver,
-    case ejabberd_config:get_local_option({welcome_message, Host}) of
+    case gen_mod:get_module_opt(Host, ?MODULE, welcome_message, {"", ""}) of
 	{"", ""} ->
 	    ok;
 	{Subj, Body} ->
@@ -202,7 +226,7 @@ send_welcome_message(JID) ->
 
 send_registration_notifications(UJID) ->
     Host = UJID#jid.lserver,
-    case ejabberd_config:get_local_option({registration_watchers, Host}) of
+    case gen_mod:get_module_opt(Host, ?MODULE, registration_watchers, []) of
 	[] -> ok;
 	JIDs when is_list(JIDs) ->
 	    Body = lists:flatten(
@@ -225,4 +249,3 @@ send_registration_notifications(UJID) ->
 	_ ->
 	    ok
     end.
-

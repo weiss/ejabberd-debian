@@ -3,7 +3,7 @@
 %%% Author  : Sergei Golovan <sgolovan@nes.ru>
 %%% Purpose : Auxiliary tool for interface/messages translators
 %%% Created : 23 Apr 2005 by Sergei Golovan <sgolovan@nes.ru>
-%%% Id      : $Id: extract_translations.erl 511 2006-02-25 19:48:17Z alexey $
+%%% Id      : $Id: extract_translations.erl 1070 2007-12-14 21:28:29Z badlop $
 %%%----------------------------------------------------------------------
 
 -module(extract_translations).
@@ -49,7 +49,7 @@ process(Dir, File, Used) ->
 	    case Used of
 		unused ->
 		    ets:foldl(fun({Key, _}, _) ->
-				    io:format("~p~n", [Key])
+				      io:format("~p~n", [Key])
 			      end, ok, translations); 
 		_ ->
 		    ok
@@ -122,7 +122,10 @@ process_string(_Dir, File, Str, Used) ->
 		    io:format("~n% ~s~n", [File]),
 		    ets:insert(files, {File})
 	    end,
-	    io:format("{~p, \"\"}.~n", [Str]),
+	    case Str of
+		[] -> ok;
+		_ -> io:format("{~p, \"\"}.~n", [Str])
+	    end,
 	    ets:insert(translations, {Str, ""});
 	_ ->
 	    ok

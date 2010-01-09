@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : acl.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : ACL support
-%%% Created : 18 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: acl.erl 589 2006-07-18 12:29:17Z mremond $
+%%% Created : 18 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(acl).
--author('alexey@sevcom.net').
--vsn('$Revision: 589 $ ').
+-author('alexey@process-one.net').
 
 -export([start/0,
 	 to_record/3,
@@ -31,12 +48,12 @@ start() ->
     ok.
 
 to_record(Host, ACLName, ACLSpec) ->
-    #acl{aclname = {ACLName, Host}, aclspec = ACLSpec}.
+    #acl{aclname = {ACLName, Host}, aclspec = normalize_spec(ACLSpec)}.
 
 add(Host, ACLName, ACLSpec) ->
     F = fun() ->
 		mnesia:write(#acl{aclname = {ACLName, Host},
-				  aclspec = ACLSpec})
+				  aclspec = normalize_spec(ACLSpec)})
 	end,
     mnesia:transaction(F).
 
@@ -58,7 +75,7 @@ add_list(Host, ACLs, Clear) ->
 					       aclspec = ACLSpec} ->
 					      mnesia:write(
 						#acl{aclname = {ACLName, Host},
-						     aclspec = ACLSpec})
+						     aclspec = normalize_spec(ACLSpec)})
 				      end
 			      end, ACLs)
 	end,
@@ -68,6 +85,17 @@ add_list(Host, ACLs, Clear) ->
 	_ ->
 	    false
     end.
+
+normalize(A) ->
+    jlib:nodeprep(A).
+normalize_spec({A, B}) ->
+    {A, normalize(B)};
+normalize_spec({A, B, C}) ->
+    {A, normalize(B), normalize(C)};
+normalize_spec(all) ->
+    all;
+normalize_spec(none) ->
+    none.
 
 
 
@@ -115,7 +143,7 @@ match_rule(Host, Rule, JID) ->
 	    end
     end.
 
-match_acls([], _, Host) ->
+match_acls([], _, _Host) ->
     deny;
 match_acls([{Access, ACL} | ACLs], JID, Host) ->
     case match_acl(ACL, JID, Host) of
@@ -130,7 +158,7 @@ match_acl(ACL, JID, Host) ->
 	all -> true;
 	none -> false;
 	_ ->
-	    {User, Server, Resource} = jlib:jid_tolower(JID),
+	    {User, Server, _Resource} = jlib:jid_tolower(JID),
 	    lists:any(fun(#acl{aclspec = Spec}) ->
 			      case Spec of
 				  all ->

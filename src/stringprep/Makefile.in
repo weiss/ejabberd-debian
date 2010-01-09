@@ -1,29 +1,34 @@
-# $Id: Makefile.in 864 2007-08-09 14:24:33Z mremond $
+# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
 
 CC = @CC@
-CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@ @ERLANG_LIBS@
+LIBS = @LIBS@
+
+ERLANG_CFLAGS = @ERLANG_CFLAGS@
+ERLANG_LIBS = @ERLANG_LIBS@
 
 ifeq ($(shell uname),Darwin)
-DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
+	DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
 else
-# Assume Linux-style dynamic library flags
-DYNAMIC_LIB_CFLAGS = -fpic -shared
+	# Assume Linux-style dynamic library flags
+	DYNAMIC_LIB_CFLAGS = -fpic -shared
 endif
 
-SUBDIRS = 
+EFLAGS = -I .. -pz ..
+# make debug=true to compile Erlang module with debug informations.
+ifdef debug
+	EFLAGS+=+debug_info
+endif
 
 ERLSHLIBS = ../stringprep_drv.so
-
 OUTDIR = ..
-EFLAGS = -I .. -pz ..
-OBJS   = \
-	$(OUTDIR)/stringprep.beam \
-	$(OUTDIR)/stringprep_sup.beam
+SOURCES = $(wildcard *.erl)
+BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
 
-all:    $(OBJS) $(ERLSHLIBS)
+
+all:    $(BEAMS) $(ERLSHLIBS)
 
 $(OUTDIR)/%.beam:       %.erl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
@@ -32,12 +37,13 @@ $(OUTDIR)/%.beam:       %.erl
 #	erl -s make all report "{outdir, \"..\"}" -noinput -s erlang halt
 
 $(ERLSHLIBS):	../%.so:	%.c uni_data.c uni_norm.c
-			gcc -Wall -O2 $(CFLAGS) $(LDFLAGS) $(INCLUDES) \
+			$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) \
 			$(subst ../,,$(subst .so,.c,$@)) $(LIBS) \
+			$(ERLANG_LIBS) $(ERLANG_CFLAGS) \
 			-o $@ $(DYNAMIC_LIB_CFLAGS)
 
 clean:
-	rm -f $(OBJS) $(ERLSHLIBS)
+	rm -f $(BEAMS) $(ERLSHLIBS)
 
 distclean: clean
 	rm -f Makefile

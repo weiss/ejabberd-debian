@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_muc.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : MUC support (JEP-0045)
-%%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc.erl 620 2006-09-22 17:01:16Z mremond $
+%%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_muc).
--author('alexey@sevcom.net').
--vsn('$Revision: 620 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_server).
 -behaviour(gen_mod).
@@ -17,7 +34,7 @@
 -export([start_link/2,
 	 start/2,
 	 stop/1,
-	 room_destroyed/3,
+	 room_destroyed/4,
 	 store_room/3,
 	 restore_room/2,
 	 forget_room/2,
@@ -36,7 +53,12 @@
 -record(muc_online_room, {name_host, pid}).
 -record(muc_registered, {us_host, nick}).
 
--record(state, {host, server_host, access, history_size}).
+-record(state, {host,
+		server_host,
+		access,
+		history_size,
+		default_room_opts,
+		room_shaper}).
 
 -define(PROCNAME, ejabberd_mod_muc).
 
@@ -69,9 +91,9 @@ stop(Host) ->
     gen_server:call(Proc, stop),
     supervisor:delete_child(ejabberd_sup, Proc).
 
-room_destroyed(Host, Room, ServerHost) ->
+room_destroyed(Host, Room, Pid, ServerHost) ->
     gen_mod:get_module_proc(ServerHost, ?PROCNAME) !
-	{room_destroyed, {Room, Host}},
+	{room_destroyed, {Room, Host}, Pid},
     ok.
 
 store_room(Host, Name, Opts) ->
@@ -142,23 +164,34 @@ init([Host, Opts]) ->
     mnesia:create_table(muc_registered,
 			[{disc_copies, [node()]},
 			 {attributes, record_info(fields, muc_registered)}]),
-    MyHost = gen_mod:get_opt(host, Opts, "conference." ++ Host),
+    mnesia:create_table(muc_online_room,
+			[{ram_copies, [node()]},
+			 {attributes, record_info(fields, muc_online_room)}]),
+    mnesia:add_table_copy(muc_online_room, node(), ram_copies),
+    catch ets:new(muc_online_users, [bag, named_table, public, {keypos, 2}]),
+    MyHost = gen_mod:get_opt_host(Host, Opts, "conference.@HOST@"),
     update_tables(MyHost),
+    clean_table_from_bad_node(node(), MyHost),
     mnesia:add_table_index(muc_registered, nick),
+    mnesia:subscribe(system),
     Access = gen_mod:get_opt(access, Opts, all),
     AccessCreate = gen_mod:get_opt(access_create, Opts, all),
     AccessAdmin = gen_mod:get_opt(access_admin, Opts, none),
+    AccessPersistent = gen_mod:get_opt(access_persistent, Opts, all),
     HistorySize = gen_mod:get_opt(history_size, Opts, 20),
-    catch ets:new(muc_online_room, [named_table,
-				    public,
-				    {keypos, #muc_online_room.name_host}]),
+    DefRoomOpts = gen_mod:get_opt(default_room_options, Opts, []),
+    RoomShaper = gen_mod:get_opt(room_shaper, Opts, none),
     ejabberd_router:register_route(MyHost),
-    load_permanent_rooms(MyHost, Host, {Access, AccessCreate, AccessAdmin},
-			 HistorySize),
+    load_permanent_rooms(MyHost, Host,
+			 {Access, AccessCreate, AccessAdmin, AccessPersistent},
+			 HistorySize,
+			 RoomShaper),
     {ok, #state{host = MyHost,
 		server_host = Host,
-		access = {Access, AccessCreate, AccessAdmin},
-		history_size = HistorySize}}.
+		access = {Access, AccessCreate, AccessAdmin, AccessPersistent},
+		default_room_opts = DefRoomOpts,
+		history_size = HistorySize,
+		room_shaper = RoomShaper}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -191,16 +224,26 @@ handle_info({route, From, To, Packet},
 	    #state{host = Host,
 		   server_host = ServerHost,
 		   access = Access,
-		   history_size = HistorySize} = State) ->
-    case catch do_route(Host, ServerHost, Access, HistorySize, From, To, Packet) of
+ 		   default_room_opts = DefRoomOpts,
+		   history_size = HistorySize,
+		   room_shaper = RoomShaper} = State) ->
+    case catch do_route(Host, ServerHost, Access, HistorySize, RoomShaper,
+			From, To, Packet, DefRoomOpts) of
 	{'EXIT', Reason} ->
 	    ?ERROR_MSG("~p", [Reason]);
 	_ ->
 	    ok
     end,
     {noreply, State};
-handle_info({room_destroyed, RoomHost}, State) ->
-    ets:delete(muc_online_room, RoomHost),
+handle_info({room_destroyed, RoomHost, Pid}, State) ->
+    F = fun() ->
+		mnesia:delete_object(#muc_online_room{name_host = RoomHost,
+						      pid = Pid})
+	end,
+    mnesia:transaction(F),
+    {noreply, State};
+handle_info({mnesia_system_event, {mnesia_down, Node}}, State) ->
+    clean_table_from_bad_node(Node),
     {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -243,11 +286,13 @@ stop_supervisor(Host) ->
     supervisor:terminate_child(ejabberd_sup, Proc),
     supervisor:delete_child(ejabberd_sup, Proc).
 
-do_route(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
-    {AccessRoute, _AccessCreate, _AccessAdmin} = Access,
+do_route(Host, ServerHost, Access, HistorySize, RoomShaper,
+	 From, To, Packet, DefRoomOpts) ->
+    {AccessRoute, _AccessCreate, _AccessAdmin, _AccessPersistent} = Access,
     case acl:match_rule(ServerHost, AccessRoute, From) of
 	allow ->
-	    do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet);
+	    do_route1(Host, ServerHost, Access, HistorySize, RoomShaper,
+		      From, To, Packet, DefRoomOpts);
 	_ ->
 	    {xmlelement, _Name, Attrs, _Els} = Packet,
 	    Lang = xml:get_attr_s("xml:lang", Attrs),
@@ -258,8 +303,9 @@ do_route(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
     end.
 
 
-do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
-    {_AccessRoute, AccessCreate, AccessAdmin} = Access,
+do_route1(Host, ServerHost, Access, HistorySize, RoomShaper,
+	  From, To, Packet, DefRoomOpts) ->
+    {_AccessRoute, AccessCreate, AccessAdmin, _AccessPersistent} = Access,
     {Room, _, Nick} = jlib:jid_tolower(To),
     {xmlelement, Name, Attrs, _Els} = Packet,
     case Room of
@@ -270,11 +316,11 @@ do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
 			"iq" ->
 			    case jlib:iq_query_info(Packet) of
 				#iq{type = get, xmlns = ?NS_DISCO_INFO = XMLNS,
-				    sub_el = _SubEl} = IQ ->
+ 				    sub_el = _SubEl, lang = Lang} = IQ ->
 				    Res = IQ#iq{type = result,
 						sub_el = [{xmlelement, "query",
 							   [{"xmlns", XMLNS}],
-							   iq_disco_info()}]},
+							   iq_disco_info(Lang)}]},
 				    ejabberd_router:route(To,
 							  From,
 							  jlib:iq_to_xml(Res));
@@ -373,7 +419,7 @@ do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
 		    end
 	    end;
 	_ ->
-	    case ets:lookup(muc_online_room, {Room, Host}) of
+	    case mnesia:dirty_read(muc_online_room, {Room, Host}) of
 		[] ->
 		    Type = xml:get_attr_s("type", Attrs),
 		    case {Name, Type} of
@@ -383,12 +429,10 @@ do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
 				    ?DEBUG("MUC: open new room '~s'~n", [Room]),
 				    {ok, Pid} = mod_muc_room:start(
 						  Host, ServerHost, Access,
-						  Room, HistorySize, From,
-						  Nick),
-				    ets:insert(
-				      muc_online_room,
-				      #muc_online_room{name_host = {Room, Host},
-						       pid = Pid}),
+						  Room, HistorySize,
+						  RoomShaper, From,
+						  Nick, DefRoomOpts),
+				    register_room(Host, Room, Pid),
 				    mod_muc_room:route(Pid, From, Nick, Packet),
 				    ok;
 				_ ->
@@ -416,7 +460,7 @@ do_route1(Host, ServerHost, Access, HistorySize, From, To, Packet) ->
 
 
 
-load_permanent_rooms(Host, ServerHost, Access, HistorySize) ->
+load_permanent_rooms(Host, ServerHost, Access, HistorySize, RoomShaper) ->
     case catch mnesia:dirty_select(
 		 muc_room, [{#muc_room{name_host = {'_', Host}, _ = '_'},
 			     [],
@@ -425,28 +469,39 @@ load_permanent_rooms(Host, ServerHost, Access, HistorySize) ->
 	    ?ERROR_MSG("~p", [Reason]),
 	    ok;
 	Rs ->
-	    lists:foreach(fun(R) ->
-				  {Room, Host} = R#muc_room.name_host,
-				  {ok, Pid} = mod_muc_room:start(
-						Host,
-						ServerHost,
-						Access,
-						Room,
-						HistorySize,
-						R#muc_room.opts),
-				  ets:insert(
-				    muc_online_room,
-				    #muc_online_room{name_host = {Room, Host},
-						     pid = Pid})
-			  end, Rs)
+	    lists:foreach(
+	      fun(R) ->
+		      {Room, Host} = R#muc_room.name_host,
+		      case mnesia:dirty_read(muc_online_room, {Room, Host}) of
+			  [] ->
+			      {ok, Pid} = mod_muc_room:start(
+					    Host,
+					    ServerHost,
+					    Access,
+					    Room,
+					    HistorySize,
+					    RoomShaper,
+					    R#muc_room.opts),
+			      register_room(Host, Room, Pid);
+			  _ ->
+			      ok
+		      end
+	      end, Rs)
     end.
 
+register_room(Host, Room, Pid) ->
+    F = fun() ->
+		mnesia:write(#muc_online_room{name_host = {Room, Host},
+					      pid = Pid})
+	end,
+    mnesia:transaction(F).
 
-iq_disco_info() ->
+
+iq_disco_info(Lang) ->
     [{xmlelement, "identity",
       [{"category", "conference"},
        {"type", "text"},
-       {"name", "Chatrooms"}], []},
+       {"name", translate:translate(Lang, "Chatrooms")}], []},
      {xmlelement, "feature", [{"var", ?NS_MUC}], []},
      {xmlelement, "feature", [{"var", ?NS_REGISTER}], []},
      {xmlelement, "feature", [{"var", ?NS_VCARD}], []}].
@@ -457,6 +512,7 @@ iq_disco_items(Host, From, Lang) ->
 		     case catch gen_fsm:sync_send_all_state_event(
 				  Pid, {get_disco_item, From, Lang}, 100) of
 			 {item, Desc} ->
+			     flush(),
 			     {true,
 			      {xmlelement, "item",
 			       [{"jid", jlib:jid_to_string({Name, Host, ""})},
@@ -466,6 +522,13 @@ iq_disco_items(Host, From, Lang) ->
 		     end
 	     end, get_vh_rooms(Host)).
 
+flush() ->
+    receive
+	_ ->
+	    flush()
+    after 0 ->
+	    ok
+    end.
 
 -define(XFIELD(Type, Label, Var, Val),
 	{xmlelement, "field", [{"type", Type},
@@ -583,11 +646,10 @@ iq_get_vcard(Lang) ->
     [{xmlelement, "FN", [],
       [{xmlcdata, "ejabberd/mod_muc"}]},
      {xmlelement, "URL", [],
-      [{xmlcdata,
-	"http://ejabberd.jabberstudio.org/"}]},
+      [{xmlcdata, ?EJABBERD_URI}]},
      {xmlelement, "DESC", [],
-      [{xmlcdata, translate:translate(Lang, "ejabberd MUC module\n"
-	"Copyright (c) 2003-2006 Alexey Shchepin")}]}].
+      [{xmlcdata, translate:translate(Lang, "ejabberd MUC module") ++
+	  "\nCopyright (c) 2003-2008 Alexey Shchepin"}]}].
 
 
 broadcast_service_message(Host, Msg) ->
@@ -598,11 +660,39 @@ broadcast_service_message(Host, Msg) ->
       end, get_vh_rooms(Host)).
 
 get_vh_rooms(Host) ->
-    ets:select(muc_online_room,
-	       [{#muc_online_room{name_host = '$1', _ = '_'},
-		 [{'==', {element, 2, '$1'}, Host}],
-		 ['$_']}]).
+    mnesia:dirty_select(muc_online_room,
+			[{#muc_online_room{name_host = '$1', _ = '_'},
+			  [{'==', {element, 2, '$1'}, Host}],
+			  ['$_']}]).
 
+
+clean_table_from_bad_node(Node) ->
+    F = fun() ->
+		Es = mnesia:select(
+		       muc_online_room,
+		       [{#muc_online_room{pid = '$1', _ = '_'},
+			 [{'==', {node, '$1'}, Node}],
+			 ['$_']}]),
+		lists:foreach(fun(E) ->
+				      mnesia:delete_object(E)
+			      end, Es)
+        end,
+    mnesia:transaction(F).
+
+clean_table_from_bad_node(Node, Host) ->
+    F = fun() ->
+		Es = mnesia:select(
+		       muc_online_room,
+		       [{#muc_online_room{pid = '$1',
+					  name_host = {'_', Host},
+					  _ = '_'},
+			 [{'==', {node, '$1'}, Node}],
+			 ['$_']}]),
+		lists:foreach(fun(E) ->
+				      mnesia:delete_object(E)
+			      end, Es)
+        end,
+    mnesia:transaction(F).
 
 
 update_tables(Host) ->

@@ -1,5 +1,7 @@
-\section{\aname{intro}{Introduction}}
-\label{sec:intro}
+\chapter{Introduction}
+\label{intro}
+
+%% TODO: improve the feature sheet with a nice table to highlight new features.
 
 \quoting{I just tried out ejabberd and was impressed both by ejabberd itself and the language it is written in, Erlang. ---
 Joeri} 
@@ -14,8 +16,8 @@ Joeri}
 
 \ejabberd{} is suitable for small deployments, whether they need to be \marking{scalable} or not, as well as extremely big deployments.
 
-%\subsection{\aname{layout}{Layout with example deployment (title needs a better name)}}
-%\label{sec:layout}
+%\subsection{Layout with example deployment (title needs a better name)}
+%\label{layout}
 
 %In this section there will be a graphical overview like these:\\
 %\verb|http://www.tipic.com/var/timp/timp_dep.gif| \\
@@ -24,8 +26,8 @@ Joeri}
 
 %A page full with names of Jabber client that are known to work with ejabberd. \begin{tiny}tiny font\end{tiny}
 
-%\subsection{\aname{trytoday}{Try It Today}}
-%\label{sec:trytoday}
+%\subsection{Try It Today}
+%\label{trytoday}
 
 %(Not sure if I will include/finish this section for the next version.)
 
@@ -38,8 +40,8 @@ Joeri}
 %\end{itemize}
 
 \newpage
-\subsection{\aname{keyfeatures}{Key Features}}
-\label{sec:keyfeatures}
+\section{Key Features}
+\label{keyfeatures}
 \ind{features!key features}
 
 \quoting{Erlang seems to be tailor-made for writing stable, robust servers. ---
@@ -56,17 +58,17 @@ Peter Saint-Andr\'e, Executive Director of the Jabber Software Foundation}
 \item \marking{Administrator Friendly:} \ejabberd{} is built on top of the Open Source Erlang. As a result you do not need to install an external database, an external web server, amongst others because everything is already included, and ready to run out of the box. Other administrator benefits include:
 \begin{itemize}
 \item Comprehensive documentation.
-\item Straightforward installers for Linux, Mac OS X, and Windows.\improved{}
-\item Web interface for administration tasks.
+\item Straightforward installers for Linux, Mac OS X, and Windows. %%\improved{}
+\item Web Administration.
 \item Shared Roster Groups.
-\item Command line administration tool.\improved{}
+\item Command line administration tool. %%\improved{}
 \item Can integrate with existing authentication mechanisms.
 \item Capability to send announce messages.
 \end{itemize}
 
 \item \marking{Internationalized:} \ejabberd{} leads in internationalization. Hence it is very well suited in a globalized world. Related features are:
 \begin{itemize}
-\item Translated in 12 languages.\improved{}
+\item Translated to 24 languages. %%\improved{}
 \item Support for \footahref{http://www.ietf.org/rfc/rfc3490.txt}{IDNA}.
 \end{itemize}
 
@@ -74,15 +76,15 @@ Peter Saint-Andr\'e, Executive Director of the Jabber Software Foundation}
 \begin{itemize}
 \item Fully XMPP compliant.
 \item XML-based protocol.
-\item \footahref{http://ejabberd.jabber.ru/protocols}{Many JEPs supported}.
+\item \footahref{http://www.ejabberd.im/protocols}{Many protocols supported}.
 \end{itemize}
 
 \end{itemize}
 
 \newpage
 
-\subsection{\aname{addfeatures}{Additional Features}}
-\label{sec:addfeatures}
+\section{Additional Features}
+\label{addfeatures}
 \ind{features!additional features}
 
 \quoting{ejabberd is making inroads to solving the "buggy incomplete server" problem ---
@@ -99,33 +101,33 @@ Moreover, \ejabberd{} comes with a wide range of other state-of-the-art features
 \begin{itemize}
 \item SASL and STARTTLS for c2s and s2s connections.
 \item STARTTLS and Dialback s2s connections.
-\item Web interface accessible via HTTPS secure access.
+\item Web Admin accessible via HTTPS secure access.
 \end{itemize}
 \item Databases
 \begin{itemize}
+\item Internal database for fast deployment (Mnesia).
 \item Native MySQL support.
 \item Native PostgreSQL support.
-\item Mnesia.
 \item ODBC data storage support.
-\item Microsoft SQL Server support.\new{}
+\item Microsoft SQL Server support. %%\new{}
 \end{itemize}
 \item Authentication
 \begin{itemize}
-\item LDAP and ODBC.\improved{}
-\item External Authentication script.
 \item Internal Authentication.
+\item PAM, LDAP and ODBC.  %%\improved{}
+\item External Authentication script.
 \end{itemize}
 \item Others
 \begin{itemize}
-\item Compressing XML streams with Stream Compression (\jepref{0138}).
-\item Interface with networks such as AIM, ICQ and MSN.
-\item Statistics via Statistics Gathering (\jepref{0039}).
-\item IPv6 support both for c2s and s2s connections.
-\item \tjepref{0045}{Multi-User Chat} module with logging.\improved{}
-\item Users Directory based on users vCards.
-\item \tjepref{0060}{Publish-Subscribe} component.
 \item Support for virtual hosting.
-\item \tjepref{0025}{HTTP Polling} service.
+\item Compressing XML streams with Stream Compression (\xepref{0138}).
+\item Statistics via Statistics Gathering (\xepref{0039}).
+\item IPv6 support both for c2s and s2s connections.
+\item \txepref{0045}{Multi-User Chat} module with support for clustering and HTML logging. %%\improved{}
+\item Users Directory based on users vCards.
+\item \txepref{0060}{Publish-Subscribe} component with support for \txepref{00163}{Personal Eventing via Pubsub}.
+\item Support for web clients: \txepref{0025}{HTTP Polling} and \txepref{0206}{HTTP Binding (BOSH)} services.
 \item IRC transport.
+\item Component support: interface with networks such as AIM, ICQ and MSN installing special tranports.
 \end{itemize}
 \end{itemize}

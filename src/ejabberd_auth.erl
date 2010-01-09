@@ -1,18 +1,33 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_auth.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Authentification
-%%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Updated : 23 Feb 2006 by Mickael Remond <mremond@process-one.net>
-%%%                          for anonymous login support
-%%% Id      : $Id: ejabberd_auth.erl 585 2006-07-05 14:36:21Z mremond $
+%%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 %% TODO: Use the functions in ejabberd auth to add and remove users.
 
 -module(ejabberd_auth).
--author('alexey@sevcom.net').
--vsn('$Revision: 585 $ ').
+-author('alexey@process-one.net').
 
 %% External exports
 -export([start/0,
@@ -22,10 +37,13 @@
 	 try_register/3,
 	 dirty_get_registered_users/0,
 	 get_vh_registered_users/1,
+	 get_vh_registered_users/2,
+	 get_vh_registered_users_number/1,
+	 get_vh_registered_users_number/2,
 	 get_password/2,
 	 get_password_s/2,
 	 is_user_exists/2,
-         is_user_exists_in_other_modules/3,
+	 is_user_exists_in_other_modules/3,
 	 remove_user/2,
 	 remove_user/3,
 	 plain_password_required/1,
@@ -98,7 +116,7 @@ dirty_get_registered_users() ->
     lists:flatmap(
       fun(M) ->
 	      M:dirty_get_registered_users()
-      end, auth_modules(?MYNAME)).
+      end, auth_modules()).
 
 %% Registered users list do not include anonymous users logged
 get_vh_registered_users(Server) ->
@@ -106,6 +124,38 @@ get_vh_registered_users(Server) ->
       fun(M) ->
 	      M:get_vh_registered_users(Server)
       end, auth_modules(Server)).
+
+get_vh_registered_users(Server, Opts) ->
+    lists:flatmap(
+      fun(M) ->
+	      M:get_vh_registered_users(Server, Opts)
+      end, auth_modules(Server)).
+
+get_vh_registered_users_number(Server) ->
+    lists:sum(
+      lists:map(
+	fun(M) ->
+		case erlang:function_exported(
+		       M, get_vh_registered_users_number, 1) of
+		    true ->
+			M:get_vh_registered_users_number(Server);
+		    false ->
+			length(M:get_vh_registered_users(Server))
+		end
+	end, auth_modules(Server))).
+
+get_vh_registered_users_number(Server, Opts) ->
+    lists:sum(
+      lists:map(
+	fun(M) ->
+		case erlang:function_exported(
+		       M, get_vh_registered_users_number, 2) of
+		    true ->
+			M:get_vh_registered_users_number(Server, Opts);
+		    false ->
+			length(M:get_vh_registered_users(Server))
+		end
+	end, auth_modules(Server))).
 
 get_password(User, Server) ->
     lists:foldl(
@@ -151,7 +201,6 @@ remove_user(User, Server, Password) ->
 	      M:remove_user(User, Server, Password)
       end, auth_modules(Server)).
 
-
 ctl_process_get_registered(_Val, Host, ["registered-users"]) ->
     Users = ejabberd_auth:get_vh_registered_users(Host),
     NewLine = io_lib:format("~n", []),
@@ -165,6 +214,16 @@ ctl_process_get_registered(Val, _Host, _Args) ->
 %%%----------------------------------------------------------------------
 %%% Internal functions
 %%%----------------------------------------------------------------------
+%% Return the lists of all the auth modules actually used in the
+%% configuration
+auth_modules() ->
+    lists:usort(
+      lists:flatmap(
+	fun(Server) ->
+		auth_modules(Server)
+	end, ?MYHOSTS)).
+
+%% Return the list of authenticated modules for a given host
 auth_modules(Server) ->
     LServer = jlib:nameprep(Server),
     Method = ejabberd_config:get_local_option({auth_method, LServer}),

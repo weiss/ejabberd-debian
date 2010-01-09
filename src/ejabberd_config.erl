@@ -1,28 +1,39 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_config.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Load config file
-%%% Created : 14 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_config.erl 911 2007-09-03 08:31:45Z mremond $
+%%% Created : 14 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_config).
--author('alexey@sevcom.net').
--vsn('$Revision: 911 $ ').
+-author('alexey@process-one.net').
 
 -export([start/0, load_file/1,
 	 add_global_option/2, add_local_option/2,
 	 get_global_option/1, get_local_option/1]).
+-export([get_vh_by_auth_method/1]).
 
 -include("ejabberd.hrl").
-
--record(config, {key, value}).
--record(local_config, {key, value}).
--record(state, {opts = [],
-		hosts = [],
-		override_local = false,
-		override_global = false,
-		override_acls = false}).
+-include("ejabberd_config.hrl").
 
 start() ->
     mnesia:create_table(config,
@@ -55,7 +66,7 @@ load_file(File) ->
 	    set_opts(Res);
 	{error, Reason} ->
 	    ?ERROR_MSG("Can't load config file ~p: ~p", [File, Reason]),
-	    exit(file:format_error(Reason))
+	    exit(File ++ ": " ++ file:format_error(Reason))
     end.
 
 search_hosts(Term, State) ->
@@ -108,23 +119,25 @@ process_term(Term, State) ->
 	    State#state{override_local = true};
 	override_acls ->
 	    State#state{override_acls = true};
-	{acl, ACLName, ACLData} ->
+	{acl, _ACLName, _ACLData} ->
 	    process_host_term(Term, global, State);
-	{access, RuleName, Rules} ->
+	{access, _RuleName, _Rules} ->
 	    process_host_term(Term, global, State);
-	{shaper, Name, Data} ->
-	    %lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
-	    %		State, State#state.hosts);
+	{shaper, _Name, _Data} ->
+	    %%lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
+	    %%    	State, State#state.hosts);
 	    process_host_term(Term, global, State);
-	{host, Host} ->
+	{host, _Host} ->
 	    State;
-	{hosts, Hosts} ->
+	{hosts, _Hosts} ->
 	    State;
 	{host_config, Host, Terms} ->
 	    lists:foldl(fun(T, S) -> process_host_term(T, Host, S) end,
 			State, Terms);
 	{listen, Val} ->
 	    add_option(listen, Val, State);
+	{language, Val} ->
+	    add_option(language, Val, State);
 	{outgoing_s2s_port, Port} ->
 	    add_option(outgoing_s2s_port, Port, State);
 	{s2s_use_starttls, Port} ->
@@ -133,7 +146,20 @@ process_term(Term, State) ->
 	    add_option(s2s_certfile, CertFile, State);
 	{domain_certfile, Domain, CertFile} ->
 	    add_option({domain_certfile, Domain}, CertFile, State);
-	{Opt, Val} ->
+	{node_type, NodeType} ->
+	    add_option(node_type, NodeType, State);
+	{cluster_nodes, Nodes} ->
+	    add_option(cluster_nodes, Nodes, State);
+	{domain_balancing, Domain, Balancing} ->
+	    add_option({domain_balancing, Domain}, Balancing, State);
+	{domain_balancing_component_number, Domain, N} ->
+	    add_option({domain_balancing_component_number, Domain}, N, State);
+	{watchdog_admins, Admins} ->
+	    add_option(watchdog_admins, Admins, State);
+	{loglevel, Loglevel} ->
+	    ejabberd_loglevel:set(Loglevel),
+	    State;
+	{_Opt, _Val} ->
 	    lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
 			State, State#state.hosts)
     end.
@@ -142,7 +168,7 @@ process_host_term(Term, Host, State) ->
     case Term of
 	{acl, ACLName, ACLData} ->
 	    State#state{opts =
-		   [acl:to_record(Host, ACLName, ACLData) | State#state.opts]};
+			[acl:to_record(Host, ACLName, ACLData) | State#state.opts]};
 	{access, RuleName, Rules} ->
 	    State#state{opts = [#config{key = {access, RuleName, Host},
 					value = Rules} |
@@ -153,8 +179,11 @@ process_host_term(Term, Host, State) ->
 				State#state.opts]};
 	{host, Host} ->
 	    State;
-	{hosts, Hosts} ->
+	{hosts, _Hosts} ->
 	    State;
+	{odbc_server, ODBC_server} ->
+	    odbc_modules_found = check_odbc_modules(ODBC_server),
+	    add_option({odbc_server, Host}, ODBC_server, State);
 	{Opt, Val} ->
 	    add_option({Opt, Host}, Val, State)
     end.
@@ -173,8 +202,26 @@ add_option(Opt, Val, State) ->
 	    State#state{opts = [#config{key = Opt, value = Val} |
 				State#state.opts]};
 	local_config ->
-	    State#state{opts = [#local_config{key = Opt, value = Val} |
-				State#state.opts]}
+	    case Opt of
+		{{add, OptName}, Host} ->
+		    State#state{opts = compact({OptName, Host}, Val,
+					       State#state.opts, [])};
+		_ ->
+		    State#state{opts = [#local_config{key = Opt, value = Val} |
+					State#state.opts]}
+	    end
+    end.
+
+compact(Opt, Val, [], Os) ->
+    [#local_config{key = Opt, value = Val}] ++ Os;
+compact(Opt, Val, [O | Os1], Os2) ->
+    case O#local_config.key of
+	Opt ->
+	    Os2 ++ [#local_config{key = Opt,
+				  value = Val++O#local_config.value}
+		   ] ++ Os1;
+	_ ->
+	    compact(Opt, Val, Os1, Os2++[O])
     end.
 
 
@@ -212,7 +259,20 @@ set_opts(State) ->
 				      mnesia:write(R)
 			      end, Opts)
 	end,
-    {atomic, _} = mnesia:transaction(F).
+    case mnesia:transaction(F) of
+	{atomic, _} -> ok;
+	{aborted,{no_exists,Table}} ->
+	    MnesiaDirectory = mnesia:system_info(directory),
+	    ?ERROR_MSG("Error reading Mnesia database spool files:~n"
+		       "The Mnesia database couldn't read the spool file for the table '~p'.~n"
+		       "ejabberd needs read and write access in the directory:~n   ~s~n"
+		       "Maybe the problem is a change in the computer hostname,~n"
+		       "or a change in the Erlang node name, which is currently:~n   ~p~n"
+		       "Check the ejabberd guide for details about changing the~n"
+		       "computer hostname or Erlang node name.~n",
+		       [Table, MnesiaDirectory, node()]),
+	    exit("Error reading Mnesia database")
+    end.
 
 
 add_global_option(Opt, Val) ->
@@ -244,4 +304,38 @@ get_local_option(Opt) ->
 	    undefined
     end.
 
+%% Return the list of hosts handled by a given module
+get_vh_by_auth_method(AuthMethod) ->
+    mnesia:dirty_select(local_config,
+			[{#local_config{key = {auth_method, '$1'},
+					value=AuthMethod},[],['$1']}]).
 
+check_odbc_modules(ODBC_server) ->
+    case catch check_odbc_modules2(ODBC_server) of
+	{'EXIT', {undef, [{Module, module_info, []} | _]}} ->
+	    ?CRITICAL_MSG("ejabberd is configured to use ODBC, but the Erlang module '~p' is not installed.", [Module]),
+	    odbc_module_not_found;
+	_ -> odbc_modules_found
+    end.
+
+check_odbc_modules2(ODBC_server) ->
+    check_modules_exists([ejabberd_odbc, ejabberd_odbc_sup, odbc_queries]),
+    case ODBC_server of
+	{mysql, _Server, _DB, _Username, _Password} ->
+	    check_modules_exists([mysql, mysql_auth, mysql_conn, mysql_recv]);
+
+	{mysql, _Server, _Port, _DB, _Username, _Password} ->
+	    check_modules_exists([mysql, mysql_auth, mysql_conn, mysql_recv]);
+
+	{pgsql, _Server, _DB, _Username, _Password} ->
+	    check_modules_exists([pgsql, pgsql_proto, pgsql_tcp, pgsql_util]);
+
+	{pgsql, _Server, _Port, _DB, _Username, _Password} ->
+	    check_modules_exists([pgsql, pgsql_proto, pgsql_tcp, pgsql_util]);
+
+	Server when is_list(Server) ->
+	    ok
+    end.
+
+check_modules_exists(Modules) ->
+    [true = is_list(Module:module_info()) || Module <- Modules].

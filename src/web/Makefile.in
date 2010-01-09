@@ -1,30 +1,31 @@
-# $Id: Makefile.in 498 2006-02-03 03:28:15Z alexey $
+# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
 
 CC = @CC@
-CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@ @ERLANG_LIBS@
+LIBS = @LIBS@
 
-SUBDIRS = 
+ERLANG_CFLAGS = @ERLANG_CFLAGS@
+ERLANG_LIBS = @ERLANG_LIBS@
 
-
-OUTDIR = ..
 EFLAGS = -I .. -pz ..
-OBJS   = \
-	$(OUTDIR)/ejabberd_http.beam \
-	$(OUTDIR)/ejabberd_web.beam  \
-	$(OUTDIR)/ejabberd_web_admin.beam  \
-	$(OUTDIR)/ejabberd_http_poll.beam
+# make debug=true to compile Erlang module with debug informations.
+ifdef debug
+	EFLAGS+=+debug_info
+endif
 
-all:    $(OBJS)
+SOURCES = $(wildcard *.erl)
+OUTDIR = ..
+BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
+
+all: $(BEAMS)
 
 $(OUTDIR)/%.beam:	%.erl ejabberd_http.hrl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
 
-
 clean:
-	rm -f $(OBJS)
+	rm -f $(BEAMS)
 
 distclean: clean
 	rm -f Makefile

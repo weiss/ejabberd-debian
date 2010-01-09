@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_zlib.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Interface to zlib
-%%% Created : 19 Jan 2006 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_zlib.erl 486 2006-01-19 02:17:31Z alexey $
+%%% Created : 19 Jan 2006 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_zlib).
--author('alexey@sevcom.net').
--vsn('$Revision: 486 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_server).
 
@@ -17,6 +34,7 @@
 	 send/2,
 	 recv/2, recv/3, recv_data/2,
 	 setopts/2,
+	 sockname/1, peername/1,
 	 controlling_process/2,
 	 close/1]).
 
@@ -122,6 +140,22 @@ setopts(#zlibsock{sockmod = SockMod, socket = Socket}, Opts) ->
 	    inet:setopts(Socket, Opts);
 	_ ->
 	    SockMod:setopts(Socket, Opts)
+    end.
+
+sockname(#zlibsock{sockmod = SockMod, socket = Socket}) ->
+    case SockMod of
+	gen_tcp ->
+	    inet:sockname(Socket);
+	_ ->
+	    SockMod:sockname(Socket)
+    end.
+
+peername(#zlibsock{sockmod = SockMod, socket = Socket}) ->
+    case SockMod of
+	gen_tcp ->
+	    inet:peername(Socket);
+	_ ->
+	    SockMod:peername(Socket)
     end.
 
 controlling_process(#zlibsock{sockmod = SockMod, socket = Socket}, Pid) ->

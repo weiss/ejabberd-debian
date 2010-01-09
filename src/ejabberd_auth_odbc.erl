@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_auth_odbc.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Authentification via ODBC
-%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_odbc.erl 598 2006-09-03 15:15:46Z mremond $
+%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_odbc).
--author('alexey@sevcom.net').
--vsn('$Revision: 598 $ ').
+-author('alexey@process-one.net').
 
 %% External exports
 -export([start/1,
@@ -18,6 +35,9 @@
 	 try_register/3,
 	 dirty_get_registered_users/0,
 	 get_vh_registered_users/1,
+	 get_vh_registered_users/2,
+	 get_vh_registered_users_number/1,
+	 get_vh_registered_users_number/2,
 	 get_password/2,
 	 get_password_s/2,
 	 is_user_exists/2,
@@ -28,20 +48,10 @@
 
 -include("ejabberd.hrl").
 
--record(passwd, {user, password}).
-
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
 start(Host) ->
-    ChildSpec =
-	{gen_mod:get_module_proc(Host, ejabberd_odbc_sup),
-	 {ejabberd_odbc_sup, start_link, [Host]},
-	 temporary,
-	 infinity,
-	 supervisor,
-	 [ejabberd_odbc_sup]},
-    supervisor:start_child(ejabberd_sup, ChildSpec),
     ejabberd_ctl:register_commands(
       Host,
       [{"registered-users", "list all registered users"}],
@@ -120,7 +130,11 @@ try_register(User, Server, Password) ->
     end.
 
 dirty_get_registered_users() ->
-    get_vh_registered_users(?MYNAME).
+    Servers = ejabberd_config:get_vh_by_auth_method(odbc),
+    lists:flatmap(
+      fun(Server) ->
+	      get_vh_registered_users(Server)
+      end, Servers).
 
 get_vh_registered_users(Server) ->
     LServer = jlib:nameprep(Server),
@@ -129,6 +143,33 @@ get_vh_registered_users(Server) ->
 	    [{U, LServer} || {U} <- Res];
 	_ ->
 	    []
+    end.
+
+get_vh_registered_users(Server, Opts) ->
+    LServer = jlib:nameprep(Server),
+    case catch odbc_queries:list_users(LServer, Opts) of
+	{selected, ["username"], Res} ->
+	    [{U, LServer} || {U} <- Res];
+	_ ->
+	    []
+    end.
+
+get_vh_registered_users_number(Server) ->
+    LServer = jlib:nameprep(Server),
+    case catch odbc_queries:users_number(LServer) of
+	{selected, [_], [{Res}]} ->
+	    list_to_integer(Res);
+	_ ->
+	    0
+    end.
+
+get_vh_registered_users_number(Server, Opts) ->
+    LServer = jlib:nameprep(Server),
+    case catch odbc_queries:users_number(LServer, Opts) of
+	{selected, [_], [{Res}]} ->
+	    list_to_integer(Res);
+	_Other ->
+	    0
     end.
 
 get_password(User, Server) ->
@@ -210,6 +251,6 @@ remove_user(User, Server, Password) ->
 				not_allowed
 			end
 		end,
-	    {atomic, Result} = odbc_queries:transaction(LServer, F),
+	    {atomic, Result} = odbc_queries:sql_transaction(LServer, F),
 	    Result
     end.

@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : shaper.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Functions to control connections traffic
-%%% Created :  9 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: shaper.erl 911 2007-09-03 08:31:45Z mremond $
+%%% Created :  9 Feb 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(shaper).
--author('alexey@sevcom.net').
--vsn('$Revision: 911 $ ').
+-author('alexey@process-one.net').
 
 -export([new/1, new1/1, update/2]).
 

@@ -1,13 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_muc_log.erl
-%%% Author  : Badlop
+%%% Author  : Badlop@process-one.net
 %%% Purpose : MUC room logging
-%%% Created : 12 Mar 2006 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc_log.erl 612 2006-09-22 07:58:58Z mremond $
+%%% Created : 12 Mar 2006 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_muc_log).
--author('badlop').
+-author('badlop@process-one.net').
 
 -behaviour(gen_server).
 -behaviour(gen_mod).
@@ -38,6 +56,7 @@
 		access,
 		lang,
 		timezone,
+		spam_prevention,
 		top_link}).
 
 %%====================================================================
@@ -75,7 +94,7 @@ check_access_log(Host, From) ->
     case catch gen_server:call(get_proc_name(Host),
 			       {check_access_log, Host, From}) of
 	{'EXIT', _Error} ->
-	    false;
+	    deny;
 	Res ->
 	    Res
     end.
@@ -98,6 +117,7 @@ init([Host, Opts]) ->
     AccessLog = gen_mod:get_opt(access_log, Opts, muc_admin),
     Timezone = gen_mod:get_opt(timezone, Opts, local),
     Top_link = gen_mod:get_opt(top_link, Opts, {"/", "Home"}),
+    NoFollow = gen_mod:get_opt(spam_prevention, Opts, true),
     Lang = case ejabberd_config:get_local_option({language, Host}) of
 	       undefined ->
 		   "";
@@ -111,6 +131,7 @@ init([Host, Opts]) ->
 		access = AccessLog,
 		lang = Lang,
 		timezone = Timezone,
+		spam_prevention = NoFollow,
 		top_link = Top_link}}.
 
 %%--------------------------------------------------------------------
@@ -244,7 +265,7 @@ close_previous_log(Fn, Images_dir) ->
 	    {ok, F} = file:open(Fn, [append]),
 	    %fw(F, "<div class=\"legend\">ejabberd/mod_muc log<span class=\"w3c\">"),
 	    fw(F, "<div class=\"legend\">"),
-	    fw(F, "  <a href=\"http://ejabberd.jabber.ru\"><img style=\"border:0\" src=\"~s/powered-by-ejabberd.png\" alt=\"Powered by ejabberd\"/></a>", [Images_dir]),
+	    fw(F, "  <a href=\"http://www.ejabberd.im\"><img style=\"border:0\" src=\"~s/powered-by-ejabberd.png\" alt=\"Powered by ejabberd\"/></a>", [Images_dir]),
 	    fw(F, "  <a href=\"http://www.erlang.org/\"><img style=\"border:0\" src=\"~s/powered-by-erlang.png\" alt=\"Powered by Erlang\"/></a>", [Images_dir]),
 	    fw(F, "<span class=\"w3c\">"),
 	    fw(F, "  <a href=\"http://validator.w3.org/check?uri=referer\"><img style=\"border:0;width:88px;height:31px\" src=\"~s/valid-xhtml10.png\" alt=\"Valid XHTML 1.0 Transitional\" /></a>", [Images_dir]),
@@ -261,6 +282,7 @@ add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
 	   css_file = CSSFile,
 	   lang = Lang,
 	   timezone = Timezone,
+	   spam_prevention = NoFollow,
 	   top_link = TopLink} = State,
     Room = get_room_info(RoomJID, Opts),
 
@@ -319,25 +341,34 @@ add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
 				 [Nick, ?T("leaves the room")]);
 	       {leave, Reason} ->  
 		   io_lib:format("<font class=\"ml\">~s ~s: ~s</font><br/>", 
-				 [Nick, ?T("leaves the room"), htmlize(Reason)]);
-	       {kickban, "307", ""} ->  
-		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
-				 [Nick, ?T("has been kicked")]);
-	       {kickban, "307", Reason} ->  
-		   io_lib:format("<font class=\"mk\">~s ~s: ~s</font><br/>", 
-				 [Nick, ?T("has been kicked"), htmlize(Reason)]);
+				 [Nick, ?T("leaves the room"), htmlize(Reason,NoFollow)]);
 	       {kickban, "301", ""} ->  
 		   io_lib:format("<font class=\"mb\">~s ~s</font><br/>", 
 				 [Nick, ?T("has been banned")]);
 	       {kickban, "301", Reason} ->  
 		   io_lib:format("<font class=\"mb\">~s ~s: ~s</font><br/>", 
 				 [Nick, ?T("has been banned"), htmlize(Reason)]);
+	       {kickban, "307", ""} ->  
+		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
+				 [Nick, ?T("has been kicked")]);
+	       {kickban, "307", Reason} ->  
+		   io_lib:format("<font class=\"mk\">~s ~s: ~s</font><br/>", 
+				 [Nick, ?T("has been kicked"), htmlize(Reason)]);
+	       {kickban, "321", ""} ->  
+		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
+				 [Nick, ?T("has been kicked because of an affiliation change")]);
+	       {kickban, "322", ""} ->  
+		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
+				 [Nick, ?T("has been kicked because the room has been changed to members-only")]);
+	       {kickban, "332", ""} ->  
+		   io_lib:format("<font class=\"mk\">~s ~s</font><br/>", 
+				 [Nick, ?T("has been kicked because of a system shutdown")]);
 	       {nickchange, OldNick} ->  
 		   io_lib:format("<font class=\"mnc\">~s ~s ~s</font><br/>", 
-				 [OldNick, ?T("is now known as"), Nick]);
+				 [htmlize(OldNick), ?T("is now known as"), Nick]);
 	       {subject, T} ->  
 		   io_lib:format("<font class=\"msc\">~s~s~s</font><br/>", 
-				 [Nick, ?T(" has set the subject to: "), htmlize(T)]);
+				 [Nick, ?T(" has set the subject to: "), htmlize(T,NoFollow)]);
 	       {body, T} ->  
 		   case regexp:first_match(T, "^/me\s") of
 		       {match, _, _} ->
@@ -345,7 +376,7 @@ add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
 					 [Nick, string:substr(htmlize(T), 5)]);
 		       nomatch ->
 			   io_lib:format("<font class=\"mn\">&lt;~s&gt;</font> ~s<br/>", 
-					 [Nick, htmlize(T)])
+					 [Nick, htmlize(T,NoFollow)])
 		   end
 	   end,
     {Hour, Minute, Second} = Time,
@@ -640,11 +671,19 @@ put_room_config(F, RoomConfig, Lang) ->
     fw(F,   "<div class=\"rcos\" id=\"a~p\" style=\"display: none;\" ><br/>~s</div>", [Now2, RoomConfig]),
     fw(F, "</div>").
 
+%% htmlize
+%% The default behaviour is to ignore the nofollow spam prevention on links
+%% (NoFollow=false)
 htmlize(S1) ->
+    htmlize(S1, false).
+
+%% The NoFollow parameter tell if the spam prevention should be applied to the link found
+%% true means 'apply nofollow on links'.
+htmlize(S1, NoFollow) ->
     S2_list = string:tokens(S1, "\n"),
     lists:foldl(
       fun(Si, Res) -> 
-	      Si2 = htmlize2(Si),
+	      Si2 = htmlize2(Si, NoFollow),
 	      case Res of
 		  "" -> Si2;
 		  _ -> Res ++ "<br/>" ++ Si2
@@ -653,12 +692,20 @@ htmlize(S1) ->
       "",
       S2_list).
 
-htmlize2(S1) ->
+htmlize2(S1, NoFollow) ->
     S2 = element(2, regexp:gsub(S1, "\\&", "\\&amp;")),
     S3 = element(2, regexp:gsub(S2, "<", "\\&lt;")),
     S4 = element(2, regexp:gsub(S3, ">", "\\&gt;")),
-    S5 = element(2, regexp:gsub(S4, "(http|ftp)://.[^ ]*", "<a href=\"&\">&</a>")),
-    S5.
+    S5 = element(2, regexp:gsub(S4, "[-+.a-zA-Z0-9]+://[^] )\'\"}]+", link_regexp(NoFollow))),
+    %% Remove 'right-to-left override' unicode character 0x202e
+    element(2, regexp:gsub(S5, [226,128,174], "[RLO]")).
+
+%% Regexp link
+%% Add the nofollow rel attribute when required
+link_regexp(false) ->
+    "<a href=\"&\">&</a>";
+link_regexp(true) ->
+    "<a href=\"&\" rel=\"nofollow\">&</a>".
 
 get_room_info(RoomJID, Opts) ->
     Title =

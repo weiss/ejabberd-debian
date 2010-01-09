@@ -1,8 +1,31 @@
-%% Copyrigh 2006, Process-one
-%% This module is intended to take into account relational databases behaviour
-%% differences
+%%%----------------------------------------------------------------------
+%%% File    : odbc_queries.erl
+%%% Author  : Mickael Remond <mremond@process-one.net>
+%%% Purpose : ODBC queries dependind on back-end
+%%% Created : by Mickael Remond <mremond@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
+%%%----------------------------------------------------------------------
+
 -module(odbc_queries).
--author("mickael.remond@process-one.net").
+-author("mremond@process-one.net").
 
 -export([get_db_type/0,
 	 sql_transaction/2,
@@ -15,6 +38,9 @@
 	 del_user/2,
 	 del_user_return_password/3,
 	 list_users/1,
+         list_users/2,
+	 users_number/1,
+         users_number/2,
 	 add_spool_sql/2,
 	 add_spool/2,
 	 get_and_del_spool_msg_t/2,
@@ -31,10 +57,20 @@
 	 update_roster_sql/4,
 	 roster_subscribe/4,
 	 get_subscription/3,
-	 escape/1]).
+	 set_private_data/4,
+	 set_private_data_sql/3,
+	 get_private_data/3,
+	 del_user_private_storage/2,
+	 escape/1,
+	 count_records_where/3]).
 
+%% We have only two compile time options for db queries:
 %-define(generic, true).
 %-define(mssql, true).
+-ifndef(mssql).
+-undef(generic).
+-define(generic, true).
+-endif.
 
 %% -----------------
 %% Generic queries
@@ -43,6 +79,9 @@
 get_db_type() ->
     generic.
 
+%% F can be either a fun or a list of queries
+%% TODO: We should probably move the list of queries transaction wrapper from the ejabberd_odbc module
+%%       to this one (odbc_queries)
 sql_transaction(LServer, F) ->
     ejabberd_odbc:sql_transaction(LServer, F).
 
@@ -101,6 +140,68 @@ list_users(LServer) ->
     ejabberd_odbc:sql_query(
       LServer,
       "select username from users").
+
+list_users(LServer, [{from, Start}, {to, End}]) when is_integer(Start) and
+                                                     is_integer(End) ->
+    list_users(LServer, [{limit, End-Start+1}, {offset, Start-1}]);
+list_users(LServer, [{prefix, Prefix}, {from, Start}, {to, End}]) when is_list(Prefix) and
+                                                                       is_integer(Start) and
+                                                                       is_integer(End) ->
+    list_users(LServer, [{prefix, Prefix}, {limit, End-Start+1}, {offset, Start-1}]);
+
+list_users(LServer, [{limit, Limit}, {offset, Offset}]) when is_integer(Limit) and
+                                                             is_integer(Offset) ->
+    ejabberd_odbc:sql_query(
+      LServer,
+      io_lib:format(
+        "select username from users " ++
+        "order by username " ++
+        "limit ~w offset ~w", [Limit, Offset]));
+list_users(LServer, [{prefix, Prefix},
+                     {limit, Limit},
+                     {offset, Offset}]) when is_list(Prefix) and
+                                             is_integer(Limit) and
+                                             is_integer(Offset) ->
+    ejabberd_odbc:sql_query(
+      LServer,
+      io_lib:format("select username from users " ++
+                    "where username like '~s%' " ++
+                    "order by username " ++
+                    "limit ~w offset ~w ", [Prefix, Limit, Offset])).
+
+users_number(LServer) ->
+    case element(1, ejabberd_config:get_local_option({odbc_server, LServer})) of
+    mysql ->
+	ejabberd_odbc:sql_query(
+	LServer,
+	"select table_rows from information_schema.tables where table_name='users'");
+    pgsql ->
+	case ejabberd_config:get_local_option({pgsql_users_number_estimate, LServer}) of
+	true ->
+	    ejabberd_odbc:sql_query(
+	    LServer,
+	    "select reltuples from pg_class where oid = 'users'::regclass::oid");
+	_ ->
+	    ejabberd_odbc:sql_query(
+	    LServer,
+	    "select count(*) from users")
+        end;
+    _ ->
+	ejabberd_odbc:sql_query(
+	LServer,
+	"select count(*) from users")
+    end.
+
+users_number(LServer, [{prefix, Prefix}]) when is_list(Prefix) ->
+    ejabberd_odbc:sql_query(
+      LServer,
+      io_lib:fwrite("select count(*) from users " ++
+                    %% Warning: Escape prefix at higher level to prevent SQL
+                    %%          injection.
+                    "where username like '~s%'", [Prefix]));
+users_number(LServer, []) ->
+    users_number(LServer).
+
 
 add_spool_sql(Username, XML) ->
     ["insert into spool(username, xml) "
@@ -250,6 +351,32 @@ get_subscription(LServer, Username, SJID) ->
        "where username='", Username, "' "
        "and jid='", SJID, "'"]).
 
+set_private_data(_LServer, Username, LXMLNS, SData) ->
+    lists:foreach(fun(Query) ->
+            ejabberd_odbc:sql_query_t(Query)
+        end,
+        set_private_data_sql(Username, LXMLNS, SData)).
+
+set_private_data_sql(Username, LXMLNS, SData) ->
+    [["delete from private_storage "
+       "where username='", Username, "' and "
+       "namespace='", LXMLNS, "';"],
+      ["insert into private_storage(username, namespace, data) "
+       "values ('", Username, "', '", LXMLNS, "', "
+       "'", SData, "');"]].
+
+get_private_data(LServer, Username, LXMLNS) ->
+    ejabberd_odbc:sql_query(
+		 LServer,
+		 ["select data from private_storage "
+		  "where username='", Username, "' and "
+		  "namespace='", LXMLNS, "';"]).
+
+del_user_private_storage(LServer, Username) ->
+    ejabberd_odbc:sql_transaction(
+      LServer,
+      ["delete from private_storage where username='", Username, "';"]).
+
 %% Characters to escape
 escape($\0) -> "\\0";
 escape($\n) -> "\\n";
@@ -261,6 +388,11 @@ escape($")  -> "\\\"";
 escape($\\) -> "\\\\";
 escape(C)   -> C.
 
+%% Count number of records in a table given a where clause
+count_records_where(LServer, Table, WhereClause) ->
+    ejabberd_odbc:sql_query(
+      LServer,
+      ["select count(*) from ", Table, " ", WhereClause, ";"]).
 -endif.
 
 %% -----------------
@@ -270,8 +402,18 @@ escape(C)   -> C.
 get_db_type() ->
     mssql.
 
-sql_transaction(_LServer, F) ->
-    {atomic, catch F()}.
+%% Queries can be either a fun or a list of queries
+sql_transaction(LServer, Queries) when is_list(Queries) ->
+    %% SQL transaction based on a list of queries
+    %% This function automatically
+    F = fun() ->
+    	lists:foreach(fun(Query) ->
+    		ejabberd_odbc:sql_query(LServer, Query)
+    	end, Queries)
+      end,
+    {atomic, catch F()};
+sql_transaction(_LServer, FQueries) ->
+    {atomic, catch FQueries()}.
 
 get_last(LServer, Username) ->
     ejabberd_odbc:sql_query(
@@ -287,7 +429,7 @@ set_last_t(LServer, Username, Seconds, State) ->
 
 del_last(LServer, Username) ->
     ejabberd_odbc:sql_query(
-      LServer,      
+      LServer,
       ["EXECUTE dbo.del_last '", Username, "'"]).
 
 get_password(LServer, Username) ->
@@ -321,6 +463,19 @@ list_users(LServer) ->
     ejabberd_odbc:sql_query(
       LServer,
       "EXECUTE dbo.list_users").
+
+list_users(LServer, _) ->
+    % scope listing not supported
+    list_users(LServer).
+
+users_number(LServer) ->
+	ejabberd_odbc:sql_query(
+	      LServer,
+	      "select count(*) from users with (nolock)").
+
+users_number(LServer, _) ->
+    % scope listing not supported
+    users_number(LServer).
 
 add_spool_sql(Username, XML) ->
     ["EXECUTE dbo.add_spool '", Username, "' , '",XML,"'"].
@@ -365,7 +520,7 @@ get_roster_groups(LServer, Username, SJID) ->
     ejabberd_odbc:sql_query(
       LServer,
       ["EXECUTE dbo.get_roster_groups '", Username, "' , '", SJID, "'"]).
-    
+
 del_user_roster_t(LServer, Username) ->
     Result = ejabberd_odbc:sql_query(
 		      LServer,
@@ -423,6 +578,24 @@ get_subscription(LServer, Username, SJID) ->
       LServer,
       ["EXECUTE dbo.get_subscription '", Username, "' , '", SJID, "'"]).
 
+set_private_data(LServer, Username, LXMLNS, SData) ->
+    ejabberd_odbc:sql_query(
+	    LServer,
+	    set_private_data_sql(Username, LXMLNS, SData)).
+
+set_private_data_sql(Username, LXMLNS, SData) ->
+    ["EXECUTE dbo.set_private_data '", Username, "' , '", LXMLNS, "' , '", SData, "'"].
+
+get_private_data(LServer, Username, LXMLNS) ->
+    ejabberd_odbc:sql_query(
+        LServer,
+        ["EXECUTE dbo.get_private_data '", Username, "' , '", LXMLNS, "'"]).
+
+del_user_private_storage(LServer, Username) ->
+    ejabberd_odbc:sql_query(
+        LServer,
+        ["EXECUTE dbo.del_user_storage '", Username, "'"]).
+
 %% Characters to escape
 escape($\0) -> "\\0";
 escape($\t) -> "\\t";
@@ -431,4 +604,10 @@ escape($\r) -> "\\r";
 escape($')  -> "\''";
 escape($")  -> "\\\"";
 escape(C)   -> C.
+
+%% Count number of records in a table given a where clause
+count_records_where(LServer, Table, WhereClause) ->
+    ejabberd_odbc:sql_query(
+      LServer,
+      ["select count(*) from ", Table, " ", WhereClause, " with (nolock)"]).
 -endif.

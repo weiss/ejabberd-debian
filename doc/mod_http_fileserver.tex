@@ -1,0 +1,50 @@
+\subsection{\modhttpfileserver{}}
+\label{modhttpfileserver}
+\ind{modules!\modhttpfileserver{}}\ind{modhttpfileserver}
+
+This simple module serves files from the local disk over HTTP.
+
+Options:
+\begin{description}
+  \titem{docroot} \ind{options!docroot}
+    Directory to serve the files.
+  \titem{accesslog} \ind{options!accesslog}
+    File to log accesses using an Apache-like format.
+    No log will be recorded if this option is not specified.
+\end{description}
+
+This example configuration will serve the files from 
+the local directory \verb|/var/www|
+in the address \verb|http://example.org:5280/pub/archive/|.
+To use this module you must enable it:
+\begin{verbatim}
+{modules,
+ [
+  ...
+  {mod_http_fileserver, [
+                         {docroot, "/var/www"}, 
+                         {accesslog, "/var/log/ejabberd/access.log"}
+                        ]
+  },
+  ...
+]}.
+\end{verbatim}
+And define it as a handler in the HTTP service:
+\begin{verbatim}
+{listen, 
+ [
+  ...
+  {5280, ejabberd_http, [
+                         ...
+                         {request_handlers, [
+                                             ...
+                                             {["pub", "archive"], mod_http_fileserver},
+                                             ...
+                                            ]
+                         },
+                         ...
+                        ]
+  },
+  ...
+]}.
+\end{verbatim}

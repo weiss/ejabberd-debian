@@ -1,68 +1,123 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_web_admin.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Administration web interface
-%%% Created :  9 Apr 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_web_admin.erl 588 2006-07-07 08:06:12Z mremond $
-%%%----------------------------------------------------------------------
-%%% Copyright (c) 2004-2006 Alexey Shchepin
-%%% Copyright (c) 2004-2006 Process One
+%%% Created :  9 Apr 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_web_admin).
--author('alexey@sevcom.net').
--vsn('$Revision: 588 $ ').
+-author('alexey@process-one.net').
 
 %% External exports
--export([process_admin/2,
+-export([process/2,
 	 list_users/4,
-	 list_users_in_diapason/4]).
+	 list_users_in_diapason/4,
+	 pretty_print_xml/1,
+	 term_to_id/1]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 -include("ejabberd_http.hrl").
-
--define(X(Name), {xmlelement, Name, [], []}).
--define(XA(Name, Attrs), {xmlelement, Name, Attrs, []}).
--define(XE(Name, Els), {xmlelement, Name, [], Els}).
--define(XAE(Name, Attrs, Els), {xmlelement, Name, Attrs, Els}).
--define(C(Text), {xmlcdata, Text}).
--define(XC(Name, Text), ?XE(Name, [?C(Text)])).
--define(XAC(Name, Attrs, Text), ?XAE(Name, Attrs, [?C(Text)])).
-
--define(T(Text), translate:translate(Lang, Text)).
--define(CT(Text), ?C(?T(Text))).
--define(XCT(Name, Text), ?XC(Name, ?T(Text))).
--define(XACT(Name, Attrs, Text), ?XAC(Name, Attrs, ?T(Text))).
+-include("ejabberd_web_admin.hrl").
 
 
--define(LI(Els), ?XE("li", Els)).
--define(A(URL, Els), ?XAE("a", [{"href", URL}], Els)).
--define(AC(URL, Text), ?A(URL, [?C(Text)])).
--define(ACT(URL, Text), ?AC(URL, ?T(Text))).
--define(P, ?X("p")).
--define(BR, ?X("br")).
--define(INPUT(Type, Name, Value),
-	?XA("input", [{"type", Type},
-		      {"name", Name},
-		      {"value", Value}])).
--define(INPUTT(Type, Name, Value), ?INPUT(Type, Name, ?T(Value))).
--define(INPUTS(Type, Name, Value, Size),
-	?XA("input", [{"type", Type},
-		      {"name", Name},
-		      {"value", Value},
-		      {"size", Size}])).
--define(INPUTST(Type, Name, Value, Size), ?INPUT(Type, Name, ?T(Value), Size)).
+process(["server", SHost | RPath], #request{auth = Auth} = Request) ->
+    Host = jlib:nameprep(SHost),
+    case lists:member(Host, ?MYHOSTS) of
+	true ->
+	    case get_auth(Auth) of
+		{User, Server} ->
+		    case acl:match_rule(
+			   Host, configure, jlib:make_jid(User, Server, "")) of
+			deny ->
+                            ejabberd_web:error(not_allowed);
+			allow ->
+			    process_admin(
+			      Host, Request#request{path = RPath,
+						    us = {User, Server}})
+		    end;
+		unauthorized ->
+		    {401,
+		     [{"WWW-Authenticate", "basic realm=\"ejabberd\""}],
+		     ejabberd_web:make_xhtml([{xmlelement, "h1", [],
+                                               [{xmlcdata, "401 Unauthorized"}]}])}
+	    end;
+	false ->
+            ejabberd_web:error(not_found)
+    end;
+
+process(RPath, #request{auth = Auth} = Request) ->
+    case get_auth(Auth) of
+	{User, Server} ->
+	    case acl:match_rule(
+		   global, configure, jlib:make_jid(User, Server, "")) of
+		deny ->
+                    ejabberd_web:error(not_allowed);
+		allow ->
+		    process_admin(
+		      global, Request#request{path = RPath,
+					      us = {User, Server}})
+	    end;
+	unauthorized ->
+            %% XXX bard: any reason to send this data now and not
+            %% always in case of an 401? ought to check http specs...
+	    {401, 
+	     [{"WWW-Authenticate", "basic realm=\"ejabberd\""}],
+	     ejabberd_web:make_xhtml([{xmlelement, "h1", [],
+				       [{xmlcdata, "401 Unauthorized"}]}])}
+    end.
+
+get_auth(Auth) ->
+    case Auth of
+        {SJID, P} ->
+            case jlib:string_to_jid(SJID) of
+                error ->
+                    unauthorized;
+                #jid{user = U, server = S} ->
+                    case ejabberd_auth:check_password(U, S, P) of
+                        true ->
+                            {U, S};
+                        false ->
+                            unauthorized
+                    end
+            end;
+         _ ->
+            unauthorized
+    end.
 
 make_xhtml(Els, global, Lang) ->
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_main, [], [Lang]),
+    MenuItems2 = [?LI([?AC("/admin/"++MI_uri++"/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     {200, [html],
      {xmlelement, "html", [{"xmlns", "http://www.w3.org/1999/xhtml"},
 			   {"xml:lang", Lang},
 			   {"lang", Lang}],
       [{xmlelement, "head", [],
-	[?XCT("title", "ejabberd Web Interface"),
+	[?XCT("title", "ejabberd Web Admin"),
 	 {xmlelement, "meta", [{"http-equiv", "Content-Type"},
 			       {"content", "text/html; charset=utf-8"}], []},
+	 {xmlelement, "link", [{"href", "/admin/favicon.ico"},
+			       {"type", "image/x-icon"},
+			       {"rel", "shortcut icon"}], []},
 	 {xmlelement, "link", [{"href", "/admin/style.css"},
 			       {"type", "text/css"},
 			       {"rel", "stylesheet"}], []}]},
@@ -82,7 +137,7 @@ make_xhtml(Els, global, Lang) ->
 			     ?LI([?ACT("/admin/vhosts/", "Virtual Hosts")]),
 			     ?LI([?ACT("/admin/nodes/", "Nodes")]),
 			     ?LI([?ACT("/admin/stats/", "Statistics")])
-			    ]
+			    ] ++ MenuItems2
 			   )]),
 		  ?XAE("div",
 		       [{"id", "content"}],
@@ -94,21 +149,26 @@ make_xhtml(Els, global, Lang) ->
 		 [{"id", "copyrightouter"}],
 		 [?XAE("div",
 		       [{"id", "copyright"}],
-		       [?XCT("p",
-			     "ejabberd (c) 2002-2006 Alexey Shchepin, 2004-2006 Process One")
+		       [?XC("p",
+			     "ejabberd (c) 2002-2008 ProcessOne")
 		       ])])])
       ]}};
 
 make_xhtml(Els, Host, Lang) ->
     Base = "/admin/server/" ++ Host ++ "/",
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_host, Host, [], [Host, Lang]),
+    MenuItems2 = [?LI([?AC(Base ++ MI_uri ++ "/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     {200, [html],
      {xmlelement, "html", [{"xmlns", "http://www.w3.org/1999/xhtml"},
 			   {"xml:lang", Lang},
 			   {"lang", Lang}],
       [{xmlelement, "head", [],
-	[?XCT("title", "ejabberd Web Interface"),
+	[?XCT("title", "ejabberd Web Admin"),
 	 {xmlelement, "meta", [{"http-equiv", "Content-Type"},
 			       {"content", "text/html; charset=utf-8"}], []},
+	 {xmlelement, "link", [{"href", "/admin/favicon.ico"},
+			       {"type", "image/x-icon"},
+			       {"rel", "shortcut icon"}], []},
 	 {xmlelement, "link", [{"href", Base ++ "style.css"},
 			       {"type", "text/css"},
 			       {"rel", "stylesheet"}], []}]},
@@ -118,26 +178,23 @@ make_xhtml(Els, Host, Lang) ->
 		 [?XAE("div",
 		       [{"id", "header"}],
 		       [?XE("h1",
-			    [?ACT(Base, "Administration")]
+			    [?ACT("/admin/", "Administration")]
 			   )]),
 		  ?XAE("div",
 		       [{"id", "navigation"}],
 		       [?XE("ul",
-			    [?LI([?ACT(Base ++ "acls/", "Access Control Lists")]),
+			    [?LI([?XAE("div",
+			        [{"id", "navheadhost"}],
+			        [?AC(Base, Host)]
+			     )]),
+			     ?LI([?ACT(Base ++ "acls/", "Access Control Lists")]),
 			     ?LI([?ACT(Base ++ "access/", "Access Rules")]),
 			     ?LI([?ACT(Base ++ "users/", "Users")]),
 			     ?LI([?ACT(Base ++ "online-users/", "Online Users")]),
 			     ?LI([?ACT(Base ++ "last-activity/", "Last Activity")]),
 			     ?LI([?ACT(Base ++ "nodes/", "Nodes")]),
 			     ?LI([?ACT(Base ++ "stats/", "Statistics")])
-			    ] ++
-			    case lists:member(mod_shared_roster,
-					      gen_mod:loaded_modules(Host)) of
-				true ->
-				    [?LI([?ACT(Base ++ "shared-roster/", "Shared Roster")])];
-				false ->
-				    []
-			    end
+			    ] ++ MenuItems2
 			   )]),
 		  ?XAE("div",
 		       [{"id", "content"}],
@@ -149,8 +206,8 @@ make_xhtml(Els, Host, Lang) ->
 		 [{"id", "copyrightouter"}],
 		 [?XAE("div",
 		       [{"id", "copyright"}],
-		       [?XCT("p",
-			     "ejabberd (c) 2002-2006 Alexey Shchepin, 2004-2006 Process One")
+		       [?XC("p",
+			     "ejabberd (c) 2002-2008 ProcessOne")
 		       ])])])
       ]}}.
 
@@ -281,6 +338,11 @@ html>body #container {
   border-color: #fc8800;
   color: #FFF;
   background: #332;
+}
+
+#navheadhost {
+  text-align: left;
+  border-bottom: 2px solid #d47911;
 }
 
 #lastactivity li {
@@ -498,6 +560,17 @@ h3 {
 
 ".
 
+favicon() ->
+    jlib:decode_base64(
+      "AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAA"
+      "AAAAAAAAAAAAAAAAAAAAAAAAJf+cAAIPsAAGC8gAVhecAAIr8ACiR7wBBmO"
+      "cAUKPsAFun8ABhqeoAgLryAJLB8ACz1PcAv9r7AMvi+gAAAAAAAgICARMhI"
+      "CAkJCQkQkFCQgICN2d2cSMgJCRevdvVQkICAlqYh5MgICQkXrRCQkJCMgI7"
+      "kiAjICAUFF2swkFBQRQUXazCQUFBAgI7kiAgICAkJF60QkJCQgICOpiHkyA"
+      "gJCRevdvlQkICAjdndnMgICQkJCRCQkJCAgICARAgICAAAAAAAAAAAAAAAA"
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      "AAAAAAAAAAA").
+
 logo() ->
     jlib:decode_base64(
       "iVBORw0KGgoAAAANSUhEUgAAAVcAAAA3CAMAAACPbPnEAAAAYFBMVEX///8C"
@@ -523,10 +596,10 @@ logo_fill() ->
       "RK5CYII=").
 
 process_admin(global,
-	      #request{us = US,
-		       path = [],
-		       q = Query,
-		       lang = Lang} = Request) ->
+	      #request{path = [],
+		       lang = Lang}) ->
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_main, [], [Lang]),
+    MenuItems2 = [?LI([?AC("/admin/"++MI_uri++"/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     make_xhtml([?XCT("h1", "Administration"),
 		?XE("ul",
 		    [?LI([?ACT("/admin/acls/", "Access Control Lists"), ?C(" "),
@@ -536,16 +609,16 @@ process_admin(global,
 		     ?LI([?ACT("/admin/vhosts/", "Virtual Hosts")]),
 		     ?LI([?ACT("/admin/nodes/", "Nodes")]),
 		     ?LI([?ACT("/admin/stats/", "Statistics")])
-		    ]
+		    ] ++ MenuItems2
 		   )
 	       ], global, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = [],
-		       q = Query,
-		       lang = Lang} = Request) ->
+	      #request{path = [],
+		       lang = Lang}) ->
     Base = "/admin/server/" ++ Host ++ "/",
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_host, Host, [], [Host, Lang]),
+    MenuItems2 = [?LI([?AC(Base ++ MI_uri ++ "/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     make_xhtml([?XCT("h1", "Administration"),
 		?XE("ul",
 		    [?LI([?ACT(Base ++ "acls/", "Access Control Lists"), ?C(" "),
@@ -557,43 +630,26 @@ process_admin(Host,
 		     ?LI([?ACT(Base ++ "last-activity/", "Last Activity")]),
 		     ?LI([?ACT(Base ++ "nodes/", "Nodes")]),
 		     ?LI([?ACT(Base ++ "stats/", "Statistics")])
-		    ] ++
-		    case lists:member(mod_shared_roster,
-				      gen_mod:loaded_modules(Host)) of
-			true ->
-			    [?LI([?ACT(Base ++ "shared-roster/", "Shared Roster")])];
-			false ->
-			    []
-		    end
+		    ] ++ MenuItems2
 		   )
 	       ], Host, Lang);
 
-process_admin(Host,
-	      #request{us = US,
-		       path = ["style.css"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+process_admin(Host, #request{path = ["style.css"]}) ->
     {200, [{"Content-Type", "text/css"}], css(Host)};
 
-process_admin(Host,
-	      #request{us = US,
-		       path = ["logo.png"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+process_admin(_Host, #request{path = ["favicon.ico"]}) ->
+    {200, [{"Content-Type", "image/x-icon"}], favicon()};
+
+process_admin(_Host, #request{path = ["logo.png"]}) ->
     {200, [{"Content-Type", "image/png"}], logo()};
 
-process_admin(Host,
-	      #request{us = US,
-		       path = ["logo-fill.png"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+process_admin(_Host, #request{path = ["logo-fill.png"]}) ->
     {200, [{"Content-Type", "image/png"}], logo_fill()};
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["acls-raw"],
+	      #request{path = ["acls-raw"],
 		       q = Query,
-		       lang = Lang} = Request) ->
+		       lang = Lang}) ->
     Res = case lists:keysearch("acls", 1, Query) of
 	      {value, {_, String}} ->
 		  case erl_scan:string(String) of
@@ -638,11 +694,10 @@ process_admin(Host,
 
 process_admin(Host,
 	      #request{method = Method,
-			us = US,
 			path = ["acls"],
 			q = Query,
-			lang = Lang} = Request) ->
-    ?INFO_MSG("query: ~p", [Query]),
+			lang = Lang}) ->
+    ?DEBUG("query: ~p", [Query]),
     Res = case Method of
 	      'POST' ->
 		  case catch acl_parse_query(Host, Query) of
@@ -681,10 +736,9 @@ process_admin(Host,
 	       ], Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-			path = ["access-raw"],
+	      #request{path = ["access-raw"],
 			q = Query,
-			lang = Lang} = Request) ->
+			lang = Lang}) ->
     SetAccess =
 	fun(Rs) ->
 		mnesia:transaction(
@@ -751,11 +805,10 @@ process_admin(Host,
 
 process_admin(Host,
 	      #request{method = Method,
-		       us = US,
 		       path = ["access"],
 		       q = Query,
-		       lang = Lang} = Request) ->
-    ?INFO_MSG("query: ~p", [Query]),
+		       lang = Lang}) ->
+    ?DEBUG("query: ~p", [Query]),
     Res = case Method of
 	      'POST' ->
 		  case catch access_parse_query(Host, Query) of
@@ -787,12 +840,10 @@ process_admin(Host,
 	       ], Host, Lang);
 
 process_admin(Host,
-	      #request{method = Method,
-		       us = US,
-		       path = ["access", SName],
+	      #request{path = ["access", SName],
 		       q = Query,
-		       lang = Lang} = Request) ->
-    ?INFO_MSG("query: ~p", [Query]),
+		       lang = Lang}) ->
+    ?DEBUG("query: ~p", [Query]),
     Name = list_to_atom(SName),
     Res = case lists:keysearch("rules", 1, Query) of
 	      {value, {_, String}} ->
@@ -828,44 +879,36 @@ process_admin(Host,
 	       ], Host, Lang);
 
 process_admin(global,
-	      #request{us = US,
-		       path = ["vhosts"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+	      #request{path = ["vhosts"],
+		       lang = Lang}) ->
     Res = list_vhosts(Lang),
     make_xhtml([?XCT("h1", "ejabberd virtual hosts")] ++ Res, global, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["users"],
+	      #request{path = ["users"],
 		       q = Query,
-		       lang = Lang} = Request) when is_list(Host) ->
+		       lang = Lang}) when is_list(Host) ->
     Res = list_users(Host, Query, Lang, fun url_func/1),
     make_xhtml([?XCT("h1", "Users")] ++ Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["users", Diap],
-		       q = Query,
-		       lang = Lang} = Request) when is_list(Host) ->
+	      #request{path = ["users", Diap],
+		       lang = Lang}) when is_list(Host) ->
     Res = list_users_in_diapason(Host, Diap, Lang, fun url_func/1),
     make_xhtml([?XCT("h1", "Users")] ++ Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
+	      #request{
 		       path = ["online-users"],
-		       q = Query,
-		       lang = Lang} = Request) when is_list(Host) ->
+		       lang = Lang}) when is_list(Host) ->
     Res = list_online_users(Host, Lang),
     make_xhtml([?XCT("h1", "Online Users")] ++ Res, Host, Lang);
 
 process_admin(Host,
-	      #request{method = Method,
-		       us = US,
-		       path = ["last-activity"],
+	      #request{path = ["last-activity"],
 		       q = Query,
-		       lang = Lang} = Request) when is_list(Host) ->
-    ?INFO_MSG("query: ~p", [Query]),
+		       lang = Lang}) when is_list(Host) ->
+    ?DEBUG("query: ~p", [Query]),
     Month = case lists:keysearch("period", 1, Query) of
 		{value, {_, Val}} ->
 		    Val;
@@ -901,50 +944,28 @@ process_admin(Host,
 	       Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["stats"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+	      #request{path = ["stats"],
+		       lang = Lang}) ->
     Res = get_stats(Host, Lang),
     make_xhtml([?XCT("h1", "Statistics")] ++ Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["user", U],
+	      #request{path = ["user", U],
 		       q = Query,
-		       lang = Lang} = Request) ->
+		       lang = Lang}) ->
     Res = user_info(U, Host, Query, Lang),
     make_xhtml(Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["user", U, "queue"],
-		       q = Query,
-		       lang = Lang} = Request) ->
-    Res = user_queue(U, Host, Query, Lang),
-    make_xhtml(Res, Host, Lang);
-
-process_admin(Host,
-	      #request{us = US,
-		       path = ["user", U, "roster"],
-		       q = Query,
-		       lang = Lang} = Request) ->
-    Res = user_roster(U, Host, Query, Lang, true),
-    make_xhtml(Res, Host, Lang);
-
-process_admin(Host,
-	      #request{us = US,
-		       path = ["nodes"],
-		       q = Query,
-		       lang = Lang} = Request) ->
+	      #request{path = ["nodes"],
+		       lang = Lang}) ->
     Res = get_nodes(Lang),
     make_xhtml(Res, Host, Lang);
 
 process_admin(Host,
-	      #request{us = US,
-		       path = ["node", SNode | NPath],
+	      #request{path = ["node", SNode | NPath],
 		       q = Query,
-		       lang = Lang} = Request) ->
+		       lang = Lang}) ->
     case search_running_node(SNode) of
 	false ->
 	    make_xhtml([?XCT("h1", "Node not found")], Host, Lang);
@@ -953,25 +974,15 @@ process_admin(Host,
 	    make_xhtml(Res, Host, Lang)
     end;
 
-process_admin(Host,
-	      #request{us = US,
-		       path = ["shared-roster"],
-		       q = Query,
-		       lang = Lang} = Request) ->
-    Res = list_shared_roster_groups(Host, Query, Lang),
-    make_xhtml(Res, Host, Lang);
-
-process_admin(Host,
-	      #request{us = US,
-		       path = ["shared-roster", Group],
-		       q = Query,
-		       lang = Lang} = Request) ->
-    Res = shared_roster_group(Host, Group, Query, Lang),
-    make_xhtml(Res, Host, Lang);
-
-process_admin(Host,
-	      #request{lang = Lang}) ->
-    setelement(1, make_xhtml([?XC("h1", "Not Found")], Host, Lang), 404).
+process_admin(Host, #request{lang = Lang} = Request) ->
+    {Hook, Opts} = case Host of
+		       global -> {webadmin_page_main, [Request]};
+		       Host -> {webadmin_page_host, [Host, Request]}
+		   end,
+    case ejabberd_hooks:run_fold(Hook, Host, [], Opts) of
+	[] -> setelement(1, make_xhtml([?XC("h1", "Not Found")], Host, Lang), 404);
+	Res -> make_xhtml(Res, Host, Lang)
+    end.
 
 
 
@@ -996,8 +1007,6 @@ acls_to_xhtml(ACLs) ->
 		  )]
 	     )]).
 
--define(ACLINPUT(Text), ?XE("td", [?INPUT("text", "value" ++ ID, Text)])).
-
 acl_spec_to_text({user, U}) ->
     {user, U};
 
@@ -1005,7 +1014,34 @@ acl_spec_to_text({server, S}) ->
     {server, S};
 
 acl_spec_to_text({user, U, S}) ->
-    {user_server, U ++ "@" ++ S};
+    {user, U ++ "@" ++ S};
+
+acl_spec_to_text({user_regexp, RU}) ->
+    {user_regexp, RU};
+
+acl_spec_to_text({user_regexp, RU, S}) ->
+    {user_regexp, RU ++ "@" ++ S};
+
+acl_spec_to_text({server_regexp, RS}) ->
+    {server_regexp, RS};
+
+acl_spec_to_text({node_regexp, RU, RS}) ->
+    {node_regexp, RU ++ "@" ++ RS};
+
+acl_spec_to_text({user_glob, RU}) ->
+    {user_glob, RU};
+
+acl_spec_to_text({user_glob, RU, S}) ->
+    {user_glob, RU ++ "@" ++ S};
+
+acl_spec_to_text({server_glob, RS}) ->
+    {server_glob, RS};
+
+acl_spec_to_text({node_glob, RU, RS}) ->
+    {node_glob, RU ++ "@" ++ RS};
+
+acl_spec_to_text(all) ->
+    {all, ""};
 
 acl_spec_to_text(Spec) ->
     {raw, term_to_string(Spec)}.
@@ -1026,7 +1062,8 @@ acl_spec_select(ID, Opt) ->
 			?XAC("option",
 			     Sel ++ [{"value", atom_to_list(O)}],
 			     atom_to_list(O))
-		end, [user, server, user_server, raw]))]).
+		end, [user, server, user_regexp, server_regexp, 
+		      node_regexp, user_glob, server_glob, node_glob, all, raw]))]).
 
 
 term_to_string(T) ->
@@ -1053,7 +1090,7 @@ acl_parse_submit(ACLs, Query) ->
     NewACLs =
 	lists:map(
 	  fun({acl, Name, Spec} = ACL) ->
-		  SName = atom_to_list(Name),
+		  %%SName = atom_to_list(Name),
 		  ID = term_to_id(ACL),
 		  case {lists:keysearch("type" ++ ID, 1, Query),
 			lists:keysearch("value" ++ ID, 1, Query)} of
@@ -1085,22 +1122,44 @@ acl_parse_submit(ACLs, Query) ->
     NewACLs ++ NewACL.
 
 string_to_spec("user", Val) ->
-    {user, Val};
+    string_to_spec2(user, Val);
 string_to_spec("server", Val) ->
     {server, Val};
-string_to_spec("user_server", Val) ->
+string_to_spec("user_regexp", Val) ->
+    string_to_spec2(user_regexp, Val);
+string_to_spec("server_regexp", Val) ->
+    {server_regexp, Val};
+string_to_spec("node_regexp", Val) ->
     #jid{luser = U, lserver = S, resource = ""} = jlib:string_to_jid(Val),
-    {user, U, S};
+    {node_regexp, U, S};
+string_to_spec("user_glob", Val) ->
+    string_to_spec2(user_glob, Val);
+string_to_spec("server_glob", Val) ->
+    {server_glob, Val};
+string_to_spec("node_glob", Val) ->
+    #jid{luser = U, lserver = S, resource = ""} = jlib:string_to_jid(Val),
+    {node_glob, U, S};
+string_to_spec("all", _) ->
+    all;
 string_to_spec("raw", Val) ->
     {ok, Tokens, _} = erl_scan:string(Val ++ "."),
     {ok, NewSpec} = erl_parse:parse_term(Tokens),
     NewSpec.
 
+string_to_spec2(ACLName, Val) ->
+    #jid{luser = U, lserver = S, resource = ""} = jlib:string_to_jid(Val),
+    case U of
+	"" -> 
+	    {ACLName, S};
+	_ -> 
+	    {ACLName, U, S}
+    end.
+
 
 acl_parse_delete(ACLs, Query) ->
     NewACLs =
 	lists:filter(
-	  fun({acl, Name, Spec} = ACL) ->
+	  fun({acl, _Name, _Spec} = ACL) ->
 		  ID = term_to_id(ACL),
 		  not lists:member({"selected", ID}, Query)
 	  end, ACLs),
@@ -1145,7 +1204,7 @@ access_parse_query(Host, Query) ->
 	    end
     end.
 
-access_parse_addnew(AccessRules, Host, Query) ->
+access_parse_addnew(_AccessRules, Host, Query) ->
     case lists:keysearch("namenew", 1, Query) of
 	{value, {_, String}} when String /= "" ->
 	    Name = list_to_atom(String),
@@ -1174,8 +1233,8 @@ access_parse_delete(AccessRules, Host, Query) ->
 
 access_rule_to_xhtml(Rules) ->
     Text = lists:flatmap(
-	     fun({Access, ACL} = Rule) ->
-		     SAccess = atom_to_list(Access),
+	     fun({Access, ACL} = _Rule) ->
+		     SAccess = element_to_list(Access),
 		     SACL = atom_to_list(ACL),
 		     SAccess ++ "\t" ++ SACL ++ "\n"
 	     end, Rules),
@@ -1190,7 +1249,7 @@ parse_access_rule(Text) ->
 		 fun(String) ->
 			 case string:tokens(String, "\s\t") of
 			     [Access, ACL] ->
-				 [{list_to_atom(Access), list_to_atom(ACL)}];
+				 [{list_to_element(Access), list_to_atom(ACL)}];
 			     [] ->
 				 []
 			 end
@@ -1218,7 +1277,7 @@ list_vhosts(Lang) ->
 			OnlineUsers =
 			    length(ejabberd_sm:get_vh_session_list(Host)),
 			RegisteredUsers =
-			    length(ejabberd_auth:get_vh_registered_users(Host)),
+			    ejabberd_auth:get_vh_registered_users_number(Host),
 			?XE("tr",
 			    [?XE("td", [?AC("../server/" ++ Host ++ "/", Host)]),
 			     ?XC("td", integer_to_list(RegisteredUsers)),
@@ -1242,7 +1301,7 @@ list_users(Host, Query, Lang, URLFunc) ->
 		lists:flatmap(
 		  fun(K) ->
 			  L = K + M - 1,
-			  Node = integer_to_list(K) ++ "-" ++ integer_to_list(L),
+			  %%Node = integer_to_list(K) ++ "-" ++ integer_to_list(L),
 			  Last = if L < N -> su_to_list(lists:nth(L, SUsers));
 				    true -> su_to_list(lists:last(SUsers))
 				 end,
@@ -1321,7 +1380,7 @@ list_given_users(Users, Prefix, Lang, URLFunc) ->
 		   ?XCT("td", "Last Activity")])]),
 	 ?XE("tbody",
 	     lists:map(
-	       fun(SU = {Server, User}) ->
+	       fun(_SU = {Server, User}) ->
 		       US = {User, Server},
 		       QueueLen = length(mnesia:dirty_read({offline_msg, US})),
 		       FQueueLen = [?AC(URLFunc({users_queue, Prefix,
@@ -1367,8 +1426,7 @@ su_to_list({Server, User}) ->
 
 
 get_stats(global, Lang) ->
-    OnlineUsers = mnesia:table_info(presence, size),
-    AuthUsers = mnesia:table_info(session, size),
+    OnlineUsers = mnesia:table_info(session, size),
     RegisteredUsers = mnesia:table_info(passwd, size),
     S2SConns = ejabberd_s2s:dirty_get_connections(),
     S2SConnections = length(S2SConns),
@@ -1377,8 +1435,6 @@ get_stats(global, Lang) ->
 	  [?XE("tbody",
 	       [?XE("tr", [?XCT("td", "Registered Users:"),
 			   ?XC("td", integer_to_list(RegisteredUsers))]),
-		?XE("tr", [?XCT("td", "Authenticated Users:"),
-			   ?XC("td", integer_to_list(AuthUsers))]),
 		?XE("tr", [?XCT("td", "Online Users:"),
 			   ?XC("td", integer_to_list(OnlineUsers))]),
 		?XE("tr", [?XCT("td", "Outgoing s2s Connections:"),
@@ -1390,7 +1446,7 @@ get_stats(global, Lang) ->
 
 get_stats(Host, Lang) ->
     OnlineUsers = length(ejabberd_sm:get_vh_session_list(Host)),
-    RegisteredUsers = length(ejabberd_auth:get_vh_registered_users(Host)),
+    RegisteredUsers = ejabberd_auth:get_vh_registered_users_number(Host),
     [?XAE("table", [],
 	  [?XE("tbody",
 	       [?XE("tr", [?XCT("td", "Registered Users:"),
@@ -1402,17 +1458,18 @@ get_stats(Host, Lang) ->
 
 
 list_online_users(Host, _Lang) ->
-    Users = [{S, U} || {U, S, R} <- ejabberd_sm:get_vh_session_list(Host)],
+    Users = [{S, U} || {U, S, _R} <- ejabberd_sm:get_vh_session_list(Host)],
     SUsers = lists:usort(Users),
     lists:flatmap(
-      fun({S, U} = SU) ->
+      fun({_S, U} = SU) ->
 	      [?AC("../user/" ++ ejabberd_http:url_encode(U) ++ "/",
 		   su_to_list(SU)),
 	       ?BR]
       end, SUsers).
 
 user_info(User, Server, Query, Lang) ->
-    US = {jlib:nodeprep(User), jlib:nameprep(Server)},
+    LServer = jlib:nameprep(Server),
+    US = {jlib:nodeprep(User), LServer},
     Res = user_parse_query(User, Server, Query),
     Resources = ejabberd_sm:get_user_resources(User, Server),
     FResources =
@@ -1422,15 +1479,25 @@ user_info(User, Server, Query, Lang) ->
 	    _ ->
 		[?XE("ul",
 		     lists:map(fun(R) ->
-				       ?LI([?C(R)])
+				       FIP = case ejabberd_sm:get_user_ip(
+						    User, Server, R) of
+						 undefined ->
+						     "";
+						 {IP, Port} ->
+						     " (" ++
+							 inet_parse:ntoa(IP) ++
+							 ":" ++
+							 integer_to_list(Port)
+							 ++ ")"
+					     end,
+				       ?LI([?C(R ++ FIP)])
 			       end, lists:sort(Resources)))]
 	end,
     Password = ejabberd_auth:get_password_s(User, Server),
     FPassword = [?INPUT("password", "password", Password), ?C(" "),
 		 ?INPUTT("submit", "chpassword", "Change Password")],
-    QueueLen = length(mnesia:dirty_read({offline_msg, US})),
-    FQueueLen = [?AC("queue/",
-		     integer_to_list(QueueLen))],
+    UserItems = ejabberd_hooks:run_fold(webadmin_user, LServer, [],
+					[User, Server, Lang]),
     [?XC("h1", ?T("User ") ++ us_to_list(US))] ++
 	case Res of
 	    ok -> [?CT("Submitted"), ?P];
@@ -1440,9 +1507,8 @@ user_info(User, Server, Query, Lang) ->
 	[?XAE("form", [{"action", ""}, {"method", "post"}],
 	      [?XCT("h3", "Connected Resources:")] ++ FResources ++
 	      [?XCT("h3", "Password:")] ++ FPassword ++
-	      [?XCT("h3", "Offline Messages:")] ++ FQueueLen ++
-	      [?XE("h3", [?ACT("roster/", "Roster")])] ++
-	      [?BR, ?INPUTT("submit", "removeuser", "Remove User")])].
+	      UserItems ++
+	      [?P, ?INPUTT("submit", "removeuser", "Remove User")])].
 
 
 user_parse_query(User, Server, Query) ->
@@ -1467,249 +1533,6 @@ user_parse_query(User, Server, Query) ->
 	    end
     end.
 
-
-user_queue(User, Server, Query, Lang) ->
-    US = {jlib:nodeprep(User), jlib:nameprep(Server)},
-    Res = user_queue_parse_query(US, Query),
-    Msgs = lists:keysort(3, mnesia:dirty_read({offline_msg, US})),
-    FMsgs =
-	lists:map(
-	  fun({offline_msg, _US, TimeStamp, _Expire, From, To,
-	       {xmlelement, Name, Attrs, Els}} = Msg) ->
-		  ID = jlib:encode_base64(binary_to_list(term_to_binary(Msg))),
-		  {{Year, Month, Day}, {Hour, Minute, Second}} =
-		      calendar:now_to_local_time(TimeStamp),
-		  Time = lists:flatten(
-			   io_lib:format(
-			     "~w-~.2.0w-~.2.0w ~.2.0w:~.2.0w:~.2.0w",
-			     [Year, Month, Day, Hour, Minute, Second])),
-		  SFrom = jlib:jid_to_string(From),
-		  STo = jlib:jid_to_string(To),
-		  Attrs2 = jlib:replace_from_to_attrs(SFrom, STo, Attrs),
-		  Packet = jlib:remove_attr(
-			     "jeai-id", {xmlelement, Name, Attrs2, Els}),
-		  FPacket = pretty_print(Packet),
-		  ?XE("tr",
-		      [?XAE("td", [{"class", "valign"}], [?INPUT("checkbox", "selected", ID)]),
-		       ?XAC("td", [{"class", "valign"}], Time),
-		       ?XAC("td", [{"class", "valign"}], SFrom),
-		       ?XAC("td", [{"class", "valign"}], STo),
-		       ?XAE("td", [{"class", "valign"}], [?XC("pre", FPacket)])]
-		     )
-	  end, Msgs),
-    [?XC("h1", io_lib:format(?T("~s's Offline Messages Queue"),
-			     [us_to_list(US)]))] ++
-	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
-	    nothing -> []
-	end ++
-	[?XAE("form", [{"action", ""}, {"method", "post"}],
-	      [?XE("table",
-		   [?XE("thead",
-			[?XE("tr",
-			     [?X("td"),
-			      ?XCT("td", "Time"),
-			      ?XCT("td", "From"),
-			      ?XCT("td", "To"),
-			      ?XCT("td", "Packet")
-			     ])]),
-		    ?XE("tbody",
-			if
-			    FMsgs == [] ->
-				[?XE("tr",
-				     [?XAC("td", [{"colspan", "4"}], " ")]
-				    )];
-			    true ->
-				FMsgs
-			end
-		       )]),
-	       ?BR,
-	       ?INPUTT("submit", "delete", "Delete Selected")
-	      ])].
-
-user_queue_parse_query(US, Query) ->
-    case lists:keysearch("delete", 1, Query) of
-	{value, _} ->
-	    Msgs = lists:keysort(3, mnesia:dirty_read({offline_msg, US})),
-	    F = fun() ->
-			lists:foreach(
-			  fun(Msg) ->
-				  ID = jlib:encode_base64(
-					 binary_to_list(term_to_binary(Msg))),
-				  case lists:member({"selected", ID}, Query) of
-				      true ->
-					  mnesia:delete_object(Msg);
-				      false ->
-					  ok
-				  end
-			  end, Msgs)
-		end,
-	    mnesia:transaction(F),
-	    ok;
-	false ->
-	    nothing
-    end.
-
-
-
--record(roster, {usj,
-		 us,
-		 jid,
-		 name = "",
-		 subscription = none,
-		 ask = none,
-		 groups = [],
-		 xattrs = [],
-		 xs = []}).
-
-ask_to_pending(subscribe) -> out;
-ask_to_pending(unsubscribe) -> none;
-ask_to_pending(Ask) -> Ask.
-
-
-user_roster(User, Server, Query, Lang, Admin) ->
-    US = {jlib:nodeprep(User), jlib:nameprep(Server)},
-    Items1 = mnesia:dirty_index_read(roster, US, #roster.us),
-    Res = user_roster_parse_query(User, Server, Items1, Query, Admin),
-    Items = mnesia:dirty_index_read(roster, US, #roster.us),
-    SItems = lists:sort(Items),
-    FItems =
-	case SItems of
-	    [] ->
-		[?CT("None")];
-	    _ ->
-		[?XE("table",
-		     [?XE("thead",
-			  [?XE("tr",
-			       [?XCT("td", "Jabber ID"),
-				?XCT("td", "Nickname"),
-				?XCT("td", "Subscription"),
-				?XCT("td", "Pending"),
-				?XCT("td", "Groups")
-			       ])]),
-		      ?XE("tbody",
-			  lists:map(
-			    fun(R) ->
-				    Groups =
-					lists:flatmap(
-					  fun(Group) ->
-						  [?C(Group), ?BR]
-					  end, R#roster.groups),
-				    Pending = ask_to_pending(R#roster.ask),
-				    ?XE("tr",
-					[?XAC("td", [{"class", "valign"}],
-					      jlib:jid_to_string(R#roster.jid)),
-					 ?XAC("td", [{"class", "valign"}],
-					      R#roster.name),
-					 ?XAC("td", [{"class", "valign"}],
-					      atom_to_list(R#roster.subscription)),
-					 ?XAC("td", [{"class", "valign"}],
-					      atom_to_list(Pending)),
-					 ?XAE("td", [{"class", "valign"}], Groups),
-					 if
-					     Pending == in ->
-						 ?XAE("td", [{"class", "valign"}],
-						      [?INPUTT("submit",
-							       "validate" ++
-							       term_to_id(R#roster.jid),
-							       "Validate")]);
-					     true ->
-						 ?X("td")
-					 end,
-					 ?XAE("td", [{"class", "valign"}],
-					      [?INPUTT("submit",
-						       "remove" ++
-						       term_to_id(R#roster.jid),
-						       "Remove")])])
-			    end, SItems))])]
-	end,
-    [?XC("h1", ?T("Roster of ") ++ us_to_list(US))] ++
-	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
-	    nothing -> []
-	end ++
-	[?XAE("form", [{"action", ""}, {"method", "post"}],
-	      FItems ++
-	      [?P,
-	       ?INPUT("text", "newjid", ""), ?C(" "),
-	       ?INPUTT("submit", "addjid", "Add Jabber ID")
-	      ])].
-
-user_roster_parse_query(User, Server, Items, Query, Admin) ->
-    case lists:keysearch("addjid", 1, Query) of
-	{value, _} ->
-	    case lists:keysearch("newjid", 1, Query) of
-		{value, {_, undefined}} ->
-		    error;
-		{value, {_, SJID}} ->
-		    case jlib:string_to_jid(SJID) of
-			JID when is_record(JID, jid) ->
-			    user_roster_subscribe_jid(User, Server, JID),
-			    ok;
-			error ->
-			    error
-		    end;
-		false ->
-		    error
-	    end;
-	false ->
-	    case catch user_roster_item_parse_query(
-			 User, Server, Items, Query) of
-		submitted ->
-		    ok;
-		{'EXIT', _Reason} ->
-		    error;
-		_ ->
-		    nothing
-	    end
-    end.
-
-
-user_roster_subscribe_jid(User, Server, JID) ->
-    mod_roster:out_subscription(User, Server, JID, subscribe),
-    UJID = jlib:make_jid(User, Server, ""),
-    ejabberd_router:route(
-      UJID, JID, {xmlelement, "presence", [{"type", "subscribe"}], []}).
-
-user_roster_item_parse_query(User, Server, Items, Query) ->
-    lists:foreach(
-      fun(R) ->
-	      JID = R#roster.jid,
-	      case lists:keysearch(
-		     "validate" ++ term_to_id(JID), 1, Query) of
-		  {value, _} ->
-		      JID1 = jlib:make_jid(JID),
-		      mod_roster:out_subscription(
-			User, Server, JID1, subscribed),
-		      UJID = jlib:make_jid(User, Server, ""),
-		      ejabberd_router:route(
-			UJID, JID1, {xmlelement, "presence",
-				     [{"type", "subscribed"}], []}),
-		      throw(submitted);
-		  false ->
-		      case lists:keysearch(
-			     "remove" ++ term_to_id(JID), 1, Query) of
-			  {value, _} ->
-			      UJID = jlib:make_jid(User, Server, ""),
-			      mod_roster:process_iq(
-				UJID, UJID,
-				#iq{type = set,
-				    sub_el = {xmlelement, "query",
-					      [{"xmlns", ?NS_ROSTER}],
-					      [{xmlelement, "item",
-						[{"jid", jlib:jid_to_string(JID)},
-						 {"subscription", "remove"}],
-						[]}]}}),
-			      throw(submitted);
-			  false ->
-			      ok
-		      end
-
-	      end
-      end, Items),
-    nothing.
 
 
 list_last_activity(Host, Lang, Integral, Period) ->
@@ -1835,6 +1658,8 @@ search_running_node(SNode, [Node | Nodes]) ->
 
 get_node(global, Node, [], Query, Lang) ->
     Res = node_parse_query(Node, Query),
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_node, [], [Node, Lang]),
+    MenuItems2 = [?LI([?AC(MI_uri++"/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     [?XC("h1", ?T("Node ") ++ atom_to_list(Node))] ++
 	case Res of
 	    ok -> [?CT("Submitted"), ?P];
@@ -1847,17 +1672,19 @@ get_node(global, Node, [], Query, Lang) ->
 	      ?LI([?ACT("ports/", "Listened Ports")]),
 	      ?LI([?ACT("stats/", "Statistics")]),
 	      ?LI([?ACT("update/", "Update")])
-	     ]),
+	     ] ++ MenuItems2),
 	 ?XAE("form", [{"action", ""}, {"method", "post"}],
 	      [?INPUTT("submit", "restart", "Restart"),
 	       ?C(" "),
 	       ?INPUTT("submit", "stop", "Stop")])
 	];
 
-get_node(Host, Node, [], Query, Lang) ->
+get_node(Host, Node, [], _Query, Lang) ->
+    MenuItems1 = ejabberd_hooks:run_fold(webadmin_menu_hostnode, Host, [], [Host, Node, Lang]),
+    MenuItems2 = [?LI([?AC(MI_uri++"/", MI_name)]) || {MI_uri, MI_name} <- MenuItems1],
     [?XC("h1", ?T("Node ") ++ atom_to_list(Node)),
      ?XE("ul",
-	 [?LI([?ACT("modules/", "Modules")])])
+	 [?LI([?ACT("modules/", "Modules")])] ++ MenuItems2)
     ];
 
 get_node(global, Node, ["db"], Query, Lang) ->
@@ -1865,7 +1692,7 @@ get_node(global, Node, ["db"], Query, Lang) ->
 	{badrpc, _Reason} ->
 	    [?XCT("h1", "RPC Call Error")];
 	Tables ->
-	    Res = node_db_parse_query(Node, Tables, Query),
+	    node_db_parse_query(Node, Tables, Query),
 	    STables = lists:sort(Tables),
 	    Rows = lists:map(
 		     fun(Table) ->
@@ -1902,11 +1729,7 @@ get_node(global, Node, ["db"], Query, Lang) ->
 				 ])
 		     end, STables),
 	    [?XC("h1", ?T("Database Tables at ") ++ atom_to_list(Node))] ++
-		case Res of
-		    ok -> [?CT("Submitted"), ?P];
-		    error -> [?CT("Bad format"), ?P];
-		    nothing -> []
-		end ++
+		[?CT("Submitted"), ?P] ++
 		[?XAE("form", [{"action", ""}, {"method", "post"}],
 		      [?XAE("table", [],
 			    [?XE("thead",
@@ -1928,7 +1751,7 @@ get_node(global, Node, ["db"], Query, Lang) ->
     end;
 
 get_node(global, Node, ["backup"], Query, Lang) ->
-    Res = node_backup_parse_query(Node, Query),
+    _Res = node_backup_parse_query(Node, Query),
     [?XC("h1", ?T("Backup of ") ++ atom_to_list(Node)),
      ?XCT("p", "Remark that these options will only backup the builtin Mnesia database. If you are using the ODBC module, you also need to backup your SQL database separately."),
      ?XAE("form", [{"action", ""}, {"method", "post"}],
@@ -2018,13 +1841,12 @@ get_node(Host, Node, ["modules"], Query, Lang) when is_list(Host) ->
 	      [node_modules_to_xhtml(NewModules, Lang)])
 	];
 
-get_node(global, Node, ["stats"], Query, Lang) ->
+get_node(global, Node, ["stats"], _Query, Lang) ->
     UpTime = rpc:call(Node, erlang, statistics, [wall_clock]),
     UpTimeS = io_lib:format("~.3f", [element(1, UpTime)/1000]),
     CPUTime = rpc:call(Node, erlang, statistics, [runtime]),
     CPUTimeS = io_lib:format("~.3f", [element(1, CPUTime)/1000]),
-    Users = length(
-	      rpc:call(Node, ejabberd_sm, dirty_get_my_sessions_list, [])),
+    OnlineUsers = mnesia:table_info(session, size),
     TransactionsCommited =
 	rpc:call(Node, mnesia, system_info, [transaction_commits]),
     TransactionsAborted =
@@ -2043,9 +1865,9 @@ get_node(global, Node, ["stats"], Query, Lang) ->
 		?XE("tr", [?XCT("td", "CPU Time:"),
 			   ?XAC("td", [{"class", "alignright"}],
 				CPUTimeS)]),
-		?XE("tr", [?XCT("td", "Authenticated Users:"),
+		?XE("tr", [?XCT("td", "Online Users:"),
 			   ?XAC("td", [{"class", "alignright"}],
-				integer_to_list(Users))]),
+				integer_to_list(OnlineUsers))]),
 		?XE("tr", [?XCT("td", "Transactions Commited:"),
 			   ?XAC("td", [{"class", "alignright"}],
 				integer_to_list(TransactionsCommited))]),
@@ -2065,7 +1887,7 @@ get_node(global, Node, ["update"], Query, Lang) ->
     rpc:call(Node, code, purge, [ejabberd_update]),
     Res = node_update_parse_query(Node, Query),
     rpc:call(Node, code, load_file, [ejabberd_update]),
-    {ok, Dir, UpdatedBeams, Script, LowLevelScript, Check} =
+    {ok, _Dir, UpdatedBeams, Script, LowLevelScript, Check} =
 	rpc:call(Node, ejabberd_update, update_info, []),
     Mods =
 	case UpdatedBeams of
@@ -2094,7 +1916,15 @@ get_node(global, Node, ["update"], Query, Lang) ->
 	];
 
 get_node(Host, Node, NPath, Query, Lang) ->
-    [?XCT("h1", "Not Found")].
+    {Hook, Opts} = case Host of
+		       global -> {webadmin_page_node, [Node, NPath, Query, Lang]};
+		       Host -> {webadmin_page_hostnode, [Host, Node, NPath, Query, Lang]}
+		   end,
+    case ejabberd_hooks:run_fold(Hook, Host, [], Opts) of
+	[] -> [?XC("h1", "Not Found")];
+	Res -> Res
+    end.
+
 
 
 node_parse_query(Node, Query) ->
@@ -2224,10 +2054,10 @@ node_ports_to_xhtml(Ports, Lang) ->
 		   ])]),
 	  ?XE("tbody",
 	      lists:map(
-		fun({Port, Module, Opts} = E) ->
+		fun({Port, Module, Opts} = _E) ->
 			SPort = integer_to_list(Port),
 			SModule = atom_to_list(Module),
-			ID = term_to_id(E),
+			%%ID = term_to_id(E),
 			?XE("tr",
 			    [?XC("td", SPort),
 			     ?XE("td", [?INPUT("text", "module" ++ SPort,
@@ -2304,9 +2134,9 @@ node_modules_to_xhtml(Modules, Lang) ->
 		   ])]),
 	  ?XE("tbody",
 	      lists:map(
-		fun({Module, Opts} = E) ->
+		fun({Module, Opts} = _E) ->
 			SModule = atom_to_list(Module),
-			ID = term_to_id(E),
+			%%ID = term_to_id(E),
 			?XE("tr",
 			    [?XC("td", SModule),
 			     ?XE("td", [?INPUTS("text", "opts" ++ SModule,
@@ -2382,12 +2212,12 @@ node_update_parse_query(Node, Query) ->
     end.
 
 
-pretty_print(El) ->
-    lists:flatten(pretty_print(El, "")).
+pretty_print_xml(El) ->
+    lists:flatten(pretty_print_xml(El, "")).
 
-pretty_print({xmlcdata, CData}, Prefix) ->
+pretty_print_xml({xmlcdata, CData}, Prefix) ->
     [Prefix, CData, $\n];
-pretty_print({xmlelement, Name, Attrs, Els}, Prefix) ->
+pretty_print_xml({xmlelement, Name, Attrs, Els}, Prefix) ->
     [Prefix, $<, Name,
      case Attrs of
 	 [] ->
@@ -2417,237 +2247,25 @@ pretty_print({xmlelement, Name, Attrs, Els}, Prefix) ->
 		 true ->
 		     [$>, $\n,
 		      lists:map(fun(E) ->
-					pretty_print(E, [Prefix, "  "])
+					pretty_print_xml(E, [Prefix, "  "])
 				end, Els),
 		      Prefix, $<, $/, Name, $>, $\n
 		     ]
 	     end
      end].
 
+element_to_list(X) when is_atom(X) -> atom_to_list(X);
+element_to_list(X) when is_integer(X) -> integer_to_list(X).
 
-list_shared_roster_groups(Host, Query, Lang) ->
-    Res = list_sr_groups_parse_query(Host, Query),
-    SRGroups = mod_shared_roster:list_groups(Host),
-    FGroups =
-	?XAE("table", [],
-	     [?XE("tbody",
-		  lists:map(
-		    fun(Group) ->
-			    ?XE("tr",
-				[?XE("td", [?INPUT("checkbox", "selected",
-						   Group)]),
-				 ?XE("td", [?AC(Group ++ "/", Group)])
-				]
-			       )
-		    end, lists:sort(SRGroups)) ++
-		  [?XE("tr",
-		       [?X("td"),
-			?XE("td", [?INPUT("text", "namenew", "")]),
-			?XE("td", [?INPUTT("submit", "addnew", "Add New")])
-		       ]
-		      )]
-		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
-	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
-	    nothing -> []
-	end ++
-	[?XAE("form", [{"action", ""}, {"method", "post"}],
-	      [FGroups,
-	       ?BR,
-	       ?INPUTT("submit", "delete", "Delete Selected")
-	      ])
-	].
-
-list_sr_groups_parse_query(Host, Query) ->
-    case lists:keysearch("addnew", 1, Query) of
-	{value, _} ->
-	    list_sr_groups_parse_addnew(Host, Query);
-	_ ->
-	    case lists:keysearch("delete", 1, Query) of
-		{value, _} ->
-		    list_sr_groups_parse_delete(Host, Query);
-		_ ->
-		    nothing
-	    end
-    end.
-
-list_sr_groups_parse_addnew(Host, Query) ->
-    case lists:keysearch("namenew", 1, Query) of
-	{value, {_, Group}} when Group /= "" ->
-	    mod_shared_roster:create_group(Host, Group),
-	    ok;
-	_ ->
-	    error
-    end.
-
-list_sr_groups_parse_delete(Host, Query) ->
-    SRGroups = mod_shared_roster:list_groups(Host),
-    lists:foreach(
-      fun(Group) ->
-	      case lists:member({"selected", Group}, Query) of
-		  true ->
-		      mod_shared_roster:delete_group(Host, Group);
-		  _ ->
-		      ok
-	      end
-      end, SRGroups),
-    ok.
-
-
-shared_roster_group(Host, Group, Query, Lang) ->
-    Res = shared_roster_group_parse_query(Host, Group, Query),
-    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
-    Name = get_opt(GroupOpts, name, ""),
-    Description = get_opt(GroupOpts, description, ""),
-    AllUsers = get_opt(GroupOpts, all_users, false),
-    Disabled = false,
-    DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
-    Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-    FMembers =
-	if
-	    AllUsers ->
-		"@all@\n";
-	    true ->
-		[]
-	end ++ [[us_to_list(Member), $\n] || Member <- Members],
-    FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
-    FGroup =
-	?XAE("table", [],
-	     [?XE("tbody",
-		  [?XE("tr",
-		       [?XCT("td", "Name:"),
-			?XE("td", [?INPUT("text", "name", Name)])
-		       ]
-		      ),
-		   ?XE("tr",
-		       [?XCT("td", "Description:"),
-			?XE("td", [?XAC("textarea", [{"name", "description"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					Description)])
-		       ]
-		      ),
-		   ?XE("tr",
-		       [?XCT("td", "Members:"),
-			?XE("td", [?XAC("textarea", [{"name", "members"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FMembers)])
-		       ]
-		      ),
-		   ?XE("tr",
-		       [?XCT("td", "Displayed Groups:"),
-			?XE("td", [?XAC("textarea", [{"name", "dispgroups"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FDisplayedGroups)])
-		       ]
-		      )]
-		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
-    [?XC("h2", ?T("Group ") ++ Group)] ++
-	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
-	    nothing -> []
-	end ++
-	[?XAE("form", [{"action", ""}, {"method", "post"}],
-	      [FGroup,
-	       ?BR,
-	       ?INPUTT("submit", "submit", "Submit")
-	      ])
-	].
-
-shared_roster_group_parse_query(Host, Group, Query) ->
-    case lists:keysearch("submit", 1, Query) of
-	{value, _} ->
-	    {value, {_, Name}} = lists:keysearch("name", 1, Query),
-	    {value, {_, Description}} = lists:keysearch("description", 1, Query),
-	    {value, {_, SMembers}} = lists:keysearch("members", 1, Query),
-	    {value, {_, SDispGroups}} = lists:keysearch("dispgroups", 1, Query),
-	    NameOpt =
-		if
-		    Name == "" -> [];
-		    true -> [{name, Name}]
-		end,
-	    DescriptionOpt =
-		if
-		    Description == "" -> [];
-		    true -> [{description, Description}]
-		end,
-	    DispGroups = string:tokens(SDispGroups, "\r\n"),
-	    DispGroupsOpt =
-		if
-		    DispGroups == [] -> [];
-		    true -> [{displayed_groups, DispGroups}]
-		end,
-
-	    OldMembers = mod_shared_roster:get_group_explicit_users(
-			   Host, Group),
-	    SJIDs = string:tokens(SMembers, ", \r\n"),
-	    NewMembers =
-		lists:foldl(
-		  fun(_SJID, error) -> error;
-		     (SJID, USs) ->
-			  case SJID of
-			      "@all@" ->
-				  USs;
-			      _ ->
-				  case jlib:string_to_jid(SJID) of
-				      JID when is_record(JID, jid) ->
-					  [{JID#jid.luser, JID#jid.lserver} | USs];
-				      error ->
-					  error
-				  end
-			  end
-		  end, [], SJIDs),
-	    AllUsersOpt =
-		case lists:member("@all@", SJIDs) of
-		    true -> [{all_users, true}];
-		    false -> []
-		end,
-
-	    mod_shared_roster:set_group_opts(
-	      Host, Group,
-	      NameOpt ++ DispGroupsOpt ++ DescriptionOpt ++ AllUsersOpt),
-
-	    if
-		NewMembers == error -> error;
-		true ->
-		    AddedMembers = NewMembers -- OldMembers,
-		    RemovedMembers = OldMembers -- NewMembers,
-		    lists:foreach(
-		      fun(US) ->
-			      mod_shared_roster:remove_user_from_group(
-				Host, US, Group)
-		      end, RemovedMembers),
-		    lists:foreach(
-		      fun(US) ->
-			      mod_shared_roster:add_user_to_group(
-				Host, US, Group)
-		      end, AddedMembers),
-		    ok
-	    end;
-	_ ->
-	    nothing
-    end.
-
-
-get_opt(Opts, Opt, Default) ->
-    case lists:keysearch(Opt, 1, Opts) of
-	{value, {_, Val}} ->
-	    Val;
-	false ->
-	    Default
-    end.
-
+list_to_element(List) ->
+    {ok, Tokens, _} = erl_scan:string(List),
+    [{_, _, Element}] = Tokens,
+    Element.
 
 url_func({user_diapason, From, To}) ->
     integer_to_list(From) ++ "-" ++ integer_to_list(To) ++ "/";
-url_func({users_queue, Prefix, User, Server}) ->
+url_func({users_queue, Prefix, User, _Server}) ->
     Prefix ++ "user/" ++ User ++ "/queue/";
-url_func({user, Prefix, User, Server}) ->
+url_func({user, Prefix, User, _Server}) ->
     Prefix ++ "user/" ++ User ++ "/".
 

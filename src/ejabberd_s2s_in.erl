@@ -1,21 +1,39 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_s2s_in.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Serve incoming s2s connection
-%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_s2s_in.erl 581 2006-06-19 02:32:57Z alexey $
+%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_s2s_in).
--author('alexey@sevcom.net').
+-author('alexey@process-one.net').
 
 -behaviour(gen_fsm).
 
 %% External exports
 -export([start/2,
 	 start_link/2,
-	 become_controller/1,
-	 match_domain/2]).
+	 match_domain/2,
+	 socket_type/0]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -30,15 +48,18 @@
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
+-ifdef(SSL39).
+-include_lib("ssl/include/ssl_pkix.hrl").
+-else.
 -include_lib("ssl/include/PKIX1Explicit88.hrl").
 -include_lib("ssl/include/PKIX1Implicit88.hrl").
+-endif.
 -include("XmppAddr.hrl").
 
 -define(DICT, dict).
 
 -record(state, {socket,
 		sockmod,
-		receiver,
 		streamid,
 		shaper,
 		tls = false,
@@ -58,6 +79,15 @@
 -define(FSMOPTS, []).
 -endif.
 
+%% Module start with or without supervisor:
+-ifdef(NO_TRANSIENT_SUPERVISORS).
+-define(SUPERVISOR_START, gen_fsm:start(ejabberd_s2s_in, [SockData, Opts],
+					?FSMOPTS)).
+-else.
+-define(SUPERVISOR_START, supervisor:start_child(ejabberd_s2s_in_sup,
+						 [SockData, Opts])).
+-endif.
+
 -define(STREAM_HEADER(Version),
 	("<?xml version='1.0'?>"
 	 "<stream:stream "
@@ -75,6 +105,9 @@
 -define(HOST_UNKNOWN_ERR,
 	xml:element_to_string(?SERR_HOST_UNKNOWN)).
 
+-define(INVALID_FROM_ERR,
+        xml:element_to_string(?SERR_INVALID_FROM)).
+
 -define(INVALID_XML_ERR,
 	xml:element_to_string(?SERR_XML_NOT_WELL_FORMED)).
 
@@ -82,13 +115,13 @@
 %%% API
 %%%----------------------------------------------------------------------
 start(SockData, Opts) ->
-    supervisor:start_child(ejabberd_s2s_in_sup, [SockData, Opts]).
+    ?SUPERVISOR_START.
 
 start_link(SockData, Opts) ->
     gen_fsm:start_link(ejabberd_s2s_in, [SockData, Opts], ?FSMOPTS).
 
-become_controller(Pid) ->
-    gen_fsm:send_all_state_event(Pid, become_controller).
+socket_type() ->
+    xml_stream.
 
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_fsm
@@ -99,21 +132,14 @@ become_controller(Pid) ->
 %% Returns: {ok, StateName, StateData}          |
 %%          {ok, StateName, StateData, Timeout} |
 %%          ignore                              |
-%%          {stop, StopReason}                   
+%%          {stop, StopReason}
 %%----------------------------------------------------------------------
 init([{SockMod, Socket}, Opts]) ->
-    ?INFO_MSG("started: ~p", [{SockMod, Socket}]),
+    ?DEBUG("started: ~p", [{SockMod, Socket}]),
     Shaper = case lists:keysearch(shaper, 1, Opts) of
 		 {value, {_, S}} -> S;
 		 _ -> none
 	     end,
-    MaxStanzaSize =
-	case lists:keysearch(max_stanza_size, 1, Opts) of
-	    {value, {_, Size}} -> Size;
-	    _ -> infinity
-	end,
-    ReceiverPid = ejabberd_receiver:start(
-		    Socket, SockMod, none, MaxStanzaSize),
     StartTLS = case ejabberd_config:get_local_option(s2s_use_starttls) of
 		   undefined ->
 		       false;
@@ -130,7 +156,6 @@ init([{SockMod, Socket}, Opts]) ->
     {ok, wait_for_stream,
      #state{socket = Socket,
 	    sockmod = SockMod,
-	    receiver = ReceiverPid,
 	    streamid = new_id(),
 	    shaper = Shaper,
 	    tls = StartTLS,
@@ -142,7 +167,7 @@ init([{SockMod, Socket}, Opts]) ->
 %% Func: StateName/2
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 
 wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
@@ -155,9 +180,10 @@ wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
 	    SASL =
 		if
 		    StateData#state.tls_enabled ->
-			case tls:get_peer_certificate(StateData#state.socket) of
+			case (StateData#state.sockmod):get_peer_certificate(
+			       StateData#state.socket) of
 			    {ok, _Cert} ->
-				case tls:get_verify_result(
+				case (StateData#state.sockmod):get_verify_result(
 				       StateData#state.socket) of
 				    0 ->
 					[{xmlelement, "mechanisms",
@@ -214,21 +240,20 @@ wait_for_feature_request({xmlstreamelement, El}, StateData) ->
     {xmlelement, Name, Attrs, Els} = El,
     TLS = StateData#state.tls,
     TLSEnabled = StateData#state.tls_enabled,
-    SockMod = StateData#state.sockmod,
+    SockMod = (StateData#state.sockmod):get_sockmod(StateData#state.socket),
     case {xml:get_attr_s("xmlns", Attrs), Name} of
 	{?NS_TLS, "starttls"} when TLS == true,
 				   TLSEnabled == false,
 				   SockMod == gen_tcp ->
-	    ?INFO_MSG("starttls", []),
+	    ?DEBUG("starttls", []),
 	    Socket = StateData#state.socket,
 	    TLSOpts = StateData#state.tls_options,
-	    {ok, TLSSocket} = tls:tcp_to_tls(Socket, TLSOpts),
-	    ejabberd_receiver:starttls(StateData#state.receiver, TLSSocket),
-	    send_element(StateData,
-			 {xmlelement, "proceed", [{"xmlns", ?NS_TLS}], []}),
+	    TLSSocket = (StateData#state.sockmod):starttls(
+			  Socket, TLSOpts,
+			  xml:element_to_string(
+			    {xmlelement, "proceed", [{"xmlns", ?NS_TLS}], []})),
 	    {next_state, wait_for_stream,
-	     StateData#state{sockmod = tls,
-			     socket = TLSSocket,
+	     StateData#state{socket = TLSSocket,
 			     streamid = new_id(),
 			     tls_enabled = true
 			    }};
@@ -239,9 +264,10 @@ wait_for_feature_request({xmlstreamelement, El}, StateData) ->
 		    Auth = jlib:decode_base64(xml:get_cdata(Els)),
 		    AuthDomain = jlib:nameprep(Auth),
 		    AuthRes =
-			case tls:get_peer_certificate(StateData#state.socket) of
+			case (StateData#state.sockmod):get_peer_certificate(
+			       StateData#state.socket) of
 			    {ok, Cert} ->
-				case tls:get_verify_result(
+				case (StateData#state.sockmod):get_verify_result(
 				       StateData#state.socket) of
 				    0 ->
 					case AuthDomain of
@@ -267,12 +293,12 @@ wait_for_feature_request({xmlstreamelement, El}, StateData) ->
 			end,
 		    if
 			AuthRes ->
-			    ejabberd_receiver:reset_stream(
-			      StateData#state.receiver),
+			    (StateData#state.sockmod):reset_stream(
+			      StateData#state.socket),
 			    send_element(StateData,
 					 {xmlelement, "success",
 					  [{"xmlns", ?NS_SASL}], []}),
-			    ?INFO_MSG("(~w) Accepted s2s authentication for ~s",
+			    ?DEBUG("(~w) Accepted s2s authentication for ~s",
 				      [StateData#state.socket, AuthDomain]),
 			    {next_state, wait_for_stream,
 			     StateData#state{streamid = new_id(),
@@ -314,11 +340,14 @@ stream_established({xmlstreamelement, El}, StateData) ->
     Timer = erlang:start_timer(?S2STIMEOUT, self(), []),
     case is_key_packet(El) of
 	{key, To, From, Id, Key} ->
-	    ?INFO_MSG("GET KEY: ~p", [{To, From, Id, Key}]),
+	    ?DEBUG("GET KEY: ~p", [{To, From, Id, Key}]),
 	    LTo = jlib:nameprep(To),
 	    LFrom = jlib:nameprep(From),
-	    case lists:member(LTo, ejabberd_router:dirty_get_all_domains()) of
-		true ->
+	    %% Checks if the from domain is allowed and if the to
+            %% domain is handled by this server:
+            case {ejabberd_s2s:allow_host(To, From),
+                  lists:member(LTo, ejabberd_router:dirty_get_all_domains())} of
+                {true, true} ->
 		    ejabberd_s2s_out:start(To, From,
 					   {verify, self(),
 					    Key, StateData#state.streamid}),
@@ -329,18 +358,24 @@ stream_established({xmlstreamelement, El}, StateData) ->
 		     stream_established,
 		     StateData#state{connections = Conns,
 				     timer = Timer}};
-		_ ->
+		{_, false} ->
 		    send_text(StateData, ?HOST_UNKNOWN_ERR),
-		    {stop, normal, StateData}
+		    {stop, normal, StateData};
+                {false, _} ->
+                    send_text(StateData, ?INVALID_FROM_ERR),
+                    {stop, normal, StateData}
 	    end;
 	{verify, To, From, Id, Key} ->
-	    ?INFO_MSG("VERIFY KEY: ~p", [{To, From, Id, Key}]),
+	    ?DEBUG("VERIFY KEY: ~p", [{To, From, Id, Key}]),
 	    LTo = jlib:nameprep(To),
 	    LFrom = jlib:nameprep(From),
-	    Key1 = ejabberd_s2s:get_key({LTo, LFrom}),
-	    Type = if Key == Key1 -> "valid";
-		      true -> "invalid"
+	    Type = case ejabberd_s2s:has_key({LTo, LFrom}, Key) of
+		       true -> "valid";
+		       _ -> "invalid"
 		   end,
+	    %Type = if Key == Key1 -> "valid";
+	    % true -> "invalid"
+	    % end,
 	    send_element(StateData,
 			 {xmlelement,
 			  "db:verify",
@@ -399,6 +434,7 @@ stream_established({xmlstreamelement, El}, StateData) ->
 		true ->
 		    error
 	    end,
+	    ejabberd_hooks:run(s2s_loop_debug, [{xmlstreamelement, El}]),
 	    {next_state, stream_established, StateData#state{timer = Timer}}
     end;
 
@@ -455,7 +491,7 @@ stream_established(closed, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 %state_name(Event, From, StateData) ->
 %    Reply = ok,
@@ -465,14 +501,8 @@ stream_established(closed, StateData) ->
 %% Func: handle_event/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
-handle_event(become_controller, StateName, StateData) ->
-    ok = (StateData#state.sockmod):controlling_process(
-	   StateData#state.socket,
-	   StateData#state.receiver),
-    ejabberd_receiver:become_controller(StateData#state.receiver),
-    {next_state, StateName, StateData};
 handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
@@ -483,7 +513,7 @@ handle_event(_Event, StateName, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
@@ -496,7 +526,7 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 %% Func: handle_info/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 handle_info({send_text, Text}, StateName, StateData) ->
     send_text(StateData, Text),
@@ -516,8 +546,8 @@ handle_info(_, StateName, StateData) ->
 %% Returns: any
 %%----------------------------------------------------------------------
 terminate(Reason, _StateName, StateData) ->
-    ?INFO_MSG("terminated: ~p", [Reason]),
-    ejabberd_receiver:close(StateData#state.receiver),
+    ?DEBUG("terminated: ~p", [Reason]),
+    (StateData#state.sockmod):close(StateData#state.socket),
     ok.
 
 %%%----------------------------------------------------------------------
@@ -533,7 +563,7 @@ send_element(StateData, El) ->
 
 change_shaper(StateData, Host, JID) ->
     Shaper = acl:match_rule(Host, StateData#state.shaper, JID),
-    ejabberd_receiver:change_shaper(StateData#state.receiver, Shaper).
+    (StateData#state.sockmod):change_shaper(StateData#state.socket, Shaper).
 
 
 new_id() ->
@@ -682,5 +712,3 @@ match_labels([DL | DLabels], [PL | PLabels]) ->
 	false ->
 	    false
     end.
-
-
