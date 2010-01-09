@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : HTTP Polling support (JEP-0025)
 %%% Created :  4 Mar 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_http_poll.erl 580 2006-06-15 13:32:48Z mremond $
+%%% Id      : $Id: ejabberd_http_poll.erl 909 2007-09-03 07:43:41Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_http_poll).
 -author('alexey@sevcom.net').
--vsn('$Revision: 580 $ ').
+-vsn('$Revision: 909 $ ').
 
 -behaviour(gen_fsm).
 
@@ -208,7 +208,7 @@ handle_sync_event(activate, From, StateName, StateData) ->
 	    Receiver ! {tcp, {http_poll, self()}, list_to_binary(Input)},
 	    {reply, ok, StateName, StateData#state{input = "",
 						   waiting_input = false,
-						   last_receiver = From
+						   last_receiver = Receiver
 						  }}
     end;
 

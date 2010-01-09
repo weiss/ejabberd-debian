@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : MUC room stuff
 %%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc_room.erl 641 2006-09-26 10:48:05Z mremond $
+%%% Id      : $Id: mod_muc_room.erl 863 2007-08-09 13:04:29Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_muc_room).
 -author('alexey@sevcom.net').
--vsn('$Revision: 641 $ ').
+-vsn('$Revision: 863 $ ').
 
 -behaviour(gen_fsm).
 
@@ -87,13 +87,17 @@
 %%%----------------------------------------------------------------------
 start(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
     Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
-    supervisor:start_child(
-      Supervisor, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick]).
+    %%supervisor:start_child(
+    %%  Supervisor, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick]).
+    gen_fsm:start(?MODULE, [Host, ServerHost, Access, Room, HistorySize,
+			    Creator, Nick], ?FSMOPTS).
 
 start(Host, ServerHost, Access, Room, HistorySize, Opts) ->
     Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
-    supervisor:start_child(
-      Supervisor, [Host, ServerHost, Access, Room, HistorySize, Opts]).
+    %%supervisor:start_child(
+    %%  Supervisor, [Host, ServerHost, Access, Room, HistorySize, Opts]).
+    gen_fsm:start(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Opts],
+		  ?FSMOPTS).
 
 start_link(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
     gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick],

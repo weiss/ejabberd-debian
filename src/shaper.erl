@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Functions to control connections traffic
 %%% Created :  9 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: shaper.erl 483 2006-01-13 01:55:20Z alexey $
+%%% Id      : $Id: shaper.erl 911 2007-09-03 08:31:45Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(shaper).
 -author('alexey@sevcom.net').
--vsn('$Revision: 483 $ ').
+-vsn('$Revision: 911 $ ').
 
 -export([new/1, new1/1, update/2]).
 
@@ -16,7 +16,7 @@
 
 
 new(Name) ->
-    Data = case ejabberd_config:get_global_option({shaper, Name}) of
+    Data = case ejabberd_config:get_global_option({shaper, Name, global}) of
 	       undefined ->
 		   none;
 	       D ->
