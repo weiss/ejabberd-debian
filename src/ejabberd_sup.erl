@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_sup.erl 495 2006-01-29 04:38:31Z alexey $
+%%% Id      : $Id: ejabberd_sup.erl 864 2007-08-09 14:24:33Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_sup).
 -author('alexey@sevcom.net').
--vsn('$Revision: 495 $ ').
+-vsn('$Revision: 864 $ ').
 
 -behaviour(supervisor).
 
@@ -26,13 +26,6 @@ init([]) ->
 	 brutal_kill,
 	 worker,
 	 [ejabberd_hooks]},
-    StringPrep =
-	{stringprep,
-	 {stringprep, start_link, []},
-	 permanent,
-	 brutal_kill,
-	 worker,
-	 [stringprep]},
     Router =
 	{ejabberd_router,
 	 {ejabberd_router, start_link, []},
@@ -133,7 +126,6 @@ init([]) ->
 	 [ejabberd_tmp_sup]},
     {ok, {{one_for_one, 10, 1},
 	  [Hooks,
-	   StringPrep,
 	   Router,
 	   SM,
 	   S2S,

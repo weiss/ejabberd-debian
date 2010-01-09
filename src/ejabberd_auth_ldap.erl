@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Authentification via LDAP
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_ldap.erl 623 2006-09-23 09:52:53Z mremond $
+%%% Id      : $Id: ejabberd_auth_ldap.erl 866 2007-08-09 15:35:59Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_ldap).
 -author('alexey@sevcom.net').
--vsn('$Revision: 623 $ ').
+-vsn('$Revision: 866 $ ').
 
 -behaviour(gen_server).
 
@@ -119,13 +119,20 @@ plain_password_required() ->
     true.
 
 check_password(User, Server, Password) ->
-    Proc = gen_mod:get_module_proc(Server, ?MODULE),
-    case catch gen_server:call(Proc,
-			       {check_pass, User, Password}, ?REPLY_TIMEOUT) of
-	{'EXIT', _} ->
+    %% In LDAP spec: empty password means anonymous authentication.
+    %% As ejabberd is providing other anonymous authentication mechanisms
+    %% we simply prevent the use of LDAP anonymous authentication.
+    if Password == "" ->
 	    false;
-	Result ->
-	    Result
+       true ->
+	    Proc = gen_mod:get_module_proc(Server, ?MODULE),
+	    case catch gen_server:call(Proc,
+				       {check_pass, User, Password}, ?REPLY_TIMEOUT) of
+		{'EXIT', _} ->
+		    false;
+		Result ->
+		    Result
+	    end
     end.
 
 check_password(User, Server, Password, _StreamID, _Digest) ->

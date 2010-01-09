@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Serve ODBC connection
 %%% Created :  8 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_odbc.erl 598 2006-09-03 15:15:46Z mremond $
+%%% Id      : $Id: ejabberd_odbc.erl 869 2007-08-12 15:41:00Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_odbc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 598 $ ').
+-vsn('$Revision: 869 $ ').
 
 -behaviour(gen_server).
 
@@ -272,6 +272,7 @@ mysql_connect(Server, DB, Username, Password) ->
     case mysql_conn:start(Server, ?MYSQL_PORT, Username, Password, DB, NoLogFun) of
 	{ok, Ref} ->
 	    erlang:monitor(process, Ref),
+            mysql_conn:fetch(Ref, ["set names 'utf8';"], self()), 
 	    {ok, #state{db_ref = Ref, db_type = mysql}};
 	{error, Reason} ->
 	    ?ERROR_MSG("MySQL connection failed: ~p~n", [Reason]),

@@ -1,3 +1,59 @@
+2007-09-03  Mickael Remond  <mremond@process-one.net>
+
+        * examples/extauth/check_pass_null.pl: Perl is generally available
+        as a default in most Linux distributions.
+
+2007-08-13  Mickael Remond  <mickael.remond@process-one.net>
+
+	* doc/guide.tex: cleaner, shorter documentation (EJAB-323).
+
+	* src/ejabberd.hrl: Updated version number to 1.1.4.
+	
+	* src/ejd2odbc.erl: Upgrade to latest SVN trunk (EJAB-321). 
+
+2007-08-12  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/odbc/ejabberd_odbc.erl: UTF-8 support for MySQL5 (EJAB-318).
+
+2007-08-01  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_private.erl: Reduce memory consumption on user private
+	storage removal (EJAB-299).
+
+2007-06-29  Mickael Remond  <mickael.remond@process-one.net>
+  	 	
+	* src/ejabberd_config.erl: Normalize hostnames in config file. If mixed
+  	 case is used, the hostname will be now useable (EJAB-277).
+	* src/stringprep/stringprep_sup.erl: Likewise
+	* src/stringprep/Makefile.in: Likewise
+	* src/stringprep/Makefile.win32: Likewise
+	* src/ejabberd_app.erl: Likewise
+	* src/ejabberd_sup.erl: Likewise
+
+2007-02-19  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/ejabberd_auth_ldap.erl: prevent anonymous bind on LDAP
+	servers as ejabberd is providing other anonymous authentication
+	mechanism (EJAB-190).
+
+2007-02-02  Christophe Romain <christophe.romain@process-one.net>
+
+	* doc/release_notes_1.1.3.txt: Creation.
+	* src/mod_roster_odbc.erl: Security bugfix.
+
+2006-11-23  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/eldap/eldap.erl: Bugfix (thanks to Evgeniy Khramtsov)
+
+2006-10-06  Alexey Shchepin  <alexey@sevcom.net>
+  	 	
+	* src/web/ejabberd_http_poll.erl: Bugfix
+
+2006-10-01  Alexey Shchepin  <alexey@sevcom.net>
+ 
+	* src/shaper.erl: Bugfix
+	* src/ejabberd_config.erl: Likewise
+
 2006-09-27  Mickael Remond  <mickael.remond@process-one.net>
 
 	* doc/release_notes_1.1.2.txt: Minor fixes.

@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Load config file
 %%% Created : 14 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_config.erl 432 2005-11-05 21:15:53Z alexey $
+%%% Id      : $Id: ejabberd_config.erl 911 2007-09-03 08:31:45Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_config).
 -author('alexey@sevcom.net').
--vsn('$Revision: 432 $ ').
+-vsn('$Revision: 911 $ ').
 
 -export([start/0, load_file/1,
 	 add_global_option/2, add_local_option/2,
@@ -63,7 +63,7 @@ search_hosts(Term, State) ->
 	{host, Host} ->
 	    if
 		State#state.hosts == [] ->
-		    add_option(hosts, [Host], State#state{hosts = [Host]});
+		    add_hosts_to_option([Host], State);
 		true ->
 		    ?ERROR_MSG("Can't load config file: "
 			       "too many hosts definitions", []),
@@ -72,7 +72,7 @@ search_hosts(Term, State) ->
 	{hosts, Hosts} ->
 	    if
 		State#state.hosts == [] ->
-		    add_option(hosts, Hosts, State#state{hosts = Hosts});
+		    add_hosts_to_option(Hosts, State);
 		true ->
 		    ?ERROR_MSG("Can't load config file: "
 			       "too many hosts definitions", []),
@@ -80,6 +80,24 @@ search_hosts(Term, State) ->
 	    end;
 	_ ->
 	    State
+    end.
+
+add_hosts_to_option(Hosts, State) ->
+    PrepHosts = normalize_hosts(Hosts),
+    add_option(hosts, PrepHosts, State#state{hosts = PrepHosts}).
+
+normalize_hosts(Hosts) ->
+    normalize_hosts(Hosts,[]).
+normalize_hosts([], PrepHosts) ->
+    lists:reverse(PrepHosts);
+normalize_hosts([Host|Hosts], PrepHosts) ->
+    case jlib:nodeprep(Host) of
+	error ->
+	    ?ERROR_MSG("Can't load config file: "
+		       "invalid host name [~p]", [Host]),
+	    exit("invalid hostname");
+	PrepHost ->
+	    normalize_hosts(Hosts, [PrepHost|PrepHosts])
     end.
 
 process_term(Term, State) ->
@@ -95,8 +113,9 @@ process_term(Term, State) ->
 	{access, RuleName, Rules} ->
 	    process_host_term(Term, global, State);
 	{shaper, Name, Data} ->
-	    lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
-			State, State#state.hosts);
+	    %lists:foldl(fun(Host, S) -> process_host_term(Term, Host, S) end,
+	    %		State, State#state.hosts);
+	    process_host_term(Term, global, State);
 	{host, Host} ->
 	    State;
 	{hosts, Hosts} ->

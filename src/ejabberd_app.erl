@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_app.erl 510 2006-02-20 04:07:42Z alexey $
+%%% Id      : $Id: ejabberd_app.erl 864 2007-08-09 14:24:33Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_app).
 -author('alexey@sevcom.net').
--vsn('$Revision: 510 $ ').
+-vsn('$Revision: 864 $ ').
 
 -behaviour(application).
 
@@ -22,6 +22,7 @@ start(normal, _Args) ->
     db_init(),
     sha:start(),
     catch ssl:start(),
+    stringprep_sup:start_link(),    
     translate:start(),
     acl:start(),
     ejabberd_ctl:init(),

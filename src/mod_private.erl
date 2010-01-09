@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 16 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_private.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: mod_private.erl 867 2007-08-09 16:01:32Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_private).
 -author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-vsn('$Revision: 867 $ ').
 
 -behaviour(gen_mod).
 
@@ -107,21 +107,21 @@ get_data(LUser, LServer, [El | Els], Res) ->
 	    get_data(LUser, LServer, Els, Res)
     end.
 
-
-% TODO: use mnesia:select
 remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     F = fun() ->
+		Namespaces = mnesia:select(
+			    private_storage,
+			    [{#private_storage{usns={LUser, LServer, '$1'},
+					       _ = '_'},
+			     [],
+			     ['$$']}]),
 		lists:foreach(
-		  fun({U, S, _} = Key) ->
-			  if
-			      (U == LUser) and (S == LServer) ->
-				  mnesia:delete({private_storage, Key});
-			      true ->
-				  ok
-			  end
-		  end, mnesia:all_keys(private_storage))
+		  fun([Namespace]) ->
+			  mnesia:delete({private_storage,
+					 {LUser, LServer, Namespace}})
+		     end, Namespaces)
         end,
     mnesia:transaction(F).
 

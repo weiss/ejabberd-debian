@@ -33,7 +33,7 @@
 
 %%% Modified by Alexey Shchepin <alexey@sevcom.net>
 %%% --------------------------------------------------------------------
--vc('$Id: eldap.erl 623 2006-09-23 09:52:53Z mremond $ ').
+-vc('$Id: eldap.erl 865 2007-08-09 14:55:53Z mremond $ ').
 
 
 %%%----------------------------------------------------------------------
@@ -713,7 +713,7 @@ recvd_wait_bind_response(Pkt, S) ->
 	    check_id(S#eldap.id, Msg#'LDAPMessage'.messageID),
 	    case Msg#'LDAPMessage'.protocolOp of
 		{bindResponse, Result} ->
-		    case Result#'LDAPResult'.resultCode of
+		    case Result#'BindResponse'.resultCode of
 			success -> bound;
 			Error   -> {fail_bind, Error}
 		    end

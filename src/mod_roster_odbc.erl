@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Roster management
 %%% Created : 15 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_roster_odbc.erl 609 2006-09-22 07:13:42Z mremond $
+%%% Id      : $Id: mod_roster_odbc.erl 718 2007-02-02 10:58:40Z cromain $
 %%%----------------------------------------------------------------------
 
 -module(mod_roster_odbc).
@@ -821,12 +821,13 @@ record_to_string(#roster{us = {User, _Server},
 	       in	   -> "I";
 	       none	   -> "N"
 	   end,
+    SAskMessage = ejabberd_odbc:escape(AskMessage),
     ["'", Username, "',"
      "'", SJID, "',"
      "'", Nick, "',"
      "'", SSubscription, "',"
      "'", SAsk, "',"
-     "'", AskMessage, "',"
+     "'", SAskMessage, "',"
      "'N', '', 'item'"].
 
 groups_to_string(#roster{us = {User, _Server},
