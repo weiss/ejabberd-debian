@@ -4,7 +4,7 @@
 %%% Purpose : Implements XMPP over BOSH (XEP-0205) (formerly known as 
 %%%           HTTP Binding)
 %%% Created : 21 Sep 2005 by Stefan Strigler <steve@zeank.in-berlin.de>
-%%% Id      : $Id: ejabberd_http_bind.erl 457 2007-12-21 19:55:21Z badlop $
+%%% Id      : $Id: ejabberd_http_bind.erl 694 2008-07-15 13:27:03Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_http_bind).
@@ -13,7 +13,7 @@
 -behaviour(gen_fsm).
 
 %% External exports
--export([start_link/2,
+-export([start_link/3,
 	 init/1,
 	 handle_event/3,
 	 handle_sync_event/4,
@@ -22,11 +22,11 @@
 	 terminate/3,
 	 send/2,
 	 setopts/2,
-         sockname/1, 
-         peername/1,
+	 sockname/1, 
+	 peername/1,
 	 controlling_process/2,
 	 close/1,
-	 process_request/1]).
+	 process_request/2]).
 
 %%-define(ejabberd_debug, true).
 
@@ -35,6 +35,8 @@
 -include("ejabberd_http.hrl").
 
 -record(http_bind, {id, pid, to, hold, wait, version}).
+
+-define(NULL_PEER, {{0, 0, 0, 0}, 0}).
 
 %% http binding request
 -record(hbr, {rid,
@@ -45,6 +47,7 @@
 -record(state, {id,
 		rid = none,
 		key,
+		socket,
 		output = "",
 		input = "",
 		waiting_input = false,
@@ -54,8 +57,9 @@
 		wait_timer,
 		ctime = 0,
 		timer,
-                pause=0,
-		req_list = [] % list of requests
+		pause=0,
+		req_list = [], % list of requests
+		ip = ?NULL_PEER 
 	       }).
 
 
@@ -88,17 +92,17 @@
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
-start(Sid, Key) ->
+start(Sid, Key, IP) ->
     setup_database(),
-    supervisor:start_child(ejabberd_http_bind_sup, [Sid, Key]).
+    supervisor:start_child(ejabberd_http_bind_sup, [Sid, Key, IP]).
 
-start_link(Sid, Key) ->
-    gen_fsm:start_link(?MODULE, [Sid, Key], ?FSMOPTS).
+start_link(Sid, Key, IP) ->
+    gen_fsm:start_link(?MODULE, [Sid, Key, IP], ?FSMOPTS).
 
-send({http_bind, FsmRef}, Packet) ->
+send({http_bind, FsmRef, _IP}, Packet) ->
     gen_fsm:sync_send_all_state_event(FsmRef, {send, Packet}).
 
-setopts({http_bind, FsmRef}, Opts) ->
+setopts({http_bind, FsmRef, _IP}, Opts) ->
     case lists:member({active, once}, Opts) of
 	true ->
 	    gen_fsm:send_all_state_event(FsmRef, {activate, self()});
@@ -109,16 +113,16 @@ setopts({http_bind, FsmRef}, Opts) ->
 controlling_process(_Socket, _Pid) ->
     ok.
 
-close({http_bind, FsmRef}) ->
+close({http_bind, FsmRef, _IP}) ->
     catch gen_fsm:sync_send_all_state_event(FsmRef, stop).
 
 sockname(_Socket) ->
-    {ok, {{0, 0, 0, 0}, 0}}.
+    {ok, ?NULL_PEER}.
 
-peername(_Socket) ->
-    {ok, {{0, 0, 0, 0}, 0}}.
+peername({http_bind, _FsmRef, IP}) ->
+    {ok, IP}.
 
-process_request(Data) ->
+process_request(Data, IP) ->
     case catch parse_request(Data) of
 	{ok, {"", Rid, Attrs, Payload}} ->
 	    case xml:get_attr_s("to",Attrs) of
@@ -129,7 +133,7 @@ process_request(Data) ->
                 XmppDomain ->
                     %% create new session
                     Sid = sha:sha(term_to_binary({now(), make_ref()})),
-                    {ok, Pid} = start(Sid, ""),
+                    {ok, Pid} = start(Sid, "", IP),
                     ?DEBUG("got pid: ~p", [Pid]),
                     Wait = case
                                string:to_integer(xml:get_attr_s("wait",Attrs))
@@ -177,7 +181,7 @@ process_request(Data) ->
                                            version = Version
                                           })
                       end),
-                    handle_http_put(Sid, Rid, Attrs, Payload, true)
+                    handle_http_put(Sid, Rid, Attrs, Payload, true, IP)
             end;
         {ok, {Sid, Rid, Attrs, Payload1}} ->
             %% old session
@@ -195,7 +199,7 @@ process_request(Data) ->
                            _ ->
                                Payload1
                        end,
-            handle_http_put(Sid, Rid, Attrs, Payload2, StreamStart);
+            handle_http_put(Sid, Rid, Attrs, Payload2, StreamStart, IP);
         _ ->
             {400, ?HEADER, ""}
     end.
@@ -211,8 +215,8 @@ process_request(Data) ->
 %%          ignore                              |
 %%          {stop, StopReason}                   
 %%----------------------------------------------------------------------
-init([Sid, Key]) ->
-    ?DEBUG("started: ~p", [{Sid, Key}]),
+init([Sid, Key, IP]) ->
+    ?DEBUG("started: ~p", [{Sid, Key, IP}]),
 
     %% Read c2s options from the first ejabberd_c2s configuration in
     %% the config file listen section
@@ -222,12 +226,12 @@ init([Sid, Key]) ->
     %% connector.
     Opts = ejabberd_c2s_config:get_c2s_limits(),
 
-    ejabberd_socket:start(ejabberd_c2s, ?MODULE, {http_bind, self()}, Opts),
-%    {ok, C2SPid} = ejabberd_c2s:start({?MODULE, {http_bind, self()}}, Opts),
-%    ejabberd_c2s:become_controller(C2SPid),
+    Socket = {http_bind, self(), IP},
+    ejabberd_socket:start(ejabberd_c2s, ?MODULE, Socket, Opts),
     Timer = erlang:start_timer(?MAX_INACTIVITY, self(), []),
     {ok, loop, #state{id = Sid,
 		      key = Key,
+		      socket = Socket,
 		      timer = Timer}}.
 
 %%----------------------------------------------------------------------
@@ -264,7 +268,7 @@ handle_event({activate, From}, StateName, StateData) ->
 				     waiting_input = {From, ok}}};
 	Input ->
             Receiver = From,
-	    Receiver ! {tcp, {http_bind, self()}, list_to_binary(Input)},
+	    Receiver ! {tcp, StateData#state.socket, list_to_binary(Input)},
 	    {next_state, StateName, StateData#state{
 				     input = "",
 				     waiting_input = false,
@@ -329,7 +333,7 @@ handle_sync_event(stop, _From, _StateName, StateData) ->
     Reply = ok,
     {stop, normal, Reply, StateData};
 
-handle_sync_event({http_put, Rid, Attrs, Payload, Hold, StreamTo},
+handle_sync_event({http_put, Rid, Attrs, Payload, Hold, StreamTo, IP},
 		  _From, StateName, StateData) ->
     Key = xml:get_attr_s("key", Attrs),
     NewKey = xml:get_attr_s("newkey", Attrs),
@@ -466,7 +470,8 @@ handle_sync_event({http_put, Rid, Attrs, Payload, Hold, StreamTo},
 					     timer = Timer,
                                              pause = Pause,
 					     last_poll = LastPoll,
-					     req_list = ReqList
+					     req_list = ReqList,
+					     ip = IP
 					    }};
 			{Receiver, _Tag} ->
                             SendPacket = 
@@ -486,7 +491,7 @@ handle_sync_event({http_put, Rid, Attrs, Payload, Hold, StreamTo},
                                         Payload
                                 end,
                             ?DEBUG("really sending now: ~s", [SendPacket]),
-			    Receiver ! {tcp, {http_bind, self()},
+			    Receiver ! {tcp, StateData#state.socket,
 					list_to_binary(SendPacket)},
 			    Reply = ok,
 			    {reply, Reply, StateName,
@@ -499,7 +504,8 @@ handle_sync_event({http_put, Rid, Attrs, Payload, Hold, StreamTo},
 					     timer = Timer,
                                              pause = Pause,
 					     last_poll = LastPoll,
-					     req_list = ReqList
+					     req_list = ReqList,
+					     ip = IP
 					    }}
 		    end
 	    end;
@@ -606,6 +612,10 @@ handle_sync_event({http_get, Rid, Wait, Hold}, From, StateName, StateData) ->
 					req_list = ReqList}}
     end;
 
+handle_sync_event(peername, _From, StateName, StateData) ->
+    Reply = {ok, StateData#state.ip},
+    {reply, Reply, StateName, StateData};
+
 handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
     {reply, Reply, StateName, StateData}.
@@ -675,9 +685,9 @@ terminate(_Reason, _StateName, StateData) ->
 	false ->
 	    case StateData#state.last_receiver of
 		undefined -> ok;
-		Receiver -> Receiver ! {tcp_closed, {http_bind, self()}}
+		Receiver -> Receiver ! {tcp_closed, StateData#state.socket}
 	    end;
-	{Receiver, _Tag} -> Receiver ! {tcp_closed, {http_bind, self()}}
+	{Receiver, _Tag} -> Receiver ! {tcp_closed, StateData#state.socket}
     end,
     ok.
 
@@ -685,8 +695,8 @@ terminate(_Reason, _StateName, StateData) ->
 %%% Internal functions
 %%%----------------------------------------------------------------------
 
-handle_http_put(Sid, Rid, Attrs, Payload, StreamStart) ->
-    case http_put(Sid, Rid, Attrs, Payload, StreamStart) of
+handle_http_put(Sid, Rid, Attrs, Payload, StreamStart, IP) ->
+    case http_put(Sid, Rid, Attrs, Payload, StreamStart, IP) of
         {error, not_exists} ->
             ?DEBUG("no session associated with sid: ~p", [Sid]),
             {404, ?HEADER, ""};
@@ -700,7 +710,7 @@ handle_http_put(Sid, Rid, Attrs, Payload, StreamStart) ->
             prepare_response(Sess, Rid, Attrs, StreamStart)
     end.
 
-http_put(Sid, Rid, Attrs, Payload, StreamStart) ->
+http_put(Sid, Rid, Attrs, Payload, StreamStart, IP) ->
     ?DEBUG("http-put",[]),
     case mnesia:dirty_read({http_bind, Sid}) of
 	[] ->
@@ -714,7 +724,7 @@ http_put(Sid, Rid, Attrs, Payload, StreamStart) ->
                         ""
                 end,
             {gen_fsm:sync_send_all_state_event(
-               FsmRef, {http_put, Rid, Attrs, Payload, Hold, NewStream}), Sess}
+               FsmRef, {http_put, Rid, Attrs, Payload, Hold, NewStream, IP}), Sess}
     end.
 
 handle_http_put_error(Reason, #http_bind{pid=FsmRef, version=Version}) 

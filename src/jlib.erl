@@ -5,7 +5,7 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -59,7 +59,8 @@
 	 now_to_local_string/1,
 	 datetime_string_to_timestamp/1,
 	 decode_base64/1,
-	 encode_base64/1]).
+	 encode_base64/1,
+	 ip_to_list/1]).
 
 -include("jlib.hrl").
 
@@ -676,3 +677,9 @@ e(X) when X>51, X<62 ->     X-4;
 e(62) ->                    $+;
 e(63) ->                    $/;
 e(X) ->                     exit({bad_encode_base64_token, X}).
+
+%% Convert Erlang inet IP to list
+ip_to_list({IP, _Port}) ->
+    ip_to_list(IP);
+ip_to_list({A,B,C,D}) ->
+    lists:flatten(io_lib:format("~w.~w.~w.~w",[A,B,C,D])).

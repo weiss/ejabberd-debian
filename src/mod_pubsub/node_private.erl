@@ -10,13 +10,13 @@
 %%% the License for the specific language governing rights and limitations
 %%% under the License.
 %%% 
-%%% The Initial Developer of the Original Code is Process-one.
-%%% Portions created by Process-one are Copyright 2006-2008, Process-one
+%%% The Initial Developer of the Original Code is ProcessOne.
+%%% Portions created by ProcessOne are Copyright 2006-2008, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2008, Process-one.
+%%% This software is copyright 2006-2008, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2008 Process-one
+%%% @copyright 2006-2008 ProcessOne
 %%% @author Christophe romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -62,7 +62,9 @@
 	 get_states/2,
 	 get_state/3,
 	 set_state/1,
+	 get_items/7,
 	 get_items/2,
+	 get_item/8,
 	 get_item/3,
 	 set_item/1
 	]).
@@ -95,7 +97,6 @@ features() ->
     ["create-nodes",
      "delete-nodes",
      "instant-nodes",
-     "item-ids",
      "outcast-affiliation",
      "persistent-items",
      "publish",
@@ -174,8 +175,14 @@ set_state(State) ->
 get_items(Host, Node) ->
     node_default:get_items(Host, Node).
 
+get_items(Host, Node, JID, AccessModel, PresenceSubscription, RosterGroup, SubId) ->
+    node_default:get_items(Host, Node, JID, AccessModel, PresenceSubscription, RosterGroup, SubId).
+    
 get_item(Host, Node, ItemId) ->
     node_default:get_item(Host, Node, ItemId).
 
+get_item(Host, Node, ItemId, JID, AccessModel, PresenceSubscription, RosterGroup, SubId) ->
+    node_default:get_item(Host, Node, ItemId, JID, AccessModel, PresenceSubscription, RosterGroup, SubId).
+    
 set_item(Item) ->
     node_default:set_item(Item).

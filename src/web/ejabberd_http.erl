@@ -5,7 +5,7 @@
 %%% Created : 27 Feb 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -289,7 +289,7 @@ process_request(#state{request_method = 'GET',
 			     LQ
 		     end,
 	    LPath = string:tokens(NPath, "/"),
-	    {ok, {IP, _Port}} =
+	    {ok, IP} =
 		case SockMod of
 		    gen_tcp ->
 			inet:peername(Socket);
@@ -301,7 +301,7 @@ process_request(#state{request_method = 'GET',
 			       q = LQuery,
 			       auth = Auth,
 			       lang = Lang,
-			       ip=IP},
+			       ip = IP},
 	    %% XXX bard: This previously passed control to
 	    %% ejabberd_web:process_get, now passes it to a local
 	    %% procedure (process) that handles dispatching based on
@@ -347,12 +347,20 @@ process_request(#state{request_method = 'POST',
 			 LQ ->
 			     LQ
 		     end,
+	    {ok, IP} =
+		case SockMod of
+		    gen_tcp ->
+			inet:peername(Socket);
+		    _ ->
+			SockMod:peername(Socket)
+		end,
 	    Request = #request{method = 'POST',
 			       path = LPath,
 			       q = LQuery,
 			       auth = Auth,
 			       data = Data,
-			       lang = Lang},
+			       lang = Lang,
+			       ip = IP},
 	    case process(RequestHandlers, Request) of
 		El when element(1, El) == xmlelement ->
 		    make_xhtml_output(State, 200, [], El);
@@ -382,7 +390,10 @@ recv_data(_State, 0, Acc) ->
 recv_data(State, Len, Acc) ->
     case State#state.trail of
 	[] ->
-	    case (State#state.sockmod):recv(State#state.socket, Len, 300000) of
+	    %% TODO: Fix the problem in tls C driver and revert this workaround
+	    %% https://support.process-one.net/browse/EJAB-611
+	    %%case (State#state.sockmod):recv(State#state.socket, Len, 300000) of
+	    case (State#state.sockmod):recv(State#state.socket,   0, 300000) of
 		{ok, Data} ->
 		    recv_data(State, Len - size(Data), [Acc | Data]);
 		_ ->
@@ -635,11 +646,14 @@ parse_auth(_Orig = "Basic " ++ Auth64) ->
 	{error, _Err} ->
 	    undefined;
 	Auth ->
-	    case string:tokens(Auth, ":") of
-		[User, Pass] ->
-		    {User, Pass};
-		_ ->
-		    undefined
+	    %% Auth should be a string with the format: user@server:password
+	    %% Note that password can contain additional characters '@' and ':'
+	    case string:chr(Auth, $:) of
+		0 ->
+		    undefined;
+		SplitIndex ->
+		    {User, [$: | Pass]} = lists:split(SplitIndex-1, Auth),
+		    {User, Pass}
 	    end
     end;
 parse_auth(_) ->

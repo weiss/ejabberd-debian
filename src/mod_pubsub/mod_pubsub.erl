@@ -10,12 +10,12 @@
 %%% the License for the specific language governing rights and limitations
 %%% under the License.
 %%% 
-%%% The Initial Developer of the Original Code is Process-one.
-%%% Portions created by Process-one are Copyright 2006-2008, Process-one
+%%% The Initial Developer of the Original Code is ProcessOne.
+%%% Portions created by ProcessOne are Copyright 2006-2008, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2008, Process-one.
+%%% This software is copyright 2006-2008, ProcessOne.
 %%%
-%%% @copyright 2006-2008 Process-one
+%%% @copyright 2006-2008 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -30,16 +30,18 @@
 %%%
 %%% @reference See <a href="http://www.xmpp.org/extensions/xep-0060.html">XEP-0060: Pubsub</a> for
 %%% the latest version of the PubSub specification.
-%%% This module uses version 1.10 of the specification as a base.
+%%% This module uses version 1.11 of the specification as a base.
 %%% Most of the specification is implemented.
-%%% Code is derivated from the original pubsub v1.7, functions concerning config may be rewritten.
+%%% Functions concerning configuration should be rewritten.
+%%% Code is derivated from the original pubsub v1.7, by Alexey Shchepin <alexey@process-one.net>
 %%% Code also inspired from the original PEP patch by Magnus Henoch <mange@freemail.hu>
 
 %%% TODO
 %%% plugin: generate Reply (do not use broadcast atom anymore)
 
 -module(mod_pubsub).
--version('1.10-01').
+-author('christophe.romain@process-one.net').
+-version('1.11-01').
 
 -behaviour(gen_server).
 -behaviour(gen_mod).
@@ -224,8 +226,6 @@ terminate_plugins(Host, ServerHost, Plugins, TreePlugin) ->
     ok.
 
 init_nodes(Host, ServerHost, ServedHosts) ->
-    create_node(Host, ServerHost, ["pubsub"], service_jid(Host), ?STDNODE),
-    create_node(Host, ServerHost, ["pubsub", "nodes"], service_jid(Host), ?STDNODE),
     create_node(Host, ServerHost, ["home"], service_jid(Host), ?STDNODE),
     lists:foreach(
       fun(H) ->
@@ -286,8 +286,7 @@ update_database(Host) ->
 			mnesia:delete_table(pubsub_node),
 			mnesia:create_table(pubsub_node,
 					    [{disc_copies, [node()]},
-					     {attributes, record_info(fields, pubsub_node)},
-					     {index, [type, parentid]}]),
+					     {attributes, record_info(fields, pubsub_node)}]),
 			lists:foreach(fun(Record) ->
 					      mnesia:write(Record)
 				      end, NewRecords)
@@ -417,7 +416,7 @@ remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     Proc = gen_mod:get_module_proc(Server, ?PROCNAME),
-    gen_server:cast(Proc, {remove, LUser, LServer}).
+    gen_server:cast(Proc, {remove_user, LUser, LServer}).
 
 %%--------------------------------------------------------------------
 %% Function:
@@ -473,7 +472,7 @@ handle_cast({presence, JID, Pid}, State) ->
 	    end, Subscriptions)
     end, State#state.plugins),
     %% and send to From last PEP events published by its contacts
-    case catch ejabberd_c2s:get_subscribed_and_online(Pid) of
+    case catch ejabberd_c2s:get_subscribed(Pid) of
 	ContactsWithCaps when is_list(ContactsWithCaps) ->
 	    Caps = proplists:get_value(LJID, ContactsWithCaps),
 	    ContactsUsers = lists:usort(lists:map(
@@ -514,9 +513,26 @@ handle_cast({presence, JID, Pid}, State) ->
     end,
     {noreply, State};
 
-handle_cast({remove, User, Server}, State) ->
-    Owner = jlib:make_jid(User, Server, ""),
-    delete_nodes(Server, Owner),
+handle_cast({remove_user, User, Host}, State) ->
+    Owner = jlib:make_jid(User, Host, ""),
+    OwnerKey = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
+    %% remove user's subscriptions
+    lists:foreach(fun(Type) ->
+	{result, Subscriptions} = node_action(Type, get_entity_subscriptions, [Host, Owner]),
+	lists:foreach(fun
+	    ({Node, subscribed}) ->
+		JID = jlib:jid_to_string(Owner),
+		unsubscribe_node(Host, Node, Owner, JID, all);
+	    (_) ->
+		ok
+	end, Subscriptions)
+    end, State#state.plugins),
+    %% remove user's PEP nodes 
+    lists:foreach(fun(#pubsub_node{nodeid={NodeKey, NodeName}}) ->
+	delete_node(NodeKey, NodeName, Owner)
+    end, tree_action(Host, get_nodes, [OwnerKey])),
+    %% remove user's nodes
+    delete_node(Host, ["home", Host, User], Owner),
     {noreply, State};
 
 handle_cast(_Msg, State) ->
@@ -912,7 +928,17 @@ iq_pubsub(Host, ServerHost, From, IQType, SubEl, _Lang, Access, Plugins) ->
 		    unsubscribe_node(Host, Node, From, JID, SubId);
 		{get, "items"} ->
 		    MaxItems = xml:get_attr_s("max_items", Attrs),
-		    get_items(Host, Node, From, MaxItems);
+		    SubId = xml:get_attr_s("subid", Attrs),
+		    ItemIDs = lists:foldl(fun
+			({xmlelement, "item", ItemAttrs, _}, Acc) ->
+			    case xml:get_attr_s("id", ItemAttrs) of
+			    "" -> Acc;
+			    ItemID -> [ItemID|Acc]
+			    end;
+			(_, Acc) ->
+			    Acc
+			end, [], xml:remove_cdata(Els)),
+		    get_items(Host, Node, From, SubId, MaxItems, ItemIDs);
 		{get, "subscriptions"} ->
 		    get_subscriptions(Host, From, Plugins);
 		{get, "affiliations"} ->
@@ -1284,12 +1310,6 @@ delete_node(Host, Node, Owner) ->
 	{result, Result} ->
 	    {result, Result}
     end.
-delete_nodes(Host, Owner) ->
-    %% This removes only PEP nodes when user is removed
-    OwnerKey = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
-    lists:foreach(fun(#pubsub_node{nodeid={NodeKey, NodeName}}) ->
-	delete_node(NodeKey, NodeName, Owner)
-    end, tree_action(Host, get_nodes, [OwnerKey])).
 
 %% @spec (Host, Node, From, JID) ->
 %%		  {error, Reason::stanzaError()} |
@@ -1365,7 +1385,7 @@ subscribe_node(Host, Node, From, JID) ->
 	{error, Error} ->
 	    {error, Error};
 	{result, {Result, subscribed, send_last}} ->
-	    send_all_items(Host, Node, Subscriber),
+	    send_last_item(Host, Node, Subscriber),
 	    case Result of
 		default -> {result, Reply(subscribed)};
 		_ -> {result, Result}
@@ -1436,7 +1456,7 @@ publish_item(Host, ServerHost, Node, Publisher, ItemId, Payload) ->
     Action = fun(#pubsub_node{options = Options, type = Type}) ->
 		     Features = features(Type),
 		     PublishFeature = lists:member("publish", Features),
-		     Model = get_option(Options, publish_model),
+		     PublishModel = get_option(Options, publish_model),
 		     MaxItems = max_items(Options),
 		     PayloadSize = size(term_to_binary(Payload)),
 		     PayloadMaxSize = get_option(Options, max_payload_size),
@@ -1459,7 +1479,7 @@ publish_item(Host, ServerHost, Node, Publisher, ItemId, Payload) ->
 			 %%	% Publisher attempts to publish to transient notification node with item
 			 %%	{error, extended_error(?ERR_BAD_REQUEST, "item-forbidden")};
 			 true ->
-			     node_call(Type, publish_item, [Host, Node, Publisher, Model, MaxItems, ItemId, Payload])
+			     node_call(Type, publish_item, [Host, Node, Publisher, PublishModel, MaxItems, ItemId, Payload])
 		     end
 	     end,
     %%ejabberd_hooks:run(pubsub_publish_item, Host, [Host, Node, JID, service_jid(Host), ItemId, Payload]),
@@ -1622,7 +1642,7 @@ purge_node(Host, Node, Owner) ->
 %% <p>The permission are not checked in this function.</p>
 %% @todo We probably need to check that the user doing the query has the right
 %% to read the items.
-get_items(Host, Node, _JID, SMaxItems) ->
+get_items(Host, Node, From, SubId, SMaxItems, ItemIDs) ->
     MaxItems =
 	if
 	    SMaxItems == "" -> ?MAXITEMS;
@@ -1636,24 +1656,60 @@ get_items(Host, Node, _JID, SMaxItems) ->
 	{error, Error} ->
 	    {error, Error};
 	_ ->
-	    case get_items(Host, Node) of
-		[] ->
-		    {error, ?ERR_ITEM_NOT_FOUND};
-		Items ->
+	    Action = fun(#pubsub_node{options = Options, type = Type}) ->
+		     Features = features(Type),
+		     RetreiveFeature = lists:member("retrieve-items", Features),
+		     PersistentFeature = lists:member("persistent-items", Features),
+		     AccessModel = get_option(Options, access_model),
+		     AllowedGroups = get_option(Options, roster_groups_allowed),
+		     {PresenceSubscription, RosterGroup} =
+			 case Host of
+			     {OUser, OServer, _} ->
+				 get_roster_info(OUser, OServer,
+						 jlib:jid_tolower(From), AllowedGroups);
+			     _ ->
+				 {true, true}
+			 end,
+		     if
+			 not RetreiveFeature ->
+			     %% Item Retrieval Not Supported
+			     {error, extended_error(?ERR_FEATURE_NOT_IMPLEMENTED, unsupported, "retrieve-items")};
+			 not PersistentFeature ->
+			     %% Persistent Items Not Supported
+			     {error, extended_error(?ERR_FEATURE_NOT_IMPLEMENTED, unsupported, "persistent-items")};
+			 true ->
+			     node_call(Type, get_items,
+				       [Host, Node, From,
+					AccessModel, PresenceSubscription, RosterGroup,
+					SubId])
+		     end
+	     end,
+	     case transaction(Host, Node, Action, sync_dirty) of
+		{error, Reason} ->
+		    {error, Reason};
+		{result, Items} ->
+		    SendItems = case ItemIDs of
+			[] -> 
+			    Items;
+			_ ->
+			    lists:filter(fun(#pubsub_item{itemid = {ItemId, _}}) ->
+				lists:member(ItemId, ItemIDs)
+			    end, Items) 
+			end,
 		    %% Generate the XML response (Item list), limiting the
 		    %% number of items sent to MaxItems:
 		    ItemsEls = lists:map(
-				 fun(#pubsub_item{itemid = {ItemId, _},
-						  payload = Payload}) ->
-					 ItemAttrs = case ItemId of
-							 "" -> [];
-							 _ -> [{"id", ItemId}]
-						     end,
-					 {xmlelement, "item", ItemAttrs, Payload}
-				 end, lists:sublist(Items, MaxItems)),
+				    fun(#pubsub_item{itemid = {ItemId, _},
+						    payload = Payload}) ->
+					    ItemAttrs = case ItemId of
+							    "" -> [];
+							    _ -> [{"id", ItemId}]
+							end,
+					    {xmlelement, "item", ItemAttrs, Payload}
+				    end, lists:sublist(SendItems, MaxItems)),
 		    {result, [{xmlelement, "pubsub", [{"xmlns", ?NS_PUBSUB}],
-			       [{xmlelement, "items", [{"node", node_to_string(Node)}],
-				 ItemsEls}]}]}
+				[{xmlelement, "items", [{"node", node_to_string(Node)}],
+				    ItemsEls}]}]}
 	    end
     end.
 
@@ -1676,21 +1732,25 @@ send_last_item(Host, Node, LJID) ->
 
 %% TODO use cache-last-item feature
 send_items(Host, Node, LJID, Number) ->
-    Items = get_items(Host, Node),
-    ToSend = case Number of
-		 last -> lists:sublist(Items, 1);
-		 all -> Items;
-		 N when N > 0 -> lists:sublist(Items, N);
-		 _ -> Items
-	     end,
+    ToSend = case get_items(Host, Node) of
+	[] -> 
+	    [];
+	Items ->
+	    case Number of
+		last -> lists:sublist(lists:reverse(Items), 1);
+		all -> Items;
+		N when N > 0 -> lists:nthtail(length(Items)-N, Items);
+		_ -> Items
+	    end
+    end,
     ItemsEls = lists:map(
-		 fun(#pubsub_item{itemid = {ItemId, _}, payload = Payload}) ->
-			 ItemAttrs = case ItemId of
-					 "" -> [];
-					 _ -> [{"id", ItemId}]
-				     end,
-			 {xmlelement, "item", ItemAttrs, Payload}
-		 end, ToSend),
+		fun(#pubsub_item{itemid = {ItemId, _}, payload = Payload}) ->
+		    ItemAttrs = case ItemId of
+			"" -> [];
+			_ -> [{"id", ItemId}]
+		    end,
+		    {xmlelement, "item", ItemAttrs, Payload}
+		end, ToSend),
     Stanza = {xmlelement, "message", [],
 	      [{xmlelement, "event", [{"xmlns", ?NS_PUBSUB_EVENT}],
 		[{xmlelement, "items", [{"node", node_to_string(Node)}],
@@ -1809,7 +1869,7 @@ set_affiliations(Host, Node, From, EntitiesEls) ->
 				       end, Entities),
 				     {result, []};
 				 _ ->
-				     {error, ?ERR_NOT_ALLOWED}
+				     {error, ?ERR_FORBIDDEN}
 			     end
 		     end,
 	    transaction(Host, Node, Action, sync_dirty)
@@ -1870,7 +1930,7 @@ get_subscriptions(Host, Node, JID) ->
 			     %% Service does not support manage subscriptions
 			     {error, extended_error(?ERR_FEATURE_NOT_IMPLEMENTED, unsupported, "manage-affiliations")};
 			 Affiliation /= {result, owner} ->
-						% Entity is not an owner
+			     %% Entity is not an owner
 			     {error, ?ERR_FORBIDDEN};
 			 true ->
 			     node_call(Type, get_node_subscriptions, [Host, Node])
@@ -1938,7 +1998,7 @@ set_subscriptions(Host, Node, From, EntitiesEls) ->
 						   end, Entities),
 				     {result, []};
 				 _ ->
-				     {error, ?ERR_NOT_ALLOWED}
+				     {error, ?ERR_FORBIDDEN}
 			     end
 		     end,
 	    transaction(Host, Node, Action, sync_dirty)
@@ -1952,7 +2012,8 @@ get_roster_info(OwnerUser, OwnerServer, {SubscriberUser, SubscriberServer, _}, A
 	  roster_get_jid_info, OwnerServer,
 	  {none, []},
 	  [OwnerUser, OwnerServer, {SubscriberUser, SubscriberServer, ""}]),
-    PresenceSubscription = (Subscription == both) orelse (Subscription == from),
+    PresenceSubscription = (Subscription == both) orelse (Subscription == from)
+			    orelse ({OwnerUser, OwnerServer} == {SubscriberUser, SubscriberServer}),
     RosterGroup = lists:any(fun(Group) ->
 				    lists:member(Group, AllowedGroups)
 			    end, Groups),
@@ -2341,30 +2402,27 @@ get_configure(Host, Node, From, Lang) ->
 	end,
     transaction(Host, Node, Action, sync_dirty).
 
-get_default(Host, Node, From, Lang) ->
-    Action =
-	fun(#pubsub_node{owners = Owners, type = Type}) ->
-		case node_call(Type, get_affiliation, [Host, Node, From]) of
-		    {result, owner} ->
-			Options = node_options(Type),
-			{result, [{xmlelement, "pubsub", [{"xmlns", ?NS_PUBSUB_OWNER}],
-				   [{xmlelement, "default", [],
-				     [{xmlelement, "x", [{"xmlns", ?NS_XDATA}, {"type", "form"}],
-				       get_configure_xfields(Type, Options, Lang, Owners)
-				      }]}]}]};
-		    _ ->
-			{error, ?ERR_FORBIDDEN}
-		end
-	end,
-    transaction(Host, Node, Action, sync_dirty).
+get_default(Host, _Node, _From, Lang) ->
+    Type = case Host of
+    {_, _, _} -> ?PEPNODE;
+    _ -> hd(plugins(Host))
+    end,
+    Options = node_options(Type),
+    {result, [{xmlelement, "pubsub", [{"xmlns", ?NS_PUBSUB_OWNER}],
+		[{xmlelement, "default", [],
+		    [{xmlelement, "x", [{"xmlns", ?NS_XDATA}, {"type", "form"}],
+			get_configure_xfields(Type, Options, Lang, [])
+		}]}]}]}.
 
 %% Get node option
 %% The result depend of the node type plugin system.
 get_option([], _) -> false;
 get_option(Options, Var) ->
+    get_option(Options, Var, false).
+get_option(Options, Var, Def) ->
     case lists:keysearch(Var, 1, Options) of
 	{value, {_Val, Ret}} -> Ret;
-	_ -> false
+	_ -> Def
     end.
 
 %% Get default options from the module plugin.
@@ -2409,7 +2467,7 @@ max_items(Options) ->
 
 -define(STRING_CONFIG_FIELD(Label, Var),
 	?STRINGXFIELD(Label, "pubsub#" ++ atom_to_list(Var),
-		      get_option(Options, Var))).
+		      get_option(Options, Var, ""))).
 
 -define(INTEGER_CONFIG_FIELD(Label, Var),
 	?STRINGXFIELD(Label, "pubsub#" ++ atom_to_list(Var),
@@ -2425,7 +2483,7 @@ max_items(Options) ->
 		    atom_to_list(get_option(Options, Var)),
 		    [atom_to_list(O) || O <- Opts])).
 
-get_configure_xfields(_Type, Options, _Owners, Lang) ->
+get_configure_xfields(_Type, Options, Lang, _Owners) ->
     [?XFIELD("hidden", "", "FORM_TYPE", ?NS_PUBSUB_NODE_CONFIG),
      ?BOOL_CONFIG_FIELD("Deliver payloads with event notifications", deliver_payloads),
      ?BOOL_CONFIG_FIELD("Deliver event notifications", deliver_notifications),
@@ -2433,6 +2491,7 @@ get_configure_xfields(_Type, Options, _Owners, Lang) ->
      ?BOOL_CONFIG_FIELD("Notify subscribers when the node is deleted", notify_delete),
      ?BOOL_CONFIG_FIELD("Notify subscribers when items are removed from the node", notify_retract),
      ?BOOL_CONFIG_FIELD("Persist items to storage", persist_items),
+     ?STRING_CONFIG_FIELD("A friendly name for the node", title),
      ?INTEGER_CONFIG_FIELD("Max # of items to persist", max_items),
      ?BOOL_CONFIG_FIELD("Whether to allow subscriptions", subscribe),
      ?ALIST_CONFIG_FIELD("Specify the access model", access_model,
@@ -2543,14 +2602,14 @@ add_opt(Key, Value, Opts) ->
 	end).
 
 -define(SET_LIST_XOPT(Opt, Val),
-	set_xoption(Opts, add_opt(Opt, list_to_atom(Val), NewOpts))).
+	set_xoption(Opts, add_opt(Opt, Val, NewOpts))).
 
 set_xoption([], NewOpts) ->
     NewOpts;
 set_xoption([{"FORM_TYPE", _} | Opts], NewOpts) ->
     set_xoption(Opts, NewOpts);
-set_xoption([{"pubsub#roster_groups_allowed", Value} | Opts], NewOpts) ->
-    ?SET_LIST_XOPT(roster_groups_allowed, Value);
+set_xoption([{"pubsub#roster_groups_allowed", _Value} | Opts], NewOpts) ->
+    ?SET_LIST_XOPT(roster_groups_allowed, []);  % XXX: waiting for EJAB-659 to be solved
 set_xoption([{"pubsub#deliver_payloads", [Val]} | Opts], NewOpts) ->
     ?SET_BOOL_XOPT(deliver_payloads, Val);
 set_xoption([{"pubsub#deliver_notifications", [Val]} | Opts], NewOpts) ->
@@ -2600,7 +2659,7 @@ features() ->
 	[
 	 %"access-authorize",   % OPTIONAL
 	 "access-open",   % OPTIONAL this relates to access_model option in node_default
-	 %"access-presence",   % OPTIONAL
+	 "access-presence",   % OPTIONAL this relates to access_model option in node_pep
 	 %"access-roster",   % OPTIONAL
 	 %"access-whitelist",   % OPTIONAL
 	 % see plugin "auto-create",   % OPTIONAL
@@ -2614,7 +2673,7 @@ features() ->
 	 % see plugin "filtered-notifications",   % RECOMMENDED
 	 %TODO "get-pending",   % OPTIONAL
 	 % see plugin "instant-nodes",   % RECOMMENDED
-	 %TODO "item-ids",   % RECOMMENDED
+	 "item-ids",   % RECOMMENDED
 	 "last-published",   % RECOMMENDED
 	 %TODO "cache-last-item",
 	 %TODO "leased-subscription",   % OPTIONAL

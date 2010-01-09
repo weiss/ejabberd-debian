@@ -5,7 +5,7 @@
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -101,6 +101,8 @@ check_password(User, Server, Password, StreamID, Digest) ->
 	    end
     end.
 
+%% @spec (User::string(), Server::string(), Password::string()) ->
+%%       ok | {error, invalid_jid}
 set_password(User, Server, Password) ->
     case jlib:nodeprep(User) of
 	error ->
@@ -109,7 +111,10 @@ set_password(User, Server, Password) ->
 	    Username = ejabberd_odbc:escape(LUser),
 	    Pass = ejabberd_odbc:escape(Password),
 	    LServer = jlib:nameprep(Server),
-	    catch odbc_queries:set_password_t(LServer, Username, Pass)
+	    case catch odbc_queries:set_password_t(LServer, Username, Pass) of
+	        {atomic, ok} -> ok;
+	        Other -> {error, Other}
+	    end
     end.
 
 

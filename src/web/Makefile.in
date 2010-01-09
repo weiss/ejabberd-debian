@@ -1,4 +1,4 @@
-# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
+# $Id: Makefile.in 1455 2008-07-16 22:23:58Z cromain $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -9,7 +9,7 @@ LIBS = @LIBS@
 ERLANG_CFLAGS = @ERLANG_CFLAGS@
 ERLANG_LIBS = @ERLANG_LIBS@
 
-EFLAGS = -I .. -pz ..
+EFLAGS = @ERLANG_SSL39@ -I .. -pz ..
 # make debug=true to compile Erlang module with debug informations.
 ifdef debug
 	EFLAGS+=+debug_info

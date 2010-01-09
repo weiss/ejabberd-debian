@@ -1,8 +1,8 @@
-%% $Id: ejabberd.app 1103 2007-12-22 19:51:55Z badlop $
+%% $Id: ejabberd.app 1361 2008-06-18 21:33:48Z badlop $
 
 {application, ejabberd,
  [{description, "ejabberd"},
-  {vsn, "2.0.0"},
+  {vsn, "2.0.x"},
   {modules, [acl,
 	     adhoc,
 	     configure,
