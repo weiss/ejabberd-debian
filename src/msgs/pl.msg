@@ -1,4 +1,4 @@
-% $Id: pl.msg 1191 2008-02-14 11:25:39Z badlop $
+% $Id: pl.msg 1253 2008-03-24 01:28:55Z badlop $
 % Language: Polish (polski)
 % Author: Andrzej Smyk
 % Author: Mateusz Gajewski
@@ -163,7 +163,7 @@
 {"Registration in mod_irc for ", "Rejestracja w mod_irc dla "}.
 {"Enter username and encodings you wish to use for connecting to IRC servers", "Wprowadź nazwę użytkownika i kodowanie których chcesz używać do łączenia z serwerami IRC"}.
 {"IRC Username", "Nazwa użytkownika"}.
-{"Example: [{\"irc.lucky.net\", \"koi8-r\"}, {\"vendetta.fef.net\", \"iso8859-1\"}].", "Przykład: [{\"wroclaw.irc.pl\",\"utf-8\"}, {\warszawa.irc.pl\", \"iso8859-2\"}]."}.
+{"Example: [{\"irc.lucky.net\", \"koi8-r\"}, {\"vendetta.fef.net\", \"iso8859-1\"}].", "Przykład: [{\"wroclaw.irc.pl\",\"utf-8\"}, {\"warszawa.irc.pl\", \"iso8859-2\"}]."}.
 {"Encodings", "Kodowania"}.
 
 % web/ejabberd_web_admin.erl

@@ -127,8 +127,7 @@ start(Host, Opts) ->
 
 stop(Host) ->
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
-    gen_server:call(Proc, stop),
-    supervisor:stop_child(ejabberd_sup, Proc).
+    gen_server:call(Proc, stop).
 
 %%====================================================================
 %% gen_server callbacks
@@ -215,7 +214,8 @@ handle_cast({note_caps, From,
 			       [{"type", "get"},
 				{"id", ID}],
 			       [{xmlelement, "query",
-				 [{"xmlns", ?NS_DISCO_INFO}],
+				 [{"xmlns", ?NS_DISCO_INFO},
+				  {"node", lists:concat([Node, "#", SubNode])}],
 				 []}]},
 			  ejabberd_local:register_iq_response_handler
 			    (Host, ID, ?MODULE, handle_disco_response),
@@ -251,10 +251,23 @@ handle_cast({disco_response, From, _To,
 		    ?ERROR_MSG("ID '~s' matches no query", [ID])
 	    end;
 	{error, _} ->
-	    gen_server:cast(self(), visit_feature_queries),
-	    ?ERROR_MSG("Error IQ reponse IQ from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
+	    %% XXX: if we get error, we cache empty feature not to probe the client continuously
+	    case ?DICT:find(ID, Requests) of
+		{ok, {Node, SubNode}} ->
+		    Features = [],
+		    mnesia:transaction(
+		      fun() ->
+			      mnesia:write(#caps_features{node_pair = {Node, SubNode},
+							  features = Features})
+		      end),
+		    gen_server:cast(self(), visit_feature_queries);
+		error ->
+		    ?ERROR_MSG("ID '~s' matches no query", [ID])
+	    end;
+	    %gen_server:cast(self(), visit_feature_queries),
+	    %?DEBUG("Error IQ reponse from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
 	{result, _} ->
-	    ?ERROR_MSG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
+	    ?DEBUG("Invalid IQ contents from ~s:~n~p", [jlib:jid_to_string(From), SubEls]);
 	_ ->
 	    %% Can't do anything about errors
 	    ok

@@ -1,3 +1,340 @@
+2008-05-19  Badlop  <badlop@process-one.net>
+
+	* doc/guide.html: Updated
+	* doc/features.html: Likewise
+	* doc/dev.html: Likewise
+	* doc/version.tex: Likewise
+
+	* src/ejabberd.hrl: Version is 2.0.1
+
+	* src/configure.ac: R12 support: remove compilation
+	warning (EJAB-630)
+	* src/configure: Likewise
+	* doc/guide.tex: Likewise
+
+	* doc/guide.tex: Describe how to disable registration
+	limitation (EJAB-614)
+
+2008-04-30  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_caps.erl: XEP-0115 patch (EJAB-618)
+
+2008-04-29  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_s2s_out.erl: Improve confusing log message in s2s
+	connection: wait_for_validation connect timeout (EJAB-617)
+
+	* src/ejabberd.cfg.example: Small improvements in explanations
+
+	* doc/guide.tex: Document MUC room options (EJAB-619)
+
+2008-04-28  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Document the option max_s2s_connections
+
+2008-04-27  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/mod_muc/mod_muc_room.erl: Fixed room shaper processing
+
+2008-04-26  Badlop  <badlop@process-one.net>
+
+	* src/mod_shared_roster.erl: Fix for new registered accounts not
+	being immediately shown in an 'all' special shared roster
+	group (thanks to Alexey Shchepin) (EJAB-71)
+	* src/mod_register.erl: New vhost event user_registered
+
+	* doc/guide.tex: Document option registration_timeout (EJAB-614)
+
+2008-04-23  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/treap.erl: Bugfix
+
+	* src/mod_register.erl: Fixed table creation, timeout isn't
+	activated when registration fails
+
+	* src/mod_register.erl: Restrict registration frequency per IP or
+	user (EJAB-614)
+	* src/ejabberd_c2s.erl: Pass IP to the c2s_unauthenticated_iq hook
+	* src/ejabberd_config.erl: Added registration_timeout option
+
+	* src/treap.erl: Treaps implementation
+
+2008-04-22  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_auth.erl: Improve anonymous authentication to not
+	remove rosters accidentally (EJAB-549). New functions in
+	ejabberd_auth to get/check password and know which module accepted
+	the authentication. New element 'auth_module' in ejabberd_c2s
+	record 'statedata'. Cyrsasl provides a new property in the
+	response: {auth_module, AuthModule}.
+	* src/ejabberd_auth_anonymous.erl: Likewise
+	* src/ejabberd_c2s.erl: Likewise
+	* src/cyrsasl_anonymous.erl: Likewise
+	* src/cyrsasl_digest.erl: Likewise
+	* src/cyrsasl_plain.erl: Likewise
+
+2008-04-18  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_s2s_out.erl: Fix long timeout when reconnecting s2s
+	after a remote server crash (EJAB-540)
+	* src/ejabberd_s2s_in.erl: Likewise
+	* src/ejabberd_s2s.erl: Likewise
+	* doc/guide.tex: Likewise
+
+2008-04-16  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Clarification: PEP is enabled in default config
+
+2008-04-14  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_caps.erl: Cache negative response (EJAB-474)
+
+2008-04-11  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/tls/tls_drv.c: Fixed gcc signedness warnings (EJAB-447)
+	* src/ejabberd_zlib/ejabberd_zlib_drv.c: Likewise
+
+	* src/expat_erl.c: Removed R9B workaround (EJAB-447)
+
+2008-04-10  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: fix identity and database update
+	bugfix
+	* src/mod_pubsub/nodetree_default.erl: Likewise
+
+2008-04-10  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_c2s.erl: Uniform default value for empty privacy
+	list. Fixes (EJAB-603).
+
+2008-04-08  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_auth_ldap.erl: LDAP function to get the number of
+	registered users is too slow (EJAB-331): set timeout in LDAP
+	search queries (thanks to Evgeniy Khramtsov) and return the number
+	of registered users.
+
+2008-04-07  Mickael Remond  <mremond@process-one.net>
+
+	* doc/guide.tex: Documented the IQ discipline {queue, N}.
+
+2008-04-05  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Fix default_room_opts with default_room_options
+	* doc/guide.html: Likewise
+
+2008-04-04  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_auth_ldap.erl (get_vh_registered_users_number): New
+	function that returns 0 registered users (EJAB-331).
+
+	* src/ejabberd_c2s.erl (process_presence_probe): Don't route a
+	presence probe to oneself (EJAB-498)
+
+2008-04-02  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: add condition inclusion of pep in
+	disco identity (EJAB-564)
+
+	* src/ejabberd_local.erl: The iq_response table wasn't cloned
+	automatically on all nodes which resulted in a single point of
+	failure (backport from trunk, thanks to Alexey)
+
+	* src/Makefile.in: Do not ignore values passed from configure
+	(thanks to Justin Boffemmyer)(EJAB-592)
+
+2008-03-31  Badlop  <badlop@process-one.net>
+
+	* doc/webadmmain.png: Updated to ejabberd 2.0.0
+	* doc/webadmmainru.png: Likewise
+
+	* doc/disco.png: Removed because not used
+	
+	* doc/guide.tex: Fix Latex reference to webadmin section. Update
+	explanation of screenshots. Update xmpp addresses of Mickael
+	Remond and Sander Devrieze.
+	* doc/guide.html: Likewise
+
+	* doc/Makefile: Remove the Hevea deprecated option -noiso
+	* doc/guide.html: Likewise
+	* doc/dev.html: Likewise
+	* doc/features.html: Likewise
+
+2008-03-27  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Fix epam location (thanks to Evgeniy Khramtsov)
+	* doc/guide.html: Likewise
+
+2008-03-25  Badlop  <badlop@process-one.net>
+
+	* src/Makefile.in: Failure to install epam is not
+	critical (EJAB-573). Only try to install epam if pam was enabled
+	in configure script (thanks to Etan Reisner)(EJAB-586)
+
+2008-03-24  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: mod_vcard_ldap replace NICK with NICKNAME (thanks
+	to Andreas Ntaflos)
+	* doc/guide.html: Likewise
+
+	* src/msgs/de.msg: Fix irc typo (thanks to Jonathan Schleifer)
+	* src/msgs/cs.msg: Likewise
+	* src/msgs/pl.msg: Likewise
+	* src/msgs/sk.msg: Likewise
+
+2008-03-22  Mickael Remond  <mremond@process-one.net>
+
+	* src/eldap/Makefile.in: Generate ELDAPv3.beam during first Makefile
+	pass (EJAB-583).
+
+2008-03-22  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Document service_check_from (EJAB-576)
+	* doc/guide.html: Likewise
+
+2008-03-21  Badlop  <badlop@process-one.net>
+
+	* src/mod_caps.erl: Move two log calls ERROR_MSG to DEBUG
+	* src/shaper.erl: Move log call INFO_MSG to DEBUG
+
+	* doc/guide.tex: Document s2s_default_policy and
+	s2s_host (EJAB-575)
+	* doc/guide.html: Likewise
+
+2008-03-21  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/pam/epam.erl: Seek epam binary into priv/bin (EJAB-573)
+	* src/ejabberd.erl: Likewise
+	* src/ejabberdctl.template: Likewise
+	* tools/ejabberdctl: Likewise
+
+	* src/mod_pubsub/mod_pubsub.erl: Pubsub subscription is now wrapped in
+	pubsub tags (EJAB-580)
+
+2008-03-21  Badlop  <badlop@process-one.net>
+
+	* src/cyrsasl_digest.erl: Rewrite io:format calls to loglevel
+	macros (EJAB-555)
+	* src/ejabberd_auth.erl: Likewise
+	* src/ejabberd_ctl.erl: Likewise
+	* src/ejabberd_loglevel.erl: Likewise
+	* src/ejabberd_s2s.erl: Likewise
+	* src/ejabberd_sm.erl: Likewise
+	* src/ejabberd_update.erl: Likewise
+	* src/extauth.erl: Likewise
+	* src/mod_irc/mod_irc.erl: Likewise
+	* src/shaper.erl: Likewise
+	* src/tls/tls.erl: Likewise
+	* src/web/ejabberd_http_poll.erl: Likewise
+
+	* src/ejabberd.hrl: New macro ?PRINT(Format, Args) to print in
+	standard output
+
+2008-03-20  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Improve explanation of how to start ejabberd when
+	binary installer. Don't recommend R12 in Windows compilation.
+	Describe what happens if maxrate shaper is exceeded.
+	* doc/guide.html: Likewise
+
+2008-03-20  Mickael Remond  <mremond@process-one.net>
+
+	* src/eldap.erl: Improved logging. We now use ejabberd logging
+	framework (EJAB-582).
+
+	* src/eldap.erl: Faster LDAP reconnection (Thanks to Christophe
+	Romain) (EJAB-581)
+					 
+2008-03-17  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_s2s.erl: Only trigger s2s_connect_hook on
+	successful connection (EJAB-566)
+	* src/ejabberd_s2s_out.erl: Likewise
+
+2008-03-15  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_s2s.erl: API improvement: Added s2s_connect_hook
+	(EJAB-566).
+
+2008-03-13  Badlop  <badlop@process-one.net>
+
+	* src/odbc/ejabberd_odbc.erl: Start ODBC explicitely because
+	Erlang R12 doesn't start automatically like in R11 and
+	older (thanks to Sergei Golovan)(EJAB-541)
+
+	* src/ejabberd.hrl: Removed unused ejabberd_debug and
+	PRIVACY_SUPPORT. Reordered the remaining options
+
+	* doc/guide.tex: Describe option Matches in mod_vcard_ldap (thanks
+	to Evgeniy Khramtsov)(EJAB-530).  Fix typo in the description of
+	ldap_server option.
+	* doc/guide.html: Likewise
+
+	* src/mod_echo.erl: Small change to avoid a compilation warning of
+	unused function
+
+2008-03-12  Badlop  <badlop@process-one.net>
+
+	* src/web/ejabberd_web_admin.erl (term_to_string): Show Erlang
+	terms in one line in Erlang R12 (EJAB-503)
+
+2008-03-11  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_s2s_in.erl (get_cert_domains): When compiling with
+	Erlang R12, replace the calls to deprecated module PKIX1Explicit88
+	with OTP-PKIX (EJAB-556)
+
+2008-03-10  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_update.erl: Fix crash when browsing the Update
+	page in Erlang R12 (EJAB-552)
+
+2008-03-09  Badlop  <badlop@process-one.net>
+
+	* src/mod_proxy65/mod_proxy65_service.erl: Implement alternative
+	to the deprecated function inet:ip_to_bytes (thanks to Evgeniy
+	Khramtsov)(EJAB-542)
+
+2008-03-04  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Improve documentation of host_config
+	add (EJAB-544)
+	* doc/guide.html: Likewise
+	* src/ejabberd.cfg.example: Likewise
+	* src/ejabberd_config.erl: Likewise
+
+	* doc/guide.tex: mod_announce recommends, but doesn't require
+	mod_adhoc (thanks to Anastasia Gornostaeva)
+	* doc/guide.html: Likewise
+	* src/ejabberd.cfg.example: Likewise
+
+2008-02-29  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/mod_roster.erl: Fixed "from" attribute in roster pushes
+	* src/mod_roster_odbc.erl: Likewise
+
+2008-02-28  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_app.erl (prep_stop): Stop modules when stopping
+	ejabberd (EJAB-536)
+	* src/mod_caps.erl (stop): Probably not needed to stop supervisor
+	child (EJAB-536)
+	* src/mod_muc/mod_muc.erl (room_destroyed): Catch message
+	sending (EJAB-536)
+	* src/mod_muc/mod_muc_room.erl (init): Ensure rooms are called
+	when the process dies due to a linked die (EJAB-536)
+
+2008-02-27  Mickael Remond <mremond@process-one.net>
+
+	* src/ejabberd_check.erl: Separate config loading from
+	configuration sanity checks (EJAB-533)
+	* src/src/ejabberd_app.erl: Likewise
+	* src/ejabberd_app.erl: Likewise
+	
+2008-02-26  Badlop  <badlop@process-one.net>
+
+	* src/msgs/it.msg: Updated (thanks to Smart2128)
+
 2008-02-21  Badlop  <badlop@process-one.net>
 
 	* doc/release_notes_2.0.0.txt: Small fixes and update date
@@ -187,7 +524,7 @@
 	* doc/guide.tex: Updated copyright dates to 2008.
 	* src/*: Likewise
 
-2008-01-15  Jérôme Sautret <jerome.sautret@process-one.net>
+2008-01-15  Jerome Sautret <jerome.sautret@process-one.net>
 
 	* src/Makefile.in: Allow compilation with Erlang R12 (EJAB-446)
 	(thanks to Sergei Golovan and Maxim Treskin). Erlang R12 version is

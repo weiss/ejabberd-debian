@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : DIGEST-MD5 SASL mechanism
 %%% Created : 11 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_digest.erl 1044 2007-12-06 22:12:27Z badlop $
+%%% Id      : $Id: cyrsasl_digest.erl 1298 2008-04-22 18:56:29Z badlop $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_digest).
@@ -14,9 +14,11 @@
 	 mech_new/3,
 	 mech_step/2]).
 
+-include("ejabberd.hrl").
+
 -behaviour(cyrsasl).
 
--record(state, {step, nonce, username, authzid, get_password}).
+-record(state, {step, nonce, username, authzid, get_password, auth_module}).
 
 start(_Opts) ->
     cyrsasl:register_mechanism("DIGEST-MD5", ?MODULE, true).
@@ -42,9 +44,9 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 	    UserName = xml:get_attr_s("username", KeyVals),
 	    AuthzId = xml:get_attr_s("authzid", KeyVals),
 	    case (State#state.get_password)(UserName) of
-		false ->
+		{false, _} ->
 		    {error, "not-authorized", UserName};
-		Passwd ->
+		{Passwd, AuthModule} ->
 		    Response = response(KeyVals, UserName, Passwd,
 					Nonce, AuthzId, "AUTHENTICATE"),
 		    case xml:get_attr_s("response", KeyVals) of
@@ -55,6 +57,7 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 			    {continue,
 			     "rspauth=" ++ RspAuth,
 			     State#state{step = 5,
+					 auth_module = AuthModule,
 					 username = UserName,
 					 authzid = AuthzId}};
 			_ ->
@@ -63,11 +66,13 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 	    end
     end;
 mech_step(#state{step = 5,
+		 auth_module = AuthModule,
 		 username = UserName,
 		 authzid = AuthzId}, "") ->
-    {ok, [{username, UserName}, {authzid, AuthzId}]};
+    {ok, [{username, UserName}, {authzid, AuthzId},
+	  {auth_module, AuthModule}]};
 mech_step(A, B) ->
-    io:format("SASL DIGEST: A ~p B ~p", [A,B]),
+    ?DEBUG("SASL DIGEST: A ~p B ~p", [A,B]),
     {error, "bad-protocol"}.
 
 

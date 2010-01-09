@@ -112,7 +112,7 @@
 		host,
 		access,
 		nodetree = ?STDTREE,
-		plugins = [?STDNODE,?PEPNODE]}).
+		plugins = [?STDNODE]}).
 
 %%====================================================================
 %% API
@@ -206,7 +206,7 @@ init_plugins(Host, ServerHost, Opts) ->
 			      gen_mod:get_opt(nodetree, Opts, ?STDTREE)),
     ?INFO_MSG("** tree plugin is ~p",[TreePlugin]),
     TreePlugin:init(Host, ServerHost, Opts),
-    Plugins = lists:usort(gen_mod:get_opt(plugins, Opts, []) ++ [?STDNODE,?PEPNODE]),
+    Plugins = lists:usort(gen_mod:get_opt(plugins, Opts, []) ++ [?STDNODE]),
     lists:foreach(fun(Name) ->
 			  ?INFO_MSG("** init ~s plugin",[Name]),
 			  Plugin = list_to_atom(?PLUGIN_PREFIX ++ Name),
@@ -230,7 +230,7 @@ init_nodes(Host, ServerHost, ServedHosts) ->
     lists:foreach(
       fun(H) ->
 	      create_node(Host, ServerHost, ["home", H], service_jid(Host), ?STDNODE)
-      end, [ServerHost | ServedHosts]),
+      end, lists:usort([ServerHost | ServedHosts])),
     ok.
 
 update_database(Host) ->
@@ -301,8 +301,15 @@ update_database(Host) ->
 %% disco hooks handling functions
 %%
 
-disco_local_identity(Acc, _From, _To, [], _Lang) ->
-    Acc ++ [{xmlelement, "identity", [{"category", "pubsub"}, {"type", "pep"}], []} ];
+identity(Host) ->
+    Identity = case lists:member(?PEPNODE, plugins(Host)) of
+    true -> [{"category", "pubsub"}, {"type", "pep"}];
+    false -> [{"category", "pubsub"}, {"type", "service"}]
+    end,
+    {xmlelement, "identity", Identity, []}.
+
+disco_local_identity(Acc, _From, To, [], _Lang) ->
+    Acc ++ [identity(To#jid.lserver)];
 disco_local_identity(Acc, _From, _To, _Node, _Lang) ->
     Acc.
 
@@ -323,8 +330,8 @@ disco_local_items(Acc, _From, _To, [], _Lang) ->
 disco_local_items(Acc, _From, _To, _Node, _Lang) ->
     Acc.
 
-disco_sm_identity(Acc, _From, _To, [], _Lang) ->
-    Acc ++ [{xmlelement, "identity", [{"category", "pubsub"}, {"type", "pep"}], []} ];
+disco_sm_identity(Acc, _From, To, [], _Lang) ->
+    Acc ++ [identity(To#jid.lserver)];
 disco_sm_identity(Acc, From, To, Node, _Lang) ->
     LOwner = jlib:jid_tolower(jlib:jid_remove_resource(To)),
     Acc ++ case node_disco_identity(LOwner, From, Node) of
@@ -825,11 +832,7 @@ iq_get_vcard(Lang) ->
 			    "\nCopyright (c) 2004-2008 Process-One"}]}].
 
 iq_pubsub(Host, ServerHost, From, IQType, SubEl, Lang) ->
-    Plugins = case ets:lookup(gen_mod:get_module_proc(ServerHost, pubsub_state), plugins) of
-		  [{plugins, PL}] -> PL;
-		  _ -> [?STDNODE,?PEPNODE]
-	      end,
-    iq_pubsub(Host, ServerHost, From, IQType, SubEl, Lang, all, Plugins).
+    iq_pubsub(Host, ServerHost, From, IQType, SubEl, Lang, all, plugins(ServerHost)).
 
 iq_pubsub(Host, ServerHost, From, IQType, SubEl, _Lang, Access, Plugins) ->
     {xmlelement, _, _, SubEls} = SubEl,
@@ -1351,13 +1354,12 @@ subscribe_node(Host, Node, From, JID) ->
 			[{"node", node_to_string(Node)},
 			 {"jid", jlib:jid_to_string(Subscriber)},
 			 {"subscription", subscription_to_string(Subscription)}],
-		    case Subscription of
-			subscribed ->
-			    [{xmlelement, "subscription",
-			      Fields ++ [{"subid", SubId}], []}];
-			_ ->
-			    [{xmlelement, "subscription", Fields, []}]
-		    end
+		    [{xmlelement, "pubsub", [{"xmlns", ?NS_PUBSUB}], 
+			[{xmlelement, "subscription",
+			    case Subscription of
+			    subscribed -> [{"subid", SubId}|Fields];
+			    _ -> Fields
+			    end, []}]}]
 	    end,
     case transaction(Host, Node, Action, sync_dirty) of
 	{error, Error} ->
@@ -1471,10 +1473,7 @@ publish_item(Host, ServerHost, Node, Publisher, ItemId, Payload) ->
 		{_User, _Server, _Resource} -> 
 		    ?PEPNODE;
 		_ -> 
-		    case ets:lookup(gen_mod:get_module_proc(ServerHost, pubsub_state), plugins) of
-			[{plugins, PL}] -> hd(PL);
-			_ -> ?STDNODE
-		    end
+		    hd(plugins(ServerHost))
 	    end,
 	    case lists:member("auto-create", features(Type)) of
 		true ->
@@ -2267,38 +2266,44 @@ broadcast_by_caps({LUser, LServer, LResource}, Node, _Type, Stanza) ->
 				 [R|_] ->
 				     R;
 				 [] ->
-				     ?ERROR_MSG("~p@~p is offline; can't deliver ~p to contacts", [LUser, LServer, Stanza]),
 				     ""
 			     end;
 			 _ ->
 			     LResource
 		     end,
-    case ejabberd_sm:get_session_pid(LUser, LServer, SenderResource) of
-	C2SPid when is_pid(C2SPid) ->
-	    %% set the from address on the notification to the bare JID of the account owner
-	    %% Also, add "replyto" if entity has presence subscription to the account owner
-	    %% See XEP-0163 1.1 section 4.3.1
-	    Sender = jlib:make_jid(LUser, LServer, ""),
-	    %%ReplyTo = jlib:make_jid(LUser, LServer, SenderResource),  % This has to be used
-	    case catch ejabberd_c2s:get_subscribed_and_online(C2SPid) of
-		ContactsWithCaps when is_list(ContactsWithCaps) ->
-		    ?DEBUG("found contacts with caps: ~p", [ContactsWithCaps]),
-		    lists:foreach(
-		      fun({JID, Caps}) ->
-			    case is_caps_notify(LServer, Node, Caps) of
-				true ->
-				    To = jlib:make_jid(JID),
-				    ejabberd_router ! {route, Sender, To, Stanza};
-				false ->
-				    ok
-			    end
-		      end, ContactsWithCaps);
-		_ ->
-		    ok
-	    end,
-	    ok;
-	_ ->
-	    ok
+    case SenderResource of
+    "" ->
+	?DEBUG("~p@~p is offline; can't deliver ~p to contacts", [LUser, LServer, Stanza]),
+	ok;
+    _ ->
+	case ejabberd_sm:get_session_pid(LUser, LServer, SenderResource) of
+	    C2SPid when is_pid(C2SPid) ->
+		%% set the from address on the notification to the bare JID of the account owner
+		%% Also, add "replyto" if entity has presence subscription to the account owner
+		%% See XEP-0163 1.1 section 4.3.1
+		Sender = jlib:make_jid(LUser, LServer, ""),
+		%%ReplyTo = jlib:make_jid(LUser, LServer, SenderResource),  % This has to be used
+		case catch ejabberd_c2s:get_subscribed_and_online(C2SPid) of
+		    ContactsWithCaps when is_list(ContactsWithCaps) ->
+			?DEBUG("found contacts with caps: ~p", [ContactsWithCaps]),
+			lists:foreach(
+			fun({JID, Caps}) ->
+				case is_caps_notify(LServer, Node, Caps) of
+				    true ->
+					To = jlib:make_jid(JID),
+					ejabberd_router ! {route, Sender, To, Stanza};
+				    false ->
+					ok
+				end
+			end, ContactsWithCaps);
+		    _ ->
+			ok
+		end,
+		ok;
+	    _ ->
+		?DEBUG("~p@~p has no session; can't deliver ~p to contacts", [LUser, LServer, Stanza]),
+		ok
+	end
     end;
 broadcast_by_caps(_, _, _, _) ->
     ok.
@@ -2585,6 +2590,12 @@ set_xoption([_ | _Opts], _NewOpts) ->
 
 %%%% plugin handling
 
+plugins(Host) ->
+    case ets:lookup(gen_mod:get_module_proc(Host, pubsub_state), plugins) of
+    [{plugins, PL}] -> PL;
+    _ -> [?STDNODE]
+    end.
+
 features() ->
 	[
 	 %"access-authorize",   % OPTIONAL
@@ -2636,8 +2647,10 @@ features(Type) ->
 		      {'EXIT', {undef, _}} -> [];
 		      Result -> Result
 		  end.
-features(_Host, []) ->
-    lists:usort(features(?STDNODE) ++ features(?PEPNODE));
+features(Host, []) ->
+    lists:usort(lists:foldl(fun(Plugin, Acc) ->
+	Acc ++ features(Plugin)
+    end, [], plugins(Host)));
 features(Host, Node) ->
     {result, Features} = node_action(Host, Node, features, []),
     lists:usort(features() ++ Features).
