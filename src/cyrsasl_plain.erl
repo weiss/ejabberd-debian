@@ -3,14 +3,14 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : PLAIN SASL mechanism
 %%% Created :  8 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_plain.erl 374 2005-07-13 03:24:13Z alexey $
+%%% Id      : $Id: cyrsasl_plain.erl 527 2006-04-07 00:39:24Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_plain).
 -author('alexey@sevcom.net').
--vsn('$Revision: 374 $ ').
+-vsn('$Revision: 527 $ ').
 
--export([start/1, stop/0, mech_new/2, mech_step/2, parse/1]).
+-export([start/1, stop/0, mech_new/3, mech_step/2, parse/1]).
 
 -behaviour(cyrsasl).
 
@@ -23,7 +23,7 @@ start(_Opts) ->
 stop() ->
     ok.
 
-mech_new(_GetPassword, CheckPassword) ->
+mech_new(_Host, _GetPassword, CheckPassword) ->
     {ok, #state{check_password = CheckPassword}}.
 
 mech_step(State, ClientIn) ->

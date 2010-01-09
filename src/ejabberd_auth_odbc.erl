@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Authentification via ODBC
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_odbc.erl 421 2005-10-15 19:50:02Z alexey $
+%%% Id      : $Id: ejabberd_auth_odbc.erl 527 2006-04-07 00:39:24Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_odbc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 421 $ ').
+-vsn('$Revision: 527 $ ').
 
 %% External exports
 -export([start/1,
@@ -34,7 +34,18 @@
 %%% API
 %%%----------------------------------------------------------------------
 start(Host) ->
-    ejabberd_odbc_sup:start_link(Host),
+    ChildSpec =
+	{gen_mod:get_module_proc(Host, ejabberd_odbc_sup),
+	 {ejabberd_odbc_sup, start_link, [Host]},
+	 temporary,
+	 infinity,
+	 supervisor,
+	 [ejabberd_odbc_sup]},
+    supervisor:start_child(ejabberd_sup, ChildSpec),
+    ejabberd_ctl:register_commands(
+      Host,
+      [{"registered-users", "list all registered users"}],
+      ejabberd_auth, ctl_process_get_registered),
     ok.
 
 plain_password_required() ->
@@ -49,7 +60,7 @@ check_password(User, Server, Password) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["select password from users "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["password"], [{Password}]} ->
 		    true;
 		_ ->
@@ -66,7 +77,7 @@ check_password(User, Server, Password, StreamID, Digest) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["select password from users "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["password"], [{Passwd}]} ->
 		    DigRes = if
 				 Digest /= "" ->
@@ -91,12 +102,12 @@ set_password(User, Server, Password) ->
 	LUser ->
 	    Username = ejabberd_odbc:escape(LUser),
 	    Pass = ejabberd_odbc:escape(Password),
-	    catch ejabberd_odbc:sql_query(
-		    jlib:nameprep(Server),
-		    ["begin;"
-		     "delete from users where username='", Username ,"';"
-		     "insert into users(username, password) "
-		     "values ('", Username, "', '", Pass, "'); commit"])
+	    LServer = jlib:nameprep(Server),
+	    catch ejabberd_odbc:sql_transaction(
+		    LServer,
+		    [["delete from users where username='", Username ,"';"],
+		     ["insert into users(username, password) "
+		      "values ('", Username, "', '", Pass, "');"]])
     end.
 
 
@@ -110,7 +121,7 @@ try_register(User, Server, Password) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["insert into users(username, password) "
-			  "values ('", Username, "', '", Pass, "')"]) of
+			  "values ('", Username, "', '", Pass, "');"]) of
 		{updated, 1} ->
 		    {atomic, ok};
 		_ ->
@@ -141,7 +152,7 @@ get_password(User, Server) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["select password from users "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["password"], [{Password}]} ->
 		    Password;
 		_ ->
@@ -158,7 +169,7 @@ get_password_s(User, Server) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["select password from users "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["password"], [{Password}]} ->
 		    Password;
 		_ ->
@@ -175,7 +186,7 @@ is_user_exists(User, Server) ->
 	    case catch ejabberd_odbc:sql_query(
 			 jlib:nameprep(Server),
 			 ["select password from users "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["password"], [{_Password}]} ->
 		    true;
 		_ ->
@@ -191,7 +202,7 @@ remove_user(User, Server) ->
 	    Username = ejabberd_odbc:escape(LUser),
 	    catch ejabberd_odbc:sql_query(
 		    jlib:nameprep(Server),
-		    ["delete from users where username='", Username ,"'"]),
+		    ["delete from users where username='", Username ,"';"]),
 	    ejabberd_hooks:run(remove_user, jlib:nameprep(Server),
 			       [User, Server])
     end.
@@ -203,21 +214,25 @@ remove_user(User, Server, Password) ->
 	LUser ->
 	    Username = ejabberd_odbc:escape(LUser),
 	    Pass = ejabberd_odbc:escape(Password),
-	    case catch
-		ejabberd_odbc:sql_query(
-		  jlib:nameprep(Server),
-		  ["begin;"
-		   "select password from users where username='", Username, "';"
-		   "delete from users "
-		   "where username='", Username, "' and password='", Pass, "';"
-		   "commit"]) of
-		{selected, ["password"], [{Password}]} ->
-		    ejabberd_hooks:run(remove_user, jlib:nameprep(Server),
-				       [User, Server]),
-		    ok;
-		{selected, ["password"], []} ->
-		    not_exists;
-		_ ->
-		    not_allowed
-	    end
+	    LServer = jlib:nameprep(Server),
+	    F = fun() ->
+			Result = ejabberd_odbc:sql_query_t(
+				   ["select password from users where username='",
+				    Username, "';"]),
+			ejabberd_odbc:sql_query_t(["delete from users "
+						   "where username='", Username,
+						   "' and password='", Pass, "';"]),
+			case Result of
+			    {selected, ["password"], [{Password}]} ->
+				ejabberd_hooks:run(remove_user, jlib:nameprep(Server),
+						   [User, Server]),
+				ok;
+			    {selected, ["password"], []} ->
+				not_exists;
+			    _ ->
+				not_allowed
+			end
+		end,
+	    {atomic, Result } = ejabberd_odbc:transaction(LServer, F),
+	    Result
     end.

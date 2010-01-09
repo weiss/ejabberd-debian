@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Authentification via LDAP
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_ldap.erl 386 2005-07-31 19:51:52Z alexey $
+%%% Id      : $Id: ejabberd_auth_ldap.erl 510 2006-02-20 04:07:42Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_ldap).
 -author('alexey@sevcom.net').
--vsn('$Revision: 386 $ ').
+-vsn('$Revision: 510 $ ').
 
 %% External exports
 -export([start/1,
@@ -40,6 +40,10 @@ start(Host) ->
 		     LDAPServers, 389, RootDN, Password),
     eldap:start_link(get_eldap_id(Host, ejabberd_bind),
 		     LDAPServers, 389, RootDN, Password),
+    ejabberd_ctl:register_commands(
+      Host,
+      [{"registered-users", "list all registered users"}],
+      ejabberd_auth, ctl_process_get_registered),
     ok.
 
 plain_password_required() ->

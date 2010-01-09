@@ -1,4 +1,4 @@
-# $Id: Makefile.in 285 2004-11-05 21:14:31Z aleksey $
+# $Id: Makefile.in 498 2006-02-03 03:28:15Z alexey $
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
@@ -19,7 +19,7 @@ OBJS   = \
 
 all:    $(OBJS)
 
-$(OUTDIR)/%.beam:       %.erl
+$(OUTDIR)/%.beam:	%.erl ejabberd_http.hrl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
 
 

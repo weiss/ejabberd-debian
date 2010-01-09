@@ -1,4 +1,4 @@
-% $Id: ejabberd.cfg.example 448 2005-12-06 19:32:50Z alexey $
+% $Id: ejabberd.cfg.example 538 2006-04-22 04:02:42Z alexey $
 
 %override_acls.
 
@@ -73,11 +73,11 @@
 {access, local, [{allow, local}]}.
 
 
-% Authentification method.  If you want to use internal user base, then use
+% Authentication method.  If you want to use internal user base, then use
 % this line:
 {auth_method, internal}.
 
-% For LDAP authentification use these lines instead of above one:
+% For LDAP authentication use these lines instead of above one:
 %{auth_method, ldap}.
 %{ldap_servers, ["localhost"]}.    % List of LDAP servers
 %{ldap_uidattr, "uid"}.            % LDAP attribute that holds user ID
@@ -85,11 +85,11 @@
 %{ldap_rootdn, "dc=example,dc=com"}. % LDAP manager
 %{ldap_password, "******"}. % Password to LDAP manager
 
-% For authentification via external script use the following:
+% For authentication via external script use the following:
 %{auth_method, external}.
-%{extauth_program, "/path/to/authentification/script"}.
+%{extauth_program, "/path/to/authentication/script"}.
 
-% For authentification via ODBC use the following:
+% For authentication via ODBC use the following:
 %{auth_method, odbc}.
 %{odbc_server, "DSN=ejabberd;UID=ejabberd;PWD=ejabberd"}.
 
@@ -97,6 +97,15 @@
 % Host name:
 {hosts, ["localhost"]}.
 
+%% Anonymous login support:
+%%  auth_method: anonymous
+%%  anonymous_protocol: sasl_anon|login_anon|both
+%%  allow_multiple_connections: true|false
+%%{host_config, "public.example.org", [{auth_method, anonymous},
+%%                                     {allow_multiple_connections, false},
+%%                                     {anonymous_protocol, sasl_anon}]}.
+%% To use both anonymous and internal authentication:
+%%{host_config, "public.example.org", [{auth_method, [anonymous, internal]}]}.
 
 % Default language for server messages
 {language, "en"}.
@@ -104,13 +113,17 @@
 % Listened ports:
 {listen,
  [{5222, ejabberd_c2s,     [{access, c2s}, {shaper, c2s_shaper},
+			    {max_stanza_size, 65536},
 			    starttls, {certfile, "./ssl.pem"}]},
   {5223, ejabberd_c2s,     [{access, c2s},
+			    {max_stanza_size, 65536},
 			    tls, {certfile, "./ssl.pem"}]},
   % Use these two lines instead if TLS support is not compiled
   %{5222, ejabberd_c2s,     [{access, c2s}, {shaper, c2s_shaper}]},
   %{5223, ejabberd_c2s,     [{access, c2s}, ssl, {certfile, "./ssl.pem"}]},
-  {5269, ejabberd_s2s_in,  [{shaper, s2s_shaper}]},
+  {5269, ejabberd_s2s_in,  [{shaper, s2s_shaper},
+			    {max_stanza_size, 131072}
+			   ]},
   {5280, ejabberd_http,    [http_poll, web_admin]},
   {8888, ejabberd_service, [{access, all},
 			    {hosts, ["icq.localhost", "sms.localhost"],
@@ -134,13 +147,14 @@
   {mod_register,   [{access, register}]},
   {mod_roster,     []},
   {mod_privacy,    []},
-  {mod_configure,  []},
+  {mod_adhoc,      []},
+  {mod_configure,  []}, % Depends on mod_adhoc
   {mod_configure2, []},
   {mod_disco,      []},
   {mod_stats,      []},
   {mod_vcard,      []},
   {mod_offline,    []},
-  {mod_announce,   [{access, announce}]},
+  {mod_announce,   [{access, announce}]}, % Depends on mod_adhoc
   {mod_echo,       [{host, "echo.localhost"}]},
   {mod_private,    []},
   {mod_irc,        []},
@@ -152,6 +166,8 @@
   {mod_muc,        [{access, muc},
 		    {access_create, muc},
 		    {access_admin, muc_admin}]},
+%  {mod_muc_log,    []},
+%  {mod_shared_roster, []},
   {mod_pubsub,     []},
   {mod_time,       []},
   {mod_last,       []},

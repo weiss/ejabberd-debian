@@ -3,7 +3,7 @@
 %%% Author  : Sergei Golovan <sgolovan@nes.ru>
 %%% Purpose : Auxiliary tool for interface/messages translators
 %%% Created : 23 Apr 2005 by Sergei Golovan <sgolovan@nes.ru>
-%%% Id      : $Id: extract_translations.erl 334 2005-05-01 19:14:30Z alexey $
+%%% Id      : $Id: extract_translations.erl 511 2006-02-25 19:48:17Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(extract_translations).
@@ -108,7 +108,7 @@ parse_form(Dir, File, Form, Used) ->
 	    ok
     end.
 	    
-process_string(Dir, File, Str, Used) ->
+process_string(_Dir, File, Str, Used) ->
     case {ets:lookup(translations, Str), Used} of
 	{[{_Key, _Trans}], unused} ->
 	    ets:delete(translations, Str);

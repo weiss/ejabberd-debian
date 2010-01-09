@@ -1,9 +1,9 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_service_log.erl
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : Manage announce messages
+%%% Purpose : Copy user messages to logger service
 %%% Created : 24 Aug 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_service_log.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: mod_service_log.erl 507 2006-02-15 04:15:54Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_service_log).
@@ -34,14 +34,13 @@ stop(Host) ->
     ok.
 
 log_user_send(From, To, Packet) ->
-    log_packet(From, To, Packet).
+    log_packet(From, To, Packet, From#jid.lserver).
 
 log_user_receive(_JID, From, To, Packet) ->
-    log_packet(From, To, Packet).
+    log_packet(From, To, Packet, To#jid.lserver).
 
 
-log_packet(From, To, {xmlelement, Name, Attrs, Els}) ->
-    Host = From#jid.lserver,
+log_packet(From, To, {xmlelement, Name, Attrs, Els}, Host) ->
     Loggers = gen_mod:get_module_opt(Host, ?MODULE, loggers, []),
     ServerJID = #jid{user = "", server = Host, resource = "",
 		     luser = "", lserver = Host, lresource = ""},

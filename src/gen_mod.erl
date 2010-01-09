@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 24 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: gen_mod.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: gen_mod.erl 486 2006-01-19 02:17:31Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(gen_mod).
 -author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-vsn('$Revision: 486 $ ').
 
 -export([start/0,
 	 start_module/3,
@@ -19,7 +19,8 @@
 	 loaded_modules/1,
 	 loaded_modules_with_opts/1,
 	 get_hosts/2,
-	 get_module_proc/2]).
+	 get_module_proc/2,
+	 is_loaded/2]).
 
 -export([behaviour_info/1]).
 
@@ -143,4 +144,7 @@ get_hosts(Opts, Prefix) ->
 
 get_module_proc(Host, Base) ->
     list_to_atom(atom_to_list(Base) ++ "_" ++ Host).
+
+is_loaded(Host, Module) ->
+    ets:member(ejabberd_modules, {Module, Host}).
 

@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : jabber:iq:privacy support
 %%% Created : 21 Jul 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_privacy.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: mod_privacy.erl 520 2006-03-17 04:35:03Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_privacy).
 -author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-vsn('$Revision: 520 $ ').
 
 -behaviour(gen_mod).
 
@@ -362,7 +362,9 @@ process_list_set(LUser, LServer, {value, Name}, Els) ->
 		      jlib:make_jid(LUser, ?MYNAME, ""),
 		      jlib:make_jid(LUser, ?MYNAME, ""),
 		      {xmlelement, "broadcast", [],
-		       [{privacy_list, #userlist{name = Name, list = []}}]}),
+		       [{privacy_list,
+			 #userlist{name = Name, list = []},
+			 Name}]}),
 		    Res;
 		_ ->
 		    {error, ?ERR_INTERNAL_SERVER_ERROR}
@@ -391,7 +393,9 @@ process_list_set(LUser, LServer, {value, Name}, Els) ->
 		      jlib:make_jid(LUser, ?MYNAME, ""),
 		      jlib:make_jid(LUser, ?MYNAME, ""),
 		      {xmlelement, "broadcast", [],
-		       [{privacy_list, #userlist{name = Name, list = List}}]}),
+		       [{privacy_list,
+			 #userlist{name = Name, list = List},
+			 Name}]}),
 		    Res;
 		_ ->
 		    {error, ?ERR_INTERNAL_SERVER_ERROR}

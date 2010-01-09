@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_listener.erl 288 2004-12-03 22:54:02Z aleksey $
+%%% Id      : $Id: ejabberd_listener.erl 483 2006-01-13 01:55:20Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_listener).
 -author('alexey@sevcom.net').
--vsn('$Revision: 288 $ ').
+-vsn('$Revision: 483 $ ').
 
 -export([start_link/0, init/1, start/3,
 	 init/3,
@@ -99,6 +99,7 @@ accept(ListenSocket, Module, Opts) ->
 		{error, _Reason} ->
 		    gen_tcp:close(Socket)
 	    end,
+	    Module:become_controller(Pid),
 	    accept(ListenSocket, Module, Opts);
 	{error, Reason} ->
 	    ?INFO_MSG("(~w) Failed TCP accept: ~w",
@@ -146,6 +147,7 @@ accept_ssl(ListenSocket, Module, Opts) ->
 	    end,
 	    {ok, Pid} = Module:start({ssl, Socket}, Opts),
 	    catch ssl:controlling_process(Socket, Pid),
+	    Module:become_controller(Pid),
 	    accept_ssl(ListenSocket, Module, Opts);
 	{error, timeout} ->
 	    accept_ssl(ListenSocket, Module, Opts);

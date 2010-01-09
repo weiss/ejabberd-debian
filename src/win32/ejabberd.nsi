@@ -67,7 +67,7 @@
 
 Function .onInit
 
-    StrCpy $REQUIRED_ERLANG_VERSION "5.3.6.2"
+    StrCpy $REQUIRED_ERLANG_VERSION "5.4.9"
     StrCpy $REQUIRED_OPENSSL_VERSION "0.9.7c"
 
     ;Default installation folder
@@ -123,10 +123,10 @@ FunctionEnd
 
     !insertmacro MUI_PAGE_WELCOME
     !insertmacro MUI_PAGE_LICENSE "..\..\COPYING"
-    Page custom CheckUser LeaveCheckUser
-    Page custom CheckService LeaveCheckService
     Page custom CheckReqs LeaveCheckReqs
     Page custom CheckReqs1 LeaveCheckReqs1
+    Page custom CheckUser LeaveCheckUser
+    Page custom CheckService LeaveCheckService
     ;!insertmacro MUI_PAGE_COMPONENTS
     !insertmacro MUI_PAGE_DIRECTORY
 
@@ -179,7 +179,7 @@ SectionIn 1 RO
     CreateShortCut "$0\Start Ejabberd.lnk" "$ERLANG_PATH\bin\werl.exe" \
 	'-sname ejabberd -pa ebin \
 	-env EJABBERD_LOG_PATH log/ejabberd.log \
-	-s ejabberd -kernel inetrc \"inetrc\" -mnesia dir \"spool\" \
+	-s ejabberd -kernel inetrc \"./inetrc\" -mnesia dir \"spool\" \
 	-sasl sasl_error_logger {file,\"log/sasl.log\"}' \
 	$INSTDIR\win32\ejabberd.ico
     CreateShortCut "$0\Edit Config.lnk" "%SystemRoot%\system32\notepad.exe" \
@@ -213,7 +213,7 @@ SectionIn 1 RO
     nsExec::ExecToLog '"$ERLSRV" add ejabberd -stopaction "init:stop()." \
 	-onfail restart -workdir "$INSTDIR" \
 	-args "-s ejabberd -pa ebin \
-	-kernel inetrc \\\"inetrc\\\" \
+	-kernel inetrc \\\"./inetrc\\\" \
 	-env EJABBERD_LOG_PATH log/ejabberd.log \
 	-sasl sasl_error_logger {file,\\\"log/sasl.log\\\"} \
 	-mnesia dir \\\"spool\\\"" -d'

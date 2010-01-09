@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_sup.erl 307 2005-04-17 18:08:34Z tmallard $
+%%% Id      : $Id: ejabberd_sup.erl 495 2006-01-29 04:38:31Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_sup).
 -author('alexey@sevcom.net').
--vsn('$Revision: 307 $ ').
+-vsn('$Revision: 495 $ ').
 
 -behaviour(supervisor).
 
@@ -68,6 +68,14 @@ init([]) ->
 	 infinity,
 	 supervisor,
 	 [ejabberd_listener]},
+    ReceiverSupervisor =
+	{ejabberd_receiver_sup,
+	 {ejabberd_tmp_sup, start_link,
+	  [ejabberd_receiver_sup, ejabberd_receiver]},
+	 permanent,
+	 infinity,
+	 supervisor,
+	 [ejabberd_tmp_sup]},
     C2SSupervisor =
 	{ejabberd_c2s_sup,
 	 {ejabberd_tmp_sup, start_link, [ejabberd_c2s_sup, ejabberd_c2s]},
@@ -130,6 +138,7 @@ init([]) ->
 	   SM,
 	   S2S,
 	   Local,
+	   ReceiverSupervisor,
 	   C2SSupervisor,
 	   S2SInSupervisor,
 	   S2SOutSupervisor,

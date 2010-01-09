@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : ODBC connections supervisor
 %%% Created : 22 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_odbc_sup.erl 374 2005-07-13 03:24:13Z alexey $
+%%% Id      : $Id: ejabberd_odbc_sup.erl 485 2006-01-13 18:05:10Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_odbc_sup).
 -author('alexey@sevcom.net').
--vsn('$Revision: 374 $ ').
+-vsn('$Revision: 485 $ ').
 
 -export([start_link/1,
 	 init/1,
@@ -25,7 +25,7 @@ start_link(Host) ->
 init([Host]) ->
     % TODO
     N = 10,
-    {ok, {{one_for_one, 10, 1},
+    {ok, {{one_for_one, 10, 6},
 	  lists:map(
 	    fun(I) ->
 		    {I,

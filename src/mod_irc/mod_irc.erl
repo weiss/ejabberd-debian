@@ -3,18 +3,26 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : IRC transport
 %%% Created : 15 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_irc.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: mod_irc.erl 500 2006-02-06 05:12:54Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_irc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-vsn('$Revision: 500 $ ').
 
+-behaviour(gen_server).
 -behaviour(gen_mod).
 
--export([start/2, init/2, stop/1,
+%% API
+-export([start_link/2,
+	 start/2,
+	 stop/1,
 	 closed_connection/3,
 	 get_user_and_encoding/3]).
+
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -24,9 +32,51 @@
 -record(irc_connection, {jid_server_host, pid}).
 -record(irc_custom, {us_host, data}).
 
+-record(state, {host, server_host, access}).
+
 -define(PROCNAME, ejabberd_mod_irc).
 
+%%====================================================================
+%% API
+%%====================================================================
+%%--------------------------------------------------------------------
+%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Description: Starts the server
+%%--------------------------------------------------------------------
+start_link(Host, Opts) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
+
 start(Host, Opts) ->
+    start_supervisor(Host),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    ChildSpec =
+	{Proc,
+	 {?MODULE, start_link, [Host, Opts]},
+	 temporary,
+	 1000,
+	 worker,
+	 [?MODULE]},
+    supervisor:start_child(ejabberd_sup, ChildSpec).
+
+stop(Host) ->
+    stop_supervisor(Host),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:call(Proc, stop),
+    supervisor:delete_child(ejabberd_sup, Proc).
+
+%%====================================================================
+%% gen_server callbacks
+%%====================================================================
+
+%%--------------------------------------------------------------------
+%% Function: init(Args) -> {ok, State} |
+%%                         {ok, State, Timeout} |
+%%                         ignore               |
+%%                         {stop, Reason}
+%% Description: Initiates the server
+%%--------------------------------------------------------------------
+init([Host, Opts]) ->
     iconv:start(),
     mnesia:create_table(irc_custom,
 			[{disc_copies, [node()]},
@@ -34,38 +84,97 @@ start(Host, Opts) ->
     MyHost = gen_mod:get_opt(host, Opts, "irc." ++ Host),
     update_table(MyHost),
     Access = gen_mod:get_opt(access, Opts, all),
-    register(gen_mod:get_module_proc(Host, ?PROCNAME),
-	     spawn(?MODULE, init, [MyHost, Access])).
-
-init(Host, Access) ->
     catch ets:new(irc_connection, [named_table,
 				   public,
 				   {keypos, #irc_connection.jid_server_host}]),
-    ejabberd_router:register_route(Host),
-    loop(Host, Access).
+    ejabberd_router:register_route(MyHost),
+    {ok, #state{host = MyHost,
+		server_host = Host,
+		access = Access}}.
 
-loop(Host, Access) ->
-    receive
-	{route, From, To, Packet} ->
-	    case catch do_route(Host, Access, From, To, Packet) of
-		{'EXIT', Reason} ->
-		    ?ERROR_MSG("~p", [Reason]);
-		_ ->
-		    ok
-	    end,
-	    loop(Host, Access);
-	stop ->
-	    ejabberd_router:unregister_route(Host),
-	    ok;
+%%--------------------------------------------------------------------
+%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%%                                      {reply, Reply, State, Timeout} |
+%%                                      {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, Reply, State} |
+%%                                      {stop, Reason, State}
+%% Description: Handling call messages
+%%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, State}
+%% Description: Handling cast messages
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_info(Info, State) -> {noreply, State} |
+%%                                       {noreply, State, Timeout} |
+%%                                       {stop, Reason, State}
+%% Description: Handling all non call/cast messages
+%%--------------------------------------------------------------------
+handle_info({route, From, To, Packet},
+	    #state{host = Host,
+		   server_host = ServerHost,
+		   access = Access} = State) ->
+    case catch do_route(Host, ServerHost, Access, From, To, Packet) of
+	{'EXIT', Reason} ->
+	    ?ERROR_MSG("~p", [Reason]);
 	_ ->
-	    loop(Host, Access)
-    end.
+	    ok
+    end,
+    {noreply, State};
+handle_info(_Info, State) ->
+    {noreply, State}.
 
+%%--------------------------------------------------------------------
+%% Function: terminate(Reason, State) -> void()
+%% Description: This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any necessary
+%% cleaning up. When it returns, the gen_server terminates with Reason.
+%% The return value is ignored.
+%%--------------------------------------------------------------------
+terminate(_Reason, State) ->
+    ejabberd_router:unregister_route(State#state.host),
+    ok.
 
-do_route(Host, Access, From, To, Packet) ->
+%%--------------------------------------------------------------------
+%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% Description: Convert process state when code is changed
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%--------------------------------------------------------------------
+%%% Internal functions
+%%--------------------------------------------------------------------
+start_supervisor(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ejabberd_mod_irc_sup),
+    ChildSpec =
+	{Proc,
+	 {ejabberd_tmp_sup, start_link,
+	  [Proc, mod_irc_connection]},
+	 permanent,
+	 infinity,
+	 supervisor,
+	 [ejabberd_tmp_sup]},
+    supervisor:start_child(ejabberd_sup, ChildSpec).
+
+stop_supervisor(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ejabberd_mod_irc_sup),
+    supervisor:terminate_child(ejabberd_sup, Proc),
+    supervisor:delete_child(ejabberd_sup, Proc).
+
+do_route(Host, ServerHost, Access, From, To, Packet) ->
     case acl:match_rule(Host, Access, From) of
 	allow ->
-	    do_route1(Host, From, To, Packet);
+	    do_route1(Host, ServerHost, From, To, Packet);
 	_ ->
 	    {xmlelement, _Name, Attrs, _Els} = Packet,
 	    Lang = xml:get_attr_s("xml:lang", Attrs),
@@ -75,7 +184,7 @@ do_route(Host, Access, From, To, Packet) ->
 	    ejabberd_router:route(To, From, Err)
     end.
 
-do_route1(Host, From, To, Packet) ->
+do_route1(Host, ServerHost, From, To, Packet) ->
     #jid{user = ChanServ, resource = Resource} = To,
     {xmlelement, _Name, Attrs, _Els} = Packet,
     case ChanServ of
@@ -132,7 +241,7 @@ do_route1(Host, From, To, Packet) ->
 			    {Username, Encoding} = get_user_and_encoding(
 						     Host, From, Server),
 			    {ok, Pid} = mod_irc_connection:start(
-					  From, Host, Server,
+					  From, Host, ServerHost, Server,
 					  Username, Encoding),
 			    ets:insert(
 			      irc_connection,
@@ -174,12 +283,6 @@ do_route1(Host, From, To, Packet) ->
     end.
 
 
-stop(Host) ->
-    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
-    Proc ! stop,
-    {wait, Proc}.
-
-
 closed_connection(Host, From, Server) ->
     ets:delete(irc_connection, {From, Server, Host}).
 
@@ -204,7 +307,7 @@ iq_get_vcard(Lang) ->
         "http://ejabberd.jabberstudio.org/"}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(Lang, "ejabberd IRC module\n"
-        "Copyright (c) 2003-2005 Alexey Shchepin")}]}].
+        "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 process_register(Host, From, To, #iq{} = IQ) ->
     case catch process_irc_register(Host, From, To, IQ) of

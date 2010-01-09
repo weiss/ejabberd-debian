@@ -1,20 +1,22 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_s2s_in.erl
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
+%%% Purpose : Serve incoming s2s connection
 %%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_s2s_in.erl 435 2005-11-17 05:29:33Z alexey $
+%%% Id      : $Id: ejabberd_s2s_in.erl 537 2006-04-22 03:35:13Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_s2s_in).
 -author('alexey@sevcom.net').
--vsn('$Revision: 435 $ ').
+-vsn('$Revision: 537 $ ').
 
 -behaviour(gen_fsm).
 
 %% External exports
 -export([start/2,
-	 start_link/2,match_domain/2]).
+	 start_link/2,
+	 become_controller/1,
+	 match_domain/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -29,9 +31,8 @@
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
-%-include_lib("ssl/pkix/SSL-PKIX.hrl").
--include_lib("ssl/pkix/PKIX1Explicit88.hrl").
--include_lib("ssl/pkix/PKIX1Implicit88.hrl").
+-include_lib("ssl/include/PKIX1Explicit88.hrl").
+-include_lib("ssl/include/PKIX1Implicit88.hrl").
 -include("XmppAddr.hrl").
 
 -define(DICT, dict).
@@ -87,6 +88,9 @@ start(SockData, Opts) ->
 start_link(SockData, Opts) ->
     gen_fsm:start_link(ejabberd_s2s_in, [SockData, Opts], ?FSMOPTS).
 
+become_controller(Pid) ->
+    gen_fsm:send_all_state_event(Pid, become_controller).
+
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_fsm
 %%%----------------------------------------------------------------------
@@ -100,11 +104,17 @@ start_link(SockData, Opts) ->
 %%----------------------------------------------------------------------
 init([{SockMod, Socket}, Opts]) ->
     ?INFO_MSG("started: ~p", [{SockMod, Socket}]),
-    ReceiverPid = ejabberd_receiver:start(Socket, SockMod, none),
     Shaper = case lists:keysearch(shaper, 1, Opts) of
 		 {value, {_, S}} -> S;
 		 _ -> none
 	     end,
+    MaxStanzaSize =
+	case lists:keysearch(max_stanza_size, 1, Opts) of
+	    {value, {_, Size}} -> Size;
+	    _ -> infinity
+	end,
+    ReceiverPid = ejabberd_receiver:start(
+		    Socket, SockMod, none, MaxStanzaSize),
     StartTLS = case ejabberd_config:get_local_option(s2s_use_starttls) of
 		   undefined ->
 		       false;
@@ -342,7 +352,8 @@ stream_established({xmlstreamelement, El}, StateData) ->
 			  []}),
 	    {next_state, stream_established, StateData#state{timer = Timer}};
 	_ ->
-	    {xmlelement, Name, Attrs, _Els} = El,
+	    NewEl = jlib:remove_attr("xmlns", El),
+	    {xmlelement, Name, Attrs, _Els} = NewEl,
 	    From_s = xml:get_attr_s("from", Attrs),
 	    From = jlib:string_to_jid(From_s),
 	    To_s = xml:get_attr_s("to", Attrs),
@@ -362,7 +373,8 @@ stream_established({xmlstreamelement, El}, StateData) ->
 				    if ((Name == "iq") or
 					(Name == "message") or
 					(Name == "presence")) ->
-					    ejabberd_router:route(From, To, El);
+					    ejabberd_router:route(
+					      From, To, NewEl);
 				       true ->
 					    error
 				    end;
@@ -376,7 +388,8 @@ stream_established({xmlstreamelement, El}, StateData) ->
 				    if ((Name == "iq") or
 					(Name == "message") or
 					(Name == "presence")) ->
-					    ejabberd_router:route(From, To, El);
+					    ejabberd_router:route(
+					      From, To, NewEl);
 				       true ->
 					    error
 				    end;
@@ -455,6 +468,12 @@ stream_established(closed, StateData) ->
 %%          {next_state, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                         
 %%----------------------------------------------------------------------
+handle_event(become_controller, StateName, StateData) ->
+    ok = (StateData#state.sockmod):controlling_process(
+	   StateData#state.socket,
+	   StateData#state.receiver),
+    ejabberd_receiver:become_controller(StateData#state.receiver),
+    {next_state, StateName, StateData};
 handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
@@ -499,7 +518,7 @@ handle_info(_, StateName, StateData) ->
 %%----------------------------------------------------------------------
 terminate(Reason, _StateName, StateData) ->
     ?INFO_MSG("terminated: ~p", [Reason]),
-    (StateData#state.sockmod):close(StateData#state.socket),
+    ejabberd_receiver:close(StateData#state.receiver),
     ok.
 
 %%%----------------------------------------------------------------------

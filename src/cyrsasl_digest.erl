@@ -3,16 +3,16 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : DIGEST-MD5 SASL mechanism
 %%% Created : 11 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_digest.erl 405 2005-08-10 23:29:16Z alexey $
+%%% Id      : $Id: cyrsasl_digest.erl 527 2006-04-07 00:39:24Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_digest).
 -author('alexey@sevcom.net').
--vsn('$Revision: 405 $ ').
+-vsn('$Revision: 527 $ ').
 
 -export([start/1,
 	 stop/0,
-	 mech_new/2,
+	 mech_new/3,
 	 mech_step/2]).
 
 -behaviour(cyrsasl).
@@ -25,7 +25,7 @@ start(_Opts) ->
 stop() ->
     ok.
 
-mech_new(GetPassword, _CheckPassword) ->
+mech_new(_Host, GetPassword, _CheckPassword) ->
     {ok, #state{step = 1,
 		nonce = randoms:get_string(),
 		get_password = GetPassword}}.

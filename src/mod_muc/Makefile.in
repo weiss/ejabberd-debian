@@ -1,4 +1,4 @@
-# $Id: Makefile.in 285 2004-11-05 21:14:31Z aleksey $
+# $Id: Makefile.in 517 2006-03-14 04:26:15Z alexey $
 
 CC = @CC@ 
 CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
@@ -12,6 +12,7 @@ OUTDIR = ..
 EFLAGS = -I .. -pz ..
 OBJS   = \
 	$(OUTDIR)/mod_muc.beam \
+	$(OUTDIR)/mod_muc_log.beam \
 	$(OUTDIR)/mod_muc_room.beam
 
 all:    $(OBJS)

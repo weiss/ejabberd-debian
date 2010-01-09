@@ -3,22 +3,20 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Pub/sub support (JEP-0060)
 %%% Created :  4 Jul 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_pubsub.erl 378 2005-07-20 03:09:34Z alexey $
+%%% Id      : $Id: mod_pubsub.erl 529 2006-04-07 13:39:48Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_pubsub).
 -author('alexey@sevcom.net').
--vsn('$Revision: 378 $ ').
+-vsn('$Revision: 529 $ ').
 
+-behaviour(gen_server).
 -behaviour(gen_mod).
 
--export([start/2,
-	 init/4,
-	 loop/2,
-	 stop/1,
-	 system_continue/3,
-	 system_terminate/4,
-	 system_code_change/4]).
+%% API
+-export([start_link/2,
+	 start/2,
+	 stop/1]).
 
 -export([delete_item/3,
 	 set_entities/4,
@@ -28,8 +26,14 @@
 	 get_node_config/4,
 	 set_node_config/4]).
 
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
+
 -include("ejabberd.hrl").
 -include("jlib.hrl").
+
+-record(state, {host}).
 
 -define(DICT, dict).
 -define(MAXITEMS, 20).
@@ -45,60 +49,35 @@
 -record(item, {id, publisher, payload}).
 
 -define(PROCNAME, ejabberd_mod_pubsub).
-
-start(Host, Opts) ->
-    mnesia:create_table(pubsub_node,
-			[{disc_only_copies, [node()]},
-			 {attributes, record_info(fields, pubsub_node)}]),
-    MyHost = gen_mod:get_opt(host, Opts, "pubsub." ++ Host),
-    update_table(MyHost),
-    mnesia:add_table_index(pubsub_node, host_parent),
-    ServedHosts = gen_mod:get_opt(served_hosts, Opts, []),
-    register(gen_mod:get_module_proc(Host, ?PROCNAME),
-	     proc_lib:spawn_link(?MODULE, init,
-				 [MyHost, Host, ServedHosts, self()])).
-
-
 -define(MYJID, #jid{user = "", server = Host, resource = "",
 		    luser = "", lserver = Host, lresource = ""}).
 
-init(Host, ServerHost, ServedHosts, Parent) ->
-    ejabberd_router:register_route(Host),
-    create_new_node(Host, ["pubsub"], ?MYJID),
-    create_new_node(Host, ["pubsub", "nodes"], ?MYJID),
-    create_new_node(Host, ["home"], ?MYJID),
-    create_new_node(Host, ["home", ServerHost], ?MYJID),
-    lists:foreach(fun(H) ->
-			  create_new_node(Host, ["home", H], ?MYJID)
-		  end, ServedHosts),
-    ets:new(gen_mod:get_module_proc(Host, pubsub_presence), [set, named_table]),
-    loop(Host, Parent).
+%%====================================================================
+%% API
+%%====================================================================
+%%--------------------------------------------------------------------
+%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Description: Starts the server
+%%--------------------------------------------------------------------
+start_link(Host, Opts) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
 
-loop(Host, Parent) ->
-    receive
-	{route, From, To, Packet} ->
-	    case catch do_route(To#jid.lserver, From, To, Packet) of
-		{'EXIT', Reason} ->
-		    ?ERROR_MSG("~p", [Reason]);
-		_ ->
-		    ok
-	    end,
-	    loop(Host, Parent);
-	{room_destroyed, Room} ->
-	    ets:delete(muc_online_room, Room),
-	    loop(Host, Parent);
-	stop ->
-	    ejabberd_router:unregister_route(Host),
-	    ok;
-	reload ->
-	    ?MODULE:loop(Host, Parent);
-        {system, From, Request} ->
-            sys:handle_system_msg(Request, From, Parent, ?MODULE, [], Host);
-	_ ->
-	    loop(Host, Parent)
-    end.
+start(Host, Opts) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    ChildSpec =
+	{Proc,
+	 {?MODULE, start_link, [Host, Opts]},
+	 temporary,
+	 1000,
+	 worker,
+	 [?MODULE]},
+    supervisor:start_child(ejabberd_sup, ChildSpec).
 
-%%% API functions
+stop(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:call(Proc, stop),
+    supervisor:stop_child(ejabberd_sup, Proc).
 
 delete_item(From, Node, ItemID) ->
     delete_item(get_host(), From, Node, ItemID).
@@ -124,8 +103,97 @@ get_host() ->
 	    timeout
     end.
 
-%%% Internal functions
+%%====================================================================
+%% gen_server callbacks
+%%====================================================================
 
+%%--------------------------------------------------------------------
+%% Function: init(Args) -> {ok, State} |
+%%                         {ok, State, Timeout} |
+%%                         ignore               |
+%%                         {stop, Reason}
+%% Description: Initiates the server
+%%--------------------------------------------------------------------
+init([ServerHost, Opts]) ->
+    mnesia:create_table(pubsub_node,
+			[{disc_only_copies, [node()]},
+			 {attributes, record_info(fields, pubsub_node)}]),
+    Host = gen_mod:get_opt(host, Opts, "pubsub." ++ ServerHost),
+    update_table(Host),
+    mnesia:add_table_index(pubsub_node, host_parent),
+    ServedHosts = gen_mod:get_opt(served_hosts, Opts, []),
+
+    ejabberd_router:register_route(Host),
+    create_new_node(Host, ["pubsub"], ?MYJID),
+    create_new_node(Host, ["pubsub", "nodes"], ?MYJID),
+    create_new_node(Host, ["home"], ?MYJID),
+    create_new_node(Host, ["home", ServerHost], ?MYJID),
+    lists:foreach(fun(H) ->
+			  create_new_node(Host, ["home", H], ?MYJID)
+		  end, ServedHosts),
+    ets:new(gen_mod:get_module_proc(Host, pubsub_presence),
+	    [set, named_table]),
+    {ok, #state{host = Host}}.
+
+%%--------------------------------------------------------------------
+%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%%                                      {reply, Reply, State, Timeout} |
+%%                                      {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, Reply, State} |
+%%                                      {stop, Reason, State}
+%% Description: Handling call messages
+%%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, State}
+%% Description: Handling cast messages
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_info(Info, State) -> {noreply, State} |
+%%                                       {noreply, State, Timeout} |
+%%                                       {stop, Reason, State}
+%% Description: Handling all non call/cast messages
+%%--------------------------------------------------------------------
+handle_info({route, From, To, Packet}, State) ->
+    case catch do_route(To#jid.lserver, From, To, Packet) of
+	{'EXIT', Reason} ->
+	    ?ERROR_MSG("~p", [Reason]);
+	_ ->
+	    ok
+    end,
+    {noreply, State};
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% Function: terminate(Reason, State) -> void()
+%% Description: This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any necessary
+%% cleaning up. When it returns, the gen_server terminates with Reason.
+%% The return value is ignored.
+%%--------------------------------------------------------------------
+terminate(_Reason, State) ->
+    ejabberd_router:unregister_route(State#state.host),
+    ok.
+
+%%--------------------------------------------------------------------
+%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% Description: Convert process state when code is changed
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%--------------------------------------------------------------------
+%%% Internal functions
+%%--------------------------------------------------------------------
 do_route(Host, From, To, Packet) ->
     {xmlelement, Name, Attrs, Els} = Packet,
     case To of
@@ -236,14 +304,6 @@ do_route(Host, From, To, Packet) ->
 
 
 
-
-stop(Host) ->
-    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
-    Proc ! stop,
-    {wait, Proc}.
-
-
-
 node_to_string(Node) ->
     string:strip(lists:flatten(lists:map(fun(S) -> [S, "/"] end, Node)),
 		 right, $/).
@@ -334,7 +394,7 @@ iq_get_vcard(Lang) ->
       [{xmlcdata, translate:translate(
 		    Lang,
 		    "ejabberd pub/sub module\n"
-		    "Copyright (c) 2003-2005 Alexey Shchepin")}]}].
+		    "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 
 iq_pubsub(Host, From, Type, SubEl) ->
@@ -1258,18 +1318,6 @@ broadcast_config_notification(Host, Node, Lang) ->
 	_ ->
 	    false
     end.
-
-
-
-system_continue(Parent, _, State) ->
-    loop(State, Parent).
-
-system_terminate(Reason, Parent, _, State) ->
-    exit(Reason).
-
-system_code_change(State, _Mod, Ver, _Extra) ->
-    {ok, State}.
-
 
 
 

@@ -14,9 +14,14 @@ AM_WITH_ERLANG
 AM_ICONV
 #locating libexpat
 AM_WITH_EXPAT
+#locating zlib
+AM_WITH_ZLIB
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+
+# Change default prefix
+AC_PREFIX_DEFAULT /
 
 # Checks for library functions.
 AC_FUNC_MALLOC
@@ -29,6 +34,7 @@ AC_MOD_ENABLE(eldap, yes)
 AC_MOD_ENABLE(web, yes)
 AC_MOD_ENABLE(tls, yes)
 AC_MOD_ENABLE(odbc, no)
+AC_MOD_ENABLE(ejabberd_zlib, yes)
 
 AC_ARG_ENABLE(roster_gateway_workaround,
 [  --enable-roster-gateway-workaround    Turn on workaround for processing gateway subscriptions],
@@ -47,7 +53,8 @@ AC_CONFIG_FILES([Makefile
                  $make_web
                  stringprep/Makefile
                  $make_tls
-                 $make_odbc])
+                 $make_odbc
+                 $make_ejabberd_zlib])
 #openssl
 AM_WITH_OPENSSL
 AC_OUTPUT

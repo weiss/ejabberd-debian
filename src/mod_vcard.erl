@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created :  2 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_vcard.erl 437 2005-11-19 01:20:05Z alexey $
+%%% Id      : $Id: mod_vcard.erl 508 2006-02-18 19:56:16Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_vcard).
 -author('alexey@sevcom.net').
--vsn('$Revision: 437 $ ').
+-vsn('$Revision: 508 $ ').
 
 -behaviour(gen_mod).
 
@@ -147,7 +147,7 @@ process_local_iq(_From, _To, #iq{type = Type, lang = Lang, sub_el = SubEl} = IQ)
 				 translate:translate(
 				   Lang,
 				   "Erlang Jabber Server\n"
-				   "Copyright (c) 2002-2005 Alexey Shchepin")}]},
+				   "Copyright (c) 2002-2006 Alexey Shchepin")}]},
 			      {xmlelement, "BDAY", [],
 			       [{xmlcdata, "2002-11-16"}]}
 			     ]}]}
@@ -281,7 +281,7 @@ set_vcard(User, LServer, VCARD) ->
 	   ?TLFIELD("text-single", "Birthday", "bday"),
 	   ?TLFIELD("text-single", "Country", "ctry"),
 	   ?TLFIELD("text-single", "City", "locality"),
-	   ?TLFIELD("text-single", "email", "email"),
+	   ?TLFIELD("text-single", "Email", "email"),
 	   ?TLFIELD("text-single", "Organization Name", "orgname"),
 	   ?TLFIELD("text-single", "Organization Unit", "orgunit")
 	  ]}]).
@@ -416,7 +416,7 @@ iq_get_vcard(Lang) ->
       [{xmlcdata, translate:translate(
 		    Lang,
 		    "ejabberd vCard module\n"
-		    "Copyright (c) 2003-2005 Alexey Shchepin")}]}].
+		    "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 find_xdata_el({xmlelement, _Name, _Attrs, SubEls}) ->
     find_xdata_el1(SubEls).
@@ -439,10 +439,10 @@ find_xdata_el1([_ | Els]) ->
 
 search_result(Lang, JID, ServerHost, Data) ->
     [{xmlelement, "title", [],
-      [{xmlcdata, translate:translate(Lang, "Results of search in ") ++
+      [{xmlcdata, translate:translate(Lang, "Search Results for ") ++
 	jlib:jid_to_string(JID)}]},
      {xmlelement, "reported", [],
-      [?LFIELD("JID", "jid"),
+      [?LFIELD("Jabber ID", "jid"),
        ?LFIELD("Full Name", "fn"),
        ?LFIELD("Name", "given"),
        ?LFIELD("Middle Name", "middle"),
@@ -451,7 +451,7 @@ search_result(Lang, JID, ServerHost, Data) ->
        ?LFIELD("Birthday", "bday"),
        ?LFIELD("Country", "ctry"),
        ?LFIELD("City", "locality"),
-       ?LFIELD("email", "email"),
+       ?LFIELD("Email", "email"),
        ?LFIELD("Organization Name", "orgname"),
        ?LFIELD("Organization Unit", "orgunit")
       ]}] ++ lists:map(fun record_to_item/1, search(ServerHost, Data)).

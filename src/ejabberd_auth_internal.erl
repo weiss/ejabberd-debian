@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Authentification via mnesia
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_internal.erl 374 2005-07-13 03:24:13Z alexey $
+%%% Id      : $Id: ejabberd_auth_internal.erl 510 2006-02-20 04:07:42Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_internal).
 -author('alexey@sevcom.net').
--vsn('$Revision: 374 $ ').
+-vsn('$Revision: 510 $ ').
 
 %% External exports
 -export([start/1,
@@ -33,10 +33,14 @@
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
-start(_Host) ->
+start(Host) ->
     mnesia:create_table(passwd, [{disc_copies, [node()]},
 				 {attributes, record_info(fields, passwd)}]),
     update_table(),
+    ejabberd_ctl:register_commands(
+      Host,
+      [{"registered-users", "list all registered users"}],
+      ejabberd_auth, ctl_process_get_registered),
     ok.
 
 plain_password_required() ->

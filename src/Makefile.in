@@ -1,4 +1,4 @@
-# $Id: Makefile.in 459 2005-12-11 19:48:31Z alexey $
+# $Id: Makefile.in 524 2006-04-01 16:05:20Z mremond $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -17,26 +17,30 @@ ifdef debug
   ERLC_FLAGS+=+debug_info
 endif
 
+ifdef ejabberd_debug
+  ERLC_FLAGS+=-Dejabberd_debug
+endif
+
 ifeq (@roster_gateway_workaround@, true)
   ERLC_FLAGS+=-DROSTER_GATEWAY_WORKAROUND
 endif
 
 prefix = @prefix@
 
-SUBDIRS = @mod_irc@ @mod_pubsub@ @mod_muc@ @eldap@ @web@ stringprep @tls@ @odbc@
+SUBDIRS = @mod_irc@ @mod_pubsub@ @mod_muc@ @eldap@ @web@ stringprep @tls@ @odbc@ @ejabberd_zlib@
 ERLSHLIBS = expat_erl.so
 SOURCES = $(wildcard *.erl)
 BEAMS = $(SOURCES:.erl=.beam)
 
-DESTDIR =
+DESTDIR = 
 
-EJABBERDDIR = $(DESTDIR)/var/lib/ejabberd
+EJABBERDDIR = $(DESTDIR)@prefix@/var/lib/ejabberd
 BEAMDIR = $(EJABBERDDIR)/ebin
 PRIVDIR = $(EJABBERDDIR)/priv
 SODIR = $(PRIVDIR)/lib
 MSGSDIR = $(PRIVDIR)/msgs
-LOGDIR = $(DESTDIR)/var/log/ejabberd
-ETCDIR = $(DESTDIR)/etc/ejabberd
+LOGDIR = $(DESTDIR)@prefix@/var/log/ejabberd
+ETCDIR = $(DESTDIR)@prefix@/etc/ejabberd
 
 ASN_FLAGS = -bber_bin +der +compact_bit_string +optimize +noobj
 
@@ -84,7 +88,8 @@ install: all
 clean: clean-recursive clean-local
 
 clean-local:
-	rm -f *.beam $(ERLSHLIBS) XmppAddr.{asn1db,erl,hrl}
+	rm -f *.beam $(ERLSHLIBS)
+	rm -f XmppAddr.asn1db XmppAddr.erl XmppAddr.hrl
 
 distclean: distclean-recursive clean-local
 	rm -f config.status

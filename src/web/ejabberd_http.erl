@@ -3,16 +3,17 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 27 Feb 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_http.erl 444 2005-11-26 18:56:39Z alexey $
+%%% Id      : $Id: ejabberd_http.erl 498 2006-02-03 03:28:15Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_http).
 -author('alexey@sevcom.net').
--vsn('$Revision: 444 $ ').
+-vsn('$Revision: 498 $  ').
 
 %% External exports
 -export([start/2,
 	 start_link/2,
+	 become_controller/1,
 	 receive_headers/1,
 	 url_encode/1]).
 
@@ -80,6 +81,9 @@ start_link({SockMod, Socket}, Opts) ->
 				     use_http_poll = UseHTTPPoll,
 				     use_web_admin = UseWebAdmin}])}.
 
+
+become_controller(_Pid) ->
+    ok.
 
 send_text(State, Text) ->
     (State#state.sockmod):send(State#state.socket, Text).
@@ -197,60 +201,34 @@ process_request(#state{request_method = 'GET',
 		       request_lang = Lang,
 		       use_http_poll = UseHTTPPoll,
 		       use_web_admin = UseWebAdmin} = State) ->
-    US = case Auth of
-	     {SJID, P} ->
-		 case jlib:string_to_jid(SJID) of
-		     error ->
-			 unauthorized;
-		     #jid{user = U, server = S} ->
-			 case ejabberd_auth:check_password(U, S, P) of
-			     true ->
-				 {U, S};
-			     false ->
-				 unauthorized
-			 end
-		 end;
-	     _ ->
-		 undefined
-	 end,
-    case US of
-	unauthorized ->
-	    make_xhtml_output(
-	      State, 
-	      401,
-	      [{"WWW-Authenticate", "basic realm=\"ejabberd\""}],
-	      ejabberd_web:make_xhtml([{xmlelement, "h1", [],
-					[{xmlcdata, "401 Unauthorized"}]}]));
-	_ ->
-	    case (catch url_decode_q_split(Path)) of
-		{'EXIT', _} ->
-		    process_request(false);
-		{NPath, Query} ->
-		    LQuery = case (catch parse_urlencoded(Query)) of
-				 {'EXIT', _Reason} ->
-				     [];
-				 LQ ->
-				     LQ
-			     end,
-		    LPath = string:tokens(NPath, "/"),
-		    Request = #request{method = 'GET',
-				       path = LPath,
-				       q = LQuery,
-				       us = US,
-				       lang = Lang},
-		    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
-						  Request) of
-			El when element(1, El) == xmlelement ->
-			    make_xhtml_output(State, 200, [], El);
-			{Status, Headers, El} when
-			      element(1, El) == xmlelement ->
-			    make_xhtml_output(State, Status, Headers, El);
-			Text when is_list(Text) ->
-			    make_text_output(State, 200, [], Text);
-			{Status, Headers, Text} when
-			      is_list(Text) ->
-			    make_text_output(State, Status, Headers, Text)
-		    end
+    case (catch url_decode_q_split(Path)) of
+	{'EXIT', _} ->
+	    process_request(false);
+	{NPath, Query} ->
+	    LQuery = case (catch parse_urlencoded(Query)) of
+			 {'EXIT', _Reason} ->
+			     [];
+			 LQ ->
+			     LQ
+		     end,
+	    LPath = string:tokens(NPath, "/"),
+	    Request = #request{method = 'GET',
+			       path = LPath,
+			       q = LQuery,
+			       auth = Auth,
+			       lang = Lang},
+	    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
+					  Request) of
+		El when element(1, El) == xmlelement ->
+		    make_xhtml_output(State, 200, [], El);
+		{Status, Headers, El} when
+		element(1, El) == xmlelement ->
+		    make_xhtml_output(State, Status, Headers, El);
+		Text when is_list(Text) ->
+		    make_text_output(State, 200, [], Text);
+		{Status, Headers, Text} when
+		is_list(Text) ->
+		    make_text_output(State, Status, Headers, Text)
 	    end
     end;
 
@@ -264,68 +242,42 @@ process_request(#state{request_method = 'POST',
 		       use_http_poll = UseHTTPPoll,
 		       use_web_admin = UseWebAdmin} = State)
   when is_integer(Len) ->
-    US = case Auth of
-	     {SJID, P} ->
-		 case jlib:string_to_jid(SJID) of
-		     error ->
-			 unauthorized;
-		     #jid{user = U, server = S} ->
-			 case ejabberd_auth:check_password(U, S, P) of
-			     true ->
-				 {U, S};
-			     false ->
-				 unauthorized
-			 end
-		 end;
-	     _ ->
-		 undefined
-	 end,
-    case US of
-	unauthorized ->
-	    make_xhtml_output(
-	      State, 
-	      401,
-	      [{"WWW-Authenticate", "basic realm=\"ejabberd\""}],
-	      ejabberd_web:make_xhtml([{xmlelement, "h1", [],
-					[{xmlcdata, "401 Unauthorized"}]}]));
+    case SockMod of
+	gen_tcp ->
+	    inet:setopts(Socket, [{packet, 0}]);
 	_ ->
-    	    case SockMod of
-		gen_tcp ->
-		    inet:setopts(Socket, [{packet, 0}]);
-		_ ->
-		    ok
-	    end,
-	    Data = recv_data(State, Len),
-	    ?DEBUG("client data: ~p~n", [Data]),
-	    case (catch url_decode_q_split(Path)) of
-		{'EXIT', _} ->
-		    process_request(false);
-		{NPath, Query} ->
-		    LPath = string:tokens(NPath, "/"),
-		    LQuery = case (catch parse_urlencoded(Data)) of
-				 {'EXIT', _Reason} ->
-				     [];
-				 LQ ->
-				     LQ
-			     end,
-		    Request = #request{method = 'POST',
-				       path = LPath,
-				       q = LQuery,
-				       us = US,
-				       data = Data,
-				       lang = Lang},
-		    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
-						  Request) of
-			El when element(1, El) == xmlelement ->
-			    make_xhtml_output(State, 200, [], El);
-			{Status, Headers, El} when
-			      element(1, El) == xmlelement ->
-			    make_xhtml_output(State, Status, Headers, El);
-			Text when is_list(Text) ->
-			    make_text_output(State, 200, [], Text);
-			{Status, Headers, Text} when is_list(Text) ->
-			    make_text_output(State, Status, Headers, Text)
-		    end
+	    ok
+    end,
+    Data = recv_data(State, Len),
+    ?DEBUG("client data: ~p~n", [Data]),
+    case (catch url_decode_q_split(Path)) of
+	{'EXIT', _} ->
+	    process_request(false);
+	{NPath, Query} ->
+	    LPath = string:tokens(NPath, "/"),
+	    LQuery = case (catch parse_urlencoded(Data)) of
+			 {'EXIT', _Reason} ->
+			     [];
+			 LQ ->
+			     LQ
+		     end,
+	    Request = #request{method = 'POST',
+			       path = LPath,
+			       q = LQuery,
+			       auth = Auth,
+			       data = Data,
+			       lang = Lang},
+	    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
+					  Request) of
+		El when element(1, El) == xmlelement ->
+		    make_xhtml_output(State, 200, [], El);
+		{Status, Headers, El} when
+		element(1, El) == xmlelement ->
+		    make_xhtml_output(State, Status, Headers, El);
+		Text when is_list(Text) ->
+		    make_text_output(State, 200, [], Text);
+		{Status, Headers, Text} when is_list(Text) ->
+		    make_text_output(State, Status, Headers, Text)
 	    end
     end;
 
