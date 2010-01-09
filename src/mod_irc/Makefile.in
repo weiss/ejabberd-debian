@@ -1,0 +1,41 @@
+# $Id: Makefile.in 285 2004-11-05 21:14:31Z aleksey $
+
+CC = @CC@
+CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@ @ERLANG_LIBS@ @LIBICONV@
+
+SUBDIRS = 
+
+ERLSHLIBS = ../iconv_erl.so
+
+OUTDIR = ..
+EFLAGS = -I .. -pz ..
+OBJS   = \
+	$(OUTDIR)/mod_irc.beam \
+	$(OUTDIR)/mod_irc_connection.beam \
+	$(OUTDIR)/iconv.beam
+
+all:    $(OBJS) $(ERLSHLIBS)
+
+$(OUTDIR)/%.beam:       %.erl
+	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
+
+#all:	$(ERLSHLIBS)
+#	erl -s make all report "{outdir, \"..\"}" -noinput -s erlang halt
+
+$(ERLSHLIBS):	../%.so:	%.c
+			$(CC) -Wall $(INCLUDES) $(CFLAGS) $(LDFLAGS) \
+			$(subst ../,,$(subst .so,.c,$@)) $(LIBS) \
+			-o $@ -fpic -shared
+
+clean:
+	rm -f $(OBJS) $(ERLSHLIBS)
+
+distclean: clean
+	rm -f Makefile
+
+TAGS:
+	etags *.erl
+
