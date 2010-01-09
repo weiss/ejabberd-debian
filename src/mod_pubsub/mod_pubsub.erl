@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Pub/sub support (JEP-0060)
 %%% Created :  4 Jul 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_pubsub.erl 529 2006-04-07 13:39:48Z mremond $
+%%% Id      : $Id: mod_pubsub.erl 620 2006-09-22 17:01:16Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_pubsub).
 -author('alexey@sevcom.net').
--vsn('$Revision: 529 $ ').
+-vsn('$Revision: 620 $ ').
 
 -behaviour(gen_server).
 -behaviour(gen_mod).
@@ -33,7 +33,7 @@
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 
--record(state, {host}).
+-record(state, {host, server_host, access}).
 
 -define(DICT, dict).
 -define(MAXITEMS, 20).
@@ -122,6 +122,7 @@ init([ServerHost, Opts]) ->
     update_table(Host),
     mnesia:add_table_index(pubsub_node, host_parent),
     ServedHosts = gen_mod:get_opt(served_hosts, Opts, []),
+    Access = gen_mod:get_opt(access_createnode, Opts, all),
 
     ejabberd_router:register_route(Host),
     create_new_node(Host, ["pubsub"], ?MYJID),
@@ -133,7 +134,7 @@ init([ServerHost, Opts]) ->
 		  end, ServedHosts),
     ets:new(gen_mod:get_module_proc(Host, pubsub_presence),
 	    [set, named_table]),
-    {ok, #state{host = Host}}.
+    {ok, #state{host = Host, server_host = ServerHost, access = Access}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -162,8 +163,9 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
-handle_info({route, From, To, Packet}, State) ->
-    case catch do_route(To#jid.lserver, From, To, Packet) of
+handle_info({route, From, To, Packet}, 
+#state{server_host = ServerHost, access = Access} = State) ->
+    case catch do_route(To#jid.lserver, ServerHost, Access, From, To, Packet) of
 	{'EXIT', Reason} ->
 	    ?ERROR_MSG("~p", [Reason]);
 	_ ->
@@ -194,7 +196,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-do_route(Host, From, To, Packet) ->
+do_route(Host, ServerHost, Access, From, To, Packet) ->
     {xmlelement, Name, Attrs, Els} = Packet,
     case To of
 	#jid{luser = "", lresource = ""} ->
@@ -232,7 +234,7 @@ do_route(Host, From, To, Packet) ->
 			#iq{type = Type, xmlns = ?NS_PUBSUB = XMLNS,
 			    sub_el = SubEl} = IQ ->
 			    Res =
-				case iq_pubsub(Host, From, Type, SubEl) of
+				case iq_pubsub(Host, ServerHost, From, Type, SubEl, Access) of
 				    {result, IQRes} ->
 					jlib:iq_to_xml(
 					  IQ#iq{type = result,
@@ -316,7 +318,7 @@ iq_disco_info(SNode) ->
 	    [{xmlelement, "identity",
 	      [{"category", "pubsub"},
 	       {"type", "generic"},
-	       {"name", "ejabberd/mod_pubsub"}], []},
+	       {"name", "Publish-Subscribe"}], []},
 	     {xmlelement, "feature", [{"var", ?NS_PUBSUB}], []},
 	     {xmlelement, "feature", [{"var", ?NS_PUBSUB_EVENT}], []},
 	     {xmlelement, "feature", [{"var", ?NS_PUBSUB_OWNER}], []},
@@ -326,32 +328,50 @@ iq_disco_info(SNode) ->
 	    []
     end.
 
-
 iq_disco_items(Host, From, SNode) ->
-    Node = string:tokens(SNode, "/"),
+	{Node,ItemID} = case SNode of
+	[] ->
+		{[],none};
+	_ ->
+		Tokens = string:tokens(SNode, "!"),
+		NodeList = string:tokens(lists:nth(1, Tokens), "/"),
+		ItemName = case length(Tokens) of
+		2 -> lists:nth(2, Tokens);
+		_ -> none
+		end,
+		{NodeList, ItemName}
+	end,
+	NodeFull = string:tokens(SNode,"/"),
     F = fun() ->
 		case mnesia:read({pubsub_node, {Host, Node}}) of
 		    [#pubsub_node{info = Info}] ->
-			SubNodes = mnesia:index_read(pubsub_node,
+			case ItemID of
+			none ->
+				SubNodes = mnesia:index_read(pubsub_node,
 						     {Host, Node},
 						     #pubsub_node.host_parent),
-			SubItems =
-			    lists:map(fun(#pubsub_node{host_node = {_, N}}) ->
+				SubItems = lists:map(fun(#pubsub_node{host_node = {_, N}}) ->
 					      SN = node_to_string(N),
 					      {xmlelement, "item",
 					       [{"jid", Host},
 						{"node", SN},
 						{"name", lists:last(N)}], []}
 				      end, SubNodes),
-			SN = node_to_string(Node),
-			Items =
-			    lists:map(fun(#item{id = Name}) ->
+				SN = node_to_string(Node),
+				Items = lists:map(fun(#item{id = Name}) ->
+						RealName = case Name of
+						[] -> "item";
+						_ -> Name
+						end,
 					      {xmlelement, "item",
 					       [{"jid", Host},
 						{"node", SN ++ "!" ++ Name},
-						{"name", Name}], []}
+						{"name", RealName}], []}
 				      end, Info#nodeinfo.items),
-			SubItems ++ Items;
+				SubItems ++ Items;
+			_ ->
+				[]
+			end;
 		    [] ->
 			case Node of
 			    [] ->
@@ -382,8 +402,6 @@ iq_disco_items(Host, From, SNode) ->
 	    {error, ?ERR_INTERNAL_SERVER_ERROR}
     end.
 
-
-
 iq_get_vcard(Lang) ->
     [{xmlelement, "FN", [],
       [{xmlcdata, "ejabberd/mod_pubsub"}]},
@@ -397,7 +415,7 @@ iq_get_vcard(Lang) ->
 		    "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 
-iq_pubsub(Host, From, Type, SubEl) ->
+iq_pubsub(Host, ServerHost, From, Type, SubEl, Access) ->
     {xmlelement, _, _, SubEls} = SubEl,
     case xml:remove_cdata(SubEls) of
 	[{xmlelement, Name, Attrs, Els}] ->
@@ -405,7 +423,7 @@ iq_pubsub(Host, From, Type, SubEl) ->
 	    Node = string:tokens(SNode, "/"),
 	    case {Type, Name} of
 		{set, "create"} ->
-		    create_new_node(Host, Node, From);
+		    create_new_node(Host, Node, From, ServerHost, Access);
 		{set, "publish"} ->
 		    case xml:remove_cdata(Els) of
 			[{xmlelement, "item", ItemAttrs, Payload}] ->
@@ -484,13 +502,17 @@ iq_pubsub(Host, From, Type, SubEl) ->
 %% Create new pubsub nodes
 %% This function is used during init to create the first bootstrap nodes
 create_new_node(Host, Node, Owner) ->
+    %% This is the case use during "bootstrapping to create the initial
+    %% hierarchy. Should always be ... undefined,all
+    create_new_node(Host, Node, Owner, undefined, all).
+create_new_node(Host, Node, Owner, ServerHost, Access) ->
     case Node of
 	[] ->
 	    {LOU, LOS, _} = jlib:jid_tolower(Owner),
 	    HomeNode = ["home", LOS, LOU],
-	    create_new_node(Host, HomeNode, Owner),
+	    create_new_node(Host, HomeNode, Owner, ServerHost, Access),
 	    NewNode = ["home", LOS, LOU, randoms:get_string()],
-	    create_new_node(Host, NewNode, Owner);
+	    create_new_node(Host, NewNode, Owner, ServerHost, Access);
 	_ ->
 	    LOwner = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
 	    Parent = lists:sublist(Node, length(Node) - 1),
@@ -525,7 +547,7 @@ create_new_node(Host, Node, Owner) ->
 				end
 			end
 		end,
-	    case check_create_permission(Host, Node, Owner) of
+	    case check_create_permission(Host, Node, Owner, ServerHost, Access) of
 		true ->
 		    case mnesia:transaction(F) of
 			{atomic, ok} ->
@@ -1052,14 +1074,23 @@ subscription_to_string(Subscription) ->
     end.
 
 
-check_create_permission(Host, Node, Owner) ->
-    if
-	Owner#jid.lserver == Host ->
-	    true;
-	true ->
-	    #jid{luser = User, lserver = Server} = Owner,
-	    case Node of
-		["home", Server, User | _] ->
+check_create_permission(Host, Node, Owner, ServerHost, Access) ->
+	#jid{luser = User, lserver = Server, lresource = Resource} = Owner,
+    case acl:match_rule(ServerHost, Access, {User, Server, Resource}) of
+    allow ->
+    	if Server == Host ->
+	    	true;
+		true ->
+	    	case Node of
+			["home", Server, User | _] ->
+		    	true;
+			_ ->
+			    false
+		    end
+	    end;
+	_ ->
+	    case Owner of
+		?MYJID ->
 		    true;
 		_ ->
 		    false

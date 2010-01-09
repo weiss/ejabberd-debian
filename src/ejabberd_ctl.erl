@@ -3,11 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Ejabberd admin tool
 %%% Created : 11 Jan 2004 by Alexey Shchepin <alex@alex.sevcom.net>
-%%% Id      : $Id: ejabberd_ctl.erl 554 2006-04-26 22:28:05Z mremond $
+%%% Id      : $Id: ejabberd_ctl.erl 565 2006-05-07 21:26:06Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_ctl).
 -author('alexey@sevcom.net').
+-vsn('$Revision: 565 $ ').
 
 -export([start/0,
 	 init/0,
@@ -18,6 +19,7 @@
 	 unregister_commands/4]).
 
 -include("ejabberd_ctl.hrl").
+-include("ejabberd.hrl").
 
 start() ->
     case init:get_plain_arguments() of
@@ -122,12 +124,20 @@ process(["load", Path]) ->
     end;
 
 process(["restore", Path]) ->
-    case mnesia:restore(Path, [{default_op, keep_tables}]) of
+    case ejabberd_admin:restore(Path) of 
 	{atomic, _} ->
 	    ?STATUS_SUCCESS;
 	{error, Reason} ->
 	    io:format("Can't restore backup from ~p at node ~p: ~p~n",
 		      [filename:absname(Path), node(), Reason]),
+	    ?STATUS_ERROR;
+	{aborted,{no_exists,Table}} ->
+	    io:format("Can't restore backup from ~p at node ~p: Table ~p does not exist.~n",
+		      [filename:absname(Path), node(), Table]),
+	    ?STATUS_ERROR;
+	{aborted,enoent} ->
+	    io:format("Can't restore backup from ~p at node ~p: File not found.~n",
+		      [filename:absname(Path), node()]),
 	    ?STATUS_ERROR
     end;
 
@@ -164,6 +174,21 @@ process(["import-dir", Path]) ->
 process(["delete-expired-messages"]) ->
     mod_offline:remove_expired_messages(),
     ?STATUS_SUCCESS;
+
+process(["delete-old-messages", Days]) ->
+    case catch list_to_integer(Days) of
+	{'EXIT',{Reason, _Stack}} ->
+            io:format("Can't delete old messages (~p). Please pass an integer as parameter.~n",
+                      [Reason]),
+	    ?STATUS_ERROR;
+	Integer when Integer >= 0 ->
+	    {atomic, _} = mod_offline:remove_old_messages(Integer),
+	    io:format("Removed messages older than ~s days~n", [Days]),
+	    ?STATUS_SUCCESS;
+	Integer ->
+	    io:format("Can't delete old messages. Please pass a positive integer as parameter.~n", []),
+	    ?STATUS_ERROR
+    end;
 
 process(["vhost", H | Args]) ->
     case jlib:nameprep(H) of
@@ -207,6 +232,7 @@ print_usage() ->
 	 {"import-file file", "import user data from jabberd 1.4 spool file"},
 	 {"import-dir dir", "import user data from jabberd 1.4 spool directory"},
 	 {"delete-expired-messages", "delete expired offline messages from database"},
+	 {"delete-old-messages n", "delete offline messages older than n days from database"},
 	 {"vhost host ...", "execute host-specific commands"}] ++
 	ets:tab2list(ejabberd_ctl_cmds),
     MaxCmdLen =
@@ -323,4 +349,3 @@ dump_tab(F, T) ->
 		     fun() -> mnesia:match_object(T, W, read) end),
     lists:foreach(
       fun(Term) -> io:format(F,"~p.~n", [setelement(1, Term, T)]) end, All).
-

@@ -1,4 +1,4 @@
-% $Id: uk.msg 525 2006-04-01 21:43:52Z alexey $
+% $Id: uk.msg 641 2006-09-26 10:48:05Z mremond $
 
 % ejabberd_c2s.erl
 {"Use of STARTTLS required", "Ви мусите використовувати STARTTLS"}.
@@ -210,7 +210,9 @@
  "Дозволити користувачам надсилати запрошення"}.
 {"Make room password protected", "Зробити кімнату захищеною паролем"}.
 {"Password", "Пароль"}.
-{"Make room semianonymous", "Зробити кімнату напіванонімною"}.
+{"Present real JIDs to", "Зробити реальні JID учасників видимими"}.
+{"moderators only", "тільки модераторам"}.
+{"anyone", "всім учасникам"}.
 {"Enable logging", "Включити журнал роботи"}.
 {"Only moderators and participants are allowed to change subject in this room",
  "Тільки модератори та учасники можуть змінювати тему в цій кімнаті"}.

@@ -3,21 +3,21 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : MUC room stuff
 %%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc_room.erl 517 2006-03-14 04:26:15Z alexey $
+%%% Id      : $Id: mod_muc_room.erl 641 2006-09-26 10:48:05Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_muc_room).
 -author('alexey@sevcom.net').
--vsn('$Revision: 517 $ ').
+-vsn('$Revision: 641 $ ').
 
 -behaviour(gen_fsm).
 
 
 %% External exports
--export([start_link/6,
-	 start_link/5,
+-export([start_link/7,
+	 start_link/6,
+	 start/7,
 	 start/6,
-	 start/5,
 	 route/4]).
 
 %% gen_fsm callbacks
@@ -85,22 +85,22 @@
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
-start(Host, ServerHost, Access, Room, Creator, Nick) ->
+start(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
     Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
     supervisor:start_child(
-      Supervisor, [Host, ServerHost, Access, Room, Creator, Nick]).
+      Supervisor, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick]).
 
-start(Host, ServerHost, Access, Room, Opts) ->
+start(Host, ServerHost, Access, Room, HistorySize, Opts) ->
     Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
     supervisor:start_child(
-      Supervisor, [Host, ServerHost, Access, Room, Opts]).
+      Supervisor, [Host, ServerHost, Access, Room, HistorySize, Opts]).
 
-start_link(Host, ServerHost, Access, Room, Creator, Nick) ->
-    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, Creator, Nick],
+start_link(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
+    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick],
 		       ?FSMOPTS).
 
-start_link(Host, ServerHost, Access, Room, Opts) ->
-    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, Opts],
+start_link(Host, ServerHost, Access, Room, HistorySize, Opts) ->
+    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Opts],
 		       ?FSMOPTS).
 
 %%%----------------------------------------------------------------------
@@ -114,20 +114,22 @@ start_link(Host, ServerHost, Access, Room, Opts) ->
 %%          ignore                              |
 %%          {stop, StopReason}                   
 %%----------------------------------------------------------------------
-init([Host, ServerHost, Access, Room, Creator, _Nick]) ->
+init([Host, ServerHost, Access, Room, HistorySize, Creator, _Nick]) ->
     State = set_affiliation(Creator, owner,
 			    #state{host = Host,
 				   server_host = ServerHost,
 				   access = Access,
 				   room = Room,
+				   history = lqueue_new(HistorySize),
 				   jid = jlib:make_jid(Room, Host, ""),
 				   just_created = true}),
     {ok, normal_state, State};
-init([Host, ServerHost, Access, Room, Opts]) ->
+init([Host, ServerHost, Access, Room, HistorySize, Opts]) ->
     State = set_opts(Opts, #state{host = Host,
 				  server_host = ServerHost,
 				  access = Access,
 				  room = Room,
+				  history = lqueue_new(HistorySize),
 				  jid = jlib:make_jid(Room, Host, "")}),
     {ok, normal_state, State}.
 
@@ -1002,8 +1004,8 @@ add_new_user(From, Nick, {xmlelement, _, Attrs, Els} = Packet, StateData) ->
 				true ->
 				    ok
 			    end,
-			    send_new_presence(From, NewState),
 			    send_existing_presences(From, NewState),
+			    send_new_presence(From, NewState),
 			    Shift = count_stanza_shift(Nick, Els, NewState),
 			    case send_history(From, Shift, NewState) of
 				true ->
@@ -1372,6 +1374,10 @@ lqueue_new(Max) ->
 	    len = 0,
 	    max = Max}.
 
+%% If the message queue limit is set to 0, do not store messages.
+lqueue_in(_Item, LQ = #lqueue{max = 0}) ->
+    LQ;
+%% Otherwise, rotate messages in the queue store.
 lqueue_in(Item, #lqueue{queue = Q1, len = Len, max = Max}) ->
     Q2 = queue:in(Item, Q1),
     if
@@ -2068,7 +2074,8 @@ process_iq_owner(From, get, Lang, SubEl, StateData) ->
     end.
 
 check_allowed_log_change(XEl, StateData, From) ->
-    case lists:keymember("logging", 1, jlib:parse_xdata_submit(XEl)) of
+    case lists:keymember("muc#roomconfig_enablelogging", 1,
+			 jlib:parse_xdata_submit(XEl)) of
 	false ->
 	    allow;
 	true ->
@@ -2103,41 +2110,56 @@ get_config(Lang, StateData, From) ->
 	[{xmlelement, "title", [],
 	  [{xmlcdata, translate:translate(Lang, "Configuration for ") ++
 	    jlib:jid_to_string(StateData#state.jid)}]},
+	 {xmlelement, "field", [{"type", "hidden"},
+				{"var", "FORM_TYPE"}],
+	  [{xmlelement, "value", [],
+	    [{xmlcdata, "http://jabber.org/protocol/muc#roomconfig"}]}]},
 	 ?STRINGXFIELD("Room title",
-		       "title",
+		       "muc#roomconfig_roomname",
 		       Config#config.title),
 	 ?BOOLXFIELD("Make room persistent",
-		     "persistent",
+		     "muc#roomconfig_persistentroom",
 		     Config#config.persistent),
 	 ?BOOLXFIELD("Make room public searchable",
-		     "public",
+		     "muc#roomconfig_publicroom",
 		     Config#config.public),
 	 ?BOOLXFIELD("Make participants list public",
 		     "public_list",
 		     Config#config.public_list),
 	 ?BOOLXFIELD("Make room password protected",
-		     "password_protected",
+		     "muc#roomconfig_passwordprotectedroom",
 		     Config#config.password_protected),
 	 ?PRIVATEXFIELD("Password",
-			"password",
+			"muc#roomconfig_roomsecret",
 			case Config#config.password_protected of
 			    true -> Config#config.password;
 			    false -> ""
 			end),
-	 ?BOOLXFIELD("Make room semianonymous",
-		     "anonymous",
-		     Config#config.anonymous),
+	 {xmlelement, "field",
+	  [{"type", "list-single"},
+	   {"label", translate:translate(Lang, "Present real JIDs to")},
+	   {"var", "muc#roomconfig_whois"}],
+	  [{xmlelement, "value", [], [{xmlcdata,
+				       if Config#config.anonymous ->
+					       "moderators";
+					  true ->
+					       "anyone"
+				       end}]},
+	   {xmlelement, "option", [{"label", translate:translate(Lang, "moderators only")}],
+	    [{xmlelement, "value", [], [{xmlcdata, "moderators"}]}]},
+	   {xmlelement, "option", [{"label", translate:translate(Lang, "anyone")}],
+	    [{xmlelement, "value", [], [{xmlcdata, "anyone"}]}]}]},
 	 ?BOOLXFIELD("Make room members-only",
-		     "members_only",
+		     "muc#roomconfig_membersonly",
 		     Config#config.members_only),
 	 ?BOOLXFIELD("Make room moderated",
-		     "moderated",
+		     "muc#roomconfig_moderatedroom",
 		     Config#config.moderated),
 	 ?BOOLXFIELD("Default users as participants",
 		     "members_by_default",
 		     Config#config.members_by_default),
 	 ?BOOLXFIELD("Allow users to change subject",
-		     "allow_change_subj",
+		     "muc#roomconfig_changesubject",
 		     Config#config.allow_change_subj),
 	 ?BOOLXFIELD("Allow users to send private messages",
 		     "allow_private_messages",
@@ -2146,7 +2168,7 @@ get_config(Lang, StateData, From) ->
 		     "allow_query_users",
 		     Config#config.allow_query_users),
 	 ?BOOLXFIELD("Allow users to send invites",
-		     "allow_user_invites",
+		     "muc#roomconfig_allowinvites",
 		     Config#config.allow_user_invites)
 	] ++
 	case mod_muc_log:check_access_log(
@@ -2154,7 +2176,7 @@ get_config(Lang, StateData, From) ->
 	    allow ->
 		[?BOOLXFIELD(
 		    "Enable logging",
-		    "logging",
+		    "muc#roomconfig_enablelogging",
 		    Config#config.logging)];
 	    _ -> []
 	end,
@@ -2201,36 +2223,48 @@ set_config(XEl, StateData) ->
 
 set_xoption([], Config) ->
     Config;
-set_xoption([{"title", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_roomname", [Val]} | Opts], Config) ->
     ?SET_STRING_XOPT(title, Val);
-set_xoption([{"allow_change_subj", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_changesubject", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(allow_change_subj, Val);
 set_xoption([{"allow_query_users", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(allow_query_users, Val);
 set_xoption([{"allow_private_messages", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(allow_private_messages, Val);
-set_xoption([{"public", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_publicroom", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(public, Val);
 set_xoption([{"public_list", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(public_list, Val);
-set_xoption([{"persistent", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_persistentroom", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(persistent, Val);
-set_xoption([{"moderated", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_moderatedroom", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(moderated, Val);
 set_xoption([{"members_by_default", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(members_by_default, Val);
-set_xoption([{"members_only", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_membersonly", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(members_only, Val);
-set_xoption([{"allow_user_invites", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_allowinvites", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(allow_user_invites, Val);
-set_xoption([{"password_protected", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_passwordprotectedroom", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(password_protected, Val);
-set_xoption([{"password", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_roomsecret", [Val]} | Opts], Config) ->
     ?SET_STRING_XOPT(password, Val);
 set_xoption([{"anonymous", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(anonymous, Val);
-set_xoption([{"logging", [Val]} | Opts], Config) ->
+set_xoption([{"muc#roomconfig_whois", [Val]} | Opts], Config) ->
+    case Val of
+	"moderators" ->
+	    ?SET_BOOL_XOPT(anonymous, "1");
+	"anyone" ->
+	    ?SET_BOOL_XOPT(anonymous, "0");
+	_ ->
+	    {error, ?ERR_BAD_REQUEST}
+    end;
+set_xoption([{"muc#roomconfig_enablelogging", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(logging, Val);
+set_xoption([{"FORM_TYPE", _} | Opts], Config) ->
+    %% Ignore our FORM_TYPE
+    set_xoption(Opts, Config);
 set_xoption([_ | _Opts], _Config) ->
     {error, ?ERR_BAD_REQUEST}.
 

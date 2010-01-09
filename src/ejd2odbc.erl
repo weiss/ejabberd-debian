@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Export some mnesia tables to SQL DB
 %%% Created : 22 Aug 2005 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejd2odbc.erl 414 2005-10-06 23:57:34Z alexey $
+%%% Id      : $Id: ejd2odbc.erl 613 2006-09-22 08:05:50Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejd2odbc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 414 $ ').
+-vsn('$Revision: 613 $ ').
 
 %% External exports
 -export([export_passwd/2,
@@ -74,7 +74,7 @@ export_roster(Server, Output) ->
 	       "        and jid='", SJID, "';"
 	       "insert into rosterusers("
 	       "              username, jid, nick, "
-	       "              subscription, ask, "
+	       "              subscription, ask, askmessage, "
 	       "              server, subscribe, type) "
 	       " values ", ItemVals, ";"
 	       "delete from rostergroups "
@@ -271,7 +271,8 @@ output(LServer, IO, SQL) ->
 record_to_string(#roster{usj = {User, Server, JID},
 			 name = Name,
 			 subscription = Subscription,
-			 ask = Ask}) ->
+			 ask = Ask,
+			 askmessage = AskMessage}) ->
     Username = ejabberd_odbc:escape(User),
     SJID = ejabberd_odbc:escape(jlib:jid_to_string(JID)),
     Nick = ejabberd_odbc:escape(Name),
@@ -295,6 +296,7 @@ record_to_string(#roster{usj = {User, Server, JID},
      "'", Nick, "',"
      "'", SSubscription, "',"
      "'", SAsk, "',"
+     "'", AskMessage, "',"
      "'N', '', 'item')"].
 
 groups_to_string(#roster{usj = {User, Server, JID},

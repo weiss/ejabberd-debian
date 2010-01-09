@@ -1,4 +1,4 @@
-# $Id: Makefile.in 359 2005-05-23 20:27:17Z alexey $
+# $Id: Makefile.in 598 2006-09-03 15:15:46Z mremond $
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
@@ -13,12 +13,13 @@ OUTDIR = ..
 EFLAGS = -I .. -pz ..
 OBJS   = \
 	$(OUTDIR)/ejabberd_odbc.beam \
-	$(OUTDIR)/ejabberd_odbc_sup.beam
+	$(OUTDIR)/ejabberd_odbc_sup.beam \
+	$(OUTDIR)/odbc_queries.beam
 
 all:    $(OBJS)
 
 $(OUTDIR)/%.beam:       %.erl
-	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
+	@ERLC@ -W $(EFLAGS) -D@db_type@ -o $(OUTDIR) $<
 
 
 clean:

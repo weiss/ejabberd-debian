@@ -33,7 +33,7 @@
 
 %%% Modified by Alexey Shchepin <alexey@sevcom.net>
 %%% --------------------------------------------------------------------
--vc('$Id: eldap.erl 246 2004-07-23 14:24:09Z aleksey $ ').
+-vc('$Id: eldap.erl 623 2006-09-23 09:52:53Z mremond $ ').
 
 
 %%%----------------------------------------------------------------------
@@ -808,7 +808,7 @@ polish([], Res, Ref) ->
 %%-----------------------------------------------------------------------
 connect_bind(S) ->
     Host = next_host(S#eldap.host, S#eldap.hosts),
-    TcpOpts = [{packet, asn1}, {active, true}, binary],
+    TcpOpts = [{packet, asn1}, {active, true}, {keepalive, true}, binary],
     case gen_tcp:connect(Host, S#eldap.port, TcpOpts) of
 	{ok, Socket} ->
 	    case bind_request(Socket, S) of

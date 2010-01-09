@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : IRC transport
 %%% Created : 15 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_irc.erl 500 2006-02-06 05:12:54Z alexey $
+%%% Id      : $Id: mod_irc.erl 620 2006-09-22 17:01:16Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_irc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 500 $ ').
+-vsn('$Revision: 620 $ ').
 
 -behaviour(gen_server).
 -behaviour(gen_mod).
@@ -291,7 +291,7 @@ iq_disco() ->
     [{xmlelement, "identity",
       [{"category", "conference"},
        {"type", "irc"},
-       {"name", "ejabberd/mod_irc"}], []},
+       {"name", "IRC Transport"}], []},
      {xmlelement, "feature",
       [{"var", ?NS_MUC}], []},
      {xmlelement, "feature",

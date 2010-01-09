@@ -1,8 +1,8 @@
-% $Id: ejabberd.app 464 2005-12-13 17:25:08Z alexey $
+% $Id: ejabberd.app 638 2006-09-25 20:53:55Z mremond $
 
 {application, ejabberd,
  [{description, "ejabberd"},
-  {vsn, "1.0.0"},
+  {vsn, "1.1.2"},
   {modules, [acl,
 	     configure,
 	     cyrsasl,

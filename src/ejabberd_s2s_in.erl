@@ -3,12 +3,11 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Serve incoming s2s connection
 %%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_s2s_in.erl 537 2006-04-22 03:35:13Z alexey $
+%%% Id      : $Id: ejabberd_s2s_in.erl 581 2006-06-19 02:32:57Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_s2s_in).
 -author('alexey@sevcom.net').
--vsn('$Revision: 537 $ ').
 
 -behaviour(gen_fsm).
 
@@ -150,7 +149,7 @@ wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
     case {xml:get_attr_s("xmlns", Attrs),
 	  xml:get_attr_s("xmlns:db", Attrs),
 	  xml:get_attr_s("version", Attrs) == "1.0"} of
-	{"jabber:server", "jabber:server:dialback", true} when
+	{"jabber:server", _, true} when
 	      StateData#state.tls and (not StateData#state.authenticated) ->
 	    send_text(StateData, ?STREAM_HEADER(" version='1.0'")),
 	    SASL =

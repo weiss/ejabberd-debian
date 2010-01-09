@@ -3,12 +3,11 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Session manager
 %%% Created : 24 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_sm.erl 541 2006-04-23 09:31:54Z mremond $
+%%% Id      : $Id: ejabberd_sm.erl 590 2006-07-28 16:18:50Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_sm).
 -author('alexey@sevcom.net').
--vsn('$Revision: 541 $ ').
 
 -behaviour(gen_server).
 
@@ -42,6 +41,9 @@
 -record(session, {sid, usr, us, priority}).
 -record(state, {}).
 
+%% default value for the maximum number of user connections
+-define(MAX_USER_SESSIONS, infinity).
+
 %%====================================================================
 %% API
 %%====================================================================
@@ -63,6 +65,7 @@ route(From, To, Packet) ->
 
 open_session(SID, User, Server, Resource) ->
     set_session(SID, User, Server, Resource, undefined),
+    check_for_sessions_to_replace(User, Server, Resource),
     JID = jlib:make_jid(User, Server, Resource),
     ejabberd_hooks:run(sm_register_connection_hook, JID#jid.lserver,
 		       [SID, JID]).
@@ -177,6 +180,7 @@ init([]) ->
        {"connected-users-number", "print a number of established sessions"},
        {"user-resources user server", "print user's connected resources"}],
       ?MODULE, ctl_process),
+
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -270,23 +274,7 @@ set_session(SID, User, Server, Resource, Priority) ->
 				      us = US,
 				      priority = Priority})
 	end,
-    mnesia:sync_dirty(F),
-    SIDs = mnesia:dirty_select(
-	     session,
-	     [{#session{sid = '$1', usr = USR, _ = '_'}, [], ['$1']}]),
-    if
-	SIDs == [] ->
-	    ok;
-	true ->
-	    MaxSID = lists:max(SIDs),
-	    lists:foreach(
-	      fun({_, Pid} = S) when S /= MaxSID ->
-		      Pid ! replaced;
-		 (_) ->
-		      ok
-	      end, SIDs)
-    end.
-
+    mnesia:sync_dirty(F).
 
 clean_table_from_bad_node(Node) ->
     F = fun() ->
@@ -317,32 +305,35 @@ do_route(From, To, Packet) ->
 		    {Pass, Subsc} =
 			case xml:get_attr_s("type", Attrs) of
 			    "subscribe" ->
+				Reason = xml:get_path_s(
+					   Packet,
+					   [{elem, "status"}, cdata]),
 				{ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
-				   [User, Server, From, subscribe]),
+				   [User, Server, From, subscribe, Reason]),
 				 true};
 			    "subscribed" ->
 				{ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
-				   [User, Server, From, subscribed]),
+				   [User, Server, From, subscribed, ""]),
 				 true};
 			    "unsubscribe" ->
 				{ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
-				   [User, Server, From, unsubscribe]),
+				   [User, Server, From, unsubscribe, ""]),
 				 true};
 			    "unsubscribed" ->
 				{ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
-				   [User, Server, From, unsubscribed]),
+				   [User, Server, From, unsubscribed, ""]),
 				 true};
 			    _ ->
 				{true, false}
@@ -351,39 +342,18 @@ do_route(From, To, Packet) ->
 			    LFrom = jlib:jid_tolower(From),
 			    PResources = get_user_present_resources(
 					   LUser, LServer),
-			    if
-				PResources /= [] ->
-				    lists:foreach(
-				      fun({_, R}) ->
-					      if LFrom /=
-						 {LUser, LServer, R} ->
-						      do_route(
-							From,
-							jlib:jid_replace_resource(To, R),
-							Packet);
-						 true ->
-						      ok
-					      end
-				      end, PResources);
-				true ->
-				    if
-					Subsc ->
-					    case ejabberd_auth:is_user_exists(
-						   LUser, LServer) of
-						true ->
-						    ejabberd_hooks:run(
-						      offline_subscription_hook,
-						      LServer,
-						      [From, To, Packet]);
-						_ ->
-						    Err = jlib:make_error_reply(
-							    Packet, ?ERR_SERVICE_UNAVAILABLE),
-						    ejabberd_router:route(To, From, Err)
-					    end;
-					true ->
-					    ok
-				    end
-			    end;
+			    lists:foreach(
+			      fun({_, R}) ->
+				      if LFrom /=
+					 {LUser, LServer, R} ->
+					      do_route(
+						From,
+						jlib:jid_replace_resource(To, R),
+						Packet);
+					 true ->
+					      ok
+				      end
+			      end, PResources);
 		       true ->
 			    ok
 		    end;
@@ -509,6 +479,59 @@ get_user_present_resources(LUser, LServer) ->
 		S <- clean_session_list(Ss), is_integer(S#session.priority)]
     end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% On new session, check if some existing connections need to be replace
+check_for_sessions_to_replace(User, Server, Resource) ->
+    LUser = jlib:nodeprep(User),
+    LServer = jlib:nameprep(Server),
+    LResource = jlib:resourceprep(Resource),
+
+    %% TODO: Depending on how this is executed, there could be an unneeded
+    %% replacement for max_sessions. We need to check this at some point.
+    check_existing_resources(LUser, LServer, LResource),
+    check_max_sessions(LUser, LServer).
+
+check_existing_resources(LUser, LServer, LResource) ->
+    USR = {LUser, LServer, LResource},
+    %% A connection exist with the same resource. We replace it:
+    SIDs = mnesia:dirty_select(
+	     session,
+	     [{#session{sid = '$1', usr = USR, _ = '_'}, [], ['$1']}]),
+    if
+	SIDs == [] -> ok;
+	true ->
+	    MaxSID = lists:max(SIDs),
+	    lists:foreach(
+	      fun({_, Pid} = S) when S /= MaxSID ->
+		      Pid ! replaced;
+		 (_) -> ok
+	      end, SIDs)
+    end.
+
+check_max_sessions(LUser, LServer) ->
+    %% If the max number of sessions for a given is reached, we replace the
+    %% first one
+    SIDs =  mnesia:dirty_select(
+             session,
+             [{#session{sid = '$1', usr = {LUser, LServer, '_'}, _ = '_'}, [], ['$1']}]),
+    MaxSessions = get_max_user_sessions(LServer),
+    if length(SIDs) =< MaxSessions -> ok;
+       true -> {_, Pid} = lists:min(SIDs),
+               Pid ! replaced
+    end.
+
+
+%% Get the user_max_session setting
+%% This option defines the max number of time a given users are allowed to
+%% log in
+%% Defaults to infinity
+get_max_user_sessions(Host) ->
+    case ejabberd_config:get_local_option({max_user_sessions, Host}) of 
+	undefined -> ?MAX_USER_SESSIONS;
+	Max -> Max
+    end.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -532,7 +555,7 @@ process_iq(From, To, Packet) ->
 					  From, To, IQ);
 		[] ->
 		    Err = jlib:make_error_reply(
-			    Packet, ?ERR_FEATURE_NOT_IMPLEMENTED),
+			    Packet, ?ERR_SERVICE_UNAVAILABLE),
 		    ejabberd_router:route(To, From, Err)
 	    end;
 	reply ->

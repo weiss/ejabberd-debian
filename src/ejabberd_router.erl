@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Main router
 %%% Created : 27 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_router.erl 495 2006-01-29 04:38:31Z alexey $
+%%% Id      : $Id: ejabberd_router.erl 594 2006-08-14 19:46:14Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_router).
 -author('alexey@sevcom.net').
--vsn('$Revision: 495 $ ').
+-vsn('$Revision: 594 $ ').
 
 -behaviour(gen_server).
 
@@ -221,7 +221,7 @@ do_route(OrigFrom, OrigTo, OrigPacket) ->
     ?DEBUG("route~n\tfrom ~p~n\tto ~p~n\tpacket ~p~n",
 	   [OrigFrom, OrigTo, OrigPacket]),
     LOrigDstDomain = OrigTo#jid.lserver,
-    case ejabberd_hooks:run_fold(filter_packet, LOrigDstDomain,
+    case ejabberd_hooks:run_fold(filter_packet,
 				 {OrigFrom, OrigTo, OrigPacket}, []) of
 	{From, To, Packet} ->
 	    LDstDomain = To#jid.lserver,

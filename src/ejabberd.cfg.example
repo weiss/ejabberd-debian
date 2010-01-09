@@ -1,4 +1,4 @@
-% $Id: ejabberd.cfg.example 538 2006-04-22 04:02:42Z alexey $
+% $Id: ejabberd.cfg.example 577 2006-06-07 08:38:37Z mremond $
 
 %override_acls.
 
@@ -20,6 +20,8 @@
 %{acl, test, {user_regexp, "^test"}}.
 %{acl, test, {user_glob, "test*"}}.
 
+% Everybody can create pubsub nodes
+{access, pubsub_createnode, [{allow, all}]}.
 
 % Only admins can use configuration interface:
 {access, configure, [{allow, admin}]}.
@@ -97,6 +99,9 @@
 % Host name:
 {hosts, ["localhost"]}.
 
+%% Define the maximum number of time a single user is allowed to connect:
+{max_user_sessions, 10}.
+
 %% Anonymous login support:
 %%  auth_method: anonymous
 %%  anonymous_protocol: sasl_anon|login_anon|both
@@ -168,7 +173,7 @@
 		    {access_admin, muc_admin}]},
 %  {mod_muc_log,    []},
 %  {mod_shared_roster, []},
-  {mod_pubsub,     []},
+  {mod_pubsub,     [{access_createnode, pubsub_createnode}]},
   {mod_time,       []},
   {mod_last,       []},
   {mod_version,    []}

@@ -1,4 +1,4 @@
-% $Id: de.msg 540 2006-04-23 09:26:41Z mremond $
+% $Id: de.msg 641 2006-09-26 10:48:05Z mremond $
 
 % jlib.hrl
 {"No resource provided", "Keine Ressource zur Verfügung"}.
@@ -236,9 +236,6 @@
 {"Group ", "Gruppe "}.
 {"ejabberd Web Interface", "ejabberd Web Interface"}.
 
-% mod_vcard_ldap.erl
-{"Given Name", "Vorname"}.
-
 % ejabberd_c2s.erl
 {"Use of STARTTLS required", "Verwendung von STARTTLS erforderlich"}.
 {"Replaced by new connection", "Durch neue Verbindung ersetzt"}.
@@ -352,7 +349,6 @@
 {"Make room public searchable", "Raum öffentlich durchsuchbar machen"}.
 {"Make participants list public", "Teilnehmerliste öffentlich machen"}.
 {"Make room password protected", "Raum passwortgeschützt machen"}.
-{"Make room semianonymous", "Raum semi-anonym machen"}.
 {"Make room members-only", "Raum members-only machen"}.
 {"Make room moderated", "Raum modieriert machen"}.
 {"Default users as participants", "Standartbenutzer als Teilnehmer"}.
@@ -363,6 +359,9 @@
 {"Enable logging", "Log-Funktion aktivieren"}.
 {"Description", "Beschreibung"}.
 {"Number of occupants", "Anzahl der Teilnehmer"}.
+{"Present real JIDs to", "Echte Jabber IDs anzeigen für"}.
+{"moderators only", "nur Moderatoren"}.
+{"anyone", "jeden"}.
 
 % Local Variables:
 % mode: erlang

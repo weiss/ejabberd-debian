@@ -1,4 +1,4 @@
-% $Id: nl.msg 531 2006-04-12 02:54:27Z alexey $
+% $Id: nl.msg 641 2006-09-26 10:48:05Z mremond $
 
 % mod_vcard_ldap.erl
 {"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin", "Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin"}.
@@ -7,7 +7,6 @@
 {"Fill in fields to search for any matching Jabber User", "Vul de velden in om te zoeken naar Jabber-gebruikers op deze server"}.
 {"User", "Gebruiker"}.
 {"Full Name", "Volledige naam"}.
-{"Given Name", "Voornaam"}.
 {"Middle Name", "Tussennaam"}.
 {"Family Name", "Achternaam"}.
 {"Nickname", "Bijnaam"}.
@@ -168,7 +167,6 @@
 {"Make room public searchable", "Chatruimte doorzoekbaar maken"}.
 {"Make participants list public", "Deelnemerslijst publiek maken"}.
 {"Make room password protected", "Chatruimte beveiligen met een wachtwoord"}.
-{"Make room semianonymous", "Chatruimte gedeeltelijk anoniem maken"}.
 {"Make room members-only", "Chatruimte enkel toegankelijk maken voor leden"}.
 {"Make room moderated", "Chatruimte gemodereerd maken"}.
 {"Default users as participants", "Gebruikers standaard instellen als deelnemers"}.
@@ -180,6 +178,9 @@
 {"You need an x:data capable client to configure room", "U hebt een client nodig die x:data ondersteunt om deze chatruimte in te stellen"}.
 {"Description", "Beschrijving"}.
 {"Number of occupants", "Aantal aanwezigen"}.
+{"Present real JIDs to", "Jabber ID's kunnen achterhaald worden door"}.
+{"moderators only", "moderators"}.
+{"anyone", "iedereen"}.
 
 % mod_irc/mod_irc.erl
 {"ejabberd IRC module\nCopyright (c) 2003-2006 Alexey Shchepin", "ejabberd's IRC-module\nCopyright (c) 2003-2006 Alexey Shchepin"}.

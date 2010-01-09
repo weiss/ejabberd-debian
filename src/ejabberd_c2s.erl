@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Serve C2S connection
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_c2s.erl 542 2006-04-23 14:57:37Z alexey $
+%%% Id      : $Id: ejabberd_c2s.erl 590 2006-07-28 16:18:50Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_c2s).
@@ -1109,6 +1109,7 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 	end,
     if
 	Pass == exit ->
+	    catch send_text(StateData, ?STREAM_TRAILER),
 	    {stop, normal, StateData};
 	Pass ->
 	    Attrs2 = jlib:replace_from_to_attrs(jlib:jid_to_string(From),
@@ -1364,6 +1365,7 @@ presence_update(From, Packet, StateData) ->
 					   StateData#state.server,
 					   [StateData#state.jid]),
 			resend_offline_messages(StateData),
+			resend_subscription_requests(StateData),
 			presence_broadcast_first(
 			  From, StateData#state{pres_last = Packet,
 						pres_invis = false
@@ -1727,6 +1729,19 @@ resend_offline_messages(#state{user = User,
 	      end, Rs)
     end.
 
+resend_subscription_requests(#state{user = User,
+				    server = Server} = StateData) ->
+    PendingSubscriptions = ejabberd_hooks:run_fold(
+			     resend_subscription_requests_hook,
+			     Server,
+			     [],
+			     [User, Server]),
+    lists:foreach(fun(XMLPacket) ->
+			  send_element(StateData,
+				       XMLPacket)
+		  end,
+		  PendingSubscriptions).
+
 get_showtag(undefined) ->
     "unavailable";
 get_showtag(Presence) ->
@@ -1754,7 +1769,7 @@ process_unauthenticated_stanza(StateData, El) ->
 		    % The only reasonable IQ's here are auth and register IQ's
 		    % They contain secrets, so don't include subelements to response
 		    ResIQ = IQ#iq{type = error,
-				  sub_el = [?ERR_FEATURE_NOT_IMPLEMENTED]},
+				  sub_el = [?ERR_SERVICE_UNAVAILABLE]},
 		    Res1 = jlib:replace_from_to(
 			     jlib:make_jid("", StateData#state.server, ""),
 			     jlib:make_jid("", "", ""),
