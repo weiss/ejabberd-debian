@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_app.erl 427 2005-10-25 02:19:01Z alexey $
+%%% Id      : $Id: ejabberd_app.erl 510 2006-02-20 04:07:42Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_app).
 -author('alexey@sevcom.net').
--vsn('$Revision: 427 $ ').
+-vsn('$Revision: 510 $ ').
 
 -behaviour(application).
 
@@ -24,6 +24,7 @@ start(normal, _Args) ->
     catch ssl:start(),
     translate:start(),
     acl:start(),
+    ejabberd_ctl:init(),
     gen_mod:start(),
     ejabberd_config:start(),
     Sup = ejabberd_sup:start_link(),

@@ -1,4 +1,4 @@
-% $Id: ru.msg 457 2005-12-10 17:47:00Z alexey $
+% $Id: ru.msg 525 2006-04-01 21:43:52Z alexey $
 
 % ejabberd_c2s.erl
 {"Use of STARTTLS required", "Вы обязаны использовать STARTTLS"}.
@@ -9,8 +9,28 @@
 {"Illegal resource format", "Неправильный формат ресурса"}.
 {"Resource conflict", "Конфликт ресурсов"}.
 
+% mod_adhoc.erl
+{"Commands", "Команды"}.
+{"Ping", "Пинг"}.
+{"Pong", "Понг"}.
+
+% mod_announce.erl
+{"Really delete message of the day?", "Действительно удалить сообщение дня?"}.
+{"Subject", "Тема"}.
+{"Message body", "Тело сообщения"}.
+{"No body provided for announce message", "Тело объявления не должно быть пустым"}.
+{"Announcements", "Объявления"}.
+{"Send announcement to all users", "Разослать объявление всем пользователям"}.
+{"Send announcement to all online users", "Разослать объявление всем подключённым пользователям"}.
+{"Send announcement to all online users on all hosts",
+ "Разослать объявление всем подключённым пользователям на всех виртуальных серверах"}.
+{"Set message of the day and send to online users",
+ "Установить сообщение дня и разослать его подключённым пользователям"}.
+{"Update message of the day (don't send)", "Обновить сообщение дня (не рассылать)"}.
+{"Delete message of the day", "Удалить сообщение дня"}.
+
 % mod_configure.erl
-{"DB Tables Configuration at ", "Конфигурация таблиц БД на "}.
+{"Database Tables Configuration at ", "Конфигурация таблиц базы данных на "}.
 {"Choose storage type of tables", "Выберите тип хранения таблиц"}.
 {"RAM copy", "ОЗУ"}.
 {"RAM and disc copy", "ОЗУ и диск"}.
@@ -50,7 +70,7 @@
 {"Configuration", "Конфигурация"}.
 {"Online Users", "Подключённые пользователи"}.
 {"All Users", "Все пользователи"}.
-{"Outgoing S2S connections", "Исходящие S2S-соединения"}.
+{"Outgoing s2s Connections", "Исходящие s2s-соединения"}.
 {"To ~s", "К ~s"}.
 {"From ~s", "От ~s"}.
 {"Running Nodes", "Работающие узлы"}.
@@ -59,12 +79,12 @@
 {"Access Control Lists", "Списки управления доступом"}.
 {"Access Rules", "Правила доступа"}.
 {"Remove Users", "Удаление пользователей"}.
-{"DB", "БД"}.
+{"Database", "База данных"}.
 {"Modules", "Модули"}.
 {"Start Modules", "Запуск модулей"}.
 {"Stop Modules", "Остановка модулей"}.
 {"Backup Management", "Управление резервным копированием"}.
-{"Import users from jabberd1.4 spool files", "Импорт пользователей из спула jabberd1.4"}.
+{"Import Users From jabberd 1.4 Spool Files", "Импорт пользователей из спула jabberd 1.4"}.
 {"Backup", "Резервное копирование"}.
 {"Restore", "Восстановление из резервной копии"}.
 {"Dump to Text File", "Копирование в текстовый файл"}.
@@ -76,16 +96,17 @@
  "Выберите имя пользователя и пароль для регистрации на этом сервере"}.
 
 % mod_vcard.erl
-{"Erlang Jabber Server\nCopyright (c) 2002-2005 Alexey Shchepin",
- "Erlang Jabber Server\nCopyright (c) 2002-2005 Алексей Щепин"}.
-{"ejabberd vCard module\nCopyright (c) 2003-2005 Alexey Shchepin",
- "ejabberd vCard модуль\nCopyright (c) 2003-2005 Алексей Щепин"}.
+{"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin",
+ "Erlang Jabber Server\nCopyright (c) 2002-2006 Алексей Щепин"}.
+{"ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin",
+ "ejabberd vCard модуль\nCopyright (c) 2003-2006 Алексей Щепин"}.
 {"You need an x:data capable client to search",
  "Чтобы воспользоваться поиском, требуется x:data-совместимый клиент"}.
 {"Search users in ", "Поиск пользователей в "}.
 {"Fill in the form to search for any matching Jabber User (Add * to the end of field to match substring)",
 "Заполните форму для поиска пользователя Jabber (Если добавить * в конец поля, то происходит поиск подстроки)"}.
-{"Results of search in ", "Результаты поиска в "}.
+{"Search Results for ", "Результаты поиска в "}.
+{"Jabber ID",         "Jabber ID"}.
 {"User",              "Пользователь"}.
 {"Full Name", 	      "Полное имя"}.
 {"Name", 	      "Имя"}.
@@ -95,7 +116,7 @@
 {"Birthday", 	      "День рождения"}.
 {"Country", 	      "Страна"}.
 {"City", 	      "Город"}.
-{"email", 	      "email"}.
+{"Email", 	      "Электронная почта"}.
 {"Organization Name", "Название организации"}.
 {"Organization Unit", "Отдел организации"}.
 
@@ -104,8 +125,8 @@
 {"Given Name", "Имя"}.
 
 % mod_pubsub/mod_pubsub.erl
-{"ejabberd pub/sub module\nCopyright (c) 2003-2005 Alexey Shchepin",
- "ejabberd pub/sub модуль\nCopyright (c) 2003-2005 Алексей Щепин"}.
+{"ejabberd pub/sub module\nCopyright (c) 2003-2006 Alexey Shchepin",
+ "ejabberd pub/sub модуль\nCopyright (c) 2003-2006 Алексей Щепин"}.
 {"Node Creator", "Создатель сборника"}.
 {"Deliver payloads with event notifications", "Доставлять вместе с уведомлениями o публикациях сами публикации"}.
 {"Notify subscribers when the node configuration changes", "Уведомлять подписчиков об изменении конфигурации сборника"}.
@@ -126,43 +147,72 @@
  "Чтобы зарегистрировать псевдоним, требуется x:data-совместимый клиент"}.
 {"Nickname Registration at ", "Регистрация псевдонима на "}.
 {"Enter nickname you want to register", "Введите псевдоним, который Вы хотели бы зарегистрировать"}.
-{"ejabberd MUC module\nCopyright (c) 2003-2005 Alexey Shchepin",
- "ejabberd MUC модуль\nCopyright (c) 2003-2005 Алексей Щепин"}.
+{"ejabberd MUC module\nCopyright (c) 2003-2006 Alexey Shchepin",
+ "ejabberd MUC модуль\nCopyright (c) 2003-2006 Алексей Щепин"}.
 {"Only service administrators are allowed to send service messages",
  "Только администратор службы может посылать служебные сообщения"}.
 {"Room creation is denied by service policy",
  "Cоздавать конференцию запрещено политикой службы"}.
 {"Conference room does not exist", "Конференция не существует"}.
 {"Access denied by service policy", "Доступ запрещён политикой службы"}.
-{"You must fill in field \"nick\" in the form",
- "Вы должны заполнить поле \"nick\" в форме"}.
+{"You must fill in field \"Nickname\" in the form",
+ "Вы должны заполнить поле \"Псевдоним\" в форме"}.
 {"Specified nickname is already registered", "Указанный псевдоним уже зарегистрирован"}.
 
+% /home/sergei/src/ejabberd/ejabberd/src/mod_muc/mod_muc_log.erl
+{"Chatroom configuration modified", "Конфигурация комнаты изменилась"}.
+{"joins the room", "вошёл(а) в комнату"}.
+{"leaves the room", "вышел(а) из комнаты"}.
+{"has been kicked", "выгнали из комнаты"}.
+{"has been banned", "запретили входить в комнату"}.
+{"is now known as", "изменил(а) имя на"}.
+{"Monday", "Понедельник"}.
+{"Tuesday", "Вторник"}.
+{"Wednesday", "Среда"}.
+{"Thursday", "Четверг"}.
+{"Friday", "Пятница"}.
+{"Saturday", "Суббота"}.
+{"Sunday", "Воскресенье"}.
+{"January", "января"}.
+{"February", "февраля"}.
+{"March", "марта"}.
+{"April", "апреля"}.
+{"May", "мая"}.
+{"June", "июня"}.
+{"July", "июля"}.
+{"August", "августа"}.
+{"September", "сентября"}.
+{"October", "октября"}.
+{"November", "ноября"}.
+{"December", "декабря"}.
+{"Room Configuration", "Конфигурация комнаты"}.
+
 % mod_muc/mod_muc_room.erl
+{"This room is not anonymous", "Эта комната не анонимная"}.
 {" has set the subject to: ", " установил(а) тему: "}.
 {"You need an x:data capable client to configure room",
  "Чтобы сконфигурировать комнату, требуется x:data-совместимый клиент"}.
 {"Configuration for ", "Конфигурация "}.
 {"Room title", "Название комнаты"}.
-{"Allow users to change subject?", "Разрешить пользователям изменять тему?"}.
-{"Allow users to query other users?",
- "Разрешить iq-запросы к пользователям?"}.
-{"Allow users to send private messages?",
- "Разрешить приватные сообщения?"}.
-{"Make room public searchable?", "Сделать комнату видимой всем?"}.
-{"Make participants list public?", "Сделать список участников видимым всем?"}.
-{"Make room persistent?", "Сделать комнату постоянной?"}.
-{"Make room moderated?", "Сделать комнату модерируемой?"}.
-{"Default users as members?",
- "Сделать пользователей участниками по умолчанию?"}.
-{"Make room members only?",
- "Комната только для зарегистрированных участников?"}.
-{"Allow users to send invites?",
- "Разрешить пользователям посылать приглашения?"}.
-{"Make room password protected?", "Сделать комнату защищённой паролем?"}.
+{"Allow users to change subject", "Разрешить пользователям изменять тему"}.
+{"Allow users to query other users",
+ "Разрешить iq-запросы к пользователям"}.
+{"Allow users to send private messages",
+ "Разрешить приватные сообщения"}.
+{"Make room public searchable", "Сделать комнату видимой всем"}.
+{"Make participants list public", "Сделать список участников видимым всем"}.
+{"Make room persistent", "Сделать комнату постоянной"}.
+{"Make room moderated", "Сделать комнату модерируемой"}.
+{"Default users as participants",
+ "Сделать пользователей участниками по умолчанию"}.
+{"Make room members-only",
+ "Комната только для зарегистрированных участников"}.
+{"Allow users to send invites",
+ "Разрешить пользователям посылать приглашения"}.
+{"Make room password protected", "Сделать комнату защищённой паролем"}.
 {"Password", "Пароль"}.
-{"Make room anonymous?", "Сделать комнату анонимной?"}.
-{"Enable logging?", "Включить журналирование?"}.
+{"Make room semianonymous", "Сделать комнату полуанонимной"}.
+{"Enable logging", "Включить журналирование"}.
 {"Only moderators and participants are allowed to change subject in this room",
  "Только модераторы и участники могут изменять тему в этой комнате"}.
 {"Only moderators are allowed to change subject in this room",
@@ -197,10 +247,12 @@
 {"Invalid role: ~s", "Недопустимая роль: ~s"}.
 {"Owner privileges required", "Требуются права владельца"}.
 {"private, ", "приватная, "}.
+{"Description", "Описание"}.
+{"Number of occupants", "Число присутствующих"}.
 
 % mod_irc/mod_irc.erl
-{"ejabberd IRC module\nCopyright (c) 2003-2005 Alexey Shchepin",
- "ejabberd IRC модуль\nCopyright (c) 2003-2005 Алексей Щепин"}.
+{"ejabberd IRC module\nCopyright (c) 2003-2006 Alexey Shchepin",
+ "ejabberd IRC модуль\nCopyright (c) 2003-2006 Алексей Щепин"}.
 {"You need an x:data capable client to configure mod_irc settings",
  "Чтобы настроить параметры mod_irc, требуется x:data-совместимый клиент"}.
 {"Registration in mod_irc for ", "Регистрация в mod_irc для "}.
@@ -213,93 +265,98 @@
 
 % web/ejabberd_web_admin.erl
 {"ejabberd Web Interface", "Web-интерфейс ejabberd"}.
-{"ejabberd administration", "Администрирование ejabberd"}.
+{"Administration", "Администрирование"}.
 {"Users", "Пользователи"}.
 {"Nodes", "Узлы"}.
 {"Statistics", "Статистика"}.
-{"(raw)", "(необработанный формат)"}.
-{"submitted", "отправлено"}.
-{"bad format", "неправильный формат"}.
-{"raw", "необработанный формат"}.
-{"ejabberd access control lists configuration", "Конфигурация списков управления доступом ejabberd"}.
+{"(Raw)", "(Необработанный формат)"}.
+{"Submitted", "Отправлено"}.
+{"Bad format", "Неправильный формат"}.
+{"Raw", "Необработанный формат"}.
 {"Delete Selected", "Удалить выделенные"}.
 {"Submit", "Отправить"}.
-{"ejabberd access rules configuration", "Конфигурация правил доступа ejabberd"}.
 {"~s access rule configuration", "Конфигурация правила доступа ~s"}.
-{"ejabberd users", "Пользователи ejabberd"}.
-{"ejabberd stats", "Статистика ejabberd"}.
 {"Node not found", "Узел не найден"}.
 {"Add New", "Добавить"}.
-{"Registered users", "Зарегистрированные пользователи"}.
-{"Authenticated users", "Аутентифицированные пользователи"}.
-{"Online users", "Подключённые пользователи"}.
-{"Outgoing S2S servers", "Исходящие S2S-серверы"}.
+{"Registered Users", "Зарегистрированные пользователи"}.
+{"Registered Users:", "Зарегистрированные пользователи:"}.
+{"Authenticated Users:", "Аутентифицированные пользователи:"}.
+{"Online Users", "Подключённые пользователи"}.
+{"Online Users:", "Подключённые пользователи:"}.
+{"Outgoing s2s Connections:", "Исходящие s2s-серверы:"}.
+{"Outgoing s2s Servers:", "Исходящие s2s-серверы:"}.
 {"Change Password", "Сменить пароль"}.
 {"Connected Resources:", "Подключённые ресурсы:"}.
 {"Password:", "Пароль:"}.
 {"None", "Нет"}.
 {"Node ", "Узел "}.
-{"DB Management", "Управление БД"}.
-{"Listened Ports Management", "Управление прослушиваемыми портами"}.
+{"Listened Ports", "Прослушиваемые порты"}.
 {"Restart", "Перезапустить"}.
 {"Stop", "Остановить"}.
-{"RPC call error", "Ошибка вызова RPC"}.
-{"DB Tables at ", "Таблицы БД на "}.
+{"RPC Call Error", "Ошибка вызова RPC"}.
+{"Database Tables at ", "Таблицы базы данных на "}.
 {"Name", "Название"}.
 {"Storage Type", "Тип таблицы"}.
 {"Size", "Размер"}.
 {"Memory", "Память"}.
-{"Backup Management at ", "Управление резервным копированием на "}.
-{"Store a backup in a file", "Сохранить резервную копию в файл"}.
+{"Backup of ", "Резервное копирование "}.
+{"Remark that these options will only backup the builtin Mnesia database. If you are using the ODBC module, you also need to backup your SQL database separately.", "Заметьте, что здесь производится резервное копирование только встроенной базы данных Mnesia. Если Вы также используете другое хранилище данных (например с помощью модуля ODBC), то его резервное копирование следует осуществлять отдельно."}.
+{"Store binary backup:", "Сохранить бинарную резервную копию:"}.
 {"OK", "Продолжить"}.
-{"Restore a backup from a file", "Восстановить из резервной копии из файла"}.
-{"Install a database fallback from a file", "Установить базу данных для восстановления при следующем запуске"}.
-{"Dump a database in a text file", "Копировать базу данных в текстовый файл"}.
-{"Restore a database from a text file", "Восстановить базу данных из текстового файла"}.
+{"Restore binary backup immediately:", "Восстановить из бинарной резервной копии немедленно:"}.
+{"Restore binary backup after next ejabberd restart (requires less memory):", "Восстановить из бинарной резервной копии при следующем запуске (требует меньше памяти):"}.
+{"Store plain text backup:", "Сохранить текстовую резервную копию:"}.
+{"Restore plain text backup immediately:", "Восстановить из текстовой резервной копии немедленно:"}.
 {"Listened Ports at ", "Прослушиваемые порты на "}.
-{"~p statistics", "статистика узла ~p"}.
-{"Uptime", "Время работы"}.
-{"CPU Time", "Процессорное время"}.
-{"Transactions commited", "Транзакции завершенные"}.
-{"Transactions aborted", "Транзакции отмененные"}.
-{"Transactions restarted", "Транзакции перезапущенные"}.
-{"Transactions logged", "Транзакции запротоколированные"}.
+{"Statistics of ~p", "статистика узла ~p"}.
+{"Uptime:", "Время работы:"}.
+{"CPU Time:", "Процессорное время:"}.
+{"Transactions Commited:", "Транзакции завершенные:"}.
+{"Transactions Aborted:", "Транзакции отмененные:"}.
+{"Transactions Restarted:", "Транзакции перезапущенные:"}.
+{"Transactions Logged:", "Транзакции запротоколированные:"}.
+{"Update ", "Обновление "}.
+{"Update plan", "План обновления"}.
+{"Updated modules", "Обновлённые модули"}.
+{"Update script", "Сценарий обновления"}.
+{"Low level update script", "Низкоуровневый сценарий обновления"}.
+{"Script check", "Проверка сценария"}.
 {"Port", "Порт"}.
 {"Module", "Модуль"}.
 {"Options", "Параметры"}.
 {"Update", "Обновить"}.
 {"Delete", "Удалить"}.
 {"Add User", "Добавить пользователя"}.
-{"ejabberd (c) 2002-2005 Alexey Shchepin, 2004-2005 Process One", "ejabberd (c) 2002-2005 Алексей Щепин, 2004-2005 Process One"}.
-{"Offline messages", "Офлайновые сообщения"}.
+{"ejabberd (c) 2002-2006 Alexey Shchepin, 2004-2006 Process One", "ejabberd (c) 2002-2006 Алексей Щепин, 2004-2006 Process One"}.
+{"Offline Messages", "Офлайновые сообщения"}.
+{"Offline Messages:", "Офлайновые сообщения:"}.
 {"Last Activity", "Последнее подключение"}.
 {"Never", "Никогда"}.
-{"~s offline messages queue", "Oчередь офлайновых сообщений ~s"}.
+{"~s's Offline Messages Queue", "Oчередь офлайновых сообщений ~s"}.
 {"Time", "Время"}.
 {"From", "От кого"}.
 {"To", "Кому"}.
 {"Packet", "Пакет"}.
-{"Offline messages:", "Офлайновые сообщения:"}.
 {"Roster", "Ростер"}.
 {"Nickname", "Псевдоним"}.
 {"Subscription", "Подписка"}.
 {"Pending", "Ожидание"}.
 {"Groups", "Группы"}.
 {"Remove", "Удалить"}.
-{"Add JID", "Добавить JID"}.
+{"Add Jabber ID", "Добавить Jabber ID"}.
 {"User ", "Пользователь "}.
 {"Roster of ", "Ростер пользователя "}.
 {"Shared Roster", "Общие контакты"}.
 {"Online", "Подключён"}.
 {"Validate", "Утвердить"}.
-{"Not found", "Не найдено"}.
-{"Shared roster groups", "Группы общих контактов"}.
+{"Not Found", "Не найдено"}.
+{"Shared Roster Groups", "Группы общих контактов"}.
 {"Name:", "Название:"}.
 {"Description:", "Описание:"}.
 {"Members:", "Члены:"}.
 {"Displayed Groups:", "Видимые группы:"}.
 {"Group ", "Группа "}.
-{"Users last activity", "Статистика последнего подключения пользователей"}.
+{"Users Last Activity", "Статистика последнего подключения пользователей"}.
 {"Period: ", "Период"}.
 {"Last month", "За последний месяц"}.
 {"Last year", "За последний год"}.
@@ -307,9 +364,8 @@
 {"Show Ordinary Table", "Показать обычную таблицу"}.
 {"Show Integral Table", "Показать интегральную таблицу"}.
 {"Start", "Запустить"}.
-{"Modules Management", "Управление модулями"}.
 {"Modules at ", "Модули на "}.
-{"No data", "Нет данных"}.
+{"No Data", "Нет данных"}.
 {"Virtual Hosts", "Виртуальные хосты"}.
 {"ejabberd virtual hosts", "Виртуальные хосты ejabberd"}.
 {"Host", "Хост"}.

@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Cyrus SASL-like library
 %%% Created :  8 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl.erl 374 2005-07-13 03:24:13Z alexey $
+%%% Id      : $Id: cyrsasl.erl 555 2006-04-27 21:24:30Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl).
 -author('alexey@sevcom.net').
--vsn('$Revision: 374 $ ').
+-vsn('$Revision: 555 $ ').
 
 -export([start/0,
 	 register_mechanism/3,
@@ -25,8 +25,7 @@
 -export([behaviour_info/1]).
 
 behaviour_info(callbacks) ->
-    [{mech_new, 2},
-     {mech_step, 2}];
+    [{mech_new, 3}, {mech_step, 2}];
 behaviour_info(Other) ->
     undefined.
 
@@ -36,6 +35,7 @@ start() ->
 			     {keypos, #sasl_mechanism.mechanism}]),
     cyrsasl_plain:start([]),
     cyrsasl_digest:start([]),
+    cyrsasl_anonymous:start([]),
     ok.
 
 register_mechanism(Mechanism, Module, RequirePlainPassword) ->
@@ -81,18 +81,19 @@ check_credentials(State, Props) ->
 
 listmech(Host) ->
     RequirePlainPassword = ejabberd_auth:plain_password_required(Host),
-    ets:select(sasl_mechanism,
-	       [{#sasl_mechanism{mechanism = '$1',
-				 require_plain_password = '$2',
-				 _ = '_'},
-		 if
-		     RequirePlainPassword ->
-			 [{'==', '$2', false}];
-		     true ->
-			 []
-		 end,
-		 ['$1']}]).
-
+    
+    Mechs = ets:select(sasl_mechanism,
+		       [{#sasl_mechanism{mechanism = '$1',
+					 require_plain_password = '$2',
+					 _ = '_'},
+			 if
+			     RequirePlainPassword ->
+				 [{'==', '$2', false}];
+			     true ->
+				 []
+			 end,
+			 ['$1']}]),
+    filter_anonymous(Host, Mechs).
 
 server_new(Service, ServerFQDN, UserRealm, SecFlags,
 	   GetPassword, CheckPassword) ->
@@ -103,14 +104,21 @@ server_new(Service, ServerFQDN, UserRealm, SecFlags,
 		check_password = CheckPassword}.
 
 server_start(State, Mech, ClientIn) ->
-    case ets:lookup(sasl_mechanism, Mech) of
-	[#sasl_mechanism{module = Module}] ->
-	    {ok, MechState} = Module:mech_new(State#sasl_state.get_password,
-					      State#sasl_state.check_password),
-	    server_step(State#sasl_state{mech_mod = Module,
-					 mech_state = MechState},
-			ClientIn);
-	_ ->
+    case lists:member(Mech, listmech(State#sasl_state.myname)) of
+	true ->
+	    case ets:lookup(sasl_mechanism, Mech) of
+		[#sasl_mechanism{module = Module}] ->
+		    {ok, MechState} = Module:mech_new(
+					State#sasl_state.myname,
+					State#sasl_state.get_password,
+					State#sasl_state.check_password),
+		    server_step(State#sasl_state{mech_mod = Module,
+						 mech_state = MechState},
+				ClientIn);
+		_ ->
+		    {error, "no-mechanism"}
+	    end;
+	false ->
 	    {error, "no-mechanism"}
     end.
 
@@ -132,3 +140,10 @@ server_step(State, ClientIn) ->
 	    {error, Error}
     end.
 
+%% Remove the anonymous mechanism from the list if not enabled for the given
+%% host
+filter_anonymous(Host, Mechs) ->
+    case ejabberd_auth_anonymous:is_sasl_anonymous_enabled(Host) of
+	true  -> Mechs;
+	false -> Mechs -- ["ANONYMOUS"]
+    end.

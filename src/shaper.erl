@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Functions to control connections traffic
 %%% Created :  9 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: shaper.erl 66 2003-02-09 19:17:23Z alexey $
+%%% Id      : $Id: shaper.erl 483 2006-01-13 01:55:20Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(shaper).
 -author('alexey@sevcom.net').
--vsn('$Revision: 66 $ ').
+-vsn('$Revision: 483 $ ').
 
 -export([new/1, new1/1, update/2]).
 
@@ -33,25 +33,26 @@ new1({maxrate, MaxRate}) ->
 	     lasttime = now_to_usec(now())}.
 
 
-update(none, Size) ->
-    none;
+update(none, _Size) ->
+    {none, 0};
 update(#maxrate{} = State, Size) ->
     MinInterv = 1000 * Size /
 	(2 * State#maxrate.maxrate - State#maxrate.lastrate),
     Interv = (now_to_usec(now()) - State#maxrate.lasttime) / 1000,
     %io:format("State: ~p, Size=~p~nM=~p, I=~p~n",
     %          [State, Size, MinInterv, Interv]),
-    if
-	MinInterv > Interv ->
-	    timer:sleep(1 + trunc(MinInterv - Interv));
-	true ->
-	    ok
-    end,
-    Now = now_to_usec(now()),
-    State#maxrate{
-      lastrate = (State#maxrate.lastrate +
-		  1000000 * Size / (Now - State#maxrate.lasttime))/2,
-      lasttime = Now}.
+    Pause = if
+		MinInterv > Interv ->
+		    1 + trunc(MinInterv - Interv);
+		true ->
+		    0
+	    end,
+    NextNow = now_to_usec(now()) + Pause * 1000,
+    {State#maxrate{
+       lastrate = (State#maxrate.lastrate +
+		   1000000 * Size / (NextNow - State#maxrate.lasttime))/2,
+       lasttime = NextNow},
+     Pause}.
 
 
 now_to_usec({MSec, Sec, USec}) ->

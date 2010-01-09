@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : vCard support via ODBC
 %%% Created :  2 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_vcard_odbc.erl 437 2005-11-19 01:20:05Z alexey $
+%%% Id      : $Id: mod_vcard_odbc.erl 508 2006-02-18 19:56:16Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_vcard_odbc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 437 $ ').
+-vsn('$Revision: 508 $ ').
 
 -behaviour(gen_mod).
 
@@ -111,7 +111,7 @@ process_local_iq(_From, _To, #iq{type = Type, lang = Lang, sub_el = SubEl} = IQ)
 				 translate:translate(
 				   Lang,
 				   "Erlang Jabber Server\n"
-				   "Copyright (c) 2002-2005 Alexey Shchepin")}]},
+				   "Copyright (c) 2002-2006 Alexey Shchepin")}]},
 			      {xmlelement, "BDAY", [],
 			       [{xmlcdata, "2002-11-16"}]}
 			     ]}]}
@@ -131,12 +131,11 @@ process_sm_iq(From, To, #iq{type = Type, sub_el = SubEl} = IQ) ->
 	    end;
 	get ->
 	    #jid{luser = LUser, lserver = LServer} = To,
-	    US = {LUser, LServer},
 	    Username = ejabberd_odbc:escape(LUser),
 	    case catch ejabberd_odbc:sql_query(
 			 LServer,
 			 ["select vcard from vcard "
-			  "where username='", Username, "'"]) of
+			  "where username='", Username, "';"]) of
 		{selected, ["vcard"], [{SVCARD}]} ->
 		    case xml_stream:parse_element(SVCARD) of
 			{error, _Reason} ->
@@ -186,8 +185,6 @@ set_vcard(User, LServer, VCARD) ->
     LOrgName  = stringprep:tolower(OrgName),
     LOrgUnit  = stringprep:tolower(OrgUnit),
 
-    US = {LUser, LServer},
-
     if
 	(LUser     == error) or
 	(LFN       == error) or
@@ -231,32 +228,30 @@ set_vcard(User, LServer, VCARD) ->
 	    SOrgUnit = ejabberd_odbc:escape(OrgUnit),
 	    SLOrgUnit = ejabberd_odbc:escape(LOrgUnit),
 
-	    ejabberd_odbc:sql_query(
+	    ejabberd_odbc:sql_transaction(
 	      LServer,
-	      ["begin;"
-	       "delete from vcard where username='", LUsername, "';"
-	       "insert into vcard(username, vcard) "
-	       "values ('", LUsername, "', '", SVCARD, "');"
-	       "delete from vcard_search where lusername='", LUsername, "';"
-	       "insert into vcard_search("
-	       "        username, lusername, fn, lfn, family, lfamily,"
-	       "        given, lgiven, middle, lmiddle, nickname, lnickname,"
-	       "        bday, lbday, ctry, lctry, locality, llocality,"
-	       "        email, lemail, orgname, lorgname, orgunit, lorgunit)"
-	       "values (",
-	       "        '", Username,  "', '", LUsername,  "'," 
-	       "        '", SFN,       "', '", SLFN,       "'," 
-	       "        '", SFamily,   "', '", SLFamily,   "',"
-	       "        '", SGiven,    "', '", SLGiven,	   "',"
-	       "        '", SMiddle,   "', '", SLMiddle,   "',"
-	       "        '", SNickname, "', '", SLNickname, "',"
-	       "        '", SBDay,     "', '", SLBDay,	   "',"
-	       "        '", SCTRY,     "', '", SLCTRY,	   "',"
-	       "        '", SLocality, "', '", SLLocality, "',"
-	       "        '", SEMail,    "', '", SLEMail,	   "',"
-	       "        '", SOrgName,  "', '", SLOrgName,  "',"
-	       "        '", SOrgUnit,  "', '", SLOrgUnit,  "');"
-	       "commit"])
+	      [["delete from vcard where username='", LUsername, "';"],
+	       ["insert into vcard(username, vcard) "
+	       "values ('", LUsername, "', '", SVCARD, "');"],
+	       ["delete from vcard_search where lusername='", LUsername, "';"],
+	       ["insert into vcard_search("
+		"        username, lusername, fn, lfn, family, lfamily,"
+		"        given, lgiven, middle, lmiddle, nickname, lnickname,"
+		"        bday, lbday, ctry, lctry, locality, llocality,"
+		"        email, lemail, orgname, lorgname, orgunit, lorgunit)"
+		"values (",
+		"        '", Username,  "', '", LUsername,  "'," 
+		"        '", SFN,       "', '", SLFN,       "'," 
+		"        '", SFamily,   "', '", SLFamily,   "',"
+		"        '", SGiven,    "', '", SLGiven,    "',"
+		"        '", SMiddle,   "', '", SLMiddle,   "',"
+		"        '", SNickname, "', '", SLNickname, "',"
+		"        '", SBDay,     "', '", SLBDay,	   "',"
+		"        '", SCTRY,     "', '", SLCTRY,	   "',"
+		"        '", SLocality, "', '", SLLocality, "',"
+		"        '", SEMail,    "', '", SLEMail,	   "',"
+		"        '", SOrgName,  "', '", SLOrgName,  "',"
+		"        '", SOrgUnit,  "', '", SLOrgUnit,  "');"]])
     end.
 
 -define(TLFIELD(Type, Label, Var),
@@ -286,13 +281,10 @@ set_vcard(User, LServer, VCARD) ->
 	   ?TLFIELD("text-single", "Birthday", "bday"),
 	   ?TLFIELD("text-single", "Country", "ctry"),
 	   ?TLFIELD("text-single", "City", "locality"),
-	   ?TLFIELD("text-single", "email", "email"),
+	   ?TLFIELD("text-single", "Email", "email"),
 	   ?TLFIELD("text-single", "Organization Name", "orgname"),
 	   ?TLFIELD("text-single", "Organization Unit", "orgunit")
 	  ]}]).
-
-
-
 
 do_route(ServerHost, From, To, Packet) ->
     #jid{user = User, resource = Resource} = To,
@@ -421,7 +413,7 @@ iq_get_vcard(Lang) ->
       [{xmlcdata, translate:translate(
 		    Lang,
 		    "ejabberd vCard module\n"
-		    "Copyright (c) 2003-2005 Alexey Shchepin")}]}].
+		    "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 find_xdata_el({xmlelement, _Name, _Attrs, SubEls}) ->
     find_xdata_el1(SubEls).
@@ -444,10 +436,10 @@ find_xdata_el1([_ | Els]) ->
 
 search_result(Lang, JID, ServerHost, Data) ->
     [{xmlelement, "title", [],
-      [{xmlcdata, translate:translate(Lang, "Results of search in ") ++
+      [{xmlcdata, translate:translate(Lang, "Search Results for ") ++
 	jlib:jid_to_string(JID)}]},
      {xmlelement, "reported", [],
-      [?LFIELD("JID", "jid"),
+      [?LFIELD("Jabber ID", "jid"),
        ?LFIELD("Full Name", "fn"),
        ?LFIELD("Name", "given"),
        ?LFIELD("Middle Name", "middle"),
@@ -456,7 +448,7 @@ search_result(Lang, JID, ServerHost, Data) ->
        ?LFIELD("Birthday", "bday"),
        ?LFIELD("Country", "ctry"),
        ?LFIELD("City", "locality"),
-       ?LFIELD("email", "email"),
+       ?LFIELD("Email", "email"),
        ?LFIELD("Organization Name", "orgname"),
        ?LFIELD("Organization Unit", "orgunit")
       ]}] ++ lists:map(fun(R) -> record_to_item(ServerHost, R) end,
@@ -514,7 +506,7 @@ search(LServer, Data) ->
 			 ["select username, fn, family, given, middle, "
 			  "       nickname, bday, ctry, locality, "
 			  "       email, orgname, orgunit from vcard_search ",
-			  MatchSpec, Limit]) of
+			  MatchSpec, Limit, ";"]) of
 		{selected, ["username", "fn", "family", "given", "middle",
 			    "nickname", "bday", "ctry", "locality",
 			    "email", "orgname", "orgunit"],
@@ -564,12 +556,7 @@ make_val(Match, Field, Val) ->
 	case lists:suffix("*", Val) of
 	    true ->
 		Val1 = lists:sublist(Val, length(Val) - 1),
-		Val2 = lists:flatten([case C of
-					  $_ -> "\\_";
-					  $% -> "\\%";
-					  _ -> C
-				      end || C <- Val1]),
-		SVal = ejabberd_odbc:escape(Val2 ++ "%"),
+		SVal = ejabberd_odbc:escape_like(Val1) ++ "%",
 		[Field, " LIKE '", SVal, "'"];
 	    _ ->
 		SVal = ejabberd_odbc:escape(Val),
@@ -660,11 +647,9 @@ remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     Username = ejabberd_odbc:escape(LUser),
-    ejabberd_odbc:sql_query(
+    ejabberd_odbc:sql_transaction(
       LServer,
-      ["begin;"
-       "delete from vcard where username='", Username, "';"
-       "delete from vcard_search where lusername='", Username, "';"
-       "commit"]).
+      [["delete from vcard where username='", Username, "';"],
+       ["delete from vcard_search where lusername='", Username, "';"]]).
 
 

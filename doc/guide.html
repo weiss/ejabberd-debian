@@ -4,7 +4,7 @@
 
 <HEAD>
 
-<TITLE>Ejabberd 1.0.0 Installation and Operation Guide</TITLE>
+<TITLE>Ejabberd 1.1.1 Installation and Operation Guide</TITLE>
 
 <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <META name="GENERATOR" content="hevea 1.08">
@@ -34,7 +34,7 @@ BLOCKQUOTE{margin-left:4ex;margin-right:4ex;text-align:left;}
 
  <TABLE CLASS="title">
 <TR><TD>
-<H1 CLASS="titlemain">Ejabberd 1.0.0 Installation and Operation Guide</H1>
+<H1 CLASS="titlemain">Ejabberd 1.1.1 Installation and Operation Guide</H1>
 <H3 CLASS="titlerest">Alexey Shchepin<BR>
 <A HREF="mailto:alexey@sevcom.net"><TT>mailto:alexey@sevcom.net</TT></A><BR>
 <A HREF="xmpp:aleksey@jabber.ru"><TT>xmpp:aleksey@jabber.ru</TT></A></H3></TD>
@@ -87,61 +87,72 @@ BLOCKQUOTE{margin-left:4ex;margin-right:4ex;text-align:left;}
 <LI CLASS="li-toc"><A HREF="#htoc19">3.1.5&nbsp;&nbsp;Listened Sockets</A>
 <LI CLASS="li-toc"><A HREF="#htoc20">3.1.6&nbsp;&nbsp;Modules</A>
 <LI CLASS="li-toc"><A HREF="#htoc21">3.1.7&nbsp;&nbsp;Virtual Hosting</A>
+<LI CLASS="li-toc"><A HREF="#htoc22">3.1.8&nbsp;&nbsp;SASL anonymous and anonymous login</A>
 </UL>
-<LI CLASS="li-toc"><A HREF="#htoc22">3.2&nbsp;&nbsp;Creating an Initial Administrator</A>
-<LI CLASS="li-toc"><A HREF="#htoc23">3.3&nbsp;&nbsp;Online Configuration and Monitoring</A>
+<LI CLASS="li-toc"><A HREF="#htoc23">3.2&nbsp;&nbsp;Relational Database Support</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc24">3.3.1&nbsp;&nbsp;Web Interface</A>
-<LI CLASS="li-toc"><A HREF="#htoc25">3.3.2&nbsp;&nbsp;<TT>ejabberdctl</TT></A>
+<A HREF="#htoc24">3.2.1&nbsp;&nbsp;Authentication against a relational database</A>
+<LI CLASS="li-toc"><A HREF="#htoc25">3.2.2&nbsp;&nbsp;Relational database for other modules</A>
 </UL>
-</UL>
-<LI CLASS="li-toc"><A HREF="#htoc26">4&nbsp;&nbsp;Firewall Settings</A>
-<LI CLASS="li-toc"><A HREF="#htoc27">5&nbsp;&nbsp;SRV Records</A>
-<LI CLASS="li-toc"><A HREF="#htoc28">6&nbsp;&nbsp;Clustering</A>
+<LI CLASS="li-toc"><A HREF="#htoc26">3.3&nbsp;&nbsp;Creating an Initial Administrator</A>
+<LI CLASS="li-toc"><A HREF="#htoc27">3.4&nbsp;&nbsp;Online Configuration and Monitoring</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc29">6.1&nbsp;&nbsp;How it Works</A>
+<A HREF="#htoc28">3.4.1&nbsp;&nbsp;Web Interface</A>
+<LI CLASS="li-toc"><A HREF="#htoc29">3.4.2&nbsp;&nbsp;<TT>ejabberdctl</TT></A>
+</UL>
+</UL>
+<LI CLASS="li-toc"><A HREF="#htoc30">4&nbsp;&nbsp;Firewall Settings</A>
+<LI CLASS="li-toc"><A HREF="#htoc31">5&nbsp;&nbsp;SRV Records</A>
+<LI CLASS="li-toc"><A HREF="#htoc32">6&nbsp;&nbsp;Clustering</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc30">6.1.1&nbsp;&nbsp;Router</A>
-<LI CLASS="li-toc"><A HREF="#htoc31">6.1.2&nbsp;&nbsp;Local Router</A>
-<LI CLASS="li-toc"><A HREF="#htoc32">6.1.3&nbsp;&nbsp;Session Manager</A>
-<LI CLASS="li-toc"><A HREF="#htoc33">6.1.4&nbsp;&nbsp;s2s Manager</A>
-</UL>
-<LI CLASS="li-toc"><A HREF="#htoc34">6.2&nbsp;&nbsp;Clustering Setup</A>
-</UL>
-<LI CLASS="li-toc"><A HREF="#htoc35">A&nbsp;&nbsp;Built-in Modules</A>
+<A HREF="#htoc33">6.1&nbsp;&nbsp;How it Works</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc36">A.1&nbsp;&nbsp;Common Options</A>
+<A HREF="#htoc34">6.1.1&nbsp;&nbsp;Router</A>
+<LI CLASS="li-toc"><A HREF="#htoc35">6.1.2&nbsp;&nbsp;Local Router</A>
+<LI CLASS="li-toc"><A HREF="#htoc36">6.1.3&nbsp;&nbsp;Session Manager</A>
+<LI CLASS="li-toc"><A HREF="#htoc37">6.1.4&nbsp;&nbsp;s2s Manager</A>
+</UL>
+<LI CLASS="li-toc"><A HREF="#htoc38">6.2&nbsp;&nbsp;Clustering Setup</A>
+</UL>
+<LI CLASS="li-toc"><A HREF="#htoc39">A&nbsp;&nbsp;Built-in Modules</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc37">A.1.1&nbsp;&nbsp;<TT>iqdisc</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc38">A.1.2&nbsp;&nbsp;<TT>hosts</TT></A>
-</UL>
-<LI CLASS="li-toc"><A HREF="#htoc39">A.2&nbsp;&nbsp;<TT>mod_announce</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc40">A.3&nbsp;&nbsp;<TT>mod_disco</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc41">A.4&nbsp;&nbsp;<TT>mod_echo</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc42">A.5&nbsp;&nbsp;<TT>mod_irc</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc43">A.6&nbsp;&nbsp;<TT>mod_last</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc44">A.7&nbsp;&nbsp;<TT>mod_muc</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc45">A.8&nbsp;&nbsp;<TT>mod_offline</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc46">A.9&nbsp;&nbsp;<TT>mod_privacy</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc47">A.10&nbsp;&nbsp;<TT>mod_private</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc48">A.11&nbsp;&nbsp;<TT>mod_pubsub</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc49">A.12&nbsp;&nbsp;<TT>mod_register</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc50">A.13&nbsp;&nbsp;<TT>mod_roster</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc51">A.14&nbsp;&nbsp;<TT>mod_service_log</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc52">A.15&nbsp;&nbsp;<TT>mod_shared_roster</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc53">A.16&nbsp;&nbsp;<TT>mod_stats</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc54">A.17&nbsp;&nbsp;<TT>mod_time</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc55">A.18&nbsp;&nbsp;<TT>mod_vcard</TT></A>
-<LI CLASS="li-toc"><A HREF="#htoc56">A.19&nbsp;&nbsp;<TT>mod_version</TT></A>
-</UL>
-<LI CLASS="li-toc"><A HREF="#htoc57">B&nbsp;&nbsp;Internationalization and Localization</A>
-<LI CLASS="li-toc"><A HREF="#htoc58">C&nbsp;&nbsp;Release Notes</A>
+<A HREF="#htoc40">A.1&nbsp;&nbsp;Overview</A>
+<LI CLASS="li-toc"><A HREF="#htoc41">A.2&nbsp;&nbsp;Common Options</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc59">C.1&nbsp;&nbsp;ejabberd 0.9</A>
-<LI CLASS="li-toc"><A HREF="#htoc60">C.2&nbsp;&nbsp;ejabberd 0.9.1</A>
-<LI CLASS="li-toc"><A HREF="#htoc61">C.3&nbsp;&nbsp;ejabberd 0.9.8</A>
+<A HREF="#htoc42">A.2.1&nbsp;&nbsp;<TT>iqdisc</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc43">A.2.2&nbsp;&nbsp;<TT>hosts</TT></A>
 </UL>
-<LI CLASS="li-toc"><A HREF="#htoc62">D&nbsp;&nbsp;Acknowledgements</A>
+<LI CLASS="li-toc"><A HREF="#htoc44">A.3&nbsp;&nbsp;<TT>mod_announce</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc45">A.4&nbsp;&nbsp;<TT>mod_disco</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc46">A.5&nbsp;&nbsp;<TT>mod_echo</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc47">A.6&nbsp;&nbsp;<TT>mod_irc</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc48">A.7&nbsp;&nbsp;<TT>mod_last</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc49">A.8&nbsp;&nbsp;<TT>mod_muc</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc50">A.9&nbsp;&nbsp;<TT>mod_muc_log</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc51">A.10&nbsp;&nbsp;<TT>mod_offline</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc52">A.11&nbsp;&nbsp;<TT>mod_privacy</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc53">A.12&nbsp;&nbsp;<TT>mod_private</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc54">A.13&nbsp;&nbsp;<TT>mod_pubsub</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc55">A.14&nbsp;&nbsp;<TT>mod_register</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc56">A.15&nbsp;&nbsp;<TT>mod_roster</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc57">A.16&nbsp;&nbsp;<TT>mod_service_log</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc58">A.17&nbsp;&nbsp;<TT>mod_shared_roster</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc59">A.18&nbsp;&nbsp;<TT>mod_stats</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc60">A.19&nbsp;&nbsp;<TT>mod_time</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc61">A.20&nbsp;&nbsp;<TT>mod_vcard</TT></A>
+<LI CLASS="li-toc"><A HREF="#htoc62">A.21&nbsp;&nbsp;<TT>mod_version</TT></A>
+</UL>
+<LI CLASS="li-toc"><A HREF="#htoc63">B&nbsp;&nbsp;Internationalization and Localization</A>
+<LI CLASS="li-toc"><A HREF="#htoc64">C&nbsp;&nbsp;Release Notes</A>
+<UL CLASS="toc"><LI CLASS="li-toc">
+<A HREF="#htoc65">C.1&nbsp;&nbsp;ejabberd 0.9</A>
+<LI CLASS="li-toc"><A HREF="#htoc66">C.2&nbsp;&nbsp;ejabberd 0.9.1</A>
+<LI CLASS="li-toc"><A HREF="#htoc67">C.3&nbsp;&nbsp;ejabberd 0.9.8</A>
+<LI CLASS="li-toc"><A HREF="#htoc68">C.4&nbsp;&nbsp;ejabberd 1.0.0</A>
+<LI CLASS="li-toc"><A HREF="#htoc69">C.5&nbsp;&nbsp;ejabberd 1.1.0</A>
+<LI CLASS="li-toc"><A HREF="#htoc70">C.6&nbsp;&nbsp;ejabberd 1.1.1</A>
+</UL>
+<LI CLASS="li-toc"><A HREF="#htoc71">D&nbsp;&nbsp;Acknowledgements</A>
 </UL>
 
 <!--TOC section Introduction-->
@@ -166,16 +177,16 @@ BLOCKQUOTE{margin-left:4ex;margin-right:4ex;text-align:left;}
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 Multiplatform: <TT>ejabberd</TT> runs under Microsoft Windows and Unix derived systems such as Linux, FreeBSD and NetBSD.<BR>
 <BR>
-<LI CLASS="li-itemize">Distributed: You can run <TT>ejabberd</TT> on a cluster of machines and all of them will serve one Jabber domain. When you need more capacity you can simply add a new cheap node to your cluster. Accordingly, you do not need to buy an expensive high-end machine to support tens of thousands concurrent users.<BR>
+<LI CLASS="li-itemize">Distributed: You can run <TT>ejabberd</TT> on a cluster of machines and all of them will serve the same Jabber domain(s). When you need more capacity you can simply add a new cheap node to your cluster. Accordingly, you do not need to buy an expensive high-end machine to support tens of thousands concurrent users.<BR>
 <BR>
 <LI CLASS="li-itemize">Fault-tolerant: You can deploy an <TT>ejabberd</TT> cluster so that all the information required for a properly working service will be replicated permanently on all nodes. This means that if one of the nodes crashes, the others will continue working without disruption. In addition, nodes also can be added or replaced &#8220;on the fly&#8221;.<BR>
 <BR>
 <LI CLASS="li-itemize">Administrator Friendly: <TT>ejabberd</TT> is built on top of the Open Source Erlang. As a result you do not need to install an external database, an external web server, amongst others because everything is already included, and ready to run out of the box. Other administrator benefits include:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 Comprehensive documentation.
-<LI CLASS="li-itemize">Straightforward installers for Windows and Linux.
+<LI CLASS="li-itemize">Straightforward installers for Linux, Mac OS X, and Windows.
 <LI CLASS="li-itemize">Web interface for administration tasks.
-<LI CLASS="li-itemize">Shared Roster groups.
+<LI CLASS="li-itemize">Shared Roster Groups.
 <LI CLASS="li-itemize">Command line administration tool.
 <LI CLASS="li-itemize">Can integrate with existing authentication mechanisms.
 <LI CLASS="li-itemize">Capability to send announce messages.
@@ -189,7 +200,7 @@ Translated in 11 languages.
 <BR>
 <LI CLASS="li-itemize">Open Standards: <TT>ejabberd</TT> is the first Open Source Jabber server claiming to fully comply to the XMPP standard.
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-Fully XMPP compliant  
+Fully XMPP compliant 
 <LI CLASS="li-itemize">XML-based protocol
 <LI CLASS="li-itemize"><A HREF="http://ejabberd.jabber.ru/protocols">Many JEPs supported</A>.
 </UL></UL>
@@ -201,7 +212,7 @@ Fully XMPP compliant
 
 Besides common Jabber server features, <TT>ejabberd</TT> comes with a wide range of other features:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-Modular: <TT>ejabberd</TT>'s modular architecture allows easy customization:
+Modular
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 Load only the modules you want.
 <LI CLASS="li-itemize">Extend <TT>ejabberd</TT> with your own custom modules.
@@ -210,37 +221,33 @@ Load only the modules you want.
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 SASL and STARTTLS for c2s and s2s connections.
 <LI CLASS="li-itemize">STARTTLS and Dialback s2s connections.
-<LI CLASS="li-itemize">Obsolete SSL for c2s connections also supported.
 <LI CLASS="li-itemize">Web interface accessible via HTTPS secure access.
 </UL>
 <LI CLASS="li-itemize">Databases
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-Native PostgreSQL support. 
+Native MySQL support.
+<LI CLASS="li-itemize">Native PostgreSQL support.
 <LI CLASS="li-itemize">Mnesia.
 <LI CLASS="li-itemize">ODBC data storage support. 
 </UL>
 <LI CLASS="li-itemize">Authentication
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-LDAP. 
+LDAP and ODBC. 
 <LI CLASS="li-itemize">External Authentication script.
 <LI CLASS="li-itemize">Internal Authentication.
 </UL>
-<LI CLASS="li-itemize">The ability to interface via external components with networks such as:
-<UL CLASS="itemize"><LI CLASS="li-itemize">
-AIM
-<LI CLASS="li-itemize">ICQ
-<LI CLASS="li-itemize">MSN
-</UL>
 <LI CLASS="li-itemize">Others
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-IPv6 support both for c2s and s2s connections. 
-<LI CLASS="li-itemize">Support for virtual hosting. 
-<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0025.html">HTTP Polling</A> service
-<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0045.html">Multi-User Chat</A> module.
-<LI CLASS="li-itemize">IRC transport.
-<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0060.html">Publish-Subscribe</A> component.
-<LI CLASS="li-itemize">Users Directory based on users vCards.
+Compressing XML streams with Stream Compression (<A HREF="http://www.jabber.org/jeps/jep-0138.html">JEP-0138</A>).
+<LI CLASS="li-itemize">Interface with networks such as AIM, ICQ and MSN.
 <LI CLASS="li-itemize">Statistics via Statistics Gathering (<A HREF="http://www.jabber.org/jeps/jep-0039.html">JEP-0039</A>).
+<LI CLASS="li-itemize">IPv6 support both for c2s and s2s connections.
+<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0045.html">Multi-User Chat</A> module with logging.
+<LI CLASS="li-itemize">Users Directory based on users vCards.
+<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0060.html">Publish-Subscribe</A> component.
+<LI CLASS="li-itemize">Support for virtual hosting. 
+<LI CLASS="li-itemize"><A HREF="http://www.jabber.org/jeps/jep-0025.html">HTTP Polling</A> service.
+<LI CLASS="li-itemize">IRC transport.
 </UL>
 </UL>
 <!--TOC section Installation from Source-->
@@ -265,8 +272,10 @@ To compile <TT>ejabberd</TT> on a &#8220;Unix-like&#8221; operating system, you 
 GNU Make;
 <LI CLASS="li-itemize">GCC;
 <LI CLASS="li-itemize">libexpat 1.95 or higher;
-<LI CLASS="li-itemize">Erlang/OTP R8B or higher;
+<LI CLASS="li-itemize">Erlang/OTP R9C-2 or higher;
 <LI CLASS="li-itemize">OpenSSL 0.9.6 or higher (optional).
+<LI CLASS="li-itemize">Zlib 1.2.3 or higher (optional).
+<LI CLASS="li-itemize">GNU Iconv 1.8 or higher (optional, not needed at all on systems with GNU libc).
 </UL>
 <!--TOC subsubsection Windows-->
 
@@ -277,12 +286,13 @@ GNU Make;
 To compile <TT>ejabberd</TT> on a Windows flavour, you need:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 MS Visual C++ 6.0 Compiler
-<LI CLASS="li-itemize"><A HREF="http://erlang.org/download.html">Erlang/OTP R8B or higher</A>
+<LI CLASS="li-itemize"><A HREF="http://erlang.org/download.html">Erlang/OTP R9C-2 or higher</A>
 <LI CLASS="li-itemize"><A HREF="http://sourceforge.net/project/showfiles.php?group_id=10127&package_id=11277">Expat 1.95.7 or higher</A>
-<LI CLASS="li-itemize"><A HREF="http://www.gnu.org/software/libiconv/">Iconv 1.9.1</A>
+<LI CLASS="li-itemize"><A HREF="http://www.gnu.org/software/libiconv/">GNU Iconv 1.9.1</A>
 (optional)
 <LI CLASS="li-itemize"><A HREF="http://www.slproweb.com/products/Win32OpenSSL.html">Shining Light OpenSSL</A>
 (to enable SSL connections)
+<LI CLASS="li-itemize"><A HREF="http://www.zlib.net/">Zlib 1.2.3 or higher</A>
 </UL>
 <!--TOC subsection Obtaining <TT>ejabberd</TT>-->
 
@@ -456,7 +466,7 @@ Serving one domain:
 </PRE></UL>
 <LI CLASS="li-itemize">Serving two domains:
 <PRE CLASS="verbatim">
-  {hosts, ["one.org", "two.org"]}.
+  {hosts, ["example.net", "example.com"]}.
 </PRE></UL>
 <!--TOC subsubsection Default Language-->
 
@@ -612,48 +622,47 @@ Port number.
 
 Currently next modules are implemented:
 <BLOCKQUOTE CLASS="table"><DIV CLASS="center"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
+ 
  <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
-<TR><TD ALIGN=left NOWRAP><TT>ejabberd_c2s</TT></TD>
-<TD ALIGN=left NOWRAP>Description</TD>
-<TD ALIGN=left NOWRAP>Handles c2s connections.</TD>
+<TR><TD VALIGN=top ALIGN=left NOWRAP><TT>ejabberd_c2s</TT></TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Description</TD>
+<TD VALIGN=top ALIGN=left>Handles c2s connections.</TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP>Options</TD>
-<TD ALIGN=left NOWRAP><TT>access</TT>, <TT>certfile</TT>, <TT>inet6</TT>,
- <TT>ip</TT>, <TT>shaper</TT>, <TT>ssl</TT>, <TT>tls</TT>,
- <TT>starttls</TT>,</TD>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Options</TD>
+<TD VALIGN=top ALIGN=left><TT>access</TT>, <TT>certfile</TT>, <TT>inet6</TT>,
+ <TT>ip</TT>, <TT>max_stanza_size</TT>, <TT>shaper</TT>, <TT>ssl</TT>,
+ <TT>tls</TT>, <TT>starttls</TT>, <TT>starttls_required</TT>,
+ <TT>zlib</TT></TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP><TT>starttls_required</TT></TD>
-</TR>
-<TR><TD ALIGN=left NOWRAP><TT>ejabberd_s2s_in</TT></TD>
-<TD ALIGN=left NOWRAP>Description</TD>
-<TD ALIGN=left NOWRAP>Handles incoming s2s
+<TR><TD VALIGN=top ALIGN=left NOWRAP><TT>ejabberd_s2s_in</TT></TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Description</TD>
+<TD VALIGN=top ALIGN=left>Handles incoming s2s
  connections.</TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP>Options</TD>
-<TD ALIGN=left NOWRAP><TT>inet6</TT>, <TT>ip</TT></TD>
+<TR><TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Options</TD>
+<TD VALIGN=top ALIGN=left><TT>inet6</TT>, <TT>ip</TT>,
+ <TT>max_stanza_size</TT></TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP><TT>ejabberd_service</TT></TD>
-<TD ALIGN=left NOWRAP>Description</TD>
-<TD ALIGN=left NOWRAP>Interacts with external
+<TR><TD VALIGN=top ALIGN=left NOWRAP><TT>ejabberd_service</TT></TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Description</TD>
+<TD VALIGN=top ALIGN=left>Interacts with external
  components (*).</TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP>Options</TD>
-<TD ALIGN=left NOWRAP><TT>access</TT>, <TT>hosts</TT>, <TT>inet6</TT>,
+<TR><TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Options</TD>
+<TD VALIGN=top ALIGN=left><TT>access</TT>, <TT>hosts</TT>, <TT>inet6</TT>,
  <TT>ip</TT>, <TT>shaper</TT></TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP><TT>ejabberd_http</TT></TD>
-<TD ALIGN=left NOWRAP>Description</TD>
-<TD ALIGN=left NOWRAP>Handles incoming HTTP
+<TR><TD VALIGN=top ALIGN=left NOWRAP><TT>ejabberd_http</TT></TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Description</TD>
+<TD VALIGN=top ALIGN=left>Handles incoming HTTP
  connections.</TD>
 </TR>
-<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
-<TD ALIGN=left NOWRAP>Options</TD>
-<TD ALIGN=left NOWRAP><TT>certfile</TT>, <TT>http_poll</TT>,
+<TR><TD VALIGN=top ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=left NOWRAP>Options</TD>
+<TD VALIGN=top ALIGN=left><TT>certfile</TT>, <TT>http_poll</TT>,
  <TT>inet6</TT>, <TT>ip</TT>, <TT>tls</TT>, <TT>web_admin</TT></TD>
 </TR></TABLE>
 <DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></DIV></BLOCKQUOTE>
@@ -682,6 +691,10 @@ If HTTP Polling is enabled, it will be available at
  <DT CLASS="dt-description"><B><TT>inet6</TT></B><DD CLASS="dd-description"> Set up the socket for IPv6.
  <DT CLASS="dt-description"><B><TT>{ip, IPAddress}</TT></B><DD CLASS="dd-description"> This option specifies which network
  interface to listen for. For example <CODE>{ip, {192, 168, 1, 1}}</CODE>.
+ <DT CLASS="dt-description"><B><TT>{max_stanza_size, Size}</TT></B><DD CLASS="dd-description"> This
+ option specifies an approximate maximal size in bytes of XML stanzas.
+ For example <CODE>{max\_stanza\_size, 65536}</CODE>. The default value
+ is &#8220;<TT>infinity</TT>&#8221;.
  <DT CLASS="dt-description"><B><TT>{shaper, &lt;access rule&gt;}</TT></B><DD CLASS="dd-description"> This option defines a
  shaper for the port (see section&nbsp;<A HREF="#sec:configshaper">3.1.4</A>). The default value
  is &#8220;<TT>none</TT>&#8221;.
@@ -699,6 +712,11 @@ If HTTP Polling is enabled, it will be available at
  <DT CLASS="dt-description"><B><TT>tls</TT></B><DD CLASS="dd-description"> This option specifies that traffic on
  the port will be encrypted using SSL immediately after connecting. You
  should also set the <TT>certfile</TT> option.
+ <DT CLASS="dt-description"><B><TT>zlib</TT></B><DD CLASS="dd-description"> This
+ option specifies that Zlib stream compression (as defined in <A HREF="http://www.jabber.org/jeps/jep-0138.html">JEP-0138</A>)
+ is available on connections to the port. Client cannot use stream compression and
+ stream encryption simultaneously, so if you specify both <TT>tls</TT> (or <TT>ssl</TT>)
+ and <TT>zlib</TT> the latter option will not affect connection at all.
  <DT CLASS="dt-description"><B><TT>web_admin</TT></B><DD CLASS="dd-description"> This option
  enables the web interface for <TT>ejabberd</TT> administration which is available
  at <CODE>http://server:port/admin/</CODE>. Login and password are the username and
@@ -723,7 +741,7 @@ c2s connections are listened for on port 5222 and 5223 (SSL) and denied
  traffic enabled.
 <LI CLASS="li-itemize">Port 5280 is serving the web interface and the HTTP Polling service. Note
  that it is also possible to serve them on different ports. The second
- example in section&nbsp;<A HREF="#sec:webadm">3.3.1</A> shows how exactly this can be done.
+ example in section&nbsp;<A HREF="#sec:webadm">3.4.1</A> shows how exactly this can be done.
 <LI CLASS="li-itemize">All users except for the administrators have a traffic of limit 
  1,000&nbsp;Bytes/second
 <LI CLASS="li-itemize">The
@@ -816,33 +834,28 @@ services you have to make the transports log and do XDB by themselves:
 <A NAME="sec:configmodules"></A>
 
 The option <TT>modules</TT> defines the list of modules that will be loaded after
-<TT>ejabberd</TT> startup. Each entry in the list is a tuple in which the first
+<TT>ejabberd</TT>'s startup. Each entry in the list is a tuple in which the first
 element is the name of a module and the second is a list of options for that
-module. Read section&nbsp;<A HREF="#sec:modules">A</A> for detailed information about each
-module.<BR>
+module. Read section&nbsp;<A HREF="#sec:modules">A</A> for detailed information about modules.<BR>
 <BR>
-Example:
-<PRE CLASS="verbatim">
+Examples:
+<UL CLASS="itemize"><LI CLASS="li-itemize">
+In this simple example, only the module <TT>mod_echo</TT> is loaded and no
+ options are specified between square brackets:
+ <PRE CLASS="verbatim">
   {modules,
-   [{mod_register,  []},
-    {mod_roster,    []},
-    {mod_privacy,   []},
-    {mod_configure, []},
-    {mod_disco,     []},
-    {mod_stats,     []},
-    {mod_vcard,     []},
-    {mod_offline,   []},
-    {mod_announce,  [{access, announce}]},
-    {mod_echo,      [{hosts, ["echo.example.org"]}]},
-    {mod_private,   []},
-    {mod_irc,       []},
-    {mod_muc,       []},
-    {mod_pubsub,    []},
-    {mod_time,      [{iqdisc, no_queue}]},
-    {mod_last,      []},
+   [{mod_echo,      []}
+   ]}.
+</PRE><LI CLASS="li-itemize">The second example is also simple: the modules <TT>mod_echo</TT>, <TT>mod_time</TT>, and
+ <TT>mod_version</TT> are loaded without options. Remark that, besides the last entry,
+ all entries end with a comma:
+ <PRE CLASS="verbatim">
+  {modules,
+   [{mod_echo,      []},
+    {mod_time,      []},
     {mod_version,   []}
    ]}.
-</PRE>
+</PRE></UL>
 <!--TOC subsubsection Virtual Hosting-->
 
 <H4 CLASS="subsubsection"><A NAME="htoc21">3.1.7</A>&nbsp;&nbsp;Virtual Hosting</H4><!--SEC END -->
@@ -857,35 +870,168 @@ syntax:
 </PRE>
 Examples:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-Domain <TT>one.org</TT> is using the internal authentication method while
- domain <TT>two.org</TT> is using the LDAP server running on the domain
+Domain <TT>example.net</TT> is using the internal authentication method while
+ domain <TT>example.com</TT> is using the LDAP server running on the domain
  <TT>localhost</TT> to perform authentication:
 <PRE CLASS="verbatim">
-{host_config, "one.org", [{auth_method, internal}]}.
+{host_config, "example.net", [{auth_method, internal}]}.
 
-{host_config, "two.org", [{auth_method, ldap},
+{host_config, "example.com", [{auth_method, ldap},
                               {ldap_servers, ["localhost"]},
                               {ldap_uidattr, "uid"},
                               {ldap_rootdn, "dc=localdomain"},
                               {ldap_rootdn, "dc=example,dc=com"},
                               {ldap_password, ""}]}.
-</PRE><LI CLASS="li-itemize">Domain <TT>one.org</TT> is using ODBC to perform authentication
- while domain <TT>two.org</TT> is using the LDAP servers running on the domains
+</PRE><LI CLASS="li-itemize">Domain <TT>example.net</TT> is using ODBC to perform authentication
+ while domain <TT>example.com</TT> is using the LDAP servers running on the domains
  <TT>localhost</TT> and <TT>otherhost</TT>:
 <PRE CLASS="verbatim">
-{host_config, "one.org", [{auth_method, odbc},
+{host_config, "example.net", [{auth_method, odbc},
                               {odbc_server, "DSN=ejabberd;UID=ejabberd;PWD=ejabberd"}]}.
 
-{host_config, "two.org", [{auth_method, ldap},
+{host_config, "example.com", [{auth_method, ldap},
                               {ldap_servers, ["localhost", "otherhost"]},
                               {ldap_uidattr, "uid"},
                               {ldap_rootdn, "dc=localdomain"},
                               {ldap_rootdn, "dc=example,dc=com"},
                               {ldap_password, ""}]}.
 </PRE></UL>
+<!--TOC subsubsection SASL anonymous and anonymous login-->
+
+<H4 CLASS="subsubsection"><A NAME="htoc22">3.1.8</A>&nbsp;&nbsp;SASL anonymous and anonymous login</H4><!--SEC END -->
+
+<A NAME="sec:configsaslanonymous"></A>
+
+The configuration of the anonymous mode can be done with three
+<TT>host_config</TT> parameters:
+<UL CLASS="itemize"><LI CLASS="li-itemize"> 
+<TT>auth_method</TT>: This value is used for defining the authentication method:
+internal, odbc, ldap, external). You now have a special extra option to enable
+anonymous mode: anonymous.<BR>
+<BR>
+<LI CLASS="li-itemize"><TT>allow_multiple_connections</TT>: This option can be either true or false and
+is only used when the anonymous mode is enabled. Setting it to true means that
+the same username will be able to be taken several time in anonymous login
+mode if different resource are used to connect. This option is only useful in
+very special cases. It defaults to false.<BR>
+<BR>
+<LI CLASS="li-itemize"><TT>anonymous_protocol</TT>: This option can take three values:
+ <TT>sasl_anon</TT>, <TT>login_anon</TT> or both. <TT>sasl_anon</TT> means that
+ SASL anonymous mode is enabled. <TT>login_anon</TT> means that anonymous
+ login mode is enabled. both means that SASL anonymous and login anonymous are
+ enabled.
+</UL>
+Those options are defined for each virtual host with the <TT>host_config</TT>
+parameter (see section&nbsp;<A HREF="#sec:configvirtualhost">3.1.7</A>).<BR>
+<BR>
+Examples:
+<UL CLASS="itemize"><LI CLASS="li-itemize">
+To enable anonymous login on a virtual host:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, anonymous},
+                                     {anonymous_protocol, login_anon}]}.
+</PRE><LI CLASS="li-itemize">To enable anonymous login and internal authentication on a virtual host:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, [anonymous,internal]},
+                                     {anonymous_protocol, login_anon}]}.
+</PRE><LI CLASS="li-itemize">To enable SASL anonymous on a virtual host:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, [anonymous]},
+                                     {anonymous_protocol, sasl_anon}]}.
+</PRE><LI CLASS="li-itemize">To enable SASL anonymous and anonymous login on a virtual host:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, [anonymous]},
+                                     {anonymous_protocol, both}]}.
+</PRE><LI CLASS="li-itemize">To enable SASL anonymous, anonymous login and internal authentication on
+a virtual host:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, [anonymous,internal]},
+                                     {anonymous_protocol, both}]}.
+</PRE></UL>
+A detailled tutorial on SASL anonymous and anonymous login support is
+available from:
+<A HREF="http://support.process-one.net/doc/display/MESSENGER/Anonymous+users+support"><TT>http://support.process-one.net/doc/display/MESSENGER/Anonymous+users+support</TT></A><BR>
+<BR>
+<!--TOC subsection Relational Database Support-->
+
+<H3 CLASS="subsection"><A NAME="htoc23">3.2</A>&nbsp;&nbsp;Relational Database Support</H3><!--SEC END -->
+
+<A NAME="sec:relationaldatabase"></A>
+<!--TOC subsubsection Authentication against a relational database-->
+
+<H4 CLASS="subsubsection"><A NAME="htoc24">3.2.1</A>&nbsp;&nbsp;Authentication against a relational database</H4><!--SEC END -->
+
+<A NAME="sec:relationaldatabaseauth"></A>
+ejabberd use its internal Mnesia database as a default. It is however possible
+to use relational database to store persistant, long-living data. When
+switching the <TT>auth_method</TT> from internal to <TT>odbc</TT>, you are
+telling ejabberd to use a relational database for authentication. Different
+<TT>auth_method</TT> values can be used for different virtual hosts in the
+system.<BR>
+<BR>
+The option value name be misleading, as the method name is use both for access
+to relational database through ODBC or through the native interface. In any
+case, the first step is to define the odbc <TT>auth_method</TT>. For example:
+<PRE CLASS="verbatim">
+{host_config, "public.example.org", [{auth_method, [odbc]}]}.
+</PRE>
+The actual database access is defined in the option <TT>odbc_server</TT>. Its
+value is use to defined if we want to use ODBC, or one of the two native
+interface available, PostgreSQL or MySQL.<BR>
+<BR>
+To use a relational database through ODBC, you can pass the ODBC connection
+string as <TT>odbc_server</TT> parameter. For example:
+<PRE CLASS="verbatim">
+{odbc_server, "DSN=database;UID=ejabberd;PWD=password"}.
+</PRE>
+To use the native PostgreSQL interface, you can pass a tuple of the following form as
+parameter:
+<PRE CLASS="verbatim">
+{pgsql, "Server", "Database", "Username", "Password"}
+</PRE>
+<TT>pgsql</TT> is a keyword that should be kept as is. For example:
+<PRE CLASS="verbatim">
+{odbc_server, {pgsql, "localhost", "database", "ejabberd", "password"}}.
+</PRE>
+Note that you need to install the Erlang PgSQL library first. This library is
+available from Sourceforge: <A HREF="http://cvs.sourceforge.net/viewcvs.py/jungerl/jungerl/lib/pgsql/"><TT>http://cvs.sourceforge.net/viewcvs.py/jungerl/jungerl/lib/pgsql/</TT></A><BR>
+<BR>
+To use the native MySQL interface, the same tuple should be passed, except
+that you now have to use the <TT>mysql</TT> keyword instead of the <TT>pgsql</TT>
+keyword:
+<PRE CLASS="verbatim">
+{mysql, "Server", "Database", "Username", "Password"}
+</PRE>
+<TT>mysql</TT> is a keyword that should be kept as is. For example:
+<PRE CLASS="verbatim">
+{odbc_server, {mysql, "localhost", "test", "root", "password"}}.
+</PRE>
+Note that you need to install the Erlang MySQL library first. This library is
+directly available from Process-one website: <A HREF="http://support.process-one.net/doc/display/CONTRIBS/Yxa"><TT>http://support.process-one.net/doc/display/CONTRIBS/Yxa</TT></A><BR>
+<BR>
+A detailled tutorial to set-up <TT>ejabberd</TT> using the native MySQL interface is
+available from: <A HREF="http://support.process-one.net/doc/display/MESSENGER/Using+ejabberd+with+MySQL+native+driver"><TT>http://support.process-one.net/doc/display/MESSENGER/Using+ejabberd+with+MySQL+native+driver</TT></A><BR>
+<BR>
+<!--TOC subsubsection Relational database for other modules-->
+
+<H4 CLASS="subsubsection"><A NAME="htoc25">3.2.2</A>&nbsp;&nbsp;Relational database for other modules</H4><!--SEC END -->
+
+<A NAME="sec:relationaldatabaseextra"></A>
+It is possible to use a relational database to store pieces of
+information. You can do this by changing the module name to a name with an
+<TT>_odbc</TT> suffix in <TT>ejabberd</TT> config file. You can use a relational
+database for the following data:
+<UL CLASS="itemize"><LI CLASS="li-itemize">
+Last connection date and time: Use <TT>mod_last_odbc</TT> instead of
+ <TT>mod_last</TT>.
+<LI CLASS="li-itemize">Offline messages: Use <TT>mod_offline_odbc</TT> instead of
+ <TT>mod_offline</TT>.
+<LI CLASS="li-itemize">Rosters: Use <TT>mod_roster_odbc</TT> instead of <TT>mod_roster</TT>.
+<LI CLASS="li-itemize">Users' VCARD: Use <TT>mod_vcard_odbc</TT> instead of <TT>mod_vcard</TT>.
+</UL>
 <!--TOC subsection Creating an Initial Administrator-->
 
-<H3 CLASS="subsection"><A NAME="htoc22">3.2</A>&nbsp;&nbsp;Creating an Initial Administrator</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc26">3.3</A>&nbsp;&nbsp;Creating an Initial Administrator</H3><!--SEC END -->
 
 <A NAME="sec:initialadmin"></A>
 Before the web interface can be entered to perform administration tasks, an
@@ -897,10 +1043,10 @@ Register an account on your <TT>ejabberd</TT> deployment. An account can be
  created in two ways:
  <OL CLASS="enumerate" type=a><LI CLASS="li-enumerate">
  Using the tool <TT>ejabberdctl</TT> (see
- section&nbsp;<A HREF="#sec:ejabberdctl">3.3.2</A>):
+ section&nbsp;<A HREF="#sec:ejabberdctl">3.4.2</A>):
  <PRE CLASS="verbatim">
 % ejabberdctl node@host register admin example.org password
-</PRE><LI CLASS="li-enumerate">Using In-Band Registration (see section&nbsp;<A HREF="#sec:modregister">A.12</A>): you can
+</PRE><LI CLASS="li-enumerate">Using In-Band Registration (see section&nbsp;<A HREF="#sec:modregister">A.14</A>): you can
  use a Jabber client to register an account.
  </OL>
 <LI CLASS="li-enumerate">Edit the configuration file to promote the account created in the previous
@@ -917,12 +1063,12 @@ Register an account on your <TT>ejabberd</TT> deployment. An account can be
 </OL>
 <!--TOC subsection Online Configuration and Monitoring-->
 
-<H3 CLASS="subsection"><A NAME="htoc23">3.3</A>&nbsp;&nbsp;Online Configuration and Monitoring</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc27">3.4</A>&nbsp;&nbsp;Online Configuration and Monitoring</H3><!--SEC END -->
 
 <A NAME="sec:onlineconfig"></A>
 <!--TOC subsubsection Web Interface-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc24">3.3.1</A>&nbsp;&nbsp;Web Interface</H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc28">3.4.1</A>&nbsp;&nbsp;Web Interface</H4><!--SEC END -->
 
 <A NAME="sec:webadm"></A>
 
@@ -955,18 +1101,18 @@ You can serve the web interface on the same port as the
  HTTP Polling interface. In this example
  you should point your web browser to <CODE>http://example.org:5280/admin/</CODE> to
  administer all virtual hosts or to
- <CODE>http://example.org:5280/admin/server/two.org/</CODE> to administer only the
- virtual host <TT>two.org</TT>. Before you get access to the web interface you
- need to enter as username, the JID and password from a registered user that is
- allowed to configure <TT>ejabberd</TT>. In this example you can enter as username
- &#8220;<TT>admin@one.org</TT>&#8221; to administer all virtual hosts (first URL). If you
- log in with &#8220;<TT>admin@two.org</TT>&#8221; on<BR>
-<CODE>http://example.org:5280/admin/server/two.org/</CODE> you can only administer
- the virtual host <TT>two.org</TT>.
+ <CODE>http://example.org:5280/admin/server/example.com/</CODE> to administer only
+ the virtual host <TT>example.com</TT>. Before you get access to the web interface
+ you need to enter as username, the JID and password from a registered user
+ that is allowed to configure <TT>ejabberd</TT>. In this example you can enter as
+ username &#8220;<TT>admin@example.net</TT>&#8221; to administer all virtual hosts (first
+ URL). If you log in with &#8220;<TT>admin@example.com</TT>&#8221; on<BR>
+<CODE>http://example.org:5280/admin/server/example.com/</CODE> you can only
+ administer the virtual host <TT>example.com</TT>.
  <PRE CLASS="verbatim">
   ...
-  {acl, admins, {user, "admin", "one.org"}}.
-  {host_config, "two.org", [{acl, admins, {user, "admin", "two.org"}}]}.
+  {acl, admins, {user, "admin", "example.net"}}.
+  {host_config, "example.com", [{acl, admins, {user, "admin", "example.com"}}]}.
   {access, configure, [{allow, admins}]}.
   ...
   {hosts, ["example.org"]}.
@@ -996,7 +1142,7 @@ You can serve the web interface on the same port as the
 </PRE></UL>
 <!--TOC subsubsection <TT>ejabberdctl</TT>-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc25">3.3.2</A>&nbsp;&nbsp;<TT>ejabberdctl</TT></H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc29">3.4.2</A>&nbsp;&nbsp;<TT>ejabberdctl</TT></H4><!--SEC END -->
 
 <A NAME="sec:ejabberdctl"></A>
 It is possible to do some administration operations using the command
@@ -1042,11 +1188,11 @@ Additional information:
 </DL>
 <!--TOC section Firewall Settings-->
 
-<H2 CLASS="section"><A NAME="htoc26">4</A>&nbsp;&nbsp;Firewall Settings</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc30">4</A>&nbsp;&nbsp;Firewall Settings</H2><!--SEC END -->
 
 <A NAME="sec:firewall"></A>
 
-You need to take the following ports in mind when configuring your firewall:
+You need to take the following TCP ports in mind when configuring your firewall:
 <BLOCKQUOTE CLASS="table"><DIV CLASS="center"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
  <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
 <TR><TD ALIGN=left NOWRAP>Port</TD>
@@ -1071,7 +1217,7 @@ You need to take the following ports in mind when configuring your firewall:
 <DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></DIV></BLOCKQUOTE>
 <!--TOC section SRV Records-->
 
-<H2 CLASS="section"><A NAME="htoc27">5</A>&nbsp;&nbsp;SRV Records</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc31">5</A>&nbsp;&nbsp;SRV Records</H2><!--SEC END -->
 
 <A NAME="sec:srv"></A>
 
@@ -1083,13 +1229,13 @@ General information:
 </UL>
 <!--TOC section Clustering-->
 
-<H2 CLASS="section"><A NAME="htoc28">6</A>&nbsp;&nbsp;Clustering</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc32">6</A>&nbsp;&nbsp;Clustering</H2><!--SEC END -->
 
 <A NAME="sec:clustering"></A>
 
 <!--TOC subsection How it Works-->
 
-<H3 CLASS="subsection"><A NAME="htoc29">6.1</A>&nbsp;&nbsp;How it Works</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc33">6.1</A>&nbsp;&nbsp;How it Works</H3><!--SEC END -->
 
 <A NAME="sec:howitworks"></A>
 
@@ -1110,7 +1256,7 @@ router,
 </UL>
 <!--TOC subsubsection Router-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc30">6.1.1</A>&nbsp;&nbsp;Router</H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc34">6.1.1</A>&nbsp;&nbsp;Router</H4><!--SEC END -->
 
 
 This module is the main router of Jabber packets on each node. It
@@ -1121,7 +1267,7 @@ appropriate process. If not, it is sent to the s2s manager.<BR>
 <BR>
 <!--TOC subsubsection Local Router-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc31">6.1.2</A>&nbsp;&nbsp;Local Router</H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc35">6.1.2</A>&nbsp;&nbsp;Local Router</H4><!--SEC END -->
 
 
 This module routes packets which have a destination domain equal to
@@ -1131,7 +1277,7 @@ on its content.<BR>
 <BR>
 <!--TOC subsubsection Session Manager-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc32">6.1.3</A>&nbsp;&nbsp;Session Manager</H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc36">6.1.3</A>&nbsp;&nbsp;Session Manager</H4><!--SEC END -->
 
 
 This module routes packets to local users. It looks up to which user
@@ -1141,7 +1287,7 @@ storage, or bounced back.<BR>
 <BR>
 <!--TOC subsubsection s2s Manager-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc33">6.1.4</A>&nbsp;&nbsp;s2s Manager</H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc37">6.1.4</A>&nbsp;&nbsp;s2s Manager</H4><!--SEC END -->
 
 
 This module routes packets to other Jabber servers. First, it
@@ -1152,7 +1298,7 @@ serving this connection, otherwise a new connection is opened.<BR>
 <BR>
 <!--TOC subsection Clustering Setup-->
 
-<H3 CLASS="subsection"><A NAME="htoc34">6.2</A>&nbsp;&nbsp;Clustering Setup</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc38">6.2</A>&nbsp;&nbsp;Clustering Setup</H3><!--SEC END -->
 
 <A NAME="sec:cluster"></A>
 
@@ -1222,15 +1368,228 @@ Also <A HREF="http://www.erlang.se/doc/doc-5.4.9/lib/mnesia-4.2.2/doc/html/Mnesi
 You can repeat these steps for other machines supposed to serve this
 domain.<BR>
 <BR>
+
 <!--TOC section Built-in Modules-->
 
-<H2 CLASS="section"><A NAME="htoc35">A</A>&nbsp;&nbsp;Built-in Modules</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc39">A</A>&nbsp;&nbsp;Built-in Modules</H2><!--SEC END -->
 
 <A NAME="sec:modules"></A>
 
+<!--TOC subsection Overview-->
+
+<H3 CLASS="subsection"><A NAME="htoc40">A.1</A>&nbsp;&nbsp;Overview</H3><!--SEC END -->
+
+<A NAME="sec:modoverview"></A>
+
+The following table lists all modules available in the official <TT>ejabberd</TT>
+distribution. You can find more
+<A HREF="http://ejabberd.jabber.ru/contributions">contributed modules</A> on the
+ejabberd website. Please remember that these contributions might not work or
+that they can contain severe bugs and security leaks. Therefore, use them at
+your own risk!<BR>
+<BR>
+You can see which database backend each module needs by looking at the suffix:
+<UL CLASS="itemize"><LI CLASS="li-itemize">
+&#8220;_ldap&#8221;, this means that the module needs an LDAP server as backend.
+<LI CLASS="li-itemize">&#8220;_odbc&#8221;, this means that the module needs an ODBC compatible database,
+ a MySQL database, or a PostgreSQL database as backend.
+<LI CLASS="li-itemize">Nothing, this means that the modules uses Erlang's built-in database
+ Mnesia as backend.
+</UL>
+<BLOCKQUOTE CLASS="table"><DIV CLASS="center"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
+ <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1>
+<TR><TD ALIGN=left NOWRAP>Module</TD>
+<TD ALIGN=left NOWRAP>Feature</TD>
+<TD ALIGN=left NOWRAP>Dependencies</TD>
+<TD ALIGN=left NOWRAP>Needed for XMPP?</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_adhoc</TT></TD>
+<TD ALIGN=left NOWRAP>Ad-Hoc Commands (<A HREF="http://www.jabber.org/jeps/jep-0050.html">JEP-0050</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_announce</TT></TD>
+<TD ALIGN=left NOWRAP>Manage announcements</TD>
+<TD ALIGN=left NOWRAP><TT>mod_adhoc</TT></TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_configure</TT></TD>
+<TD ALIGN=left NOWRAP>Support for online</TD>
+<TD ALIGN=left NOWRAP><TT>mod_adhoc</TT></TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>configuration of ejabberd</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_disco</TT></TD>
+<TD ALIGN=left NOWRAP>Service Discovery (<A HREF="http://www.jabber.org/jeps/jep-0030.html">JEP-0030</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_echo</TT></TD>
+<TD ALIGN=left NOWRAP>Echoes Jabber packets</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_irc</TT></TD>
+<TD ALIGN=left NOWRAP>IRC transport</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_last</TT></TD>
+<TD ALIGN=left NOWRAP>Last Activity (<A HREF="http://www.jabber.org/jeps/jep-0012.html">JEP-0012</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_last_odbc</TT></TD>
+<TD ALIGN=left NOWRAP>Last Activity (<A HREF="http://www.jabber.org/jeps/jep-0012.html">JEP-0012</A>)</TD>
+<TD ALIGN=left NOWRAP>ODBC compatible</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>database, MySQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>or PostgreSQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_muc</TT></TD>
+<TD ALIGN=left NOWRAP>Multi-User Chat (<A HREF="http://www.jabber.org/jeps/jep-0045.html">JEP-0045</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_muc_log</TT></TD>
+<TD ALIGN=left NOWRAP>Multi-User Chat room logging</TD>
+<TD ALIGN=left NOWRAP><TT>mod_muc</TT></TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_offline</TT></TD>
+<TD ALIGN=left NOWRAP>Offline message storage</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_offline_odbc</TT></TD>
+<TD ALIGN=left NOWRAP>Offline message storage</TD>
+<TD ALIGN=left NOWRAP>ODBC compatible</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>database, MySQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>or PostgreSQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_privacy</TT></TD>
+<TD ALIGN=left NOWRAP>Blocking Communication</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Yes</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_private</TT></TD>
+<TD ALIGN=left NOWRAP>Private XML Storage (<A HREF="http://www.jabber.org/jeps/jep-0049.html">JEP-0049</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_pubsub</TT></TD>
+<TD ALIGN=left NOWRAP>Publish-Subscribe (<A HREF="http://www.jabber.org/jeps/jep-0060.html">JEP-0060</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_register</TT></TD>
+<TD ALIGN=left NOWRAP>In-Band Registration (<A HREF="http://www.jabber.org/jeps/jep-0077.html">JEP-0077</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_roster</TT></TD>
+<TD ALIGN=left NOWRAP>Roster management</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Yes (*)</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_roster_odbc</TT></TD>
+<TD ALIGN=left NOWRAP>Roster management</TD>
+<TD ALIGN=left NOWRAP>ODBC compatible</TD>
+<TD ALIGN=left NOWRAP>Yes (*)</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>database, MySQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>or PostgreSQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_service_log</TT></TD>
+<TD ALIGN=left NOWRAP>Copy user messages to logger service</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_shared_roster</TT></TD>
+<TD ALIGN=left NOWRAP>Shared roster management</TD>
+<TD ALIGN=left NOWRAP><TT>mod_roster</TT> or</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT>mod_roster_odbc</TT></TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_stats</TT></TD>
+<TD ALIGN=left NOWRAP>Statistics Gathering (<A HREF="http://www.jabber.org/jeps/jep-0039.html">JEP-0039</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_time</TT></TD>
+<TD ALIGN=left NOWRAP>Entity Time (<A HREF="http://www.jabber.org/jeps/jep-0090.html">JEP-0090</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_vcard</TT></TD>
+<TD ALIGN=left NOWRAP>vcard-temp (<A HREF="http://www.jabber.org/jeps/jep-0054.html">JEP-0054</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_vcard_ldap</TT></TD>
+<TD ALIGN=left NOWRAP>vcard-temp (<A HREF="http://www.jabber.org/jeps/jep-0054.html">JEP-0054</A>)</TD>
+<TD ALIGN=left NOWRAP>LDAP server</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_vcard_odbc</TT></TD>
+<TD ALIGN=left NOWRAP>vcard-temp (<A HREF="http://www.jabber.org/jeps/jep-0054.html">JEP-0054</A>)</TD>
+<TD ALIGN=left NOWRAP>ODBC compatible</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>database, MySQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>or PostgreSQL</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>mod_version</TT></TD>
+<TD ALIGN=left NOWRAP>Software Version (<A HREF="http://www.jabber.org/jeps/jep-0092.html">JEP-0092</A>)</TD>
+<TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD ALIGN=left NOWRAP>No</TD>
+</TR></TABLE>
+<DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></DIV></BLOCKQUOTE>
+(*) This module or a similar one with another database backend is needed for
+XMPP compliancy.<BR>
+<BR>
 <!--TOC subsection Common Options-->
 
-<H3 CLASS="subsection"><A NAME="htoc36">A.1</A>&nbsp;&nbsp;Common Options</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc41">A.2</A>&nbsp;&nbsp;Common Options</H3><!--SEC END -->
 
 <A NAME="sec:modcommonopts"></A>
 The following options are used by many modules. Therefore, they are described in
@@ -1238,7 +1597,7 @@ this separate section.<BR>
 <BR>
 <!--TOC subsubsection <TT>iqdisc</TT>-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc37">A.1.1</A>&nbsp;&nbsp;<TT>iqdisc</TT></H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc42">A.2.1</A>&nbsp;&nbsp;<TT>iqdisc</TT></H4><!--SEC END -->
 
 <A NAME="sec:modiqdiscoption"></A>
 
@@ -1272,7 +1631,7 @@ Example:
 </PRE>
 <!--TOC subsubsection <TT>hosts</TT>-->
 
-<H4 CLASS="subsubsection"><A NAME="htoc38">A.1.2</A>&nbsp;&nbsp;<TT>hosts</TT></H4><!--SEC END -->
+<H4 CLASS="subsubsection"><A NAME="htoc43">A.2.2</A>&nbsp;&nbsp;<TT>hosts</TT></H4><!--SEC END -->
 
 <A NAME="sec:modhostsoption"></A>
 
@@ -1300,18 +1659,18 @@ Serving the echo module on one domain:
     ...
    ]}.
 </PRE></UL>
- <LI CLASS="li-itemize">Serving the echo module on tho domains:
+ <LI CLASS="li-itemize">Serving the echo module on two domains:
  <PRE CLASS="verbatim">
   {modules,
    [
     ...
-    {mod_echo, [{hosts, ["echo.one.org", "echo.two.org"]}]},
+    {mod_echo, [{hosts, ["echo.example.net", "echo.example.com"]}]},
     ...
    ]}.
 </PRE></UL>
 <!--TOC subsection <TT>mod_announce</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc39">A.2</A>&nbsp;&nbsp;<TT>mod_announce</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc44">A.3</A>&nbsp;&nbsp;<TT>mod_announce</TT></H3><!--SEC END -->
 
 <A NAME="sec:modannounce"></A>
 
@@ -1327,7 +1686,7 @@ hosts:
  to several resources, only the resource with the highest priority will receive
  the message. If the registered user is not connected, the message will be
  stored offline in assumption that offline storage
- (see section&nbsp;<A HREF="#sec:modoffline">A.8</A>) is enabled.
+ (see section&nbsp;<A HREF="#sec:modoffline">A.10</A>) is enabled.
 <DT CLASS="dt-description"><B><TT>example.org/announce/online (example.org/announce/all-hosts/online)</TT></B><DD CLASS="dd-description">The
  message is sent to all connected users. If the user is online and connected
  to several resources, all resources will receive the message.
@@ -1377,7 +1736,7 @@ Only administrators can send announcements:
 </PRE></UL>
 <!--TOC subsection <TT>mod_disco</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc40">A.3</A>&nbsp;&nbsp;<TT>mod_disco</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc45">A.4</A>&nbsp;&nbsp;<TT>mod_disco</TT></H3><!--SEC END -->
 
 <A NAME="sec:moddisco"></A>
 
@@ -1394,7 +1753,7 @@ Options:
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Service Discovery (<TT>http://jabber.org/protocol/disco#items</TT> and
  <TT>http://jabber.org/protocol/disco#info</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 <DT CLASS="dt-description"><B><TT>extra_domains</TT></B><DD CLASS="dd-description"> With this option,
  extra domains can be added to the Service Discovery item list.
 </DL>
@@ -1429,7 +1788,7 @@ To serve a link to the Jabber User Directory on <TT>jabber.org</TT>:
 </PRE></UL>
 <!--TOC subsection <TT>mod_echo</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc41">A.4</A>&nbsp;&nbsp;<TT>mod_echo</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc46">A.5</A>&nbsp;&nbsp;<TT>mod_echo</TT></H3><!--SEC END -->
 
 <A NAME="sec:modecho"></A>
 
@@ -1441,7 +1800,7 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 
  <B><TT>hosts</TT></B><DD CLASS="dd-description">  This option defines the hostnames of the
- service (see section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>). If neither <TT>hosts</TT> nor
+ service (see section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>). If neither <TT>hosts</TT> nor
  the old <TT>host</TT> is present, the prefix &#8220;<TT>echo.</TT>&#8221; is added to all
  <TT>ejabberd</TT> hostnames.
 
@@ -1458,11 +1817,11 @@ Mirror, mirror, on the wall, who is the most beautiful
     ...
    ]}.
 </PRE><LI CLASS="li-itemize">If you still do not understand the inner workings of <TT>mod_echo</TT>,
- you can find a few more examples in section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>.
+ you can find a few more examples in section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>.
 </UL>
 <!--TOC subsection <TT>mod_irc</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc42">A.5</A>&nbsp;&nbsp;<TT>mod_irc</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc47">A.6</A>&nbsp;&nbsp;<TT>mod_irc</TT></H3><!--SEC END -->
 
 <A NAME="sec:modirc"></A>
 
@@ -1491,7 +1850,7 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 
  <B><TT>hosts</TT></B><DD CLASS="dd-description">  This option defines the hostnames of the
- service (see section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>). If neither <TT>hosts</TT> nor
+ service (see section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>). If neither <TT>hosts</TT> nor
  the old <TT>host</TT> is present, the prefix &#8220;<TT>irc.</TT>&#8221; is added to all
  <TT>ejabberd</TT> hostnames.
 
@@ -1510,12 +1869,13 @@ In the first example, the IRC transport is available on (all) your
     {mod_irc, [{access, all}]},
     ...
    ]}.
-</PRE><LI CLASS="li-itemize">In next example the IRC transport is available on two virtual hosts
- with different prefixes on each host. Moreover, the transport is only
- accessible by paying customers registered on our domains and on other servers.
+</PRE><LI CLASS="li-itemize">In next example the IRC transport is available on the two virtual hosts
+ <TT>example.net</TT> and <TT>example.com</TT> with different prefixes on each host.
+ Moreover, the transport is only accessible by paying customers registered on
+ our domains and on other servers.
  <PRE CLASS="verbatim">
-  {acl, paying_customers, {user, "customer1", "one.org"}}.
-  {acl, paying_customers, {user, "customer2", "two.org"}}.
+  {acl, paying_customers, {user, "customer1", "example.net"}}.
+  {acl, paying_customers, {user, "customer2", "example.com"}}.
   {acl, paying_customers, {user, "customer3", "example.org"}}.
   ...
   {access, paying_customers, [{allow, paying_customers},
@@ -1525,13 +1885,13 @@ In the first example, the IRC transport is available on (all) your
    [
     ...
     {mod_irc, [{access, paying_customers},
-               {hosts, ["irc.one.org", "irc-transport.two.org"]}]},
+               {hosts, ["irc.example.net", "irc-transport.example.com"]}]},
     ...
    ]}.
 </PRE></UL>
 <!--TOC subsection <TT>mod_last</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc43">A.6</A>&nbsp;&nbsp;<TT>mod_last</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc48">A.7</A>&nbsp;&nbsp;<TT>mod_last</TT></H3><!--SEC END -->
 
 <A NAME="sec:modlast"></A>
 
@@ -1544,11 +1904,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Last activity (<TT>jabber:iq:last</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC subsection <TT>mod_muc</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc44">A.7</A>&nbsp;&nbsp;<TT>mod_muc</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc49">A.8</A>&nbsp;&nbsp;<TT>mod_muc</TT></H3><!--SEC END -->
 
 <A NAME="sec:modmuc"></A>
 
@@ -1568,7 +1928,7 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 
  <B><TT>hosts</TT></B><DD CLASS="dd-description">  This option defines the hostnames of the
- service (see section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>). If neither <TT>hosts</TT> nor
+ service (see section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>). If neither <TT>hosts</TT> nor
  the old <TT>host</TT> is present, the prefix &#8220;<TT>conference.</TT>&#8221; is added to all
  <TT>ejabberd</TT> hostnames.
 
@@ -1580,14 +1940,20 @@ Options:
 <DT CLASS="dt-description"><B><TT>access_admin</TT></B><DD CLASS="dd-description"> This option specifies
  who is allowed to administrate the Multi-User Chat service (the default
  value is <TT>none</TT>, which means that only the room creator can
- administer his room).
+ administer his room). By sending a message to the service JID,
+ administrators can send service messages that will be displayed in every
+ active room.
 </DL>
 Examples:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 In the first example everyone is allowed to use the Multi-User Chat
  service. Everyone will also be able to create new rooms but only the user
  <TT>admin@example.org</TT> is allowed to administrate any room. In this
- example he is also a global administrator.
+ example he is also a global administrator. When <TT>admin@example.org</TT>
+ sends a message such as &#8220;Tomorrow, the Jabber server will be moved
+ to new hardware. This will involve service breakdowns around 23:00 UMT.
+ We apologise for this inconvenience.&#8221; to <TT>conference.example.org</TT>,
+ it will be displayed in all active rooms.
  <PRE CLASS="verbatim">
   {acl, admins, {user, "admin", "example.org"}}.
   ...
@@ -1604,10 +1970,14 @@ In the first example everyone is allowed to use the Multi-User Chat
 </PRE><LI CLASS="li-itemize">In the second example the Multi-User Chat service is only accessible by
  paying customers registered on our domains and on other servers. Of course
  the administrator is also allowed to access rooms. In addition, he is the
- only authority able to create and administer rooms.
+ only authority able to create and administer rooms. When
+ <TT>admin@example.org</TT> sends a message such as &#8220;Tomorrow, the Jabber
+ server will be moved to new hardware. This will involve service breakdowns
+ around 23:00 UMT. We apologise for this inconvenience.&#8221; to
+ <TT>conference.example.org</TT>, it will be displayed in all active rooms.
  <PRE CLASS="verbatim">
-  {acl, paying_customers, {user, "customer1", "one.org"}}.
-  {acl, paying_customers, {user, "customer2", "two.org"}}.
+  {acl, paying_customers, {user, "customer1", "example.net"}}.
+  {acl, paying_customers, {user, "customer2", "example.com"}}.
   {acl, paying_customers, {user, "customer3", "example.org"}}.
   {acl, admins, {user, "admin", "example.org"}}.
   ...
@@ -1626,9 +1996,81 @@ In the first example everyone is allowed to use the Multi-User Chat
     ...
    ]}.
 </PRE></UL>
+<!--TOC subsection <TT>mod_muc_log</TT>-->
+
+<H3 CLASS="subsection"><A NAME="htoc50">A.9</A>&nbsp;&nbsp;<TT>mod_muc_log</TT></H3><!--SEC END -->
+
+<A NAME="sec:modmuclog"></A>
+
+This module enables optional logging of Multi-User Chat conversations to HTML.
+Once you enable this module, join a chatroom with enought privileges using a MUC capable Jabber client,
+request the configuration form and there you will have an option to enable chatroom logging.<BR>
+<BR>
+Some of the features of generated logs:
+<UL CLASS="itemize"><LI CLASS="li-itemize">
+A lot of information about chatroom is added on top of the page: Room title, JID, subject author, subject and configuration.
+<LI CLASS="li-itemize">Room title and JID are links to join the chatroom (using XMPP-IRI).
+<LI CLASS="li-itemize">Subject and chatroom configuration changes are tracked and displayed.
+<LI CLASS="li-itemize">Joins, leaves, nick changes, kicks, bans and /me are tracked and displayed, including the reason when available.
+<LI CLASS="li-itemize">Generated HTML files are XHTML 1.0 Transitional and CSS compliant.
+<LI CLASS="li-itemize">Timestamps are self-referencing links.
+<LI CLASS="li-itemize">Links on top for quicker navigation: Previous day, Next day, Up.
+<LI CLASS="li-itemize">CSS is used for style definition, and a custom CSS file can be used.
+<LI CLASS="li-itemize">URLs on messages and subjects are converted to hyperlinks.
+<LI CLASS="li-itemize">Timezone used on timestamps is shown on the log files.
+<LI CLASS="li-itemize">A custom link can be added on top of page.
+</UL>
+Options:
+<DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
+<B><TT>access_log</TT></B><DD CLASS="dd-description">
+ Restricts which users are allowed to enable or disable chatroom logging using ACL and ACCESS.
+ Default: <TT>muc_admin</TT>.
+ If you want to allow any chatroom owner put: <TT>muc</TT>.
+<DT CLASS="dt-description"><B><TT>cssfile</TT></B><DD CLASS="dd-description">
+ If HTMLs will use a custom CSS file or the embedded one.
+ Allowed values:
+ <TT>false</TT>: HTMLs will include the standard CSS code;
+ <TT>"CSS-URL"</TT>: the URL of the CSS file (for example: "http://example.com/my.css").
+ Default: <TT>false</TT>.
+<DT CLASS="dt-description"><B><TT>dirtype</TT></B><DD CLASS="dd-description">
+ Type of directory that will be created.
+	Allowed values: 
+		<TT>subdirs</TT>: creates subdirectories for year and month; 
+ <TT>plain</TT>: the filename contains the full date, no subdirs.
+ Default: <TT>subdirs</TT>.
+<DT CLASS="dt-description"><B><TT>outdir</TT></B><DD CLASS="dd-description">
+ Full path to the directory where html will be generated.
+ Make sure the system user has write access on that directory. 
+ Default: <TT>"www/muc"</TT>.
+<DT CLASS="dt-description"><B><TT>timezone</TT></B><DD CLASS="dd-description">
+ What timezone should be used.
+ Allowed values:
+		<TT>local</TT>: use local time, as reported to Erlang by the operating system;
+ <TT>universal</TT>: use GMT/UTC time.
+ Default: <TT>local</TT>.
+<DT CLASS="dt-description"><B><TT>top_link</TT></B><DD CLASS="dd-description">
+ Customizable link on top right corner. Syntax of this option: <TT>{"URL", "Text"}</TT>.
+ Default: <TT>{"/", "Home"}</TT>.
+</DL>
+Example configuration:
+<PRE CLASS="verbatim">
+  {modules,
+   [
+    ...
+    {mod_muc_log, [
+               {access_log, muc},
+               {cssfile, "http://example.com/my.css"},
+               {dirtype, plain},
+               {outdir, "/var/www/muclogs"},
+               {timezone, universal},
+               {top_link, {"http://www.jabber.ru", "Jabber.ru"}}
+    ]},
+    ...
+   ]}.
+</PRE>
 <!--TOC subsection <TT>mod_offline</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc45">A.8</A>&nbsp;&nbsp;<TT>mod_offline</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc51">A.10</A>&nbsp;&nbsp;<TT>mod_offline</TT></H3><!--SEC END -->
 
 <A NAME="sec:modoffline"></A>
 
@@ -1636,11 +2078,11 @@ This module implements offline message storage. This means that all messages
 sent to an offline user will be stored on the server until that user comes
 online again. Thus it is very similar to how email works. Note that
 <TT>ejabberdctl</TT> has a command to delete expired messages
-(see section&nbsp;<A HREF="#sec:ejabberdctl">3.3.2</A>).<BR>
+(see section&nbsp;<A HREF="#sec:ejabberdctl">3.4.2</A>).<BR>
 <BR>
 <!--TOC subsection <TT>mod_privacy</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc46">A.9</A>&nbsp;&nbsp;<TT>mod_privacy</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc52">A.11</A>&nbsp;&nbsp;<TT>mod_privacy</TT></H3><!--SEC END -->
 
 <A NAME="sec:modprivacy"></A>
 
@@ -1671,11 +2113,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Blocking Communication (<TT>jabber:iq:privacy</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC subsection <TT>mod_private</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc47">A.10</A>&nbsp;&nbsp;<TT>mod_private</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc53">A.12</A>&nbsp;&nbsp;<TT>mod_private</TT></H3><!--SEC END -->
 
 <A NAME="sec:modprivate"></A>
 
@@ -1690,11 +2132,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Private XML Storage (<TT>jabber:iq:private</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC subsection <TT>mod_pubsub</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc48">A.11</A>&nbsp;&nbsp;<TT>mod_pubsub</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc54">A.13</A>&nbsp;&nbsp;<TT>mod_pubsub</TT></H3><!--SEC END -->
 
 <A NAME="sec:modpubsub"></A>
 
@@ -1724,7 +2166,7 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 
  <B><TT>hosts</TT></B><DD CLASS="dd-description">  This option defines the hostnames of the
- service (see section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>). If neither <TT>hosts</TT> nor
+ service (see section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>). If neither <TT>hosts</TT> nor
  the old <TT>host</TT> is present, the prefix &#8220;<TT>pubsub.</TT>&#8221; is added to all
  <TT>ejabberd</TT> hostnames.
 
@@ -1743,7 +2185,7 @@ Example:
 </PRE>
 <!--TOC subsection <TT>mod_register</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc49">A.12</A>&nbsp;&nbsp;<TT>mod_register</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc55">A.14</A>&nbsp;&nbsp;<TT>mod_register</TT></H3><!--SEC END -->
 
 <A NAME="sec:modregister"></A>
 
@@ -1762,7 +2204,7 @@ Options:
  restrictions by default).
 <DT CLASS="dt-description"><B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for In-Band Registration (<TT>jabber:iq:register</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 Examples:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
@@ -1800,7 +2242,7 @@ Next example prohibits the registration of too short account names and of
 </PRE></UL>
 <!--TOC subsection <TT>mod_roster</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc50">A.13</A>&nbsp;&nbsp;<TT>mod_roster</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc56">A.15</A>&nbsp;&nbsp;<TT>mod_roster</TT></H3><!--SEC END -->
 
 <A NAME="sec:modroster"></A>
 
@@ -1810,11 +2252,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Roster Management (<TT>jabber:iq:roster</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC subsection <TT>mod_service_log</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc51">A.14</A>&nbsp;&nbsp;<TT>mod_service_log</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc57">A.16</A>&nbsp;&nbsp;<TT>mod_service_log</TT></H3><!--SEC END -->
 
 <A NAME="sec:modservicelog"></A>
 
@@ -1854,7 +2296,7 @@ To log all end user packets to the Bandersnatch service running on
 </PRE></UL>
 <!--TOC subsection <TT>mod_shared_roster</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc52">A.15</A>&nbsp;&nbsp;<TT>mod_shared_roster</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc58">A.17</A>&nbsp;&nbsp;<TT>mod_shared_roster</TT></H3><!--SEC END -->
 
 <A NAME="sec:modsharedroster"></A>
 
@@ -1981,7 +2423,7 @@ Take the case of a computer club that wants all its members seeing each
 </UL>
 <!--TOC subsection <TT>mod_stats</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc53">A.16</A>&nbsp;&nbsp;<TT>mod_stats</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc59">A.18</A>&nbsp;&nbsp;<TT>mod_stats</TT></H3><!--SEC END -->
 
 <A NAME="sec:modstats"></A>
 
@@ -1997,7 +2439,7 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Statistics Gathering (<TT>http://jabber.org/protocol/stats</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 As there are only a small amount of clients (for example
 <A HREF="http://tkabber.jabber.ru/">Tkabber</A>) and software libraries with
@@ -2023,7 +2465,7 @@ You can request the number of online users on the current virtual host
 </PRE></UL>
 <!--TOC subsection <TT>mod_time</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc54">A.17</A>&nbsp;&nbsp;<TT>mod_time</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc60">A.19</A>&nbsp;&nbsp;<TT>mod_time</TT></H3><!--SEC END -->
 
 <A NAME="sec:modtime"></A>
 
@@ -2034,11 +2476,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Entity Time (<TT>jabber:iq:time</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC subsection <TT>mod_vcard</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc55">A.18</A>&nbsp;&nbsp;<TT>mod_vcard</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc61">A.20</A>&nbsp;&nbsp;<TT>mod_vcard</TT></H3><!--SEC END -->
 
 <A NAME="sec:modvcard"></A>
 
@@ -2051,13 +2493,13 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 
  <B><TT>hosts</TT></B><DD CLASS="dd-description">  This option defines the hostnames of the
- service (see section&nbsp;<A HREF="#sec:modhostsoption">A.1.2</A>). If neither <TT>hosts</TT> nor
+ service (see section&nbsp;<A HREF="#sec:modhostsoption">A.2.2</A>). If neither <TT>hosts</TT> nor
  the old <TT>host</TT> is present, the prefix &#8220;<TT>vjud.</TT>&#8221; is added to all
  <TT>ejabberd</TT> hostnames.
 
 <DT CLASS="dt-description"><B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for <TT>vcard-temp</TT> IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 <DT CLASS="dt-description"><B><TT>search</TT></B><DD CLASS="dd-description"> This option specifies whether the search
  functionality is enabled (value: <TT>true</TT>) or disabled
  (value: <TT>false</TT>). If disabled, the option <TT>hosts</TT> will be
@@ -2104,7 +2546,7 @@ In this first situation, search results are limited to twenty items,
 </PRE></UL>
 <!--TOC subsection <TT>mod_version</TT>-->
 
-<H3 CLASS="subsection"><A NAME="htoc56">A.19</A>&nbsp;&nbsp;<TT>mod_version</TT></H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc62">A.21</A>&nbsp;&nbsp;<TT>mod_version</TT></H3><!--SEC END -->
 
 <A NAME="sec:modversion"></A>
 
@@ -2115,11 +2557,11 @@ Options:
 <DL CLASS="description" COMPACT=compact><DT CLASS="dt-description">
 <B><TT>iqdisc</TT></B><DD CLASS="dd-description"> This specifies 
 the processing discipline for Software Version (<TT>jabber:iq:version</TT>) IQ queries
-(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.1.1</A>).
+(see section&nbsp;<A HREF="#sec:modiqdiscoption">A.2.1</A>).
 </DL>
 <!--TOC section Internationalization and Localization-->
 
-<H2 CLASS="section"><A NAME="htoc57">B</A>&nbsp;&nbsp;Internationalization and Localization</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc63">B</A>&nbsp;&nbsp;Internationalization and Localization</H2><!--SEC END -->
 
 <A NAME="sec:i18nl10n"></A>
 
@@ -2162,13 +2604,13 @@ figure&nbsp;<A HREF="#fig:webadmmainru">3</A> with figure&nbsp;<A HREF="#fig:web
 <DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></DIV></BLOCKQUOTE>
 <!--TOC section Release Notes-->
 
-<H2 CLASS="section"><A NAME="htoc58">C</A>&nbsp;&nbsp;Release Notes</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc64">C</A>&nbsp;&nbsp;Release Notes</H2><!--SEC END -->
 
 <A NAME="sec:releasenotes"></A>
 
 <!--TOC subsection ejabberd 0.9-->
 
-<H3 CLASS="subsection"><A NAME="htoc59">C.1</A>&nbsp;&nbsp;ejabberd 0.9</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc65">C.1</A>&nbsp;&nbsp;ejabberd 0.9</H3><!--SEC END -->
 
 <PRE CLASS="verbatim">
        Release notes
@@ -2262,7 +2704,7 @@ Bugfixes
 </PRE>
 <!--TOC subsection ejabberd 0.9.1-->
 
-<H3 CLASS="subsection"><A NAME="htoc60">C.2</A>&nbsp;&nbsp;ejabberd 0.9.1</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc66">C.2</A>&nbsp;&nbsp;ejabberd 0.9.1</H3><!--SEC END -->
 
 <PRE CLASS="verbatim">
        Release notes
@@ -2330,7 +2772,7 @@ Bugfixes
 </PRE>
 <!--TOC subsection ejabberd 0.9.8-->
 
-<H3 CLASS="subsection"><A NAME="htoc61">C.3</A>&nbsp;&nbsp;ejabberd 0.9.8</H3><!--SEC END -->
+<H3 CLASS="subsection"><A NAME="htoc67">C.3</A>&nbsp;&nbsp;ejabberd 0.9.8</H3><!--SEC END -->
 
 <PRE CLASS="verbatim">
        Release notes
@@ -2433,9 +2875,381 @@ References
 END
 
 </PRE>
+<!--TOC subsection ejabberd 1.0.0-->
+
+<H3 CLASS="subsection"><A NAME="htoc68">C.4</A>&nbsp;&nbsp;ejabberd 1.0.0</H3><!--SEC END -->
+
+<PRE CLASS="verbatim">
+       Release Notes
+       ejabberd 1.0.0
+       14 December 2005
+
+   This document describes the main changes in ejabberd 1.0.0. Unique in this
+   version is the compliancy with the XMPP (eXtensible Messaging and Presence
+   Protocol) standard. ejabberd is the first Open Source Jabber server claiming
+   to fully comply to the XMPP standard.
+
+   ejabberd can be downloaded from the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/
+
+   Detailed information can be found in the ejabberd Feature Sheet and User
+   Guide which are available on the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/docs.html
+
+
+   Recent changes include:
+
+
+Server-to-server Encryption for Enhanced Security
+
+  - Support for STARTTLS and SASL EXTERNAL to secure server-to-server traffic
+    has been added.
+  - Also, STARTTLS and Dialback has been implemented for server-to-server (s2s)
+    connections. Detailed information about these new features can be found on
+    http://ejabberd.jabber.ru/s2s-encryption
+  - commonName and dNSName fields matching were introduced to ease the process
+    of retrieving certificates.
+  - Different certificates can be defined for each virtual host.
+
+ODBC Support
+
+  - ODBC support has been improved to allow production use of ejabberd with
+    relational databases.
+  - Support for vCard storage in ODBC has been added.
+  - ejd2odbc.erl is a tool to convert an installation from Erlang's database
+    Mnesia to an ODBC compatible relational database.
+
+Native PostgreSQL Support
+
+  - Native PostgreSQL support gives you a better performance when you use
+    PostgreSQL.
+
+Shared Roster groups
+
+  - Shared Roster groups support has been enhanced. New is the ability to add
+    all registered users to everyone's roster. Detailed information about this
+    new feature can be found on http://ejabberd.jabber.ru/shared-roster-all
+
+Web Interface
+
+   - The web interface internal code has been modified for better integration
+     and compliancy with J-EAI, an ejabberd-based Enterprise Application
+     Integration platform.
+   - More XHTML 1.0 Transitional compliancy work was done.
+
+Transports
+
+   - A transport workaround can be enabled during compilation. To do this, you
+     can pass the "--enable-roster-gateway-workaround" option to the configure
+     script. (./configure --enable-roster-gateway-workaround)
+     This option allows transports to add items with subscription "to" in the
+     roster by sending &lt;presence type='subscribed'/&gt; stanza to user. This option
+     is only needed for JIT ICQ transport.
+     Warning: by enabling this option, ejabberd will not be fully XMPP compliant
+              anymore.
+
+Documentation and Internationalization
+
+   - Documentation has been extended to cover more topics.
+   - Translations have been updated.
+
+Bugfixes
+
+   - This release contains several bugfixes.
+   - Among other bugfixes include improvements to the client-to-server (c2s)
+     connection management module.
+   - Please refer to the ChangeLog file supplied
+     with this release regarding all improvements in ejabberd.
+
+
+   Installation Notes
+
+
+Supported Erlang Version
+
+   - You need at least Erlang/OTP R9C to run ejabberd 1.0.0.
+
+Installation
+
+   Installers are provided for Microsoft Windows and Linux/x86.
+   Installers can be retrieved from:
+   http://www.process-one.net/en/projects/ejabberd/download.html
+
+Migration Notes
+
+   - Before any migration, ejabberd system and database must be properly
+     backed up.
+   - When upgrading an ODBC-based installation, you will need to change the
+     relational database schema. The following SQL commands must be run on the
+     database:
+       CREATE SEQUENCE spool_seq_seq;
+       ALTER TABLE spool ADD COLUMN seq integer;
+       ALTER TABLE spool ALTER COLUMN seq SET DEFAULT nextval('spool_seq_seq');
+       UPDATE spool SET seq = DEFAULT;
+       ALTER TABLE spool ALTER COLUMN seq SET NOT NULL;
+
+References
+
+   Contributed tutorials of interest are:
+   - Migration from Jabberd1.4 to ejabberd:
+     http://ejabberd.jabber.ru/jabberd1-to-ejabberd
+   - Migration from Jabberd2 to ejabberd:
+     http://ejabberd.jabber.ru/jabberd2-to-ejabberd
+   - Transport configuration for connecting to other networks:
+     http://ejabberd.jabber.ru/tutorials-transports
+
+END
+
+</PRE>
+<!--TOC subsection ejabberd 1.1.0-->
+
+<H3 CLASS="subsection"><A NAME="htoc69">C.5</A>&nbsp;&nbsp;ejabberd 1.1.0</H3><!--SEC END -->
+
+<PRE CLASS="verbatim">
+    Release Notes
+    ejabberd 1.1.0
+    24 April 2006
+
+   This document describes the main changes in ejabberd 1.1.0. This version
+   introduce new features including support for new Jabber Enhancement
+   Proposals and several performance improvements enabling deployments on an
+   even larger scale than already possible.
+
+   ejabberd can be downloaded from the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/
+
+   Detailed information can be found in the ejabberd Feature Sheet and User
+   Guide which are available on the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/docs.html
+
+   A complete list of changes is available from:
+   http://support.process-one.net/secure/ReleaseNote.jspa?projectId=10011&amp;styleName=Html&amp;version=10025
+
+
+   Recent changes include:
+
+
+New Jabber Enhancement Proposal support:
+
+  - JEP-0050: Ad-Hoc Commands.
+  - JEP-0138: Stream Compression.
+  - JEP-0175: SASL anonymous.
+
+Anonymous login
+
+  - SASL anonymous.
+  - Anonymous login for clients that do not yet support SASL Anonymous.
+  
+Relational database Support
+
+  - MySQL is now fully supported through ODBC and in native mode.
+  - Various improvements to the native database interfaces.
+  - The migration tool can use relational databases.
+
+Multi-User Chat improvements
+
+  - Logging of room discussion to text file is now supported.
+  - Better reconfiguration support.
+  - Security oriented fixes.
+  - Several improvements and updates to latest JEP-0045.
+
+Performance scalability improvements for large clusters
+
+  - Improved session synchronisation management between cluster nodes.
+  - Internal architecture has been reworked to use generalize Erlang/OTP
+    framework usage.
+  - Speed improvement on logger.
+  - TCP/IP packet reception change for better network throttling and
+    regulation.
+  As a result, these improvements will reduce load on large scale deployments.
+
+XMPP Protocol related improvements
+
+  - XML stanza size can be limited.
+  - Messages are send to all resources with the same highest priority.
+
+Documentation and Internationalization
+
+   - Documentation has been extended to cover more topics.
+   - Translations have been updated.
+
+Web interface
+
+   - XHTML 1.0 compliance.
+
+Bugfixes
+
+   - This release contains many bugfixes on various areas such as Publish-Subscribe, build
+     chain, installers, IRC gateway, ejabberdctl, amongst others.
+   - Please refer to the ChangeLog file supplied with this release regarding
+     all improvements in ejabberd.
+
+
+
+   Installation Notes
+
+Supported Erlang Version
+
+   - You need at least Erlang/OTP R9C-2 to run ejabberd 1.1.0.
+
+Installation
+
+   Installers are provided for Microsoft Windows, Linux/x86 and MacOSX/PPC.
+   Installers can be retrieved from:
+   http://www.process-one.net/en/projects/ejabberd/download.html
+
+Migration Notes
+
+   - Before any migration, ejabberd system and database must be properly
+     backed up.
+   - The database schema has not been changed comparing to version 1.0.0 and
+     consequently it does not require any migration.
+
+
+References
+
+   Contributed tutorials and documents of interest are:
+   - Migration from Jabberd1.4, Jabberd2 and WPJabber to ejabberd:
+     http://ejabberd.jabber.ru/migrate-to-ejabberd     
+   - Transport configuration for connecting to other networks:
+     http://ejabberd.jabber.ru/tutorials-transports
+   - Using ejabberd with MySQL native driver:
+     http://support.process-one.net/doc/display/MESSENGER/Using+ejabberd+with+MySQL+native+driver
+   - Anonymous User Support:
+     http://support.process-one.net/doc/display/MESSENGER/Anonymous+users+support
+   - Frequently Asked Questions:
+     http://ejabberd.jabber.ru/faq
+
+END
+</PRE>
+<!--TOC subsection ejabberd 1.1.1-->
+
+<H3 CLASS="subsection"><A NAME="htoc70">C.6</A>&nbsp;&nbsp;ejabberd 1.1.1</H3><!--SEC END -->
+
+<PRE CLASS="verbatim">
+    Release Notes
+    ejabberd 1.1.1 
+    28 April 2006
+
+   This document describes the main changes in ejabberd 1.1.x. This version
+   introduce new features including support for new Jabber Enhancement
+   Proposals and several performance improvements enabling deployments on an
+   even larger scale than already possible.
+
+   This release fix a security issue introduced in ejabberd 1.1.0. In SASL
+   mode, anonymous login was enabled as a default. Upgrading ejabberd 1.1.0 to
+   ejabberd 1.1.1 is highly recommanded.
+
+   ejabberd can be downloaded from the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/
+
+   Detailed information can be found in the ejabberd Feature Sheet and User
+   Guide which are available on the Process-one website:
+   http://www.process-one.net/en/projects/ejabberd/docs.html
+
+   A complete list of changes is available from:
+   http://support.process-one.net/secure/ReleaseNote.jspa?projectId=10011&amp;styleName=Html&amp;version=10025
+
+
+   Recent changes include:
+
+
+New Jabber Enhancement Proposal support:
+
+  - JEP-0050: Ad-Hoc Commands.
+  - JEP-0138: Stream Compression.
+  - JEP-0175: SASL anonymous.
+
+Anonymous login
+
+  - SASL anonymous.
+  - Anonymous login for clients that do not yet support SASL Anonymous.
+  
+Relational database Support
+
+  - MySQL is now fully supported through ODBC and in native mode.
+  - Various improvements to the native database interfaces.
+  - The migration tool can use relational databases.
+
+Multi-User Chat improvements
+
+  - Logging of room discussion to text file is now supported.
+  - Better reconfiguration support.
+  - Security oriented fixes.
+  - Several improvements and updates to latest JEP-0045.
+
+Performance scalability improvements for large clusters
+
+  - Improved session synchronisation management between cluster nodes.
+  - Internal architecture has been reworked to use generalize Erlang/OTP
+    framework usage.
+  - Speed improvement on logger.
+  - TCP/IP packet reception change for better network throttling and
+    regulation.
+  As a result, these improvements will reduce load on large scale deployments.
+
+XMPP Protocol related improvements
+
+  - XML stanza size can be limited.
+  - Messages are send to all resources with the same highest priority.
+
+Documentation and Internationalization
+
+   - Documentation has been extended to cover more topics.
+   - Translations have been updated.
+
+Web interface
+
+   - XHTML 1.0 compliance.
+
+Bugfixes
+
+   - This release contains many bugfixes on various areas such as Publish-Subscribe, build
+     chain, installers, IRC gateway, ejabberdctl, amongst others.
+   - Please refer to the ChangeLog file supplied with this release regarding
+     all improvements in ejabberd.
+
+
+
+   Installation Notes
+
+Supported Erlang Version
+
+   - You need at least Erlang/OTP R9C-2 to run ejabberd 1.1.0.
+
+Installation
+
+   Installers are provided for Microsoft Windows, Linux/x86 and MacOSX/PPC.
+   Installers can be retrieved from:
+   http://www.process-one.net/en/projects/ejabberd/download.html
+
+Migration Notes
+
+   - Before any migration, ejabberd system and database must be properly
+     backed up.
+   - The database schema has not been changed comparing to version 1.0.0 and
+     consequently it does not require any migration.
+
+
+References
+
+   Contributed tutorials and documents of interest are:
+   - Migration from Jabberd1.4, Jabberd2 and WPJabber to ejabberd:
+     http://ejabberd.jabber.ru/migrate-to-ejabberd     
+   - Transport configuration for connecting to other networks:
+     http://ejabberd.jabber.ru/tutorials-transports
+   - Using ejabberd with MySQL native driver:
+     http://support.process-one.net/doc/display/MESSENGER/Using+ejabberd+with+MySQL+native+driver
+   - Anonymous User Support:
+     http://support.process-one.net/doc/display/MESSENGER/Anonymous+users+support
+   - Frequently Asked Questions:
+     http://ejabberd.jabber.ru/faq
+
+END
+</PRE>
 <!--TOC section Acknowledgements-->
 
-<H2 CLASS="section"><A NAME="htoc62">D</A>&nbsp;&nbsp;Acknowledgements</H2><!--SEC END -->
+<H2 CLASS="section"><A NAME="htoc71">D</A>&nbsp;&nbsp;Acknowledgements</H2><!--SEC END -->
 
 <A NAME="sec:acknowledgements"></A>
 
@@ -2444,7 +3258,7 @@ Thanks to all people who contributed to this guide:
 Alexey Shchepin (<A HREF="xmpp:aleksey@jabber.ru"><TT>xmpp:aleksey@jabber.ru</TT></A>)
 <LI CLASS="li-itemize">Florian Zumbiehl (<A HREF="xmpp:florz@florz.de"><TT>xmpp:florz@florz.de</TT></A>)
 <LI CLASS="li-itemize">Michael Grigutsch (<A HREF="xmpp:migri@jabber.i-pobox.net"><TT>xmpp:migri@jabber.i-pobox.net</TT></A>)
-<LI CLASS="li-itemize">Mickaël Rémond (<A HREF="xmpp:mremond@erlang-projects.org"><TT>xmpp:mremond@erlang-projects.org</TT></A>)
+<LI CLASS="li-itemize">Mickael Remond (<A HREF="xmpp:mremond@erlang-projects.org"><TT>xmpp:mremond@erlang-projects.org</TT></A>)
 <LI CLASS="li-itemize">Sander Devrieze (<A HREF="xmpp:sander@devrieze.dyndns.org"><TT>xmpp:sander@devrieze.dyndns.org</TT></A>)
 <LI CLASS="li-itemize">Sergei Golovan (<A HREF="xmpp:sgolovan@nes.ru"><TT>xmpp:sgolovan@nes.ru</TT></A>)
 <LI CLASS="li-itemize">Vsevolod Pelipas (<A HREF="xmpp:vsevoload@jabber.ru"><TT>xmpp:vsevoload@jabber.ru</TT></A>)

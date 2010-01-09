@@ -3,17 +3,19 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : MUC support (JEP-0045)
 %%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Id      : $Id: mod_muc.erl 500 2006-02-06 05:12:54Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(mod_muc).
 -author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-vsn('$Revision: 500 $ ').
 
+-behaviour(gen_server).
 -behaviour(gen_mod).
 
--export([start/2,
-	 init/3,
+%% API
+-export([start_link/2,
+	 start/2,
 	 stop/1,
 	 room_destroyed/3,
 	 store_room/3,
@@ -21,6 +23,10 @@
 	 forget_room/2,
 	 process_iq_disco_items/4,
 	 can_use_nick/3]).
+
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -30,9 +36,106 @@
 -record(muc_online_room, {name_host, pid}).
 -record(muc_registered, {us_host, nick}).
 
+-record(state, {host, server_host, access}).
+
 -define(PROCNAME, ejabberd_mod_muc).
 
+%%====================================================================
+%% API
+%%====================================================================
+%%--------------------------------------------------------------------
+%% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
+%% Description: Starts the server
+%%--------------------------------------------------------------------
+start_link(Host, Opts) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
+
 start(Host, Opts) ->
+    start_supervisor(Host),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    ChildSpec =
+	{Proc,
+	 {?MODULE, start_link, [Host, Opts]},
+	 temporary,
+	 1000,
+	 worker,
+	 [?MODULE]},
+    supervisor:start_child(ejabberd_sup, ChildSpec).
+
+stop(Host) ->
+    stop_supervisor(Host),
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    gen_server:call(Proc, stop),
+    supervisor:delete_child(ejabberd_sup, Proc).
+
+room_destroyed(Host, Room, ServerHost) ->
+    gen_mod:get_module_proc(ServerHost, ?PROCNAME) !
+	{room_destroyed, {Room, Host}},
+    ok.
+
+store_room(Host, Name, Opts) ->
+    F = fun() ->
+		mnesia:write(#muc_room{name_host = {Name, Host},
+				       opts = Opts})
+	end,
+    mnesia:transaction(F).
+
+restore_room(Host, Name) ->
+    case catch mnesia:dirty_read(muc_room, {Name, Host}) of
+	[#muc_room{opts = Opts}] ->
+	    Opts;
+	_ ->
+	    error
+    end.
+
+forget_room(Host, Name) ->
+    F = fun() ->
+		mnesia:delete({muc_room, {Name, Host}})
+	end,
+    mnesia:transaction(F).
+
+process_iq_disco_items(Host, From, To, #iq{lang = Lang} = IQ) ->
+    Res = IQ#iq{type = result,
+		sub_el = [{xmlelement, "query",
+			   [{"xmlns", ?NS_DISCO_ITEMS}],
+			   iq_disco_items(Host, From, Lang)}]},
+    ejabberd_router:route(To,
+			  From,
+			  jlib:iq_to_xml(Res)).
+
+can_use_nick(_Host, _JID, "") ->
+    false;
+can_use_nick(Host, JID, Nick) ->
+    {LUser, LServer, _} = jlib:jid_tolower(JID),
+    LUS = {LUser, LServer},
+    case catch mnesia:dirty_select(
+		 muc_registered,
+		 [{#muc_registered{us_host = '$1',
+				   nick = Nick,
+				   _ = '_'},
+		   [{'==', {element, 2, '$1'}, Host}],
+		   ['$_']}]) of
+	{'EXIT', _Reason} ->
+	    true;
+	[] ->
+	    true;
+	[#muc_registered{us_host = {U, _Host}}] ->
+	    U == LUS
+    end.
+
+%%====================================================================
+%% gen_server callbacks
+%%====================================================================
+
+%%--------------------------------------------------------------------
+%% Function: init(Args) -> {ok, State} |
+%%                         {ok, State, Timeout} |
+%%                         ignore               |
+%%                         {stop, Reason}
+%% Description: Initiates the server
+%%--------------------------------------------------------------------
+init([Host, Opts]) ->
     mnesia:create_table(muc_room,
 			[{disc_copies, [node()]},
 			 {attributes, record_info(fields, muc_room)}]),
@@ -45,40 +148,96 @@ start(Host, Opts) ->
     Access = gen_mod:get_opt(access, Opts, all),
     AccessCreate = gen_mod:get_opt(access_create, Opts, all),
     AccessAdmin = gen_mod:get_opt(access_admin, Opts, none),
-    register(gen_mod:get_module_proc(Host, ?PROCNAME),
-	     spawn(?MODULE, init,
-		   [MyHost, Host, {Access, AccessCreate, AccessAdmin}])).
-
-
-
-init(Host, ServerHost, Access) ->
     catch ets:new(muc_online_room, [named_table,
 				    public,
 				    {keypos, #muc_online_room.name_host}]),
-    ejabberd_router:register_route(Host),
-    load_permanent_rooms(Host, ServerHost, Access),
-    loop(Host, ServerHost, Access).
+    ejabberd_router:register_route(MyHost),
+    load_permanent_rooms(MyHost, Host, {Access, AccessCreate, AccessAdmin}),
+    {ok, #state{host = MyHost,
+		server_host = Host,
+		access = {Access, AccessCreate, AccessAdmin}}}.
 
-loop(Host, ServerHost, Access) ->
-    receive
-	{route, From, To, Packet} ->
-	    case catch do_route(Host, ServerHost, Access, From, To, Packet) of
-		{'EXIT', Reason} ->
-		    ?ERROR_MSG("~p", [Reason]);
-		_ ->
-		    ok
-	    end,
-	    loop(Host, ServerHost, Access);
-	{room_destroyed, RoomHost} ->
-	    ets:delete(muc_online_room, RoomHost),
-	    loop(Host, ServerHost, Access);
-	stop ->
-	    ejabberd_router:unregister_route(Host),
-	    ok;
+%%--------------------------------------------------------------------
+%% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
+%%                                      {reply, Reply, State, Timeout} |
+%%                                      {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, Reply, State} |
+%%                                      {stop, Reason, State}
+%% Description: Handling call messages
+%%--------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_cast(Msg, State) -> {noreply, State} |
+%%                                      {noreply, State, Timeout} |
+%%                                      {stop, Reason, State}
+%% Description: Handling cast messages
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% Function: handle_info(Info, State) -> {noreply, State} |
+%%                                       {noreply, State, Timeout} |
+%%                                       {stop, Reason, State}
+%% Description: Handling all non call/cast messages
+%%--------------------------------------------------------------------
+handle_info({route, From, To, Packet},
+	    #state{host = Host,
+		   server_host = ServerHost,
+		   access = Access} = State) ->
+    case catch do_route(Host, ServerHost, Access, From, To, Packet) of
+	{'EXIT', Reason} ->
+	    ?ERROR_MSG("~p", [Reason]);
 	_ ->
-	    loop(Host, ServerHost, Access)
-    end.
+	    ok
+    end,
+    {noreply, State};
+handle_info({room_destroyed, RoomHost}, State) ->
+    ets:delete(muc_online_room, RoomHost),
+    {noreply, State};
+handle_info(_Info, State) ->
+    {noreply, State}.
 
+%%--------------------------------------------------------------------
+%% Function: terminate(Reason, State) -> void()
+%% Description: This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any necessary
+%% cleaning up. When it returns, the gen_server terminates with Reason.
+%% The return value is ignored.
+%%--------------------------------------------------------------------
+terminate(_Reason, State) ->
+    ejabberd_router:unregister_route(State#state.host),
+    ok.
+
+%%--------------------------------------------------------------------
+%% Func: code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% Description: Convert process state when code is changed
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%--------------------------------------------------------------------
+%%% Internal functions
+%%--------------------------------------------------------------------
+start_supervisor(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ejabberd_mod_muc_sup),
+    ChildSpec =
+	{Proc,
+	 {ejabberd_tmp_sup, start_link,
+	  [Proc, mod_muc_room]},
+	 permanent,
+	 infinity,
+	 supervisor,
+	 [ejabberd_tmp_sup]},
+    supervisor:start_child(ejabberd_sup, ChildSpec).
+
+stop_supervisor(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ejabberd_mod_muc_sup),
+    supervisor:terminate_child(ejabberd_sup, Proc),
+    supervisor:delete_child(ejabberd_sup, Proc).
 
 do_route(Host, ServerHost, Access, From, To, Packet) ->
     {AccessRoute, _AccessCreate, _AccessAdmin} = Access,
@@ -107,7 +266,7 @@ do_route1(Host, ServerHost, Access, From, To, Packet) ->
 			"iq" ->
 			    case jlib:iq_query_info(Packet) of
 				#iq{type = get, xmlns = ?NS_DISCO_INFO = XMLNS,
-				    sub_el = SubEl} = IQ ->
+				    sub_el = _SubEl} = IQ ->
 				    Res = IQ#iq{type = result,
 						sub_el = [{xmlelement, "query",
 							   [{"xmlns", XMLNS}],
@@ -123,7 +282,7 @@ do_route1(Host, ServerHost, Access, From, To, Packet) ->
 				#iq{type = get,
 				    xmlns = ?NS_REGISTER = XMLNS,
 				    lang = Lang,
-				    sub_el = SubEl} = IQ ->
+				    sub_el = _SubEl} = IQ ->
 				    Res = IQ#iq{type = result,
 						sub_el =
 						[{xmlelement, "query",
@@ -155,7 +314,7 @@ do_route1(Host, ServerHost, Access, From, To, Packet) ->
 				#iq{type = get,
 				    xmlns = ?NS_VCARD = XMLNS,
 				    lang = Lang,
-				    sub_el = SubEl} = IQ ->
+				    sub_el = _SubEl} = IQ ->
 				    Res = IQ#iq{type = result,
 						sub_el =
 						[{xmlelement, "vCard",
@@ -252,40 +411,6 @@ do_route1(Host, ServerHost, Access, From, To, Packet) ->
 
 
 
-room_destroyed(Host, Room, ServerHost) ->
-    gen_mod:get_module_proc(ServerHost, ?PROCNAME) !
-	{room_destroyed, {Room, Host}},
-    ok.
-
-stop(Host) ->
-    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
-    Proc ! stop,
-    {wait, Proc}.
-
-
-store_room(Host, Name, Opts) ->
-    F = fun() ->
-		mnesia:write(#muc_room{name_host = {Name, Host},
-				       opts = Opts})
-	end,
-    mnesia:transaction(F).
-
-restore_room(Host, Name) ->
-    case catch mnesia:dirty_read(muc_room, {Name, Host}) of
-	[#muc_room{opts = Opts}] ->
-	    Opts;
-	_ ->
-	    error
-    end.
-
-
-forget_room(Host, Name) ->
-    F = fun() ->
-		mnesia:delete({muc_room, {Name, Host}})
-	end,
-    mnesia:transaction(F).
-
-
 load_permanent_rooms(Host, ServerHost, Access) ->
     case catch mnesia:dirty_select(
 		 muc_room, [{#muc_room{name_host = {'_', Host}, _ = '_'},
@@ -320,15 +445,6 @@ iq_disco_info() ->
      {xmlelement, "feature", [{"var", ?NS_REGISTER}], []},
      {xmlelement, "feature", [{"var", ?NS_VCARD}], []}].
 
-
-process_iq_disco_items(Host, From, To, #iq{lang = Lang} = IQ) ->
-    Res = IQ#iq{type = result,
-		sub_el = [{xmlelement, "query",
-			   [{"xmlns", ?NS_DISCO_ITEMS}],
-			   iq_disco_items(Host, From, Lang)}]},
-    ejabberd_router:route(To,
-			  From,
-			  jlib:iq_to_xml(Res)).
 
 iq_disco_items(Host, From, Lang) ->
     lists:zf(fun(#muc_online_room{name_host = {Name, _Host}, pid = Pid}) ->
@@ -380,76 +496,81 @@ iq_get_register_info(Host, From, Lang) ->
 		Lang, "Enter nickname you want to register")}]},
 	   ?XFIELD("text-single", "Nickname", "nick", Nick)]}].
 
-iq_set_register_info(Host, From, XData, Lang) ->
+iq_set_register_info(Host, From, Nick, Lang) ->
     {LUser, LServer, _} = jlib:jid_tolower(From),
     LUS = {LUser, LServer},
-    case lists:keysearch("nick", 1, XData) of
-	false ->
-	    ErrText = "You must fill in field \"nick\" in the form",
-	    {error, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)};
-	{value, {_, [Nick]}} ->
-	    F = fun() ->
-			case Nick of
-			    "" ->
-				mnesia:delete({muc_registered, {LUS, Host}}),
+    F = fun() ->
+		case Nick of
+		    "" ->
+			mnesia:delete({muc_registered, {LUS, Host}}),
+			ok;
+		    _ ->
+			Allow =
+			    case mnesia:select(
+				   muc_registered,
+				   [{#muc_registered{us_host = '$1',
+						     nick = Nick,
+						     _ = '_'},
+				     [{'==', {element, 2, '$1'}, Host}],
+				     ['$_']}]) of
+				[] ->
+				    true;
+				[#muc_registered{us_host = {U, _Host}}] ->
+				    U == LUS
+			    end,
+			if
+			    Allow ->
+				mnesia:write(
+				  #muc_registered{us_host = {LUS, Host},
+						  nick = Nick}),
 				ok;
-			    _ ->
-				Allow =
-				    case mnesia:select(
-					   muc_registered,
-					   [{#muc_registered{us_host = '$1',
-							     nick = Nick,
-							     _ = '_'},
-					     [{'==', {element, 2, '$1'}, Host}],
-					     ['$_']}]) of
-					[] ->
-					    true;
-					[#muc_registered{us_host = {U, _Host}}] ->
-					    U == LUS
-				    end,
-				if
-				    Allow ->
-					mnesia:write(
-					  #muc_registered{us_host = {LUS, Host},
-							  nick = Nick}),
-					ok;
-				    true ->
-					false
-				end
+			    true ->
+				false
 			end
-		end,
-	    case mnesia:transaction(F) of
-		{atomic, ok} ->
-		    {result, []};
-		{atomic, false} ->
-		    ErrText = "Specified nickname is already registered",
-		    {error, ?ERRT_CONFLICT(Lang, ErrText)};
-		_ ->
-		    {error, ?ERR_INTERNAL_SERVER_ERROR}
-	    end
+		end
+	end,
+    case mnesia:transaction(F) of
+	{atomic, ok} ->
+	    {result, []};
+	{atomic, false} ->
+	    ErrText = "Specified nickname is already registered",
+	    {error, ?ERRT_CONFLICT(Lang, ErrText)};
+	_ ->
+	    {error, ?ERR_INTERNAL_SERVER_ERROR}
     end.
 
 process_iq_register_set(Host, From, SubEl, Lang) ->
     {xmlelement, _Name, _Attrs, Els} = SubEl,
-    case xml:remove_cdata(Els) of
-	[{xmlelement, "x", _Attrs1, _Els1} = XEl] ->
-	    case {xml:get_tag_attr_s("xmlns", XEl),
-		  xml:get_tag_attr_s("type", XEl)} of
-		{?NS_XDATA, "cancel"} ->
-		    {result, []};
-		{?NS_XDATA, "submit"} ->
-		    XData = jlib:parse_xdata_submit(XEl),
-		    case XData of
-			invalid ->
-			    {error, ?ERR_BAD_REQUEST};
+    case xml:get_subtag(SubEl, "remove") of
+	false ->
+	    case xml:remove_cdata(Els) of
+		[{xmlelement, "x", _Attrs1, _Els1} = XEl] ->
+		    case {xml:get_tag_attr_s("xmlns", XEl),
+			  xml:get_tag_attr_s("type", XEl)} of
+			{?NS_XDATA, "cancel"} ->
+			    {result, []};
+			{?NS_XDATA, "submit"} ->
+			    XData = jlib:parse_xdata_submit(XEl),
+			    case XData of
+				invalid ->
+				    {error, ?ERR_BAD_REQUEST};
+				_ ->
+				    case lists:keysearch("nick", 1, XData) of
+					false ->
+					    ErrText = "You must fill in field \"Nickname\" in the form",
+					    {error, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)};
+					{value, {_, [Nick]}} ->
+					    iq_set_register_info(Host, From, Nick, Lang)
+				    end
+			    end;
 			_ ->
-			    iq_set_register_info(Host, From, XData, Lang)
+			    {error, ?ERR_BAD_REQUEST}
 		    end;
 		_ ->
 		    {error, ?ERR_BAD_REQUEST}
 	    end;
 	_ ->
-	    {error, ?ERR_BAD_REQUEST}
+	    iq_set_register_info(Host, From, "", Lang)
     end.
 
 iq_get_vcard(Lang) ->
@@ -460,7 +581,7 @@ iq_get_vcard(Lang) ->
 	"http://ejabberd.jabberstudio.org/"}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(Lang, "ejabberd MUC module\n"
-	"Copyright (c) 2003-2005 Alexey Shchepin")}]}].
+	"Copyright (c) 2003-2006 Alexey Shchepin")}]}].
 
 
 broadcast_service_message(Host, Msg) ->
@@ -476,26 +597,6 @@ get_vh_rooms(Host) ->
 		 [{'==', {element, 2, '$1'}, Host}],
 		 ['$_']}]).
 
-
-can_use_nick(_Host, _JID, "") ->
-    false;
-can_use_nick(Host, JID, Nick) ->
-    {LUser, LServer, _} = jlib:jid_tolower(JID),
-    LUS = {LUser, LServer},
-    case catch mnesia:dirty_select(
-		 muc_registered,
-		 [{#muc_registered{us_host = '$1',
-				   nick = Nick,
-				   _ = '_'},
-		   [{'==', {element, 2, '$1'}, Host}],
-		   ['$_']}]) of
-	{'EXIT', _Reason} ->
-	    true;
-	[] ->
-	    true;
-	[#muc_registered{us_host = {U, _Host}}] ->
-	    U == LUS
-    end.
 
 
 update_tables(Host) ->

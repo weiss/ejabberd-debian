@@ -65,10 +65,15 @@ release : build release_clean
 	copy stringprep\*.tcl $(SRC_DIR)\stringprep
 	mkdir $(SRC_DIR)\tls
 	copy tls\*.erl $(SRC_DIR)\tls
+	copy tls\*.c $(SRC_DIR)\tls
+	mkdir $(SRC_DIR)\ejabberd_zlib
+	copy ejabberd_zlib\*.erl $(SRC_DIR)\ejabberd_zlib
+	copy ejabberd_zlib\*.c $(SRC_DIR)\ejabberd_zlib
 	mkdir $(SRC_DIR)\web
 	copy web\*.erl $(SRC_DIR)\web
 	mkdir $(SRC_DIR)\odbc
 	copy odbc\*.erl $(SRC_DIR)\odbc
+	copy odbc\*.sql $(EREL)
 	mkdir $(DOC_DIR)
 	copy ..\doc\*.txt $(DOC_DIR)
 	copy ..\doc\*.html $(DOC_DIR)
@@ -93,14 +98,19 @@ all-recursive :
 	nmake -nologo -f Makefile.win32
 	cd ..\tls
 	nmake -nologo -f Makefile.win32
+	cd ..\ejabberd_zlib
+	nmake -nologo -f Makefile.win32
 	cd ..\web
 	nmake -nologo -f Makefile.win32
 	cd ..\odbc
 	nmake -nologo -f Makefile.win32
 	cd ..
 
-compile-beam : 
-	erlc *.erl
+compile-beam : XmppAddr.hrl
+	erl -s make all report -noinput -s erlang halt
+
+XmppAddr.hrl : XmppAddr.asn1
+	erlc -bber_bin +der +compact_bit_string +optimize +noobj XmppAddr.asn1
 
 CLEAN : clean-recursive clean-local
 
@@ -110,6 +120,9 @@ clean-local :
 	-@erase expat_erl.exp
 	-@erase expat_erl.lib
 	-@erase *.beam
+	-@erase XmppAddr.asn1db
+	-@erase XmppAddr.erl
+	-@erase XmppAddr.hrl
 
 clean-recursive :
 	cd eldap
@@ -123,6 +136,8 @@ clean-recursive :
 	cd ..\stringprep
 	nmake -nologo -f Makefile.win32 clean
 	cd ..\tls
+	nmake -nologo -f Makefile.win32 clean
+	cd ..\ejabberd_zlib
 	nmake -nologo -f Makefile.win32 clean
 	cd ..\web
 	nmake -nologo -f Makefile.win32 clean

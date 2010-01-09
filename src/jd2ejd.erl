@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Import of jabberd1.4 user spool file
 %%% Created :  2 Feb 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: jd2ejd.erl 379 2005-07-26 03:04:26Z alexey $
+%%% Id      : $Id: jd2ejd.erl 507 2006-02-15 04:15:54Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(jd2ejd).
 -author('alexey@sevcom.net').
--vsn('$Revision: 379 $ ').
+-vsn('$Revision: 507 $ ').
 
 %% External exports
 -export([import_file/1,
@@ -134,10 +134,19 @@ xdb_data(User, Server, {xmlelement, _Name, Attrs, _Els} = El) ->
 	    end,
 	    ok;
 	?NS_VCARD ->
-	    catch mod_vcard:process_sm_iq(
-		    From,
-		    jlib:make_jid("", Server, ""),
-		    #iq{type = set, xmlns = ?NS_VCARD, sub_el = El}),
+	    case lists:member(mod_vcard_odbc,
+			      gen_mod:loaded_modules(LServer)) of
+		true ->
+		    catch mod_vcard_odbc:process_sm_iq(
+			    From,
+			    jlib:make_jid("", Server, ""),
+			    #iq{type = set, xmlns = ?NS_VCARD, sub_el = El});
+		false ->
+		    catch mod_vcard:process_sm_iq(
+			    From,
+			    jlib:make_jid("", Server, ""),
+			    #iq{type = set, xmlns = ?NS_VCARD, sub_el = El})
+	    end,
 	    ok;
 	"jabber:x:offline" ->
 	    process_offline(Server, From, El),

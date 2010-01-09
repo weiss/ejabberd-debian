@@ -3,17 +3,15 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Parse XML streams
 %%% Created : 17 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: xml_stream.erl 289 2004-12-05 20:54:55Z aleksey $
+%%% Id      : $Id: xml_stream.erl 537 2006-04-22 03:35:13Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(xml_stream).
 -author('alexey@sevcom.net').
--vsn('$Revision: 289 $ ').
+-vsn('$Revision: 537 $ ').
 
--export([start/1, start/2,
-	 init/1, init/2,
-	 send_text/2,
-	 new/1,
+-export([new/1,
+	 new/2,
 	 parse/2,
 	 close/1,
 	 parse_element/1]).
@@ -26,46 +24,15 @@
 -define(PARSE_COMMAND, 0).
 -define(PARSE_FINAL_COMMAND, 1).
 
--record(xml_stream_state, {callback_pid, port, stack}).
-
-start(CallbackPid) ->
-    spawn(?MODULE, init, [CallbackPid]).
-
-start(Receiver, CallbackPid) ->
-    spawn(?MODULE, init, [Receiver, CallbackPid]).
-
-init(CallbackPid) ->
-    Port = open_port({spawn, expat_erl}, [binary]),
-    loop(CallbackPid, Port, []).
-
-init(Receiver, CallbackPid) ->
-    erlang:monitor(process, Receiver),
-    Port = open_port({spawn, expat_erl}, [binary]),
-    loop(CallbackPid, Port, []).
-
-loop(CallbackPid, Port, Stack) ->
-    receive
-	{Port, {data, Bin}} ->
-	    Data = binary_to_term(Bin),
-	    loop(CallbackPid, Port, process_data(CallbackPid, Stack, Data));
-	{_From, {send, Str}} ->
-	    Res = port_control(Port, ?PARSE_COMMAND, Str),
-	    NewStack = lists:foldl(
-			 fun(Data, St) ->
-				 process_data(CallbackPid, St, Data)
-			 end, Stack, binary_to_term(Res)),
-	    loop(CallbackPid, Port, NewStack);
-	{'DOWN', _Ref, _Type, _Object, _Info} ->
-	    ok
-    end.
+-record(xml_stream_state, {callback_pid, port, stack, size, maxsize}).
 
 process_data(CallbackPid, Stack, Data) ->
     case Data of
 	{?XML_START, {Name, Attrs}} ->
 	    if
 		Stack == [] ->
-		    gen_fsm:send_event(CallbackPid,
-				       {xmlstreamstart, Name, Attrs});
+		    catch gen_fsm:send_event(CallbackPid,
+					     {xmlstreamstart, Name, Attrs});
 		true ->
 		    ok
 	    end,
@@ -76,12 +43,12 @@ process_data(CallbackPid, Stack, Data) ->
 		    NewEl = {xmlelement, Name, Attrs, lists:reverse(Els)},
 		    case Tail of
 			[] ->
-			    gen_fsm:send_event(CallbackPid,
-					       {xmlstreamend, EndName}),
+			    catch gen_fsm:send_event(CallbackPid,
+						     {xmlstreamend, EndName}),
 			    Tail;
 			[_] ->
-			    gen_fsm:send_event(CallbackPid,
-					       {xmlstreamelement, NewEl}),
+			    catch gen_fsm:send_event(CallbackPid,
+						     {xmlstreamelement, NewEl}),
 			    Tail;
 			[{xmlelement, Name1, Attrs1, Els1} | Tail1] ->
 			    [{xmlelement, Name1, Attrs1, [NewEl | Els1]} |
@@ -98,30 +65,49 @@ process_data(CallbackPid, Stack, Data) ->
 		[] -> []
 	    end;
 	{?XML_ERROR, Err} ->
-	    gen_fsm:send_event(CallbackPid, {xmlstreamerror, Err})
+	    catch gen_fsm:send_event(CallbackPid, {xmlstreamerror, Err})
     end.
 
 
-send_text(Pid, Text) ->
-    Pid ! {self(), {send, Text}}.
-
-
 new(CallbackPid) ->
+    new(CallbackPid, infinity).
+
+new(CallbackPid, MaxSize) ->
     Port = open_port({spawn, expat_erl}, [binary]),
     #xml_stream_state{callback_pid = CallbackPid,
 		      port = Port,
-		      stack = []}.
+		      stack = [],
+		      size = 0,
+		      maxsize = MaxSize}.
 
 
 parse(#xml_stream_state{callback_pid = CallbackPid,
 			port = Port,
-			stack = Stack} = State, Str) ->
+			stack = Stack,
+			size = Size,
+			maxsize = MaxSize} = State, Str) ->
+    StrSize = if
+		  is_list(Str) -> length(Str);
+		  is_binary(Str) -> size(Str)
+	      end,
     Res = port_control(Port, ?PARSE_COMMAND, Str),
-    NewStack = lists:foldl(
-		 fun(Data, St) ->
-			 process_data(CallbackPid, St, Data)
-		 end, Stack, binary_to_term(Res)),
-    State#xml_stream_state{stack = NewStack}.
+    {NewStack, NewSize} =
+	lists:foldl(
+	  fun(Data, {St, Sz}) ->
+		  NewSt = process_data(CallbackPid, St, Data),
+		  case NewSt of
+		      [_] -> {NewSt, 0};
+		      _ -> {NewSt, Sz}
+		  end
+	  end, {Stack, Size + StrSize}, binary_to_term(Res)),
+    if
+	NewSize > MaxSize ->
+	    catch gen_fsm:send_event(CallbackPid,
+				     {xmlstreamerror, "XML stanza is too big"});
+	true ->
+	    ok
+    end,
+    State#xml_stream_state{stack = NewStack, size = NewSize}.
 
 close(#xml_stream_state{port = Port}) ->
     port_close(Port).

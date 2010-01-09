@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Interface to openssl
 %%% Created : 24 Jul 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: tls.erl 430 2005-11-03 05:04:54Z alexey $
+%%% Id      : $Id: tls.erl 483 2006-01-13 01:55:20Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(tls).
 -author('alexey@sevcom.net').
--vsn('$Revision: 430 $ ').
+-vsn('$Revision: 483 $ ').
 
 -behaviour(gen_server).
 
@@ -16,6 +16,8 @@
 	 tcp_to_tls/2, tls_to_tcp/1,
 	 send/2,
 	 recv/2, recv/3, recv_data/2,
+	 setopts/2,
+	 controlling_process/2,
 	 close/1,
 	 get_peer_certificate/1,
 	 get_verify_result/1,
@@ -174,6 +176,12 @@ send(#tlssock{tcpsock = TCPSocket, tlsport = Port}, Packet) ->
 	    end
     end.
 
+
+setopts(#tlssock{tcpsock = TCPSocket}, Opts) ->
+    inet:setopts(TCPSocket, Opts).
+
+controlling_process(#tlssock{tcpsock = TCPSocket}, Pid) ->
+    gen_tcp:controlling_process(TCPSocket, Pid).
 
 close(#tlssock{tcpsock = TCPSocket, tlsport = Port}) ->
     gen_tcp:close(TCPSocket),

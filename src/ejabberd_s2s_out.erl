@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_s2s_out.erl 433 2005-11-12 03:42:12Z alexey $
+%%% Id      : $Id: ejabberd_s2s_out.erl 517 2006-03-14 04:26:15Z alexey $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_s2s_out).
 -author('alexey@sevcom.net').
--vsn('$Revision: 433 $ ').
+-vsn('$Revision: 517 $ ').
 
 -behaviour(gen_fsm).
 
@@ -25,12 +25,14 @@
 	 wait_for_features/2,
 	 wait_for_auth_result/2,
 	 wait_for_starttls_proceed/2,
+	 reopen_socket/2,
 	 stream_established/2,
 	 handle_event/3,
 	 handle_sync_event/4,
 	 handle_info/3,
 	 terminate/3,
-	 code_change/4]).
+	 code_change/4,
+	 test_get_addr_port/1]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -140,7 +142,44 @@ init([From, Server, Type]) ->
 %%          {stop, Reason, NewStateData}                         
 %%----------------------------------------------------------------------
 open_socket(init, StateData) ->
-    {Addr, Port} = get_addr_port(StateData#state.server),
+    AddrList = get_addr_port(StateData#state.server),
+    case lists:foldl(fun({Addr, Port}, Acc) ->
+			case Acc of
+			    {ok, Socket} ->
+				{ok, Socket};
+			    _ ->
+				open_socket1(Addr, Port)
+			end
+		     end, {error, badarg}, AddrList) of
+	{ok, Socket} ->
+	    ReceiverPid = ejabberd_receiver:start(Socket, gen_tcp, none),
+	    ok = gen_tcp:controlling_process(Socket, ReceiverPid),
+	    ejabberd_receiver:become_controller(ReceiverPid),
+	    Version = if
+			  StateData#state.use_v10 ->
+			      " version='1.0'";
+			  true ->
+			      ""
+		      end,
+	    NewStateData = StateData#state{socket = Socket,
+					   sockmod = gen_tcp,
+					   tls_enabled = false,
+					   receiver = ReceiverPid,
+					   streamid = new_id()},
+	    send_text(NewStateData, io_lib:format(?STREAM_HEADER,
+					    [StateData#state.server,
+					     Version])),
+	    {next_state, wait_for_stream, NewStateData};
+	{error, _Reason} ->
+	    Error = ?ERR_REMOTE_SERVER_NOT_FOUND,
+	    bounce_messages(Error),
+	    {stop, normal, StateData}
+    end;
+open_socket(_, StateData) ->
+    {next_state, open_socket, StateData}.
+
+%%----------------------------------------------------------------------
+open_socket1(Addr, Port) ->
     Res = case idna:domain_utf8_to_ascii(Addr) of
 	      false -> {error, badarg};
 	      ASCIIAddr ->
@@ -163,35 +202,16 @@ open_socket(init, StateData) ->
 	  end,
     case Res of
 	{ok, Socket} ->
-	    ReceiverPid = ejabberd_receiver:start(Socket, gen_tcp, none),
-	    Version = if
-			  StateData#state.use_v10 ->
-			      " version='1.0'";
-			  true ->
-			      ""
-		      end,
-	    NewStateData = StateData#state{socket = Socket,
-					   sockmod = gen_tcp,
-					   tls_enabled = false,
-					   receiver = ReceiverPid,
-					   streamid = new_id()},
-	    send_text(NewStateData, io_lib:format(?STREAM_HEADER,
-					    [StateData#state.server,
-					     Version])),
-	    {next_state, wait_for_stream, NewStateData};
+	    {ok, Socket};
 	{error, Reason} ->
 	    ?DEBUG("s2s_out: inet6 connect return ~p~n", [Reason]),
-	    Error = ?ERR_REMOTE_SERVER_NOT_FOUND,
-	    bounce_messages(Error),
-	    {stop, normal, StateData};
+	    {error, Reason};
 	{'EXIT', Reason} ->
 	    ?DEBUG("s2s_out: inet6 connect crashed ~p~n", [Reason]),
-	    Error = ?ERR_REMOTE_SERVER_NOT_FOUND,
-	    bounce_messages(Error),
-	    {stop, normal, StateData}
-    end;
-open_socket(_, StateData) ->
-    {next_state, open_socket, StateData}.
+	    {error, Reason}
+    end.
+
+%%----------------------------------------------------------------------
 
 
 wait_for_stream({xmlstreamstart, Name, Attrs}, StateData) ->
@@ -207,10 +227,9 @@ wait_for_stream({xmlstreamstart, Name, Attrs}, StateData) ->
 	    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
 					 StateData#state.server}]),
 	    % TODO: clear message queue
-	    (StateData#state.sockmod):close(StateData#state.socket),
-	    gen_fsm:send_event(self(), init),
-	    {next_state, open_socket, StateData#state{socket = undefined,
-						      use_v10 = false}};
+	    ejabberd_receiver:close(StateData#state.receiver),
+	    {next_state, reopen_socket, StateData#state{socket = undefined,
+							use_v10 = false}};
 	_ ->
 	    send_text(StateData, ?INVALID_NAMESPACE_ERR),
 	    {stop, normal, StateData}
@@ -342,7 +361,6 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 		     StateData#state{try_auth = false}};
 		StartTLS and StateData#state.tls and
 		(not StateData#state.tls_enabled) ->
-		    StateData#state.receiver ! {change_timeout, 100},
 		    send_element(StateData,
 				 {xmlelement, "starttls",
 				  [{"xmlns", ?NS_TLS}], []}),
@@ -350,9 +368,8 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 		StartTLSRequired and (not StateData#state.tls) ->
 		    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
 						 StateData#state.server}]),
-		    (StateData#state.sockmod):close(StateData#state.socket),
-		    gen_fsm:send_event(self(), init),
-		    {next_state, open_socket,
+		    ejabberd_receiver:close(StateData#state.receiver),
+		    {next_state, reopen_socket,
 		     StateData#state{socket = undefined,
 				     use_v10 = false}};
 		true ->
@@ -408,9 +425,8 @@ wait_for_auth_result({xmlstreamelement, El}, StateData) ->
 		?NS_SASL ->
 		    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
 						 StateData#state.server}]),
-		    (StateData#state.sockmod):close(StateData#state.socket),
-		    gen_fsm:send_event(self(), init),
-		    {next_state, open_socket,
+		    ejabberd_receiver:close(StateData#state.receiver),
+		    {next_state, reopen_socket,
 		     StateData#state{socket = undefined}};
 		_ ->
 		    send_text(StateData,
@@ -462,7 +478,6 @@ wait_for_starttls_proceed({xmlstreamelement, El}, StateData) ->
 		    {ok, TLSSocket} = tls:tcp_to_tls(Socket, TLSOpts),
 		    ejabberd_receiver:starttls(
 		      StateData#state.receiver, TLSSocket),
-		    StateData#state.receiver ! {change_timeout, infinity},
 		    NewStateData = StateData#state{sockmod = tls,
 						   socket = TLSSocket,
 						   streamid = new_id(),
@@ -496,6 +511,19 @@ wait_for_starttls_proceed(timeout, StateData) ->
 
 wait_for_starttls_proceed(closed, StateData) ->
     {stop, normal, StateData}.
+
+
+reopen_socket({xmlstreamelement, El}, StateData) ->
+    {next_state, reopen_socket, StateData};
+reopen_socket({xmlstreamend, Name}, StateData) ->
+    {next_state, reopen_socket, StateData};
+reopen_socket({xmlstreamerror, _}, StateData) ->
+    {next_state, reopen_socket, StateData};
+reopen_socket(timeout, StateData) ->
+    {stop, normal, StateData};
+reopen_socket(closed, StateData) ->
+    gen_fsm:send_event(self(), init),
+    {next_state, open_socket, StateData}.
 
 
 stream_established({xmlstreamelement, El}, StateData) ->
@@ -630,8 +658,7 @@ handle_info(_, StateName, StateData) ->
 %%----------------------------------------------------------------------
 terminate(Reason, StateName, StateData) ->
     ?INFO_MSG("terminated: ~p", [Reason]),
-    Error = ?ERR_REMOTE_SERVER_NOT_FOUND,
-    bounce_queue(StateData#state.queue, Error),
+    bounce_queue(StateData#state.queue, ?ERR_REMOTE_SERVER_NOT_FOUND),
     case StateData#state.new of
 	false ->
 	    ok;
@@ -642,8 +669,8 @@ terminate(Reason, StateName, StateData) ->
     case StateData#state.socket of
 	undefined ->
 	    ok;
-	Socket ->
-	    (StateData#state.sockmod):close(Socket)
+	_Socket ->
+	    ejabberd_receiver:close(StateData#state.receiver)
     end,
     ok.
 
@@ -779,18 +806,50 @@ get_addr_port(Server) ->
     case Res of
 	{error, Reason} ->
 	    ?DEBUG("srv lookup of '~s' failed: ~p~n", [Server, Reason]),
-	    {Server, ejabberd_config:get_local_option(outgoing_s2s_port)};
+	    [{Server, ejabberd_config:get_local_option(outgoing_s2s_port)}];
 	{ok, HEnt} ->
 	    ?DEBUG("srv lookup of '~s': ~p~n",
 		   [Server, HEnt#hostent.h_addr_list]),
 	    case HEnt#hostent.h_addr_list of
 		[] ->
-		    {Server,
-		     ejabberd_config:get_local_option(outgoing_s2s_port)};
-		[{_, _, Port, Host} | _] ->
-		    {Host, Port}
+		    [{Server,
+		      ejabberd_config:get_local_option(outgoing_s2s_port)}];
+		AddrList ->
+		    % Probabilities are not exactly proportional to weights
+		    % for simplicity (higher weigths are overvalued)
+		    {A1, A2, A3} = now(),
+		    random:seed(A1, A2, A3),
+		    case (catch lists:map(
+				  fun({Priority, Weight, Port, Host}) ->
+					  N = case Weight of
+						  0 -> 0;
+						  _ -> (Weight + 1) * random:uniform()
+					      end,
+					  {Priority * 65536 - N, Host, Port}
+				  end, AddrList)) of
+			{'EXIT', _Reasn} ->
+			    [{Server,
+			      ejabberd_config:get_local_option(outgoing_s2s_port)}];
+			SortedList ->
+			    List = lists:map(
+				     fun({_, Host, Port}) ->
+					     {Host, Port}
+				     end, lists:keysort(1, SortedList)),
+			    ?DEBUG("srv lookup of '~s': ~p~n", [Server, List]),
+			    List
+		    end
 	    end
     end.
 
-
+test_get_addr_port(Server) ->
+    lists:foldl(
+	  fun(_, Acc) ->
+		[HostPort | _] = get_addr_port(Server),
+		case lists:keysearch(HostPort, 1, Acc) of
+		    false ->
+			[{HostPort, 1} | Acc];
+		    {value, {_, Num}} ->
+			lists:keyreplace(HostPort, 1, Acc, {HostPort, Num + 1})
+		end
+	  end, [], lists:seq(1, 100000)).
 
