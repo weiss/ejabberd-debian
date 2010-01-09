@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : ACL support
 %%% Created : 18 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: acl.erl 377 2005-07-14 23:48:57Z alexey $
+%%% Id      : $Id: acl.erl 589 2006-07-18 12:29:17Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(acl).
 -author('alexey@sevcom.net').
--vsn('$Revision: 377 $ ').
+-vsn('$Revision: 589 $ ').
 
 -export([start/0,
 	 to_record/3,
@@ -171,7 +171,13 @@ match_acl(ACL, JID, Host) ->
 				      is_glob_match(Server, SR);
 				  {node_glob, UR, SR} ->
 				      is_glob_match(Server, SR) andalso
-					  is_glob_match(User, UR)
+					  is_glob_match(User, UR);
+				  WrongSpec ->
+				      ?ERROR_MSG(
+					 "Wrong ACL expression: ~p~n"
+					 "Check your config file and reload it with the override_acls option enabled",
+					 [WrongSpec]),
+				      false
 			      end
 		      end,
 		      ets:lookup(acl, {ACL, global}) ++

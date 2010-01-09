@@ -3,10 +3,10 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 17 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd.hrl 557 2006-04-28 09:35:26Z mremond $
+%%% Id      : $Id: ejabberd.hrl 624 2006-09-24 09:39:04Z mremond $
 %%%----------------------------------------------------------------------
 
--define(VERSION, "1.1.1").
+-define(VERSION, "1.1.2").
 
 %-define(ejabberd_debug, true).
 %-define(DBGFSM, true).

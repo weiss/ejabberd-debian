@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created :  5 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_offline.erl 454 2005-12-07 13:01:33Z alexey $
+%%% Id      : $Id: mod_offline.erl 569 2006-05-23 20:19:37Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_offline).
@@ -36,8 +36,6 @@ start(Host, _Opts) ->
 			 {attributes, record_info(fields, offline_msg)}]),
     update_table(),
     ejabberd_hooks:add(offline_message_hook, Host,
-		       ?MODULE, store_packet, 50),
-    ejabberd_hooks:add(offline_subscription_hook, Host,
 		       ?MODULE, store_packet, 50),
     ejabberd_hooks:add(resend_offline_messages_hook, Host,
 		       ?MODULE, pop_offline_messages, 50),
@@ -82,8 +80,6 @@ receive_all(Msgs) ->
 
 stop(Host) ->
     ejabberd_hooks:delete(offline_message_hook, Host,
-			  ?MODULE, store_packet, 50),
-    ejabberd_hooks:delete(offline_subscription_hook, Host,
 			  ?MODULE, store_packet, 50),
     ejabberd_hooks:delete(resend_offline_messages_hook, Host,
 			  ?MODULE, pop_offline_messages, 50),

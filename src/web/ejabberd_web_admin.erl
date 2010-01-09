@@ -3,15 +3,15 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Administration web interface
 %%% Created :  9 Apr 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_web_admin.erl 525 2006-04-01 21:43:52Z alexey $
+%%% Id      : $Id: ejabberd_web_admin.erl 588 2006-07-07 08:06:12Z mremond $
 %%%----------------------------------------------------------------------
-%%% Copyright (c) 2004-2005 Alexey Shchepin
-%%% Copyright (c) 2004-2005 Process One
+%%% Copyright (c) 2004-2006 Alexey Shchepin
+%%% Copyright (c) 2004-2006 Process One
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_web_admin).
 -author('alexey@sevcom.net').
--vsn('$Revision: 525 $ ').
+-vsn('$Revision: 588 $ ').
 
 %% External exports
 -export([process_admin/2,
@@ -1229,7 +1229,7 @@ list_vhosts(Lang) ->
 
 
 list_users(Host, Query, Lang, URLFunc) ->
-    Res = list_users_parse_query(Query),
+    Res = list_users_parse_query(Query, Host),
     Users = ejabberd_auth:get_vh_registered_users(Host),
     SUsers = lists:sort([{S, U} || {U, S} <- Users]),
     FUsers =
@@ -1262,28 +1262,32 @@ list_users(Host, Query, Lang, URLFunc) ->
 	      [?XE("table",
 		   [?XE("tr",
 			[?XC("td", ?T("User") ++ ":"),
-			 ?XE("td", [?INPUT("text", "newusername", "")])
+			 ?XE("td", [?INPUT("text", "newusername", "")]),
+			 ?XE("td", [?C([" @ ", Host])])
 			]),
 		    ?XE("tr",
 			[?XC("td", ?T("Password") ++ ":"),
-			 ?XE("td", [?INPUT("password", "newuserpassword", "")])
+			 ?XE("td", [?INPUT("password", "newuserpassword", "")]),
+			 ?X("td")
 			]),
 		    ?XE("tr",
 			[?X("td"),
 			 ?XAE("td", [{"class", "alignright"}],
-			      [?INPUTT("submit", "addnewuser", "Add User")])
+			      [?INPUTT("submit", "addnewuser", "Add User")]),
+			 ?X("td")
 			])]),
 	       ?P] ++
 	      FUsers)].
 
-list_users_parse_query(Query) ->
+%% Parse user creation query and try register:
+list_users_parse_query(Query, Host) ->
     case lists:keysearch("addnewuser", 1, Query) of
 	{value, _} ->
-	    {value, {_, JIDString}} =
+	    {value, {_, Username}} =
 		lists:keysearch("newusername", 1, Query),
 	    {value, {_, Password}} =
 		lists:keysearch("newuserpassword", 1, Query),
-	    case jlib:string_to_jid(JIDString) of
+	    case jlib:string_to_jid(Username++"@"++Host) of
 		error ->
 		    error;
 		#jid{user = User, server = Server} ->
@@ -2179,10 +2183,8 @@ node_backup_parse_query(Node, Query) ->
 					  rpc:call(Node, mnesia,
 						   backup, [Path]);
 				      "restore" ->
-					  rpc:call(Node, mnesia,
-						   restore,
-						   [Path, [{default_op,
-							    keep_tables}]]);
+					  rpc:call(Node, ejabberd_admin,
+						   restore, [Path]);
 				      "fallback" ->
 					  rpc:call(Node, mnesia,
 						   install_fallback, [Path]);
@@ -2584,7 +2586,7 @@ shared_roster_group_parse_query(Host, Group, Query) ->
 
 	    OldMembers = mod_shared_roster:get_group_explicit_users(
 			   Host, Group),
-	    SJIDs = string:tokens(SMembers, "\r\n"),
+	    SJIDs = string:tokens(SMembers, ", \r\n"),
 	    NewMembers =
 		lists:foldl(
 		  fun(_SJID, error) -> error;

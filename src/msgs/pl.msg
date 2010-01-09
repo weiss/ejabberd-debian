@@ -1,4 +1,4 @@
-% $Id: pl.msg 533 2006-04-18 22:28:30Z alexey $
+% $Id: pl.msg 644 2006-09-26 14:07:35Z mremond $
 
 % jlib.hrl
 {"No resource provided", "Brak dostarczonych zasobów"}.
@@ -43,7 +43,6 @@
 {"Configuration", "Konfiguracja"}.
 {"Online Users", "Użytkownicy zalogowani"}.
 {"All Users", "Wszyscy użytkownicy"}.
-{"Outgoing S2S connections", "Wychodzące połączenia S2S"}.
 {"To ~s", "Do ~s"}.
 {"From ~s", "Z  ~s"}.
 {"Running Nodes", "Uruchomione gałęzie"}.
@@ -52,12 +51,10 @@
 {"Access Control Lists", "Lista dostępowa"}.
 {"Access Rules", "Zasady dostępu"}.
 {"Remove Users", "Usuń użytkowników"}.
-{"DB", "DB"}.
 {"Modules", "Moduły"}.
 {"Start Modules", "Uruchom moduły"}.
 {"Stop Modules", "Zatrzymaj moduły"}.
 {"Backup Management", "Zarządzanie kopiami zapasowymi"}.
-{"Import users from jabberd1.4 spool files", "Importowanie użytkowników z plikow spoool serwera jabberd1.4"}.
 {"Backup", "Tworzenie kopii"}.
 {"Restore", "Odtwarzanie kopii"}.
 {"Dump to Text File", "Zrzucanie do pliku tekstowego"}.
@@ -74,7 +71,6 @@
 {"Search users in ", "Wyszukaj użytkowników w "}.
 {"Fill in fields to search for any matching Jabber User",
  "Wypełnij pola aby znaleźdź pasujących użytkowników Jabbera"}.
-{"Results of search in ", "Wyniki wyszukiwania w "}.
 
 {"User",              "Użytkownik: "}.
 {"Full Name", 	      "Pełna nazwa: "}.
@@ -85,7 +81,6 @@
 {"Birthday", 	      "Data urodzenia: "}.
 {"Country", 	      "Państwo: "}.
 {"City", 	      "Miasto: "}.
-{"email", 	      "E-Mail: "}.
 {"Organization Name", "Nazwa organizacji: "}.
 {"Organization Unit", "Dział: "}.
 
@@ -98,7 +93,6 @@
  "Jedynie administrator może wysyłać wiadomości serwisowe"}.
 {"Conference room does not exist", "Pokój konferencyjny nie istnieje"}.
 {"Access denied by service policy", "Dostęp zabroniony przez zabezpieczenia serwera"}.
-{"You must fill in field \"nick\" in the form", "Musisz wypełnić pole \"nick\"  w formularzu"}.
 {"Specified nickname is already registered", "Podany nick jest już zarejestrowany"}.
 
 % mod_muc/mod_muc_room.erl
@@ -107,25 +101,7 @@
  "Potrzebujesz klienta kompatybilnego z x:data aby skonfigurować pokój"}.
 {"Configuration for ", "Konfiguracja dla "}.
 {"Room title", "Tytuł pokoju"}.
-{"Allow users to change subject?", "Zezwolić użytkownikom na zmianę tematu?"}.
-{"Allow users to query other users?",
- "Zezwolić użytkownikom na zapraszanie innych użytkowników?"}.
-{"Allow users to send private messages?",
- "Zezwolić użytkownikom na wysyłanie prywatnych wiadomości?"}.
-{"Make room public searchable?", "Uczynić pokój wyszukiwalnym publicznie?"}.
-{"Make participants list public?", "Uczynic obecnych wyszukiwalnymi publicznie?"}.
-{"Make room persistent?", "Uczynić pokój trwałym?"}.
-{"Make room moderated?", "Uczynić pokój moderowanym?"}.
-{"Default users as members?",
- "Domyślni użytkownicy jako członkowie?"}.
-{"Make room members only?",
- "Uczynić pokój tylko dla członków?"}.
-{"Allow users to send invites?",
- "Pozwolić użytkownikom na wysyłanie zaproszeń?"}.
-{"Make room password protected?", "Czy zabezpieczyć pokój hasłem?"}.
 {"Password", "Hasło"}.
-{"Make room anonymous?", "Uczynić pokój anonimowym?"}.
-{"Enable logging?", "Włączyć logowanie?"}.
 {"Only moderators and participants are allowed to change subject in this room",
  "Tylko moderatorzy i wlasciciele mogą zmienić temat tego pokoju"}.
 {"Only moderators are allowed to change subject in this room",
@@ -160,6 +136,10 @@
 {"Invalid role: ~s", "Nieprawidłowa rola: ~s"}.
 {"Owner privileges required", "Wymagane uprawnienia właściciela	"}.
 {"private, ", "prywatny, "}.
+{"Present real JIDs to", "Kto może widzieć prawdziwe JID-y?"}.
+{"moderators only", "tylko moderatorzy"}.
+{"anyone", "wszyscy"}.
+
 
 % mod_irc/mod_irc.erl
 {"You need an x:data capable client to configure mod_irc settings",
@@ -173,91 +153,55 @@
 {"Encodings", "Kodowania"}.
 
 % web/ejabberd_web_admin.erl
-{"ejabberd administration", "Administracja serwerem Ejabberd"}.
 {"Users", "Użytkownicy"}.
 {"Nodes", "Gałęzie"}.
 {"Statistics", "Statystyki"}.
-{"(raw)", "(raw)"}.
-{"submitted", "przesłane"}.
-{"bad format", "zły format"}.
-{"raw", "raw"}.
-{"ejabberd access control lists configuration", "Lista konfiguracyjna dostępu do serwera EJabberd"}.
 {"Delete Selected", "Usuń zaznaczone"}.
 {"Submit", "Wprowadź"}.
-{"ejabberd access rules configuration", "Konfiguracja zasad dostępu do serwera EJabberd"}.
 {"~s access rule configuration", "~s konfiguracja zasad dostępu"}.
-{"ejabberd users", "Użytkownicy EJabberd"}.
-{"ejabberd stats", "Statystyki EJabberd"}.
 {"Node not found", "Gałąź nie znaleziona"}.
 {"Add New", "Dodaj nowe"}.
-{"Registered users", "Zarejestrowani użytkownicy"}.
-{"Online users", "Użytkownicy online"}.
-{"Outgoing S2S servers", "Sewery zewnętrzne S2S"}.
 {"Change Password", "Zmień hasło"}.
 {"Connected Resources:", "Zasoby podłączone"}.
 {"Password:", "Hasło:"}.
 {"None", "Brak"}.
 {"Node ", "Gałąź "}.
-{"DB Management", "Zarządzanie bazą danych"}.
-{"Listened Ports Management", "Zarządzanie portami nasłuchującymi"}.
 {"Restart", "Restart"}.
 {"Stop", "Stop"}.
-{"RPC call error", "Błąd RPC"}.
-{"DB Tables at ", "Tabele bazy danych "}.
 {"Name", "Nazwa"}.
 {"Storage Type", "Typ bazy"}.
 {"Size", "Wielkość"}.
 {"Memory", "Pamięć"}.
-{"Backup Management at ", "Zarządzanie kopiami zapasowymi "}.
-{"Store a backup in a file", "Zachowaj kopie zapasowa w pliku "}.
 {"OK", "OK"}.
-{"Restore a backup from a file", "Odtwórz kopię zapasową z pliku"}.
-{"Install a database fallback from a file", "Przywróć zapisaną kopię z pliku"}.
-{"Dump a database in a text file", "Zrzuć bazę danych do pliku tekstowego"}.
-{"Restore a database from a text file", "Odtwórz bazę danych z pliku tekstowego"}.
 {"Listened Ports at ", "Porty nasłuchujące "}.
-{"~p statistics", "~p statystyka"}.
-{"Uptime", "Uptime"}.
-{"CPU Time", "Czas procesora"}.
-{"Transactions commited", "Tarnsakcje rozpoczęte"}.
-{"Transactions aborted", "Transakcje anulowane"}.
-{"Transactions restarted", "Transakcje zrestartowane"}.
-{"Transactions logged", "Transakcje logowane"}.
 {"Port", "Port"}.
 {"Module", "Moduł"}.
 {"Options", "Opcje"}.
 {"Update", "Aktualizacja"}.
 {"Delete", "Usuń"}.
 {"Add User", "Dodaj użytkownika"}.
-{"Offline messages", "Wiadomości offline"}.
 {"Last Activity", "Ostatnia aktywność"}.
 {"Never", "Nigdy"}.
-{"~s offline messages queue", "~s wiadomości offline w kolejce"}.
 {"Time", "Czas"}.
 {"From", "Od"}.
 {"To", "Do"}.
 {"Packet", "Pakiet "}.
-{"Offline messages:", "Wiadomości offline: "}.
 {"Roster", "Roster "}.
 {"Nickname", "Nick "}.
 {"Subscription", "Subskrypcja "}.
 {"Pending", "Oczekiwanie "}.
 {"Groups", "Grupy "}.
 {"Remove", "Usuń "}.
-{"Add JID", "Dodaj JID "}.
 {"User ", "Użytkownik "}.
 {"Roster of ", "Roster "}.
 {"Shared Roster", "Roster współdzielony"}.
 {"Online", "Dostępny"}.
 {"Validate", "Zatwierdź"}.
-{"Not found", "Nie znaleziony"}.
-{"Shared roster groups", "Grupy rosterów współdzielonych"}.
 {"Name:", "Nazwa:"}.
 {"Description:", "Opis:"}.
 {"Members:", "Członkowie:"}.
 {"Displayed Groups:", "Wyświetlane grupy:"}.
 {"Group ", "Grupa "}.
-{"Users last activity", "Ostatnia aktywność użytkowników"}.
 {"Period: ", "Przedział czasu "}.
 {"Last month", "Ostatni miesiąc"}.
 {"Last year", "Ostatni rok"}.
@@ -265,35 +209,23 @@
 {"Show Ordinary Table", "Pokaż zwykłą tabelę"}.
 {"Show Integral Table", "Pokaż tabelę całkowitą"}.
 {"Start", "Start"}.
-{"Modules Management", "Zarządzanie modułami"}.
 {"Modules at ", "Moduły na "}.
-{"No data", "Brak danych"}.
 {"Virtual Hosts", "Wirtualne hosty"}.
 {"ejabberd virtual hosts", "wirtualne hosty ejabberda"}.
 {"Host", "Host"}.
 {"ejabberd Web Interface", ""}.
 
 % mod_vcard_odbc.erl
-{"Erlang Jabber Server\nCopyright (c) 2002-2005 Alexey Shchepin", "Erlang Jabber Server\nCopyright (c) 2002-2005 Alexey Shchepin"}.
 {"Fill in the form to search for any matching Jabber User (Add * to the end of field to match substring)", "Wypełnij formularz aby wyszukać pasujących użytkowników Jabbera (dodaj * na koniec pola aby dopasować)"}.
-{"ejabberd vCard module\nCopyright (c) 2003-2005 Alexey Shchepin", "ejabberd vCard module\nCopyright (c) 2003-2005 Alexey Shchepin"}.
-{"JID", "JID"}.
 
 % ejabberd_c2s.erl
 {"Use of STARTTLS required", "Wymagane użycie STARTTLS"}.
 {"Replaced by new connection", ""}.
 
-% mod_configure.erl
-{"DB Tables Configuration at ", "Konfiguracja tabel bazy dla "}.
-
-% mod_vcard_ldap.erl
-{"Given Name", "Nadana nazwa"}.
-
 % mod_pubsub/mod_pubsub.erl
-{"ejabberd pub/sub module\nCopyright (c) 2003-2005 Alexey Shchepin", "ejabberd pub/sub module\nCopyright (c) 2003-2005 Alexey Shchepin"}.
 {[], " "}.
 {"Node Creator", "Tworzenie gałęzi"}.
-{"Deliver payloads with event notifications", "Do?cz zawarto? publikowanego przedmiotu podczas wysy?nia powiadomienia o publikacji"}.
+{"Deliver payloads with event notifications", "Dołącz zawartość publikowanego przedmiotu podczas wysyłania powiadomienia o publikacji"}.
 {"Notify subscribers when the node configuration changes", "Informuj subskrybentów gdy konfiguracja gałęzi się zmieni"}.
 {"Notify subscribers when the node is deleted", "Informuj subskrybentów gdy gałąż zostanie wykasowana"}.
 {"Notify subscribers when items are removed from the node", "Informuj subskrybentów kiedy zostaną z gałęzi usunięte jakieś elementy"}.
@@ -302,36 +234,23 @@
 {"Whether to allow subscriptions", "Czy pozwolić na subskrypcje"}.
 {"Specify the subscriber model", "Oznacz model subskrybenta"}.
 {"Specify the publisher model", "Oznacz model publikującego"}.
-{"Max payload size in bytes", "Maksymalna wielko? powiadomienia w bajtach"}.
+{"Max payload size in bytes", "Maksymalna wielkość powiadomienia w bajtach"}.
 {"Send items to new subscribers", "Wysyłaj rzeczy do nowych subskrybentów"}.
 {"Only deliver notifications to available users", "Dostarczaj notyfikacje tylko do osiągalnych użytkowników"}.
 {"Specify the current subscription approver", "Wyznacz aprobującego obecne subskrypcje "}.
 
-% web/ejabberd_web_admin.erl
-{"ejabberd (c) 2002-2005 Alexey Shchepin, 2004-2005 Process One", "ejabberd (c) 2002-2005 Alexey Shchepin, 2004-2005 Process One"}.
-{"(raw)", "(raw)"}.
-{"raw", "raw"}.
-{"Authenticated users", "Użytkownicy zautoryzowani"}.
-
 % mod_irc/mod_irc.erl
-{"ejabberd IRC module\nCopyright (c) 2003-2005 Alexey Shchepin", "ejabberd IRC module\nCopyright (c) 2003-2005 Alexey Shchepin"}.
 {"If you want to specify different encodings for IRC servers, fill this list with values in format '{\"irc server\", \"encoding\"}'.  By default this service use \"~s\" encoding.", "Jeśli chcesz ustawić inne kodowanie dla serwerów IRC, wypełnij tą listę wartościami w formacie '{\"irc server\",\"encoding\"}'. Jako domyślne ten serwis używa kodowania \"~s\"."}.
 
 % mod_muc/mod_muc.erl
 {"Room creation is denied by service policy", "Tworzenie pokoju jest zabronione przez polisę"}.
-{"ejabberd MUC module\nCopyright (c) 2003-2005 Alexey Shchepin", "ejabberd MUC module\nCopyright (c) 2003-2005 Alexey Shchepin"}.
-
-% Local Variables:
-% mode: erlang
-% End:
-
 
 % /usr/home/src/ejabberd/ejabberd/src/mod_vcard_odbc.erl
-{"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin", ""}.
+{"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin", "Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin"}.
 {"Email", ""}.
-{"ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin", ""}.
+{"ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin", "Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin"}.
 {"Search Results for ", "Wyniki wyszukiwania dla "}.
-{"Jabber ID", ""}.
+{"Jabber ID", "Jabber ID"}.
 
 % /usr/home/src/ejabberd/ejabberd/src/mod_adhoc.erl
 {"Commands", "Polecenia"}.
@@ -450,8 +369,7 @@
 {"Make room public searchable", "Pozwól wyszukiwać pokój"}.
 {"Make participants list public", "Upublicznij listę uczestników"}.
 {"Make room password protected", "Zabezpiecz pokój hasłem"}.
-{"Make room semianonymous", "Utwórz pokój pół-nieznanym"}.
-{"Make room members-only", "Utwórz pokój tylko dla członków"}.
+{"Make room members-only", "Utwórz pokój tylko dla uczestnikóww"}.
 {"Make room moderated", "Moderuj pokój"}.
 {"Default users as participants", "Domyślni użytkownicy jako uczestnicy"}.
 {"Allow users to change subject", "Pozwól użytkownikom zmienić tytuł pokoju"}.
@@ -461,3 +379,47 @@
 {"Enable logging", "Włącz logowanie"}.
 {"Description", "Opis"}.
 {"Number of occupants", "Liczba uczestników"}.
+
+% mod_vcard_ldap.erl
+{"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin", "Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin"}.
+{"ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin", "ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin"}.
+{"Jabber ID", "Jabber ID"}.
+
+% ./mod_presence.erl
+{"You need an x:data capable client to register presence", "Potrzebujesz klinta kompatybilnego z x:data aby zarejestrować widoczność "}.
+{"Presence registration at ", "Rejestracja widoczności na "}.
+{"What presence features do you want to register?", "Jakie usługi widoczności chcesz zarejestrować?"}.
+{"Raw XML", ""}.
+{"Specified presence is already registered", "Określona widoczność już jest zarejestrowana"}.
+{"You must fill in field \"Xml\" in the form", "Musisz wypełnić w formularzu pole \"XML\""}.
+{"You must fill in field \"Icon\" in the form", "Musisz wypełnić w formularzu pole \"Icon\""}.
+{"ejabberd presence module\nCopyright (c) 2006 Igor Goryachev", ""}.
+
+% ./mod_presence/mod_presence.erl
+{"Raw XML export", "Eksport XML do raw"}.
+{"Allow icon export", "Pozwól na eksport ikon"}.
+
+% ./mod_stats2file.erl
+{"CPUtime", "Czas procesora"}.
+
+% ./mod_vcard_odbc.erl
+{"Erlang Jabber Server\nCopyright (c) 2002-2006 Alexey Shchepin", ""}.
+{"Email", ""}.
+{"ejabberd vCard module\nCopyright (c) 2003-2006 Alexey Shchepin", ""}.
+{"Jabber ID", ""}.
+
+% ./mod_pubsub/mod_pubsub.erl
+{"ejabberd pub/sub module\nCopyright (c) 2003-2006 Alexey Shchepin", ""}.
+
+% ./web/ejabberd_web_admin.erl
+{"ejabberd (c) 2002-2006 Alexey Shchepin, 2004-2006 Process One", ""}.
+{"(Raw)", ""}.
+{"Raw", ""}.
+{"Low level update script", "Skrypt aktualizacyjny niskiego poziomu"}.
+
+% ./mod_irc/mod_irc.erl
+{"ejabberd IRC module\nCopyright (c) 2003-2006 Alexey Shchepin", ""}.
+
+% ./mod_muc/mod_muc.erl
+{"ejabberd MUC module\nCopyright (c) 2003-2006 Alexey Shchepin", ""}.
+

@@ -1,3 +1,365 @@
+2006-09-27  Mickael Remond  <mickael.remond@process-one.net>
+
+	* doc/release_notes_1.1.2.txt: Minor fixes.
+
+	* doc/guide.tex: Fixed Latexish typos.
+
+2006-09-26  Mickael Remond  <mickael.remond@process-one.net>
+
+	* doc/release_notes_1.1.2.txt: Draft release notes.
+
+	* src/msgs/pl.msg: Updated (thanks to Andrzej Smyk).
+
+	* src/ejabberd_s2s.erl: Added incoming-s2s-number and
+	outgoing-s2s-number ejabberdctl commands
+	
+	* src/mod_muc/mod_muc_room.erl: Minor english update.
+	* src/msgs/pl.msg: Likewise.
+	* src/msgs/uk.msg: Likewise.
+	* src/msgs/pt-br.msg: Likewise.
+	* src/msgs/cs.msg: Likewise.
+	* src/msgs/ru.msg: Likewise.
+	* src/msgs/es.msg: Likewise.
+	* src/msgs/fr.msg: Likewise.
+	* src/msgs/de.msg: Likewise.
+	* src/msgs/nl.msg: Likewise.
+
+	* src/msgs/pt-br.msg: Updated Brazilian translation (thanks to
+	Renato Botelho) and clean-up.
+
+2006-09-25  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/msgs/de.msg: Updated German translation (thanks to Nikolaus
+	Polak).
+
+	* src/ejabberd.app: Version update for ejabberd 1.1.2.
+
+	* src/msgs/pl.msg: Updated Polish translation (thanks to Zbyszek
+	Zolkiewski).
+
+	* src/msgs/de.msg: Updated German translation (thanks to Marvin
+	Preuss).
+
+	* src/msgs/nl.msg: Updated Dutch translation (thanks to Sander
+	 Devrieze).
+
+	* src/msgs/cs.msg: Updated Czech translation and removed unused
+	 strings.
+
+	* doc/introduction.tex: Minor doc updates for release 1.1.2.
+
+2006-09-24  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/msgs/es.msg: Updated Spanish translation (thanks to Badlop).
+
+	* src/mod_muc/mod_muc_room.erl: Strings update (thanks to Serguei
+	 Golovan).
+	* src/msgs/ru.msg: Updated Russian translation (thanks to Serguei
+	 Golovan).
+	* src/msgs/uk.msg: Updated Ukrainian translation (thanks to Serguei
+	 Golovan).
+	* src/msgs/fr.msg: Updated French translation.
+	
+	* src/doc/guide.html: Minor W3C compliance fix in an Hevea
+	generated URL.
+	
+	* src/doc/features.html: Added to be consistent (guide.html is in the
+	repository to make Latex optional, but still allow access to the doc).
+
+2006-09-23  Mickael Remond  <mickael.remond@process-one.net>
+
+        * src/ejabberd.hrl: Updated to version 1.1.2
+
+2006-09-23  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/eldap/eldap.erl: Enable the keepalive socket option (thanks
+	to Evgeniy Khramtsov)
+
+	* src/ejabberd_auth_ldap.erl: Now uses two LDAP connections
+	(thanks to Evgeniy Khramtsov)
+
+	* src/eldap/eldap_filter.erl: Bugfix (thanks to Evgeniy Khramtsov)
+	* src/mod_vcard_ldap.erl: Likewise
+
+2006-09-22  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/msgs/cs.msg: Added Czech translation (thanks to Milos Svasek).
+	
+	* src/mod_muc/mod_muc.erl: Component name is now more user friendly
+	(thanks to Badlop).
+	* src/mod_irc/mod_irc.erl: Likewise.
+	* src/mod_pubsub/mod_pubsub.erl: Likewise. 
+
+	* src/msgs/fr.msg: updated French translation.
+	
+	* doc/guide.tex: Large improvements for ejabberd 1.1.2 (thanks to
+	Sander Devrieze)
+	* doc/version.tex: Likewise.
+	* doc/features.tex: Likewise.
+	* doc/Makefile: Likewise.
+	* doc/dev.tex: Likewise.
+	
+2006-09-14  Mickael Remond  <mickael.remond@process-one.net>
+
+	* doc/guide.tex: Minor fix on index generation.
+
+2006-09-14  Alexey Shchepin  <alexey@sevcom.net>
+
+	* doc/guide.tex: Updated (thanks to Evgeniy Khramtsov)
+
+	* src/ejabberd_auth_ldap.erl: Better LDAP support (thanks to
+	Evgeniy Khramtsov)
+	* src/mod_vcard_ldap.erl: Likewise
+	* src/eldap/eldap_filter.erl: Likewise
+
+2006-09-11  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/odbc/mssql.sql: Removed unused fields.
+
+2006-09-10  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/ejd2odbc.erl: Updated
+
+	* src/mod_muc/mod_muc_log.erl: Fixed html special characters
+	escaping, added new image buttons, chatroom titles now point to
+	xmpp: URIs (thanks to Badlop)
+
+2006-09-05  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_muc/mod_muc.erl: It is now possible to configure the MUC room
+	history feature. A new option has been added in ejabberd muc module
+	configuration (history_size) to define the size of the history. 0 is
+        used to disable the feature.
+	* src/mod_muc/mod_muc_room.erl: Likewise.
+	* doc/guide.tex: Likewise.
+
+2006-09-05  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/mod_shared_roster.erl: Bugfix
+
+	* src/mod_roster_odbc.erl: Bugfix
+
+2006-09-03  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/odbc/odbc_queries.erl: Support for Microsoft SQL Server as a
+	database backend (via ODBC).
+	* src/odbc/ejabberd_odbc.erl: Likewise.
+	* src/odbc/mssql.sql: Likewise.
+	* src/odbc/Makefile.in: Likewise.
+	* src/ejabberd_auth_odbc.erl: Likewise.
+	* src/mod_offline_odbc.erl: Likewise.
+	* src/mod_roster_odbc.erl: Likewise.
+	* src/mod_last_odbc.erl: Likewise.
+	* src/configure.ac: Likewise
+	* doc/guide.tex: Likewise.
+	* doc/introduction.tex: Likewise.
+	* src/odbc/pg.sql: Minor fix. 
+
+2006-08-28  Mickael Remond  <mickael.remond@process-one.net>
+
+	* Makefile.in: Fix for MacOSX compilation.
+	* ejabberd_zlib/Makefile.in: Likewise.
+	* mod_irc/Makefile.in: Likewise.
+	* stringprep/Makefile.in: Likewise.
+	* tls/Makefile.in: Likewise. 
+
+	* src/ejabberd.app: Updated to the current version.
+
+2006-08-27  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/mod_muc/mod_muc_room.erl: Fixed logging configuring
+	permission check
+
+2006-08-14  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/ejabberd_router.erl: Now filter_packet hook works in
+	'global' context
+
+2006-08-04  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/tls/tls_drv.c: Report OpenSSL error messages (thanks to
+	Magnus Henoch)
+
+	* src/mod_muc/mod_muc_room.erl: Use standardized MUC room
+	configuration fields (thanks to Magnus Henoch and Andy Turner)
+
+2006-08-02  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/mod_roster_odbc.erl: Bugfix
+
+2006-07-28  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/ejabberd_c2s.erl: Bugfix: added a missing catch and fixed the
+	error code used on unknown namespace.
+	* src/ejabberd_s2s_out.erl: Improved s2s connection negociation
+	(dialback namespace usage) when using tls.
+	* src/ejabberd_sm.erl: Fixed the error code used on unknown namespace.
+	* src/mod_register.erl: ejabberd now sends iq result and stream end on
+	user remove.
+
+2006-07-16  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/acl.erl: The server does not crash anymore on wrong acl rule. Add
+	rule error message in log file.
+
+2006-07-07  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/web/ejabberd_web_admin.erl: User creation form now creates the
+	user for the current virual host only and does not require to type
+	the hostname.
+	* src/jlib.erl: String to JID conversion now returns an error if the
+	JID string contains two arobases.
+
+2006-07-06  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_shared_roster.erl: Shared roster entries can now be moved or
+	rename from a client without breaking current presence status.
+	* src/mod_roster.erl: Likewise.
+	* src/mod_roster_odbc.erl: Likewise.
+
+	* src/mod_muc/mod_muc_room.erl: Fixed the order in which room presence
+	packets are sent (First existing presence to new occupant, then new
+	occupant presence to existing users.
+
+2006-07-05  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/web/ejabberd_web_admin.erl: More flexible parsing the shared
+	roster members list from the configuration form.
+	* src/mod_shared_roster.erl: Deletng a shared roster group now
+	correctly deletes its user entries.
+
+	* src/mod_shared_roster.erl: The logged user (self) is now removed from
+	the shared roster list.
+	* src/ejabberd_auth.erl: Better handling of errors when the server for
+	authentication is unknown.
+
+2006-06-19  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/ejabberd_s2s_in.erl: Removed needless check for xmlns:db
+	when starttls is enabled
+
+2006-06-15  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/web/ejabberd_http_poll.erl: Bugfix: using tuple instead of a Pid
+	to send Erlang messages in a rarely used case.
+
+2006-06-13  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/ejabberd_auth.erl: Fixed broken multiple connection with
+	anonymous login problem.
+	* src/ejabberd_auth_anonymous.erl: Likewise.
+
+2006-06-07  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Support for pubsub node creation
+	ACL. It is now possible to limit the node creation rights using an
+	ACL from ejabberd config file (Thanks to Christophe Romain).
+	* doc/guide.tex: Likewise.
+	* src/ejabberd.cfg.example.
+
+	* src/mod_pubsub/mod_pubsub.erl: Discovery query on an item does
+	no more return an "item not found error". Discovery stop correctly
+	at the item level (Thanks to Christophe Romain).
+	
+2006-06-02  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/web/ejabberd_http_poll.erl: Messages polled between the
+	the last client request and the polling timeout were lost. Those
+	messages are now resent using ejabberd routing mechanisms.
+
+	* src/web/ejabberd_http.erl: The web module now accepts HTTP
+	absolute URL (used behind a proxy). This apply to HTTP polling and
+	to the web interface (Thanks to Jean-Sebastien Pedron).
+	
+2006-05-29  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_roster.erl: According to RFC3921 section 9.2, outbound
+	subscribe presence packets must be sent, even if the user has already
+	asked for subcription previously (subscription: none and pending: out).
+	The mod_roster now conforms to this behaviour. 
+	* src/mod_roster_odbc.erl: Likewise.
+
+2006-05-27  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/configure.ac: Added an optional check for krb5.h in
+	configure. ejabberd can now be build directly on RedHat and
+	OpenBSD.
+
+2006-05-27  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/msgs/sk.msg: Slovak translation (thanks to Juraj Michalek
+	and SkLUG)
+
+2006-05-26  Alexey Shchepin  <alexey@sevcom.net>
+
+	* src/odbc/pg.sql: Updated
+
+	* src/mod_shared_roster.erl: Updated
+
+	* src/ejabberd_sm.erl: Bugfix
+
+	* src/mod_roster.erl: Bugfix
+	* src/mod_roster_odbc.erl: Likewise
+
+2006-05-23  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_roster.erl: The subscribe request are now resend at login as
+	long as they have not been answered. mod_roster do no more depends on
+        mod_offline.
+	* src/ejabberd_sm.erl: Likewise.
+	* src/ejabberd_c2s.erl: Likewise.
+	* src/mod_roster_odbc.erl: Likewise (The ODBC/relational support has
+	not yet been tested).
+	* src/mod_roster.hrl: Likewise.
+	* src/mod_offline.erl: Likewise.
+	* src/mod_offline_odbc.erl: Likewise.
+	* odbc/pg.sql: Likewise.
+	* odbc/mysql.sql: Likewise.
+
+2006-05-22  Mickael Remond  <mickael.remond@process-one.net>
+	
+	* src/ejabberd_sm.erl: The max_user_sessions has been moved to
+	host configuration.
+	* src/ejabberd.cfg.example: Likewise.
+	* doc/guide.tex: Likewise.
+
+2006-05-21  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/ejabberd_sm.erl: An option to limit the number of opened sessions
+	for a given user have been added. As a default, a given user can only
+	log in 10 times with different resources. After that, new connections
+        replace the older ones.
+	* src/ejabberd.cfg.example: Likewise.
+	* doc/guide.tex: Likewise.
+
+2006-05-15  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/web/ejabberd_http_poll.erl: Timeout disconnection were not
+	properly handled after "active once" migration. This is now fixed.
+	
+2006-05-07  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/mod_configure.erl: Unknown tables or tables from now unused
+	modules are ignored during restore. The restore can now be performed in
+        such case.
+	* src/web/ejabberd_web_admin.erl: Likewise.
+	* src/ejabberd_admin.erl: Code refactoring. Common Mnesia database
+	restore function.
+
+	* src/ejabberd_ctl.erl: Now prints a user-friendly when trying to
+	restore a backup from a non-existent file.
+
+	* src/ejabberd_ctl.erl: Added a way to delete the older message
+	from the offline message table. This function is only available if
+	offline message queue is stored in Mnesia internal database. The
+	function delete_old_messages is not available in mod_offline_odbc.
+
+2006-05-01  Mickael Remond  <mickael.remond@process-one.net>
+
+	* src/ejabberd_ctl.erl: Unknown tables or tables from now unused
+	modules are ignored during restore. The restore can now be performed in
+        such case.
+
 2006-04-28  Mickael Remond  <mickael.remond@process-one.net>
 
 	* src/ejabberd.hrl: release 1.1.1

@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: jlib.erl 412 2005-09-15 18:32:05Z alexey $
+%%% Id      : $Id: jlib.erl 588 2006-07-07 08:06:12Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(jlib).
 -author('alexey@sevcom.net').
--vsn('$Revision: 412 $ ').
+-vsn('$Revision: 588 $ ').
 
 -export([make_result_iq_reply/1,
 	 make_error_reply/3,
@@ -181,6 +181,9 @@ string_to_jid1([], "") ->
 string_to_jid1([], N) ->
     make_jid("", lists:reverse(N), "").
 
+%% Only one "@" is admitted per JID
+string_to_jid2([$@ | _J], _N, _S) ->
+    error;
 string_to_jid2([$/ | _J], _N, "") ->
     error;
 string_to_jid2([$/ | J], N, S) ->

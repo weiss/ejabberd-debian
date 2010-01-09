@@ -5,14 +5,14 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
 %%% Updated : 23 Feb 2006 by Mickael Remond <mremond@process-one.net>
 %%%                          for anonymous login support
-%%% Id      : $Id: ejabberd_auth.erl 537 2006-04-22 03:35:13Z alexey $
+%%% Id      : $Id: ejabberd_auth.erl 585 2006-07-05 14:36:21Z mremond $
 %%%----------------------------------------------------------------------
 
 %% TODO: Use the functions in ejabberd auth to add and remove users.
 
 -module(ejabberd_auth).
 -author('alexey@sevcom.net').
--vsn('$Revision: 537 $ ').
+-vsn('$Revision: 585 $ ').
 
 %% External exports
 -export([start/0,
@@ -25,6 +25,7 @@
 	 get_password/2,
 	 get_password_s/2,
 	 is_user_exists/2,
+         is_user_exists_in_other_modules/3,
 	 remove_user/2,
 	 remove_user/3,
 	 plain_password_required/1,
@@ -130,6 +131,14 @@ is_user_exists(User, Server) ->
 	      M:is_user_exists(User, Server)
       end, auth_modules(Server)).
 
+%% Check if the user exists in all authentications module except the module
+%% passed as parameter
+is_user_exists_in_other_modules(Module, User, Server) ->
+    lists:any(
+      fun(M) ->
+	      M:is_user_exists(User, Server)
+      end, auth_modules(Server)--[Module]).
+
 remove_user(User, Server) ->
     lists:foreach(
       fun(M) ->
@@ -160,6 +169,7 @@ auth_modules(Server) ->
     LServer = jlib:nameprep(Server),
     Method = ejabberd_config:get_local_option({auth_method, LServer}),
     Methods = if
+		  Method == undefined -> [];
 		  is_list(Method) -> Method;
 		  is_atom(Method) -> [Method]
 	      end,

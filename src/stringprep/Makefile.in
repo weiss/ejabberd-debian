@@ -1,10 +1,17 @@
-# $Id: Makefile.in 285 2004-11-05 21:14:31Z aleksey $
+# $Id: Makefile.in 596 2006-08-28 14:56:13Z mremond $
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @ERLANG_LIBS@
+
+ifeq ($(shell uname),Darwin)
+DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
+else
+# Assume Linux-style dynamic library flags
+DYNAMIC_LIB_CFLAGS = -fpic -shared
+endif
 
 SUBDIRS = 
 
@@ -26,7 +33,7 @@ $(OUTDIR)/%.beam:       %.erl
 $(ERLSHLIBS):	../%.so:	%.c uni_data.c uni_norm.c
 			gcc -Wall -O2 $(CFLAGS) $(LDFLAGS) $(INCLUDES) \
 			$(subst ../,,$(subst .so,.c,$@)) $(LIBS) \
-			-o $@ -fpic -shared
+			-o $@ $(DYNAMIC_LIB_CFLAGS)
 
 clean:
 	rm -f $(OBJS) $(ERLSHLIBS)

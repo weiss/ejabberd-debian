@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : 
 %%% Created :  5 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_offline_odbc.erl 474 2005-12-21 16:10:56Z mremond $
+%%% Id      : $Id: mod_offline_odbc.erl 598 2006-09-03 15:15:46Z mremond $
 %%%----------------------------------------------------------------------
 -module(mod_offline_odbc).
 -author('alexey@sevcom.net').
@@ -27,8 +27,6 @@
 
 start(Host, _Opts) ->
     ejabberd_hooks:add(offline_message_hook, Host,
-		       ?MODULE, store_packet, 50),
-    ejabberd_hooks:add(offline_subscription_hook, Host,
 		       ?MODULE, store_packet, 50),
     ejabberd_hooks:add(resend_offline_messages_hook, Host,
 		       ?MODULE, pop_offline_messages, 50),
@@ -67,14 +65,9 @@ loop(Host) ->
 				  ejabberd_odbc:escape(
 				    lists:flatten(
 				      xml:element_to_string(Packet))),
-			      ["insert into spool(username, xml) "
-			       "values ('", Username, "', '",
-			       XML,
-			       "');"]
+			      odbc_queries:add_spool_sql(Username, XML)
 		      end, Msgs),
-	    case catch ejabberd_odbc:sql_transaction(
-			 Host,
-			 Query) of
+	    case catch odbc_queries:add_spool(Host, Query) of
 		{'EXIT', Reason} ->
 		    ?ERROR_MSG("~p~n", [Reason]);
 		_ ->
@@ -96,8 +89,6 @@ receive_all(Msgs) ->
 
 stop(Host) ->
     ejabberd_hooks:delete(offline_message_hook, Host,
-			  ?MODULE, store_packet, 50),
-    ejabberd_hooks:delete(offline_subscription_hook, Host,
 			  ?MODULE, store_packet, 50),
     ejabberd_hooks:delete(resend_offline_messages_hook, Host,
 			  ?MODULE, pop_offline_messages, 50),
@@ -211,15 +202,7 @@ pop_offline_messages(Ls, User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     EUser = ejabberd_odbc:escape(LUser),
-    F = fun() ->
-		Result = ejabberd_odbc:sql_query_t(
-			   ["select username, xml from spool where username='", EUser, "'"
-			    "  order by seq;"]),
-		ejabberd_odbc:sql_query_t(
-		  ["delete from spool where username='", EUser, "';"]),
-		Result
-	end,
-    case ejabberd_odbc:sql_transaction(LServer,F) of
+    case odbc_queries:get_and_del_spool_msg_t(LServer, EUser) of
 	{atomic, {selected, ["username","xml"], Rs}} ->
 	    Ls ++ lists:flatmap(
 		    fun({_, XML}) ->
@@ -249,7 +232,5 @@ remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     Username = ejabberd_odbc:escape(LUser),
-    ejabberd_odbc:sql_query(
-      LServer,
-      ["delete from spool where username='", Username, "';"]).
+    odbc_queries:del_spool_msg(LServer, Username).
 

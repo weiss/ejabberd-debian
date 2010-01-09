@@ -7,12 +7,12 @@
 %%% Anonymous support is based on the work of Magnus Henoch
 %%% <henoch@dtek.chalmers.se> and heavily extended by Process-one.
 %%%
-%%% Id      : $Id: ejabberd_auth_anonymous.erl 534 2006-04-20 15:42:51Z mremond $
+%%% Id      : $Id: ejabberd_auth_anonymous.erl 579 2006-06-13 16:52:38Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_anonymous).
 -author('mickael.remond@process-one.net').
--vsn('$Revision: 534 $ ').
+-vsn('$Revision: 579 $ ').
 
 -export([start/1,
 	 allow_anonymous/1,
@@ -149,7 +149,8 @@ check_password(User, Server, Password) ->
 check_password(User, Server, _Password, _StreamID, _Digest) ->
     %% We refuse login for registered accounts (They cannot logged but
     %% they however are "reserved")
-    case ejabberd_auth:is_user_exists(User, Server) of
+    case ejabberd_auth:is_user_exists_in_other_modules(?MODULE, 
+						       User, Server) of
 	true  -> false;
 	false -> login(User, Server)
     end.

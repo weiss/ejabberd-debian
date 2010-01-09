@@ -3,12 +3,12 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : Support for online configuration of ejabberd
 %%% Created : 19 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_configure.erl 525 2006-04-01 21:43:52Z alexey $
+%%% Id      : $Id: mod_configure.erl 562 2006-05-07 16:52:21Z mremond $
 %%%----------------------------------------------------------------------
 
 -module(mod_configure).
 -author('alexey@sevcom.net').
--vsn('$Revision: 525 $ ').
+-vsn('$Revision: 562 $ ').
 
 -behaviour(gen_mod).
 
@@ -1126,8 +1126,7 @@ set_form(_Host, ["running nodes", ENode, "backup", "restore"], _Lang, XData) ->
 		false ->
 		    {error, ?ERR_BAD_REQUEST};
 		{value, {_, [String]}} ->
-		    case rpc:call(Node, mnesia, restore,
-				  [String, [{default_op, keep_tables}]]) of
+                    case rpc:call(Node, ejabberd_admin, restore, [String]) of
 			{badrpc, _Reason} ->
 			    {error, ?ERR_INTERNAL_SERVER_ERROR};
 			{error, _Reason} ->

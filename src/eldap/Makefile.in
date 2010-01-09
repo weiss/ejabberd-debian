@@ -1,4 +1,4 @@
-# $Id: Makefile.in 285 2004-11-05 21:14:31Z aleksey $
+# $Id: Makefile.in 615 2006-09-22 08:36:09Z mremond $
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@ 
@@ -12,7 +12,8 @@ OUTDIR = ..
 EFLAGS = -I .. -pz ..
 OBJS   = \
 	$(OUTDIR)/eldap.beam \
-	$(OUTDIR)/ELDAPv3.beam
+	$(OUTDIR)/ELDAPv3.beam \
+	$(OUTDIR)/eldap_filter.beam
 
 all:    $(OBJS)
 
