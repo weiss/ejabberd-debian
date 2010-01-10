@@ -68,7 +68,7 @@ process(_Path, _Request) ->
 %%%----------------------------------------------------------------------
 %%% BEHAVIOUR CALLBACKS
 %%%----------------------------------------------------------------------
-start(Host, _Opts) ->
+start(_Host, _Opts) ->
     HTTPBindSupervisor =
         {ejabberd_http_bind_sup,
          {ejabberd_tmp_sup, start_link,

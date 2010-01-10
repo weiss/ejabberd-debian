@@ -1,3 +1,337 @@
+2009-01-13  Badlop  <badlop@process-one.net>
+
+	* doc/release_notes_2.0.3.txt: Minor changes
+
+2009-01-13  Mickael Remond  <mremond@process-one.net>
+
+	* src/tls/Makefile.win32: Windows compilation support.
+	* src/tls/tls_drv.c: Likewise.
+	* src/tls/stdint.h: Likewise.
+
+	* doc/guide.tex: Update Erlang version in Windows compilation
+	documentation.
+
+2009-01-13  Badlop  <badlop@process-one.net>
+
+	* src/msgs/pl.po: Fix typo (thanks to Apag0r)(EJAB-844)
+
+2009-01-12  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Update copyright date 2008 to 2009 (EJAB-842)
+	* doc/guide.html: Likewise
+	* src/*/*.erl: Likewise
+	* src/*/*.erl: Remove unneeded blankspaces in license text
+
+2009-01-11  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: fix owners cache and fix unsubscribe
+	permissions (thanks to Andy Skelton)(EJAB-840)
+	* src/mod_pubsub/node_default.erl: Likewise
+
+	* src/mod_pubsub/node_default.erl: prevent unauthorized entity to gain
+	none-affiliation for given entity (EJAB-840)
+
+2009-01-10  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/node_default.erl: fix unsubscription of full jid
+	subscribed node (thanks to Andy Skelton)(EJAB-839)
+
+2009-01-09  Badlop  <badlop@process-one.net>
+
+	* doc/release_notes_2.0.3.txt: New file for new release
+
+	* doc/guide.tex: Improve explanation of backup commands (EJAB-832)
+	* doc/guide.html: Likewise
+
+	* src/web/ejabberd_web_admin.erl: New appearance of WebAdmin logo,
+	fixed logo-fill.
+
+	* src/mod_configure.erl: Fix access check for vhost configuration
+
+2009-01-08  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: completely support subscription using
+	full JID (EJAB-701)
+	* src/mod_pubsub/node_default.erl: Likewise
+
+	* src/mod_pubsub/node_default.erl: any entity can retrieve item when
+	node access model is "open" (thanks to Myers Carpenter)(EJAB-836)
+
+2009-01-08  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_listener.erl: Define send timeout option to avoid
+	blocking on socket send (EJAB-746).
+	* src/ejabberd_s2s_out.erl: Likewise.
+
+2009-01-06  Badlop  <badlop@process-one.net>
+
+	* src/msgs/ru.msg: Fix typo (thanks to Dominges)
+
+2009-01-05  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/tls/tls_drv.c: Added a flag to avoid certificate validation
+	* src/tls/tls.erl: Likewise
+	* src/ejabberd_c2s.erl: Likewise
+
+2009-01-03  Badlop  <badlop@process-one.net>
+
+	* src/*.erl: Fix EDoc comments
+
+2009-01-03  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: deliver notification depending on
+	presence-based-delivery configuration (EJAB-827). notification code
+	rewrite.
+
+	* src/mod_pubsub/mod_pubsub.erl: code cleanning, minor bugfixes
+	* src/mod_pubsub/node_default.erl: Likewise
+	* src/mod_pubsub/node_pep.erl: Likewise
+	* src/mod_pubsub/pubsub.hrl: Likewise
+
+	* src/mod_pubsub/mod_pubsub.erl: prevent subscribing with full jid,
+	waiting for full jid support (EJAB-701)
+
+2008-12-29  Alexey Shchepin  <alexey@process-one.net>
+
+	* src/ejabberd_c2s.erl: Bugfix in "from" attribute checking
+
+2008-12-28  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_c2s.erl: Add resource to the from packet attribute
+	if missing (EJAB-812).
+
+2008-12-24  Badlop  <badlop@process-one.net>
+
+	* src/aclocal.m4: Fixes in configure script: fix
+	disable-ejabberd_zlib and disable-pam; in case of problems, PAM
+	verification aborts with error instead of warning. (EJAB-787)
+	* src/configure.ac: Likewise
+	* src/configure: Likewise
+
+2008-12-23  Badlop  <badlop@process-one.net>
+
+	* src/acl.erl: New ACL: shared_group (thanks to Maxim Ryazanov)
+	* doc/guide.tex: Likewise
+
+	* src/mod_shared_roster.erl: Push new group members when
+	registered or manually added to group: EJAB-730 EJAB-731 EJAB-732
+	EJAB-767 EJAB-794. When user is added to group, push it to other
+	members, and other members to it. When user is removed from group,
+	push deletion to other members, and other members to it. When user
+	is registered, push him to members of group @all@. When user is
+	deleted, push deletion to members of group @all@. Document several
+	functions in mod_shared_roster.
+
+	* src/ejabberd_auth.erl: Rename hook user_registered to
+	register_user, for name consistency with the widely used hook
+	remove_user. Run hook register_user in ejabberd_auth, so it's run
+	when account is created with any method. Run hook remove_user in
+	ejabberd_auth, so it's run when account is deleted with any
+	method.
+	* src/ejabberd_auth_internal.erl: Likewise
+	* src/ejabberd_auth_ldap.erl: Likewise
+	* src/ejabberd_auth_odbc.erl: Likewise
+	* src/ejabberd_auth_pam.erl: Likewise
+	* src/mod_register.erl: Likewise
+
+2008-12-23  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Improve handling of PEP sent to
+	external contacts (EJAB-825)
+	* src/mod_caps.erl: Likewise
+
+2008-12-23  Badlop  <badlop@process-one.net>
+
+	* src/cyrsasl_digest.erl: Check digest-uri in SASL digest
+	authentication (thanks to Paul Guyot)(EJAB-569)
+
+	* src/odbc/odbc_queries.erl: Fix removal of private_storage of an
+	account when the account is removed
+
+	* src/mod_privacy.erl: Remove privacy lists of an account when the
+	account is removed (EJAB-720)
+	* src/mod_privacy_odbc.erl: Likewise
+
+2008-12-19  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Fix send_last_published_item issue
+	when running on clustered table (thanks to Vincent Barat)(EJAB-793)
+
+2008-12-16  Badlop  <badlop@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Fix update pubsub tables from
+	ejabberd 1.x to 2.x (EJAB-817)
+
+	* doc/guide.tex: Fix capitalization of some section titles
+
+	* doc/guide.tex: Mention as optional Requirements: mysql, pgsql
+	and pam
+
+	* src/ejabberd_ctl.erl: Command reopen-log must also rotate
+	sasl.log (thanks to Alexander Tsvyashchenko)(EJAB-711)
+	* src/ejabberd_logger_h.erl: Export the function rotate_log/1
+	* doc/guide.tex: Improve explanation of log files rotation
+
+	* doc/guide.tex: Improve explanation of watchdog admins
+	option: only useful for developers (EJAB-816)
+	* src/ejabberd.cfg.example: Likewise
+
+	* doc/guide.tex: Say 'higher' instead of 'newer' in requirements
+	* README: Likewise
+
+	* doc/guide.tex: Simplify example mod_muc configuration
+
+2008-12-08  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/ejabberd_c2s.erl: Reduce memory consumption due to caps handling
+	* src/mod_pubsub/mod_pubsub.erl: Likewise
+	* src/mod_caps.erl: Likewise
+
+	* src/mod_pubsub/mod_pubsub.erl: ignore unknown configuration fields
+	(EJAB-762) (thanks to Jack Moffitt)
+
+	* src/mod_pubsub/mod_pubsub.erl: fix node authorization bug (EJAB-798)
+	(thanks to Brian Cully)
+
+	* src/mod_pubsub/pubsub.hrl: remove unused pubsub_presence record
+
+	* src/mod_pubsub/node_default.erl: remove pubsub_state record when
+	unsubscribing node without affiliation (EJAB-776)
+
+2008-12-08  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_c2s.erl: Enforce client stanza from attribute
+	(EJAB-812).
+	* src/jlib.erl: Likewise.
+
+2008-12-01  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: New subsection Database Connection
+	* doc/guide.html: Likewise
+
+2008-12-01  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/ejabberd_frontend_socket.erl: Hibernate ejabberd_receiver and
+	ejabberd_frontend_socket processes after timeout. Backported from
+	Aleksey's patch (r1680)
+	* src/ejabberd_frontend_socket.erl: Likewise
+
+	* src/tls/tls_drv.c: Don't create a SSL context on every connection
+	and disable SSLv2 on outgoing connections (EJAB-781). Backported from
+	Aleksey's patch (r1675)
+
+2008-11-26  Badlop  <badlop@process-one.net>
+
+	* src/mod_irc/mod_irc.erl: Announce disco#info (thanks to Spike)
+	* src/mod_muc/mod_muc.erl: Announce disco#info disco#items
+	* src/mod_proxy65/mod_proxy65_service.erl: No announce disco#items
+	* src/mod_pubsub/mod_pubsub.erl: Announce disco#info disco#items
+	* src/mod_vcard.erl: Announce disco#info
+
+	* src/gen_mod.erl: First store module options in ETS and Mnesia,
+	then start the module. In case of failure, remove options from
+	ETS. Until now the module was started before the options were
+	stored in database, and some modules started incorrectly because
+	they couldn't access the options from database; for instance
+	mod_muc_room required this for reading max_users option.
+
+	* src/mod_muc/mod_muc_room.erl: Include the value of max_users
+	service option and the current max_users room option in the list
+	of allowed room limit values.
+
+2008-10-17  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/node_pep.erl: Fix get_node_affiliations resultset to
+	owner (Thanks to Michal Schmidt)
+
+2008-11-12  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Improve legibility of mod_irc example config
+
+2008-11-08  Mickael Remond  <mremond@process-one.net>
+
+	* src/ejabberd_s2s_out.erl: exports the DNS resolution
+	function.
+
+2008-10-27  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_app.erl: Open ejabberd.log before parsing
+	ejabberd.cfg and translation files (EJAB-777)
+
+2008-10-17  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: fix badarg issue on get_roster_info
+	when allowed roster groups is not defined
+
+	* src/mod_pubsub/mod_pubsub.erl: fix remove_user not unsubscribing
+	user (EJAB-684)
+
+	* src/mod_pubsub/node_default.erl: does not write item when max_items
+	set to 0 (solves EJAB-768)
+
+2008-10-13  Jerome Sautret  <jerome.sautret@process-one.net>
+
+	* src/odbc/ejabberd_odbc.erl: log MySQL driver messages.
+
+2008-10-07  Jerome Sautret  <jerome.sautret@process-one.net>
+
+	* src/mod_roster_odbc.erl: fix MySQL multiple requests issue.
+
+2008-10-06  Badlop  <badlop@process-one.net>
+
+	* doc/guide.html: Regenerated
+
+	* doc/guide.tex: Fix a problem in SVN merge from trunk
+
+2008-10-06  Jerome Sautret  <jerome.sautret@process-one.net>
+
+	* src/ejabberd_rdbms.erl: fix SQL database reconnection
+	issues (EJAB-764) and add odbc_start_interval configuration
+	directive (default to 30 seconds).
+	* src/odbc/ejabberd_odbc.erl: likewise.
+	* src/odbc/ejabberd_odbc_sup.erl: likewise.
+	* doc/guide.tex: likewise.
+
+2008-10-03  Jerome Sautret  <jerome.sautret@process-one.net>
+
+	* src/odbc/odbc_queries.erl: Fix syntax error on update_roster_sql query.
+
+2008-10-03  Jerome Sautret  <jerome.sautret@process-one.net>
+
+	* src/odbc/odbc_queries.erl: Fix empty query that fails on MySQL (merged from trunk).
+
+2008-10-01  Mickael Remond  <mremond@process-one.net>
+
+	* src/mod_shared_roster.erl: Correct roster push when changing
+	a shared roster entry name (EJAB-738).
+
+2008-09-30  Badlop  <badlop@process-one.net>
+
+	* src/*/Makefile.win32: Provide explicit beam filenames because
+	nmake does not accept wildcards (thanks to Attila
+	Vangel)(EJAB-543)
+
+2008-09-29  Badlop  <badlop@process-one.net>
+
+	* contrib/ejabberd-modules.repo: Include 2.0.x branches
+
+2008-09-22  Mickael Remond  <mremond@process-one.net>
+
+	* src/mod_configure.erl: Fix adhoc commands reply types for
+	"get-online-users-num" and "get-registered-users-num" (EJAB-756).
+
+2008-09-15  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Fix explanation of mod_muc's anonymous
+	option. Make clear that an ejabberd_service can only serve a
+	single external component. Provide Mnesia directory when setting
+	clustering (thanks to Matthew Reilly)
+
+2008-09-02  Badlop  <badlop@process-one.net>
+
+	* doc/guide.tex: Fix mod_proxy configuration example
+	* doc/guide.html: Likewise
+
 2008-08-27  Christophe Romain  <christophe.romain@process-one.net>
 
 	* src/mod_pubsub/mod_pubsub.erl: send last published events now supports
@@ -158,7 +492,7 @@
 
 	* src/mod_register.erl: When a registration is blocked due to IP
 	limitation, return description in error stanza (EJAB-692)
-	
+
 2008-07-24  Christophe Romain  <christophe.romain@process-one.net>
 
 	* src/mod_pubsub/mod_pubsub.erl: Allow owner to subscribe/get its own
@@ -196,7 +530,7 @@
 	subscribing to a node sends only last items (EJAB-700)
 	* src/mod_pubsub/node_pep.erl: added acl and jid match on node
 	creation permission (EJAB-663)
-	* src/mod_pubsub/node_default.erl: fix node creation permission 
+	* src/mod_pubsub/node_default.erl: fix node creation permission
 	issue for service
 
 2008-07-22  Badlop  <badlop@process-one.net>
@@ -215,7 +549,7 @@
 
 2008-07-17  Christophe Romain  <christophe.romain@process-one.net>
 
-	* src/web/Makefile.in: use -DSSL39 if compiling with R12 
+	* src/web/Makefile.in: use -DSSL39 if compiling with R12
 
 2008-07-16  Badlop  <badlop@process-one.net>
 
@@ -223,7 +557,7 @@
 
 2008-07-16  Alexey Shchepin  <alexey@process-one.net>
 
-	* src/web/ejabberd_http_poll.erl: Report connection's IP address 
+	* src/web/ejabberd_http_poll.erl: Report connection's IP address
 
 	* src/ejabberd_c2s.erl: Rolled back the previous IP getting patch
 	* src/ejabberd_sm.erl: Likewise

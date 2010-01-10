@@ -5,7 +5,7 @@
 %%% Created : by Mickael Remond <mremond@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -322,16 +322,16 @@ update_roster_sql(Username, SJID, ItemVals, ItemGroups) ->
       "        and jid='", SJID, "';"],
      ["insert into rosterusers("
       "              username, jid, nick, "
-      "              subscription, ask, askmessage"
+      "              subscription, ask, askmessage, "
       "              server, subscribe, type) "
       " values (", ItemVals, ");"],
      ["delete from rostergroups "
       "      where username='", Username, "' "
-      "        and jid='", SJID, "';"],
+      "        and jid='", SJID, "';"]] ++
      [["insert into rostergroups("
        "              username, jid, grp) "
        " values (", ItemGroup, ");"] ||
-	 ItemGroup <- ItemGroups]].
+	 ItemGroup <- ItemGroups].
 
 roster_subscribe(_LServer, Username, SJID, ItemVals) ->
     ejabberd_odbc:sql_query_t(
@@ -374,7 +374,7 @@ get_private_data(LServer, Username, LXMLNS) ->
 		  "namespace='", LXMLNS, "';"]).
 
 del_user_private_storage(LServer, Username) ->
-    ejabberd_odbc:sql_transaction(
+    ejabberd_odbc:sql_query(
       LServer,
       ["delete from private_storage where username='", Username, "';"]).
 

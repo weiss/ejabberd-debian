@@ -5,7 +5,7 @@
 %%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -2626,11 +2626,22 @@ check_allowed_persistent_change(XEl, StateData, From) ->
 -define(PRIVATEXFIELD(Label, Var, Val),
 	?XFIELD("text-private", Label, Var, Val)).
 
+get_default_room_maxusers(RoomState) ->
+    DefRoomOpts = gen_mod:get_module_opt(RoomState#state.server_host, mod_muc, default_room_options, []),
+    RoomState2 = set_opts(DefRoomOpts, RoomState),
+    (RoomState2#state.config)#config.max_users.
 
 get_config(Lang, StateData, From) ->
     {_AccessRoute, _AccessCreate, _AccessAdmin, AccessPersistent} = StateData#state.access,
     ServiceMaxUsers = get_service_max_users(StateData),
+    DefaultRoomMaxUsers = get_default_room_maxusers(StateData),
     Config = StateData#state.config,
+    {MaxUsersRoomInteger, MaxUsersRoomString} =
+	case get_max_users(StateData) of
+	    N when is_integer(N) ->
+		{N, erlang:integer_to_list(N)};
+	    _ -> {0, "none"}
+	end,
     Res =
 	[{xmlelement, "title", [],
 	  [{xmlcdata, translate:translate(Lang, "Configuration for ") ++
@@ -2670,13 +2681,7 @@ get_config(Lang, StateData, From) ->
 	  [{"type", "list-single"},
 	   {"label", translate:translate(Lang, "Maximum Number of Occupants")},
 	   {"var", "muc#roomconfig_maxusers"}],
-	  [{xmlelement, "value", [], [{xmlcdata,
-				       case get_max_users(StateData) of
-					   N when is_integer(N) ->
-					       erlang:integer_to_list(N);
-					   _ -> "none"
-				       end
-				      }]}] ++
+	  [{xmlelement, "value", [], [{xmlcdata, MaxUsersRoomString}]}] ++
 	  if
 	      is_integer(ServiceMaxUsers) -> [];
 	      true ->
@@ -2687,7 +2692,8 @@ get_config(Lang, StateData, From) ->
 	  [{xmlelement, "option", [{"label", erlang:integer_to_list(N)}],
 	    [{xmlelement, "value", [],
 	      [{xmlcdata, erlang:integer_to_list(N)}]}]} ||
-	      N <- ?MAX_USERS_DEFAULT_LIST, N =< ServiceMaxUsers]
+	      N <- lists:usort([ServiceMaxUsers, DefaultRoomMaxUsers, MaxUsersRoomInteger |
+			       ?MAX_USERS_DEFAULT_LIST]), N =< ServiceMaxUsers]
 	 },
 	 {xmlelement, "field",
 	  [{"type", "list-single"},

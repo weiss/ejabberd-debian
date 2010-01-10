@@ -1,4 +1,4 @@
-% $Id: pl.msg 1495 2008-07-29 11:21:53Z badlop $
+% $Id: pl.msg 1814 2009-01-12 23:47:07Z badlop $
 % Language: Polish (polski)
 % Author: Zbyszek Żółkiewski
 % Author: Andrzej Smyk
@@ -351,7 +351,7 @@
 {"has been kicked because of a system shutdown", "został wyrzucony z powodu wyłączenia systemu"}.
 {"Chatroom configuration modified", "Konfiguracja pokoju zmodyfikowana"}.
 {"joins the room", "dołączył(a) się do pokoju"}.
-{"leaves the room", "opóścił(a) pokój"}.
+{"leaves the room", "opuścił(a) pokój"}.
 {"has been kicked", "został(a) kopnięty(a)"}.
 {"has been banned", "został(a) zabanowany(a)"}.
 {"is now known as", "jest teraz znany(a) jako"}.

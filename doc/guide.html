@@ -6,7 +6,7 @@
  
  
 
- ejabberd 2.0.2 
+ ejabberd 2.0.3 
  
  Installation and Operation Guide
  
@@ -76,7 +76,7 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 <HR SIZE=2><BR>
 <BR>
 
-<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.0.2 </B></FONT></TD></TR>
+<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.0.3 </B></FONT></TD></TR>
 <TR><TD ALIGN=right NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=right NOWRAP> <FONT SIZE=6>Installation and Operation Guide</FONT></TD></TR>
 </TABLE><BR>
@@ -96,7 +96,7 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 </LI><LI CLASS="li-toc"><A HREF="#htoc4">Chapter&#XA0;2&#XA0;&#XA0;Installing <TT>ejabberd</TT></A>
 <UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc5">2.1&#XA0;&#XA0;Installing <TT>ejabberd</TT> with Binary Installer</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc6">2.2&#XA0;&#XA0;Installing <TT>ejabberd</TT> with Operating System specific packages</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc6">2.2&#XA0;&#XA0;Installing <TT>ejabberd</TT> with Operating System Specific Packages</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc7">2.3&#XA0;&#XA0;Installing <TT>ejabberd</TT> with CEAN</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc8">2.4&#XA0;&#XA0;Installing <TT>ejabberd</TT> from Source Code</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
@@ -161,12 +161,12 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 </LI><LI CLASS="li-toc"><A HREF="#htoc59">3.3.25&#XA0;&#XA0;<TT>mod_version</TT></A>
 </LI></UL>
 </LI></UL>
-</LI><LI CLASS="li-toc"><A HREF="#htoc60">Chapter&#XA0;4&#XA0;&#XA0;Managing an <TT>ejabberd</TT> server</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc60">Chapter&#XA0;4&#XA0;&#XA0;Managing an <TT>ejabberd</TT> Server</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc61">4.1&#XA0;&#XA0;<TT>ejabberdctl</TT></A>
 <UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc62">4.1.1&#XA0;&#XA0;Commands</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc63">4.1.2&#XA0;&#XA0;Erlang runtime system</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc63">4.1.2&#XA0;&#XA0;Erlang Runtime System</A>
 </LI></UL>
 </LI><LI CLASS="li-toc"><A HREF="#htoc64">4.2&#XA0;&#XA0;Web Admin</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc65">4.3&#XA0;&#XA0;Ad-hoc Commands</A>
@@ -177,8 +177,8 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 <A HREF="#htoc68">5.1&#XA0;&#XA0;Firewall Settings</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc69">5.2&#XA0;&#XA0;epmd</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc70">5.3&#XA0;&#XA0;Erlang Cookie</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc71">5.4&#XA0;&#XA0;Erlang node name</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc72">5.5&#XA0;&#XA0;Securing sensible files</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc71">5.4&#XA0;&#XA0;Erlang Node Name</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc72">5.5&#XA0;&#XA0;Securing Sensible Files</A>
 </LI></UL>
 </LI><LI CLASS="li-toc"><A HREF="#htoc73">Chapter&#XA0;6&#XA0;&#XA0;Clustering</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
@@ -199,9 +199,9 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 </LI></UL>
 </LI><LI CLASS="li-toc"><A HREF="#htoc84">Chapter&#XA0;7&#XA0;&#XA0;Debugging</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
-<A HREF="#htoc85">7.1&#XA0;&#XA0;Watchdog Alerts</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc86">7.2&#XA0;&#XA0;Log Files</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc87">7.3&#XA0;&#XA0;Debug Console</A>
+<A HREF="#htoc85">7.1&#XA0;&#XA0;Log Files</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc86">7.2&#XA0;&#XA0;Debug Console</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc87">7.3&#XA0;&#XA0;Watchdog Alerts</A>
 </LI></UL>
 </LI><LI CLASS="li-toc"><A HREF="#htoc88">Appendix&#XA0;A&#XA0;&#XA0;Internationalization and Localization</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc89">Appendix&#XA0;B&#XA0;&#XA0;Release Notes</A>
@@ -272,8 +272,8 @@ Support for virtual hosting.
 </LI></UL><P> <A NAME="installing"></A> </P><!--TOC chapter Installing <TT>ejabberd</TT>-->
 <H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc4">Chapter&#XA0;2</A>&#XA0;&#XA0;<A HREF="#installing">Installing <TT>ejabberd</TT></A></H1><!--SEC END --><P> <A NAME="installing"></A> </P><P> <A NAME="install.binary"></A> </P><!--TOC section Installing <TT>ejabberd</TT> with Binary Installer-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc5">2.1</A>&#XA0;&#XA0;<A HREF="#install.binary">Installing <TT>ejabberd</TT> with Binary Installer</A></H2><!--SEC END --><P> <A NAME="install.binary"></A> </P><P>Probably the easiest way to install an <TT>ejabberd</TT> instant messaging server
-is using the binary installer published by ProcessOne. 
-The binary installers of released <TT>ejabberd</TT> versions 
+is using the binary installer published by ProcessOne.
+The binary installers of released <TT>ejabberd</TT> versions
 are available in the ProcessOne <TT>ejabberd</TT> downloads page:
 <A HREF="http://www.process-one.net/en/ejabberd/downloads"><TT>http://www.process-one.net/en/ejabberd/downloads</TT></A></P><P>The installer will deploy and configure a full featured <TT>ejabberd</TT>
 server and does not require any extra dependencies.</P><P>In *nix systems, remember to set executable the binary installer before starting it. For example:
@@ -282,13 +282,13 @@ server and does not require any extra dependencies.</P><P>In *nix systems, remem
 </PRE><P><TT>ejabberd</TT> can be started manually at any time,
 or automatically by the operating system at system boot time.</P><P>To start and stop <TT>ejabberd</TT> manually,
 use the desktop shortcuts created by the installer.
-If the machine doesn&#X2019;t have a graphical system, use the scripts &#X2019;start&#X2019; 
+If the machine doesn&#X2019;t have a graphical system, use the scripts &#X2019;start&#X2019;
 and &#X2019;stop&#X2019; in the &#X2019;bin&#X2019; directory where <TT>ejabberd</TT> is installed.</P><P>The Windows installer also adds ejabberd as a system service,
 and a shortcut to a debug console for experienced administrators.
-If you want ejabberd to be started automatically at boot time, 
+If you want ejabberd to be started automatically at boot time,
 go to the Windows service settings and set ejabberd to be automatically started.
-Note that the Windows service is a feature still in development, 
-and for example it doesn&#X2019;t read the file ejabberdctl.cfg.</P><P>On a *nix system, if you want ejabberd to be started as daemon at boot time, 
+Note that the Windows service is a feature still in development,
+and for example it doesn&#X2019;t read the file ejabberdctl.cfg.</P><P>On a *nix system, if you want ejabberd to be started as daemon at boot time,
 copy <TT>ejabberd.init</TT> from the &#X2019;bin&#X2019; directory to something like <TT>/etc/init.d/ejabberd</TT>
 (depending on your distribution) and call <TT>/etc/inid.d/ejabberd start</TT> to start it.</P><P>If <TT>ejabberd</TT> doesn&#X2019;t start correctly in Windows,
 try to start it using the shortcut in desktop or start menu.
@@ -304,10 +304,10 @@ or with the command <TT>bin/ejabberdctl live</TT> in other Operating Systems.
 This way you see the error message provided by Erlang
 and can identify what is exactly the problem.</P><P>The <TT>ejabberdctl</TT> administration script is included in the <TT>bin</TT> directory.
 Please refer to the section&#XA0;<A HREF="#ejabberdctl">4.1</A> for details about <TT>ejabberdctl</TT>,
-and configurable options to fine tune the Erlang runtime system.</P><P> <A NAME="install.os"></A> </P><!--TOC section Installing <TT>ejabberd</TT> with Operating System specific packages-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc6">2.2</A>&#XA0;&#XA0;<A HREF="#install.os">Installing <TT>ejabberd</TT> with Operating System specific packages</A></H2><!--SEC END --><P> <A NAME="install.os"></A> </P><P>Some Operating Systems provide a specific <TT>ejabberd</TT> package adapted to 
+and configurable options to fine tune the Erlang runtime system.</P><P> <A NAME="install.os"></A> </P><!--TOC section Installing <TT>ejabberd</TT> with Operating System Specific Packages-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc6">2.2</A>&#XA0;&#XA0;<A HREF="#install.os">Installing <TT>ejabberd</TT> with Operating System Specific Packages</A></H2><!--SEC END --><P> <A NAME="install.os"></A> </P><P>Some Operating Systems provide a specific <TT>ejabberd</TT> package adapted to
 the system architecture and libraries.
-It usually also checks dependencies 
+It usually also checks dependencies
 and performs basic configuration tasks like creating the initial
 administrator account. Some examples are Debian and Gentoo. Consult the
 resources provided by your Operating System for more information.</P><P>Usually those packages create a script like <TT>/etc/init.d/ejabberd</TT>
@@ -317,12 +317,12 @@ to start and stop <TT>ejabberd</TT> as a service at boot time.</P><P> <A NAME="i
 packages from many Erlang programs, including <TT>ejabberd</TT> and all its dependencies.
 The binaries are available for many different system architectures, so this is an
 alternative to the binary installer and Operating System&#X2019;s <TT>ejabberd</TT> packages.</P><P>You will have to create your own <TT>ejabberd</TT> start
-script depending of how you handle your CEAN installation. 
+script depending of how you handle your CEAN installation.
 The default <TT>ejabberdctl</TT> script is located
 into <TT>ejabberd</TT>&#X2019;s priv directory and can be used as an example.</P><P> <A NAME="installation"></A> </P><!--TOC section Installing <TT>ejabberd</TT> from Source Code-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc8">2.4</A>&#XA0;&#XA0;<A HREF="#installation">Installing <TT>ejabberd</TT> from Source Code</A></H2><!--SEC END --><P> <A NAME="installation"></A> 
 </P><P>The canonical form for distribution of <TT>ejabberd</TT> stable releases is the source code package.
-Compiling <TT>ejabberd</TT> from source code is quite easy in *nix systems, 
+Compiling <TT>ejabberd</TT> from source code is quite easy in *nix systems,
 as long as your system have all the dependencies.</P><P> <A NAME="installreq"></A> </P><!--TOC subsection Requirements-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc9">2.4.1</A>&#XA0;&#XA0;<A HREF="#installreq">Requirements</A></H3><!--SEC END --><P> <A NAME="installreq"></A> 
 </P><P>To compile <TT>ejabberd</TT> on a &#X2018;Unix-like&#X2019; operating system, you need:
@@ -330,10 +330,13 @@ as long as your system have all the dependencies.</P><P> <A NAME="installreq"></
 GNU Make
 </LI><LI CLASS="li-itemize">GCC
 </LI><LI CLASS="li-itemize">Libexpat 1.95 or higher
-</LI><LI CLASS="li-itemize">Erlang/OTP R10B-9 or newer.
+</LI><LI CLASS="li-itemize">Erlang/OTP R10B-9 or higher.
 </LI><LI CLASS="li-itemize">OpenSSL 0.9.6 or higher, for STARTTLS, SASL and SSL encryption. Optional, highly recommended.
 </LI><LI CLASS="li-itemize">Zlib 1.2.3 or higher, for Stream Compression support (<A HREF="http://www.xmpp.org/extensions/xep-0138.html">XEP-0138</A>). Optional.
-</LI><LI CLASS="li-itemize">GNU Iconv 1.8 or higher, for the IRC Transport (mod_irc). Optional. Not needed on systems with GNU Libc.
+</LI><LI CLASS="li-itemize">Erlang mysql library. Optional. For MySQL authentication or storage. See section <A HREF="#compilemysql">3.2.1</A>.
+</LI><LI CLASS="li-itemize">Erlang pgsql library. Optional. For PostgreSQL authentication or storage. See section <A HREF="#compilepgsql">3.2.3</A>.
+</LI><LI CLASS="li-itemize">PAM library. Optional. For Pluggable Authentication Modules (PAM). See section <A HREF="#pam">3.1.4</A>.
+</LI><LI CLASS="li-itemize">GNU Iconv 1.8 or higher, for the IRC Transport (mod_irc). Optional. Not needed on systems with GNU Libc. See section <A HREF="#modirc">3.3.8</A>.
 </LI></UL><P> <A NAME="download"></A> </P><!--TOC subsection Download Source Code-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc10">2.4.2</A>&#XA0;&#XA0;<A HREF="#download">Download Source Code</A></H3><!--SEC END --><P> <A NAME="download"></A> 
 </P><P>Released versions of <TT>ejabberd</TT> are available in the ProcessOne <TT>ejabberd</TT> downloads page:
@@ -350,15 +353,15 @@ To get the full list run the command:
 </P><PRE CLASS="verbatim">./configure --help
 </PRE><P>Some options that you may be interested in modifying:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-	<B><TT>--prefix=/</TT></B></DT><DD CLASS="dd-description"> 
-	Specify the path prefix where the files will be copied when running the make install command.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-pam</TT></B></DT><DD CLASS="dd-description"> 
+	<B><TT>--prefix=/</TT></B></DT><DD CLASS="dd-description">
+	Specify the path prefix where the files will be copied when running the make install command.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-pam</TT></B></DT><DD CLASS="dd-description">
 	Enable the PAM authentication method (see section <A HREF="#pam">3.1.4</A>).<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-odbc or --enable-mssql</TT></B></DT><DD CLASS="dd-description">
 	Required if you want to use an external database.
-	See section&#XA0;<A HREF="#database">3.2</A> for more information.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-full-xml</TT></B></DT><DD CLASS="dd-description"> 
+	See section&#XA0;<A HREF="#database">3.2</A> for more information.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-full-xml</TT></B></DT><DD CLASS="dd-description">
 	Enable the use of XML based optimisations.
-	It will for example use CDATA to escape characters in the XMPP stream. 
+	It will for example use CDATA to escape characters in the XMPP stream.
 	Use this option only if you are sure your Jabber clients include a fully compliant XML parser.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--disable-transient-supervisors</TT></B></DT><DD CLASS="dd-description">
-	Disable the use of Erlang/OTP supervision for transient processes. 
+	Disable the use of Erlang/OTP supervision for transient processes.
 </DD></DL><P> <A NAME="install"></A> </P><!--TOC subsection Install-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc12">2.4.4</A>&#XA0;&#XA0;<A HREF="#install">Install</A></H3><!--SEC END --><P> <A NAME="install"></A> 
 </P><P>To install <TT>ejabberd</TT> in the destination directories, run the command:
@@ -385,7 +388,7 @@ to install <TT>ejabberd</TT>.</P><P>The files and directories created are, by de
 					</DD><DT CLASS="dt-description"><B><TT>msgs</TT></B></DT><DD CLASS="dd-description"> Translated strings (*.msgs)
 				</DD></DL>
 		</DD></DL>
-	</DD><DT CLASS="dt-description"><B><TT>/var/log/ejabberd/</TT></B></DT><DD CLASS="dd-description"> Log files (see section&#XA0;<A HREF="#logfiles">7.2</A>):
+	</DD><DT CLASS="dt-description"><B><TT>/var/log/ejabberd/</TT></B></DT><DD CLASS="dd-description"> Log files (see section&#XA0;<A HREF="#logfiles">7.1</A>):
 		<DL CLASS="description"><DT CLASS="dt-description">
 			<B><TT>ejabberd.log</TT></B></DT><DD CLASS="dd-description"> ejabberd service log
 			</DD><DT CLASS="dt-description"><B><TT>sasl.log</TT></B></DT><DD CLASS="dd-description"> Erlang/OTP system log
@@ -415,8 +418,8 @@ and configurable options to fine tune the Erlang runtime system.</P><P> <A NAME=
 </P><P>You need to have <TT>GNU install</TT>,
 but it isn&#X2019;t included in Solaris.
 It can be easily installed if your Solaris system
-is set up for <A HREF="http://www.blastwave.org/">blastwave.org</A> 
-package repository. 
+is set up for <A HREF="http://www.blastwave.org/">blastwave.org</A>
+package repository.
 Make sure <TT>/opt/csw/bin</TT> is in your <TT>PATH</TT> and run:
 </P><PRE CLASS="verbatim">pkg-get -i fileutils
 </PRE><P>If that program is called <TT>ginstall</TT>,
@@ -454,9 +457,9 @@ directory, you can add the directories
 <CODE>C:\sdk\GnuWin32\bin</CODE> to the <CODE>PATH</CODE> environment
 variable.
 </P></LI><LI CLASS="li-enumerate">Install OpenSSL in <CODE>C:\sdk\OpenSSL</CODE> and add <CODE>C:\sdk\OpenSSL\lib\VC</CODE> to your path or copy the binaries to your system directory.
-</LI><LI CLASS="li-enumerate">Install ZLib in <CODE>C:\sdk\gnuWin32</CODE>. Copy 
-<CODE>C:\sdk\GnuWin32\bin\zlib1.dll</CODE> to your system directory. If you change your path it should already be set after libiconv install. 
-</LI><LI CLASS="li-enumerate">Make sure the you can access Erlang binaries from your path. For example: <CODE>set PATH=%PATH%;"C:\sdk\erl5.5.5\bin"</CODE>
+</LI><LI CLASS="li-enumerate">Install ZLib in <CODE>C:\sdk\gnuWin32</CODE>. Copy
+<CODE>C:\sdk\GnuWin32\bin\zlib1.dll</CODE> to your system directory. If you change your path it should already be set after libiconv install.
+</LI><LI CLASS="li-enumerate">Make sure the you can access Erlang binaries from your path. For example: <CODE>set PATH=%PATH%;"C:\sdk\erl5.6.5\bin"</CODE>
 </LI><LI CLASS="li-enumerate">Depending on how you end up actually installing the library you might need to check and tweak the paths in the file configure.erl.
 </LI><LI CLASS="li-enumerate">While in the directory <CODE>ejabberd\src</CODE> run:
 <PRE CLASS="verbatim">configure.bat
@@ -467,7 +470,7 @@ nmake -f Makefile.win32
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc17">2.5</A>&#XA0;&#XA0;<A HREF="#initialadmin">Create a Jabber Account for Administration</A></H2><!--SEC END --><P> <A NAME="initialadmin"></A> </P><P>You need a Jabber account and grant him administrative privileges
 to enter the <TT>ejabberd</TT> Web Admin:
 </P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
-Register a Jabber account on your <TT>ejabberd</TT> server, for example <TT>admin1@example.org</TT>. 
+Register a Jabber account on your <TT>ejabberd</TT> server, for example <TT>admin1@example.org</TT>.
 There are two ways to register a Jabber account:
 <OL CLASS="enumerate" type=a><LI CLASS="li-enumerate">
 Using <TT>ejabberdctl</TT> (see section&#XA0;<A HREF="#ejabberdctl">4.1</A>):
@@ -487,7 +490,7 @@ suffix, is because <TT>ejabberd</TT>&#X2019;s virtual hosting support.
 </LI></OL><P> <A NAME="upgrade"></A> </P><!--TOC section Upgrading <TT>ejabberd</TT>-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc18">2.6</A>&#XA0;&#XA0;<A HREF="#upgrade">Upgrading <TT>ejabberd</TT></A></H2><!--SEC END --><P> <A NAME="upgrade"></A> </P><P>To upgrade an ejabberd installation to a new version,
 simply uninstall the old version, and then install the new one.
-Of course, it is important that the configuration file 
+Of course, it is important that the configuration file
 and Mnesia database spool directory are not removed.</P><P><TT>ejabberd</TT> automatically updates the Mnesia table definitions at startup when needed.
 If you also use an external database for storage of some modules,
 check if the release notes of the new ejabberd version
@@ -497,7 +500,7 @@ indicates you need to also update those tables.</P><P> <A NAME="configure"></A> 
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc20">3.1</A>&#XA0;&#XA0;<A HREF="#basicconfig">Basic Configuration</A></H2><!--SEC END --><P> <A NAME="basicconfig"></A> </P><P>The configuration file will be loaded the first time you start <TT>ejabberd</TT>. The
 content from this file will be parsed and stored in the internal <TT>ejabberd</TT> database. Subsequently the
 configuration will be loaded from the database and any commands in the
-configuration file are appended to the entries in the database. </P><P>Note that <TT>ejabberd</TT> never edits the configuration file. 
+configuration file are appended to the entries in the database.</P><P>Note that <TT>ejabberd</TT> never edits the configuration file.
 So, the configuration changes done using the Web Admin
 are stored in the database, but are not reflected in the configuration file.
 If you want those changes to be use after <TT>ejabberd</TT> restart, you can either
@@ -608,7 +611,7 @@ Port number.
 </LI></UL><P>
 The available modules, their purpose and the options allowed by each one are:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>ejabberd_c2s</TT></B></DT><DD CLASS="dd-description"> 
+<B><TT>ejabberd_c2s</TT></B></DT><DD CLASS="dd-description">
 Handles c2s connections.<BR>
  Options: <TT>access</TT>, <TT>certfile</TT>, <TT>inet6</TT>,
 <TT>ip</TT>, <TT>max_stanza_size</TT>, <TT>shaper</TT>,
@@ -618,7 +621,7 @@ Handles c2s connections.<BR>
 Handles incoming s2s connections.<BR>
  Options: <TT>inet6</TT>, <TT>ip</TT>, <TT>max_stanza_size</TT>
 </DD><DT CLASS="dt-description"><B><TT>ejabberd_service</TT></B></DT><DD CLASS="dd-description">
-Interacts with <A HREF="http://www.ejabberd.im/tutorials-transports">external components</A> 
+Interacts with an <A HREF="http://www.ejabberd.im/tutorials-transports">external component</A>
 (as defined in the Jabber Component Protocol (<A HREF="http://www.xmpp.org/extensions/xep-0114.html">XEP-0114</A>).<BR>
  Options: <TT>access</TT>, <TT>hosts</TT>, <TT>inet6</TT>,
 <TT>ip</TT>, <TT>shaper</TT>, <TT>service_check_from</TT>
@@ -638,9 +641,10 @@ used to disable control on the from field on packets send by an
 external components. The option can be either <TT>true</TT> or
 <TT>false</TT>. The default value is <TT>true</TT> which conforms to <A HREF="http://www.xmpp.org/extensions/xep-0114.html">XEP-0114</A>.
 </DD><DT CLASS="dt-description"><B><TT>{hosts, [Hostnames], [HostOptions]}</TT></B></DT><DD CLASS="dd-description"> 
-This option of <TT>ejabberd_service</TT> allows to define one or more hostnames 
-of external Jabber components that provide a service.
-In <TT>HostOptions</TT> it is possible to define the password required to those components
+The external Jabber component that connects to this <TT>ejabberd_service</TT>
+can serve one or more hostnames.
+In <TT>HostOptions</TT> you can define options for the component;
+currently the only allowed option is the password required to the component
 when attempt to connect to ejabberd: <TT>{password, Secret}</TT>.
 Note that you cannot define in a single <TT>ejabberd_service</TT> components of
 different services: add an <TT>ejabberd_service</TT> for each service,
@@ -652,7 +656,7 @@ do not allow outgoing sockets on port 5222.<P>Remember that you must also instal
 <CODE>http://server:port/http-bind/</CODE>. Be aware that support for HTTP Bind
 is also needed in the Jabber client. Remark also that HTTP Bind can be
 interesting to host a web-based Jabber client such as
-<A HREF="http://jwchat.sourceforge.net/">JWChat</A> 
+<A HREF="http://jwchat.sourceforge.net/">JWChat</A>
 (check the tutorials to install JWChat with ejabberd and an
 <A HREF="http://www.ejabberd.im/jwchat-localserver">embedded local web server</A>
 or <A HREF="http://www.ejabberd.im/jwchat-apache">Apache</A>).
@@ -666,7 +670,7 @@ interesting to host a web-based Jabber client such as
 <A HREF="http://jwchat.sourceforge.net/">JWChat</A>.
 </P></DD><DT CLASS="dt-description"><B><TT>inet6</TT></B></DT><DD CLASS="dd-description"> Set up the socket for IPv6 instead of IPv4.
 Note: this option is not required for S2S outgoing connections,
-because when ejabberd attempts to establish a S2S outgoing connection 
+because when ejabberd attempts to establish a S2S outgoing connection
 it first tries IPv4, and if that fails it attempts with IPv6.
 </DD><DT CLASS="dt-description"><B><TT>{ip, IPAddress}</TT></B></DT><DD CLASS="dd-description"> This option specifies which network
 interface to listen for. For example <CODE>{ip, {192, 168, 1, 1}}</CODE>.
@@ -698,7 +702,7 @@ You should also set the <TT>certfile</TT> option.
 You can define a certificate file for a specific domain using the global option <TT>domain_certfile</TT>.
 </DD><DT CLASS="dt-description"><B><TT>starttls_required</TT></B></DT><DD CLASS="dd-description"> This option
 specifies that STARTTLS encryption is required on connections to the port.
-No unencrypted connections will be allowed. 
+No unencrypted connections will be allowed.
 You should also set the <TT>certfile</TT> option.
 You can define a certificate file for a specific domain using the global option <TT>domain_certfile</TT>.
 </DD><DT CLASS="dt-description"><B><TT>tls</TT></B></DT><DD CLASS="dd-description"> This option specifies that traffic on
@@ -729,7 +733,7 @@ The default policy for incoming and outgoing s2s connections to other Jabber ser
 The default value is <TT>allow</TT>.
 </DD><DT CLASS="dt-description"><B><TT>{{s2s_host, Host}, allow|deny}</TT></B></DT><DD CLASS="dd-description">
 Defines if incoming and outgoing s2s connections with a specific remote host are allowed or denied.
-This allows to restrict ejabberd to only establish s2s connections 
+This allows to restrict ejabberd to only establish s2s connections
 with a small list of trusted servers, or to block some specific servers.
 </DD><DT CLASS="dt-description"><B><TT>{s2s_max_retry_delay, Seconds}</TT></B></DT><DD CLASS="dd-description"> 
 The maximum allowed delay for retry to connect after a failed connection attempt.
@@ -738,7 +742,7 @@ Specified in seconds. The default value is 300 seconds (5 minutes).
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
 There are three domains. The default certificate file is <TT>server.pem</TT>.
 However, the c2s and s2s connections to the domain <TT>example.com</TT> use the file <TT>example_com.pem</TT>.
-</LI><LI CLASS="li-itemize">Port 5222 listens for c2s connections with STARTTLS, 
+</LI><LI CLASS="li-itemize">Port 5222 listens for c2s connections with STARTTLS,
 and also allows plain connections for old clients.
 </LI><LI CLASS="li-itemize">Port 5223 listens for c2s connections with the old SSL.
 </LI><LI CLASS="li-itemize">Port 5269 listens for s2s connections with STARTTLS.
@@ -749,7 +753,7 @@ section&#XA0;<A HREF="#webadmin">4.2</A>.
 {listen,
  [
   {5222, ejabberd_c2s, [
-                        {access, c2s}, 
+                        {access, c2s},
                         {shaper, c2s_shaper},
                         starttls, {certfile, "/etc/ejabberd/server.pem"},
                         {max_stanza_size, 65536}
@@ -787,7 +791,7 @@ only two servers can connect: "jabber.example.org" and "example.com".
 </LI><LI CLASS="li-itemize">Port 5280 is serving the Web Admin and the HTTP Polling service. Note
 that it is also possible to serve them on different ports. The second
 example in section&#XA0;<A HREF="#webadmin">4.2</A> shows how exactly this can be done.
-</LI><LI CLASS="li-itemize">All users except for the administrators have a traffic of limit 
+</LI><LI CLASS="li-itemize">All users except for the administrators have a traffic of limit
 1,000&#XA0;Bytes/second
 </LI><LI CLASS="li-itemize">The
 <A HREF="http://www.ejabberd.im/pyaimt">AIM transport</A>
@@ -1008,6 +1012,10 @@ declarations of ACLs in the configuration file have the following syntax:
 </PRE></DD><DT CLASS="dt-description"><B><TT>{server, &lt;server&gt;}</TT></B></DT><DD CLASS="dd-description"> Matches any JID from server
 <TT>&lt;server&gt;</TT>. Example:
 <PRE CLASS="verbatim">{acl, exampleorg, {server, "example.org"}}.
+</PRE></DD><DT CLASS="dt-description"><B><TT>{shared_group, &lt;groupname&gt;}</TT></B></DT><DD CLASS="dd-description"> Matches any member of a Shared Roster Group with name <TT>&lt;groupname&gt;</TT> in the virtual host. Example:
+<PRE CLASS="verbatim">{acl, techgroupmembers, {shared_group, "techteam"}}.
+</PRE></DD><DT CLASS="dt-description"><B><TT>{shared_group, &lt;groupname&gt;, &lt;server&gt;}</TT></B></DT><DD CLASS="dd-description"> Matches any member of a Shared Roster Group with name <TT>&lt;groupname&gt;</TT> in the virtual host <TT>&lt;server&gt;</TT>. Example:
+<PRE CLASS="verbatim">{acl, techgroupmembers, {shared_group, "techteam", "example.org"}}.
 </PRE></DD><DT CLASS="dt-description"><B><TT>{user_regexp, &lt;regexp&gt;}</TT></B></DT><DD CLASS="dd-description"> Matches any local user with a name that
 matches <TT>&lt;regexp&gt;</TT> on local virtual hosts. Example:
 <PRE CLASS="verbatim">{acl, tests, {user_regexp, "^test[0-9]*$"}}.
@@ -1098,7 +1106,7 @@ following syntax:
 </P><PRE CLASS="verbatim">{maxrate, &lt;rate&gt;}
 </PRE><P>where <TT>&lt;rate&gt;</TT> stands for the maximum allowed incoming rate in bytes per
 second.
-When a connection exceeds this limit, <TT>ejabberd</TT> stops reading from the socket 
+When a connection exceeds this limit, <TT>ejabberd</TT> stops reading from the socket
 until the average rate is again below the allowed maximum.</P><P>Examples:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
 To define a shaper named &#X2018;<TT>normal</TT>&#X2019; with traffic speed limited to
@@ -1141,7 +1149,18 @@ different storage systems for modules, and so forth.</P><P>The following databas
 </LI><LI CLASS="li-itemize"><A HREF="http://www.openldap.org/">OpenLDAP</A>
 </LI><LI CLASS="li-itemize">Normally any LDAP compatible server should work; inform us about your
 success with a not-listed server so that we can list it here.
-</LI></UL><P> <A NAME="mysql"></A> </P><!--TOC subsection MySQL-->
+</LI></UL><P>Important note about virtual hosting:
+if you define several domains in ejabberd.cfg (see section <A HREF="#hostnames">3.1.1</A>),
+you probably want that each virtual host uses a different configuration of database, authentication and storage,
+so that usernames do not conflict and mix between different virtual hosts.
+For that purpose, the options described in the next sections
+must be set inside a <TT>host_cofig</TT> for each vhost (see section <A HREF="#virtualhost">3.1.2</A>).
+For example:
+</P><PRE CLASS="verbatim">{host_config, "public.example.org", [
+  {odbc_server, {pgsql, "localhost", "database-public-example-org", "ejabberd", "password"}},
+  {auth_method, [odbc]}
+]}.
+</PRE><P> <A NAME="mysql"></A> </P><!--TOC subsection MySQL-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc29">3.2.1</A>&#XA0;&#XA0;<A HREF="#mysql">MySQL</A></H3><!--SEC END --><P> <A NAME="mysql"></A> 
 </P><P>Although this section will describe <TT>ejabberd</TT>&#X2019;s configuration when you want to
 use the native MySQL driver, it does not describe MySQL&#X2019;s installation and
@@ -1149,15 +1168,7 @@ database creation. Check the MySQL documentation and the tutorial <A HREF="http:
 Note that the tutorial contains information about <TT>ejabberd</TT>&#X2019;s configuration
 which is duplicate to this section.</P><P>Moreover, the file mysql.sql in the directory src/odbc might be interesting for
 you. This file contains the <TT>ejabberd</TT> schema for MySQL. At the end of the file
-you can find information to update your database schema.</P><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
-Use this option to modify the value:
-</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
-</PRE><P>You can configure an interval to make a dummy SQL request 
-to keep alive the connections to the database. 
-The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made. 
-Specify in seconds: for example 28800 means 8 hours.
-</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
-</PRE><P> <A NAME="compilemysql"></A> </P><!--TOC subsubsection Driver Compilation-->
+you can find information to update your database schema.</P><P> <A NAME="compilemysql"></A> </P><!--TOC subsubsection Driver Compilation-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#compilemysql">Driver Compilation</A></H4><!--SEC END --><P> <A NAME="compilemysql"></A> 
 </P><P>You can skip this step if you installed <TT>ejabberd</TT> using a binary installer or
 if the binary packages of <TT>ejabberd</TT> you are using include support for MySQL.</P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
@@ -1168,14 +1179,9 @@ put them for example in the same directory as your <TT>ejabberd</TT> .beam files
 also needed for native MySQL support!). This can be done, by using next
 commands:
 <PRE CLASS="verbatim">./configure --enable-odbc &amp;&amp; make install
-</PRE></LI></OL><P> <A NAME="mysqlauth"></A> </P><!--TOC subsubsection Authentication-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#mysqlauth">Authentication</A></H4><!--SEC END --><P> <A NAME="mysqlauth"></A> 
-</P><P>The option value name may be misleading, as the <TT>auth_method</TT> name is used
-for access to a relational database through ODBC, as well as through the native
-MySQL interface. Anyway, the first configuration step is to define the odbc
-<TT>auth_method</TT>. For example:
-</P><PRE CLASS="verbatim">{host_config, "public.example.org", [{auth_method, [odbc]}]}.
-</PRE><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
+</PRE></LI></OL><P> <A NAME="configuremysql"></A> </P><!--TOC subsubsection Database Connection-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#configuremysql">Database Connection</A></H4><!--SEC END --><P> <A NAME="configuremysql"></A> 
+</P><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
 value is used to define if we want to use ODBC, or one of the two native
 interface available, PostgreSQL or MySQL.</P><P>To use the native MySQL interface, you can pass a tuple of the following form as
 parameter:
@@ -1189,6 +1195,24 @@ can thus take the following form:
 </P><PRE CLASS="verbatim">{mysql, "Server", Port, "Database", "Username", "Password"}
 </PRE><P>The <TT>Port</TT> value should be an integer, without quotes. For example:
 </P><PRE CLASS="verbatim">{odbc_server, {mysql, "localhost", Port, "test", "root", "password"}}.
+</PRE><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
+Use this option to modify the value:
+</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
+</PRE><P>You can configure an interval to make a dummy SQL request
+to keep alive the connections to the database.
+The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made.
+Specify in seconds: for example 28800 means 8 hours.
+</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
+</PRE><P>If the connection to the database fails, <TT>ejabberd</TT> waits 30 seconds before retrying.
+You can modify this interval with this option:
+</P><PRE CLASS="verbatim">{odbc_start_interval, 30}.
+</PRE><P> <A NAME="mysqlauth"></A> </P><!--TOC subsubsection Authentication-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#mysqlauth">Authentication</A></H4><!--SEC END --><P> <A NAME="mysqlauth"></A> 
+</P><P>The option value name may be misleading, as the <TT>auth_method</TT> name is used
+for access to a relational database through ODBC, as well as through the native
+MySQL interface. Anyway, the first configuration step is to define the odbc
+<TT>auth_method</TT>. For example:
+</P><PRE CLASS="verbatim">{auth_method, [odbc]}.
 </PRE><P> <A NAME="mysqlstorage"></A> </P><!--TOC subsubsection Storage-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#mysqlstorage">Storage</A></H4><!--SEC END --><P> <A NAME="mysqlstorage"></A> 
 </P><P>MySQL also can be used to store information into from several <TT>ejabberd</TT>
@@ -1206,21 +1230,23 @@ tutorial <A HREF="http://support.process-one.net/doc/display/MESSENGER/Using+eja
 Note that the tutorial contains information about <TT>ejabberd</TT>&#X2019;s configuration
 which is duplicate to this section.</P><P>Moreover, the file mssql.sql in the directory src/odbc might be interesting for
 you. This file contains the <TT>ejabberd</TT> schema for Microsoft SQL Server. At the end
-of the file you can find information to update your database schema.</P><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
-Use this option to modify the value:
-</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
-</PRE><P>You can configure an interval to make a dummy SQL request 
-to keep alive the connections to the database. 
-The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made. 
-Specify in seconds: for example 28800 means 8 hours.
-</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
-</PRE><P> <A NAME="compilemssql"></A> </P><!--TOC subsubsection Driver Compilation-->
+of the file you can find information to update your database schema.</P><P> <A NAME="compilemssql"></A> </P><!--TOC subsubsection Driver Compilation-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#compilemssql">Driver Compilation</A></H4><!--SEC END --><P> <A NAME="compilemssql"></A> 
 </P><P>You can skip this step if you installed <TT>ejabberd</TT> using a binary installer or
 if the binary packages of <TT>ejabberd</TT> you are using include support for ODBC.</P><P>If you want to use Microsoft SQL Server with ODBC, you need to configure,
 compile and install <TT>ejabberd</TT> with support for ODBC and Microsoft SQL Server
 enabled. This can be done, by using next commands:
 </P><PRE CLASS="verbatim">./configure --enable-odbc --enable-mssql &amp;&amp; make install
+</PRE><P> <A NAME="configuremssql"></A> </P><!--TOC subsubsection Database Connection-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#configuremssql">Database Connection</A></H4><!--SEC END --><P> <A NAME="configuremssql"></A> 
+</P><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
+Use this option to modify the value:
+</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
+</PRE><P>You can configure an interval to make a dummy SQL request
+to keep alive the connections to the database.
+The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made.
+Specify in seconds: for example 28800 means 8 hours.
+</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
 </PRE><P> <A NAME="mssqlauth"></A> </P><!--TOC subsubsection Authentication-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#mssqlauth">Authentication</A></H4><!--SEC END --><P> <A NAME="mssqlauth"></A> 
 </P><P>The configuration of Microsoft SQL Server is the same as the configuration of
@@ -1241,21 +1267,13 @@ and database creation. Check the PostgreSQL documentation and the tutorial <A HR
 Note that the tutorial contains information about <TT>ejabberd</TT>&#X2019;s configuration
 which is duplicate to this section.</P><P>Also the file pg.sql in the directory src/odbc might be interesting for you.
 This file contains the <TT>ejabberd</TT> schema for PostgreSQL. At the end of the file
-you can find information to update your database schema.</P><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
-Use this option to modify the value:
-</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
-</PRE><P>You can configure an interval to make a dummy SQL request 
-to keep alive the connections to the database. 
-The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made. 
-Specify in seconds: for example 28800 means 8 hours.
-</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
-</PRE><P> <A NAME="compilepgsql"></A> </P><!--TOC subsubsection Driver Compilation-->
+you can find information to update your database schema.</P><P> <A NAME="compilepgsql"></A> </P><!--TOC subsubsection Driver Compilation-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#compilepgsql">Driver Compilation</A></H4><!--SEC END --><P> <A NAME="compilepgsql"></A> 
 </P><P>You can skip this step if you installed <TT>ejabberd</TT> using a binary installer or
 if the binary packages of <TT>ejabberd</TT> you are using include support for
 PostgreSQL.</P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
 First, install the Erlang pgsql library from
-<A HREF="http://www.ejabberd.im/ejabberd-modules/">ejabberd-modules SVN repository</A>. 
+<A HREF="http://www.ejabberd.im/ejabberd-modules/">ejabberd-modules SVN repository</A>.
 Make sure the compiled
 files are in your Erlang path; you can put them for example in the same
 directory as your <TT>ejabberd</TT> .beam files.
@@ -1263,14 +1281,9 @@ directory as your <TT>ejabberd</TT> .beam files.
 (this is also needed for native PostgreSQL support!). This can be done, by
 using next commands:
 <PRE CLASS="verbatim">./configure --enable-odbc &amp;&amp; make install
-</PRE></LI></OL><P> <A NAME="pgsqlauth"></A> </P><!--TOC subsubsection Authentication-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#pgsqlauth">Authentication</A></H4><!--SEC END --><P> <A NAME="pgsqlauth"></A> 
-</P><P>The option value name may be misleading, as the <TT>auth_method</TT> name is used
-for access to a relational database through ODBC, as well as through the native
-PostgreSQL interface. Anyway, the first configuration step is to define the odbc
-<TT>auth_method</TT>. For example:
-</P><PRE CLASS="verbatim">{host_config, "public.example.org", [{auth_method, [odbc]}]}.
-</PRE><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
+</PRE></LI></OL><P> <A NAME="configurepgsql"></A> </P><!--TOC subsubsection Database Connection-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#configurepgsql">Database Connection</A></H4><!--SEC END --><P> <A NAME="configurepgsql"></A> 
+</P><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
 value is used to define if we want to use ODBC, or one of the two native
 interface available, PostgreSQL or MySQL.</P><P>To use the native PostgreSQL interface, you can pass a tuple of the following
 form as parameter:
@@ -1284,6 +1297,21 @@ can thus take the following form:
 </P><PRE CLASS="verbatim">{pgsql, "Server", Port, "Database", "Username", "Password"}
 </PRE><P>The <TT>Port</TT> value should be an integer, without quotes. For example:
 </P><PRE CLASS="verbatim">{odbc_server, {pgsql, "localhost", 5432, "database", "ejabberd", "password"}}.
+</PRE><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
+Use this option to modify the value:
+</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
+</PRE><P>You can configure an interval to make a dummy SQL request
+to keep alive the connections to the database.
+The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made.
+Specify in seconds: for example 28800 means 8 hours.
+</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
+</PRE><P> <A NAME="pgsqlauth"></A> </P><!--TOC subsubsection Authentication-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#pgsqlauth">Authentication</A></H4><!--SEC END --><P> <A NAME="pgsqlauth"></A> 
+</P><P>The option value name may be misleading, as the <TT>auth_method</TT> name is used
+for access to a relational database through ODBC, as well as through the native
+PostgreSQL interface. Anyway, the first configuration step is to define the odbc
+<TT>auth_method</TT>. For example:
+</P><PRE CLASS="verbatim">{auth_method, [odbc]}.
 </PRE><P> <A NAME="pgsqlstorage"></A> </P><!--TOC subsubsection Storage-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#pgsqlstorage">Storage</A></H4><!--SEC END --><P> <A NAME="pgsqlstorage"></A> 
 </P><P>PostgreSQL also can be used to store information into from several <TT>ejabberd</TT>
@@ -1298,15 +1326,7 @@ Keep in mind that you cannot have several variants of the same module loaded!</P
 use the ODBC driver, it does not describe the installation and database creation
 of your database. Check the documentation of your database. The tutorial <A HREF="http://support.process-one.net/doc/display/MESSENGER/Using+ejabberd+with+MySQL+native+driver">Using ejabberd with MySQL native driver</A> also can help you. Note that the tutorial
 contains information about <TT>ejabberd</TT>&#X2019;s configuration which is duplicate to
-this section.</P><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
-Use this option to modify the value:
-</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
-</PRE><P>You can configure an interval to make a dummy SQL request 
-to keep alive the connections to the database. 
-The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made. 
-Specify in seconds: for example 28800 means 8 hours.
-</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
-</PRE><P> <A NAME="compileodbc"></A> </P><!--TOC subsubsection Driver Compilation-->
+this section.</P><P> <A NAME="compileodbc"></A> </P><!--TOC subsubsection Driver Compilation-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#compileodbc">Driver Compilation</A></H4><!--SEC END --><P> <A NAME="compileodbc"></A> </P><P>You can skip this step if you installed <TT>ejabberd</TT> using a binary installer or
 if the binary packages of <TT>ejabberd</TT> you are using include support for
 ODBC.</P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
@@ -1316,16 +1336,26 @@ put them for example in the same directory as your <TT>ejabberd</TT> .beam files
 </LI><LI CLASS="li-enumerate">Then, configure, compile and install <TT>ejabberd</TT> with ODBC support
 enabled. This can be done, by using next commands:
 <PRE CLASS="verbatim">./configure --enable-odbc &amp;&amp; make install
-</PRE></LI></OL><P> <A NAME="odbcauth"></A> </P><!--TOC subsubsection Authentication-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#odbcauth">Authentication</A></H4><!--SEC END --><P> <A NAME="odbcauth"></A> 
-</P><P>The first configuration step is to define the odbc <TT>auth_method</TT>. For
-example:
-</P><PRE CLASS="verbatim">{host_config, "public.example.org", [{auth_method, [odbc]}]}.
-</PRE><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
+</PRE></LI></OL><P> <A NAME="configureodbc"></A> </P><!--TOC subsubsection Database Connection-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#configureodbc">Database Connection</A></H4><!--SEC END --><P> <A NAME="configureodbc"></A> 
+</P><P>The actual database access is defined in the option <TT>odbc_server</TT>. Its
 value is used to defined if we want to use ODBC, or one of the two native
 interface available, PostgreSQL or MySQL.</P><P>To use a relational database through ODBC, you can pass the ODBC connection
 string as <TT>odbc_server</TT> parameter. For example:
 </P><PRE CLASS="verbatim">{odbc_server, "DSN=database;UID=ejabberd;PWD=password"}.
+</PRE><P>By default <TT>ejabberd</TT> opens 10 connections to the database for each virtual host.
+Use this option to modify the value:
+</P><PRE CLASS="verbatim">{odbc_pool_size, 10}.
+</PRE><P>You can configure an interval to make a dummy SQL request
+to keep alive the connections to the database.
+The default value is &#X2019;undefined&#X2019;, so no keepalive requests are made.
+Specify in seconds: for example 28800 means 8 hours.
+</P><PRE CLASS="verbatim">{odbc_keepalive_interval, undefined}.
+</PRE><P> <A NAME="odbcauth"></A> </P><!--TOC subsubsection Authentication-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#odbcauth">Authentication</A></H4><!--SEC END --><P> <A NAME="odbcauth"></A> 
+</P><P>The first configuration step is to define the odbc <TT>auth_method</TT>. For
+example:
+</P><PRE CLASS="verbatim">{auth_method, [odbc]}.
 </PRE><P> <A NAME="odbcstorage"></A> </P><!--TOC subsubsection Storage-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#odbcstorage">Storage</A></H4><!--SEC END --><P> <A NAME="odbcstorage"></A> 
 </P><P>An ODBC compatible database also can be used to store information into from
@@ -1340,17 +1370,17 @@ module loaded!</P><P> <A NAME="ldap"></A> </P><!--TOC subsection LDAP-->
 </P><P><TT>ejabberd</TT> has built-in LDAP support. You can authenticate users against LDAP
 server and use LDAP directory as vCard storage. Shared rosters are not supported
 yet.</P><P>Note that <TT>ejabberd</TT> treats LDAP as a read-only storage:
-it is possible to consult data, but not possible to 
+it is possible to consult data, but not possible to
 create accounts, change password or edit vCard that is stored in LDAP.</P><P> <A NAME="ldapconnection"></A> </P><!--TOC subsubsection Connection-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapconnection">Connection</A></H4><!--SEC END --><P> <A NAME="ldapconnection"></A> </P><P>Parameters:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>ldap_servers</TT></B></DT><DD CLASS="dd-description"> List of IP addresses or DNS names of your
 LDAP servers. This option is required.
 </DD><DT CLASS="dt-description"><B><TT>ldap_port</TT></B></DT><DD CLASS="dd-description"> Port to connect to your LDAP server.
-The initial default value is&#XA0;389, so it is used when nothing is set into the 
-configuration file. 
-If you configure a value, it is stored in <TT>ejabberd</TT>&#X2019;s database. 
-Then, if you remove that value from the configuration file, 
+The initial default value is&#XA0;389, so it is used when nothing is set into the
+configuration file.
+If you configure a value, it is stored in <TT>ejabberd</TT>&#X2019;s database.
+Then, if you remove that value from the configuration file,
 the value previously stored in the database will be used instead of the default 389.
 </DD><DT CLASS="dt-description"><B><TT>ldap_rootdn</TT></B></DT><DD CLASS="dd-description"> Bind DN. The default value
 is&#XA0;<TT>""</TT> which means &#X2018;anonymous connection&#X2019;.
@@ -1634,7 +1664,7 @@ number of processes (32000 by default).
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#modhostoption"><TT>host</TT></A></H4><!--SEC END --><P> <A NAME="modhostoption"></A> 
 </P><P>This option defines the Jabber ID of a service provided by an <TT>ejabberd</TT> module.
 The keyword "@HOST@" is replaced at start time with the real virtual host string.</P><P>This example configures
-the echo module to provide its echoing service 
+the echo module to provide its echoing service
 in the Jabber ID <TT>mirror.example.org</TT>:
 </P><PRE CLASS="verbatim">{modules,
  [
@@ -1653,7 +1683,7 @@ the "@HOST@" keyword must be used:
 </PRE><P> <A NAME="modannounce"></A> </P><!--TOC subsection <TT>mod_announce</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc37">3.3.3</A>&#XA0;&#XA0;<A HREF="#modannounce"><TT>mod_announce</TT></A></H3><!--SEC END --><P> <A NAME="modannounce"></A> 
 </P><P>This module enables configured users to broadcast announcements and to set
-the message of the day (MOTD). 
+the message of the day (MOTD).
 Configured users can perform these actions with a
 Jabber client either using Ad-hoc commands
 or sending messages to specific JIDs.</P><P>The Ad-hoc commands are listed in the Server Discovery.
@@ -1727,7 +1757,7 @@ for the superseded Jabber Browsing (<A HREF="http://www.xmpp.org/extensions/xep-
 the newer Service Discovery protocol if you want them be able to discover
 the services you offer.</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Service Discovery (<TT>http://jabber.org/protocol/disco#items</TT> and
 <TT>http://jabber.org/protocol/disco#info</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD><DT CLASS="dt-description"><B><TT>extra_domains</TT></B></DT><DD CLASS="dd-description"> With this option,
@@ -1901,19 +1931,18 @@ able to use the transport. The default encoding is set to "iso8859-15".
   ...
  ]}.
 </PRE></LI><LI CLASS="li-itemize">In next example the IRC transport is available with JIDs with prefix <TT>irc-t.net</TT>.
-Moreover, the transport is only accessible by paying customers registered on
-our domains and on other servers.
-<PRE CLASS="verbatim">{acl, paying_customers, {user, "customer1", "example.net"}}.
-{acl, paying_customers, {user, "customer2", "example.com"}}.
-{acl, paying_customers, {user, "customer3", "example.org"}}.
+Moreover, the transport is only accessible to two users 
+of <TT>example.org</TT>, and any user of <TT>example.com</TT>:
+<PRE CLASS="verbatim">{acl, paying_customers, {user, "customer1", "example.org"}}.
+{acl, paying_customers, {user, "customer2", "example.org"}}.
+{acl, paying_customers, {server, "example.com"}}.
 
-{access, paying_customers, [{allow, paying_customers},
-                              {deny, all}]}.
+{access, irc_users, [{allow, paying_customers}, {deny, all}]}.
 
 {modules,
  [
   ...
-  {mod_irc, [{access, paying_customers},
+  {mod_irc, [{access, irc_users},
              {host, "irc.example.net"}]},
   ...
  ]}.
@@ -1924,7 +1953,7 @@ discover when a disconnected user last accessed the server, to know when a
 connected user was last active on the server, or to query the uptime of the
 <TT>ejabberd</TT> server.</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Last activity (<TT>jabber:iq:last</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P> <A NAME="modmuc"></A> </P><!--TOC subsection <TT>mod_muc</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc44">3.3.10</A>&#XA0;&#XA0;<A HREF="#modmuc"><TT>mod_muc</TT></A></H3><!--SEC END --><P> <A NAME="modmuc"></A> 
@@ -1939,7 +1968,7 @@ Sending public and private messages to room occupants.
 </LI><LI CLASS="li-itemize">Kicking and banning occupants.
 </LI></UL><P>The MUC service allows any Jabber ID to register a nickname,
 so nobody else can use that nickname in any room in the MUC service.
-To register a nickname, open the Service Discovery in your 
+To register a nickname, open the Service Discovery in your
 Jabber client and register in the MUC service.</P><P>This module supports clustering and load
 balancing. One module can be started per cluster node. Rooms are
 distributed at creation time on all available MUC module
@@ -2018,7 +2047,7 @@ interval delay. Intermediate presence packets are silently
 discarded. A good value for this option is 4 seconds.
 </DD><DT CLASS="dt-description"><B><TT>default_room_options</TT></B></DT><DD CLASS="dd-description"> 
 This module option allows to define the desired default room options.
-Note that the creator of a room can modify the options of his room 
+Note that the creator of a room can modify the options of his room
 at any time using a Jabber client with MUC capability.
 The available room options and the default values are:
 <DL CLASS="description"><DT CLASS="dt-description">
@@ -2032,7 +2061,9 @@ change nickname.
 status text in presence updates. If disallowed, the <TT>status</TT>
 text is stripped before broadcasting the presence update to all
 the room occupants.
-</DD><DT CLASS="dt-description"><B><TT>{anonymous, true}</TT></B></DT><DD CLASS="dd-description"> Occupants are allowed to see the real JIDs of other occupants.
+</DD><DT CLASS="dt-description"><B><TT>{anonymous, true}</TT></B></DT><DD CLASS="dd-description"> The room is anonymous:
+occupants don&#X2019;t see the real JIDs of other occupants.
+Note that the room moderators can always see the real JIDs of the occupants.
 </DD><DT CLASS="dt-description"><B><TT>{logging, false}</TT></B></DT><DD CLASS="dd-description"> The public messages are logged using <TT>mod_muc_log</TT>.
 </DD><DT CLASS="dt-description"><B><TT>{max_users, 200}</TT></B></DT><DD CLASS="dd-description"> Maximum number of occupants in the room.
 </DD><DT CLASS="dt-description"><B><TT>{members_by_default, true}</TT></B></DT><DD CLASS="dd-description"> The occupants that enter the room are participants by default, so they have &#X2019;voice&#X2019;.
@@ -2059,16 +2090,16 @@ to new hardware. This will involve service breakdowns around 23:00 UMT.
 We apologise for this inconvenience.&#X2019; to <TT>conference.example.org</TT>,
 it will be displayed in all active rooms. In this example the history
 feature is disabled.
-<PRE CLASS="verbatim">{acl, admins, {user, "admin", "example.org"}}.
+<PRE CLASS="verbatim">{acl, admin, {user, "admin", "example.org"}}.
 
-{access, muc_admins, [{allow, admins}]}.
+{access, muc_admin, [{allow, admin}]}.
 
 {modules,
  [
   ...
   {mod_muc, [{access, all},
              {access_create, all},
-             {access_admin, muc_admins},
+             {access_admin, muc_admin},
              {history_size, 0}]},
   ...
  ]}.
@@ -2085,20 +2116,20 @@ and the default value of 20 history messages will be send to the users.
 <PRE CLASS="verbatim">{acl, paying_customers, {user, "customer1", "example.net"}}.
 {acl, paying_customers, {user, "customer2", "example.com"}}.
 {acl, paying_customers, {user, "customer3", "example.org"}}.
-{acl, admins, {user, "admin", "example.org"}}.
+{acl, admin, {user, "admin", "example.org"}}.
 
-{access, muc_admins, [{allow, admins},
+{access, muc_admin, [{allow, admin},
                       {deny, all}]}.
 {access, muc_access, [{allow, paying_customers},
-                      {allow, admins},
+                      {allow, admin},
                       {deny, all}]}.
 
 {modules,
  [
   ...
   {mod_muc, [{access, muc_access},
-             {access_create, muc_admins},
-             {access_admin, muc_admins}]},
+             {access_create, muc_admin},
+             {access_admin, muc_admin}]},
   ...
  ]}.
 </PRE></LI><LI CLASS="li-itemize">In the following example, MUC anti abuse options are used. An
@@ -2117,7 +2148,7 @@ the newly created rooms have by default those options.
  [
   ...
   {mod_muc, [{access, muc_access},
-             {access_create, muc_admins},
+             {access_create, muc_admin},
              {default_room_options,
               [
                {allow_change_subj, false},
@@ -2127,7 +2158,7 @@ the newly created rooms have by default those options.
                {title, "New chatroom"},
                {anonymous, false}
               ]},
-             {access_admin, muc_admins}]},
+             {access_admin, muc_admin}]},
   ...
  ]}.
 </PRE></LI></UL><P> <A NAME="modmuclog"></A> </P><!--TOC subsection <TT>mod_muc_log</TT>-->
@@ -2184,7 +2215,7 @@ GMT/UTC time will be used. The default value is <TT>local</TT>.
 To prevent spam, the <TT>spam_prevention</TT> option adds a special attribute
 to links that prevent their indexation by search engines. The default value
 is <TT>true</TT>, which mean that nofollow attributes will be added to user
-submitted links. 
+submitted links.
 </DD><DT CLASS="dt-description"><B><TT>top_link</TT></B></DT><DD CLASS="dd-description">
 With this option you can customize the link on the top right corner of each
 log file. The syntax of this option is <TT>{"URL", "Text"}</TT>. The default
@@ -2274,7 +2305,7 @@ subscription type (or globally).
 (from <A HREF="http://www.xmpp.org/specs/rfc3921.html#privacy"><TT>http://www.xmpp.org/specs/rfc3921.html#privacy</TT></A>)
 </BLOCKQUOTE><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Blocking Communication (<TT>jabber:iq:privacy</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P> <A NAME="modprivate"></A> </P><!--TOC subsection <TT>mod_private</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc48">3.3.14</A>&#XA0;&#XA0;<A HREF="#modprivate"><TT>mod_private</TT></A></H3><!--SEC END --><P> <A NAME="modprivate"></A> 
@@ -2286,7 +2317,7 @@ it is valid XML. One typical usage for this namespace is the server-side storage
 of client-specific preferences; another is Bookmark Storage (<A HREF="http://www.xmpp.org/extensions/xep-0048.html">XEP-0048</A>).
 </BLOCKQUOTE><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Private XML Storage (<TT>jabber:iq:private</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P> <A NAME="modproxy"></A> </P><!--TOC subsection <TT>mod_proxy65</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc49">3.3.15</A>&#XA0;&#XA0;<A HREF="#modproxy"><TT>mod_proxy65</TT></A></H3><!--SEC END --><P> <A NAME="modproxy"></A> 
@@ -2328,8 +2359,8 @@ The simpliest configuration of the module:
 {access, proxy65_access, [{allow, proxy_users}, {deny, all}]}.
 
 {acl, admin, {user, "admin", "example.org"}}.
-{shaper, normal, {maxrate, 10240}}. %% 10 Kbytes/sec
-{access, proxy65_shaper, [{none, admin}, {normal, all}]}.
+{shaper, proxyrate, {maxrate, 10240}}. %% 10 Kbytes/sec
+{access, proxy65_shaper, [{none, admin}, {proxyrate, proxy_users}]}.
 
 {modules,
  [
@@ -2363,7 +2394,7 @@ ACL and ACCESS. The default value is <TT>pubsub_createnode</TT>. </DD><DT CLASS=
 pubsub plugin is always used.
 </DD><DT CLASS="dt-description"><B><TT>nodetree</TT></B></DT><DD CLASS="dd-description"> To specify which nodetree to use. If not defined, the default pubsub
 nodetree is used. Nodetrees are default and virtual. Only one nodetree can be used
-and is shared by all node plugins. 
+and is shared by all node plugins.
 </DD></DL><P>Example:
 </P><PRE CLASS="verbatim">{modules,
  [
@@ -2389,12 +2420,12 @@ rules to restrict registration. If a rule returns &#X2018;deny&#X2019; on the re
 user name, registration for that user name is denied. (there are no
 restrictions by default).
 </DD><DT CLASS="dt-description"><B><TT>welcome_message</TT></B></DT><DD CLASS="dd-description"> Set a welcome message that
-is sent to each newly registered account. The first string is the subject, and 
+is sent to each newly registered account. The first string is the subject, and
 the second string is the message body.
 In the body you can set a newline with the characters: <CODE>\n</CODE>
-</DD><DT CLASS="dt-description"><B><TT>registration_watchers</TT></B></DT><DD CLASS="dd-description"> This option defines a 
+</DD><DT CLASS="dt-description"><B><TT>registration_watchers</TT></B></DT><DD CLASS="dd-description"> This option defines a
 list of JIDs which will be notified each time a new account is registered.
-</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for In-Band Registration (<TT>jabber:iq:register</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P>This module reads also another option defined globably for the server:
 <TT>{registration_timeout, Timeout}</TT>. 
@@ -2451,7 +2482,7 @@ Also define a registration timeout of one hour:
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc52">3.3.18</A>&#XA0;&#XA0;<A HREF="#modroster"><TT>mod_roster</TT></A></H3><!--SEC END --><P> <A NAME="modroster"></A> 
 </P><P>This module implements roster management as defined in <A HREF="http://www.xmpp.org/specs/rfc3921.html#roster">RFC 3921: XMPP IM</A>.</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Roster Management (<TT>jabber:iq:roster</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P> <A NAME="modservicelog"></A> </P><!--TOC subsection <TT>mod_service_log</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc53">3.3.19</A>&#XA0;&#XA0;<A HREF="#modservicelog"><TT>mod_service_log</TT></A></H3><!--SEC END --><P> <A NAME="modservicelog"></A> 
@@ -2474,7 +2505,7 @@ To log all end user packets to the Bandersnatch service running on
   ...
  ]}.
 </PRE></LI><LI CLASS="li-itemize">To log all end user packets to the Bandersnatch service running on
-<TT>bandersnatch.example.com</TT> and the backup service on 
+<TT>bandersnatch.example.com</TT> and the backup service on
 <TT>bandersnatch.example.org</TT>:
 <PRE CLASS="verbatim">{modules,
  [
@@ -2489,9 +2520,9 @@ To log all end user packets to the Bandersnatch service running on
 create groups of people that can see members from (other) groups in their
 rosters. The big advantages of this feature are that end users do not need to
 manually add all users to their rosters, and that they cannot permanently delete
-users from the shared roster groups. 
+users from the shared roster groups.
 A shared roster group can have members from any Jabber server,
-but the presence will only be available from and to members 
+but the presence will only be available from and to members
 of the same virtual host where the group is created.</P><P>Shared roster groups can be edited <EM>only</EM> via the Web Admin. Each group
 has a unique identification and the following parameters:
 </P><DL CLASS="description"><DT CLASS="dt-description">
@@ -2569,7 +2600,7 @@ Total number of registered users on the current virtual host (users/total).
 </LI><LI CLASS="li-itemize">Total number of online users on all virtual hosts (users/all-hosts/online).
 </LI></UL><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Statistics Gathering (<TT>http://jabber.org/protocol/stats</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P>As there are only a small amount of clients (for example
 <A HREF="http://tkabber.jabber.ru/">Tkabber</A>) and software libraries with
@@ -2595,7 +2626,7 @@ by sending:
 </P><P>This module features support for Entity Time (<A HREF="http://www.xmpp.org/extensions/xep-0090.html">XEP-0090</A>). By using this XEP,
 you are able to discover the time at another entity&#X2019;s location.</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+<B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Entity Time (<TT>jabber:iq:time</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD></DL><P> <A NAME="modvcard"></A> </P><!--TOC subsection <TT>mod_vcard</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc57">3.3.23</A>&#XA0;&#XA0;<A HREF="#modvcard"><TT>mod_vcard</TT></A></H3><!--SEC END --><P> <A NAME="modvcard"></A> 
@@ -2610,7 +2641,7 @@ service. If the <TT>host</TT> option is not specified, the Jabber ID will be the
 hostname of the virtual host with the prefix &#X2018;<TT>vjud.</TT>&#X2019;. The keyword "@HOST@"
 is replaced at start time with the real virtual host name.
 
-</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for <TT>vcard-temp</TT> IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD><DT CLASS="dt-description"><B><TT>search</TT></B></DT><DD CLASS="dd-description">This option specifies whether the search
 functionality is enabled (value: <TT>true</TT>) or disabled (value:
@@ -2657,7 +2688,7 @@ and that all virtual hosts will be searched instead of only the current one:
 </P><P><TT>ejabberd</TT> can map LDAP attributes to vCard fields. This behaviour is
 implemented in the <TT>mod_vcard_ldap</TT> module. This module does not depend on the
 authentication method (see&#XA0;<A HREF="#ldapauth">3.2.5</A>).</P><P>Note that <TT>ejabberd</TT> treats LDAP as a read-only storage:
-it is possible to consult data, but not possible to 
+it is possible to consult data, but not possible to
 create accounts, change password or edit vCard that is stored in LDAP.</P><P>The <TT>mod_vcard_ldap</TT> module has
 its own optional parameters. The first group of parameters has the same
 meaning as the top-level LDAP parameters to set the authentication method:
@@ -2673,7 +2704,7 @@ service. If the <TT>host</TT> option is not specified, the Jabber ID will be the
 hostname of the virtual host with the prefix &#X2018;<TT>vjud.</TT>&#X2019;. The keyword "@HOST@"
 is replaced at start time with the real virtual host name.
 
-</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for <TT>vcard-temp</TT> IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
 </DD><DT CLASS="dt-description"><B><TT>search</TT></B></DT><DD CLASS="dd-description">This option specifies whether the search
 functionality is enabled (value: <TT>true</TT>) or disabled (value:
@@ -2835,14 +2866,14 @@ answers <TT>ejabberd</TT>&#X2019;s version when queried.</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>show_os</TT></B></DT><DD CLASS="dd-description">Should the operating system be revealed or not.
 The default value is <TT>true</TT>.
-</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies 
+</DD><DT CLASS="dt-description"><B><TT>iqdisc</TT></B></DT><DD CLASS="dd-description"> This specifies
 the processing discipline for Software Version (<TT>jabber:iq:version</TT>) IQ queries (see section&#XA0;<A HREF="#modiqdiscoption">3.3.2</A>).
-</DD></DL><P> <A NAME="manage"></A> </P><!--TOC chapter Managing an <TT>ejabberd</TT> server-->
-<H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc60">Chapter&#XA0;4</A>&#XA0;&#XA0;<A HREF="#manage">Managing an <TT>ejabberd</TT> server</A></H1><!--SEC END --><P> <A NAME="manage"></A> </P><P> <A NAME="ejabberdctl"></A> </P><!--TOC section <TT>ejabberdctl</TT>-->
+</DD></DL><P> <A NAME="manage"></A> </P><!--TOC chapter Managing an <TT>ejabberd</TT> Server-->
+<H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc60">Chapter&#XA0;4</A>&#XA0;&#XA0;<A HREF="#manage">Managing an <TT>ejabberd</TT> Server</A></H1><!--SEC END --><P> <A NAME="manage"></A> </P><P> <A NAME="ejabberdctl"></A> </P><!--TOC section <TT>ejabberdctl</TT>-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc61">4.1</A>&#XA0;&#XA0;<A HREF="#ejabberdctl"><TT>ejabberdctl</TT></A></H2><!--SEC END --><P> <A NAME="ejabberdctl"></A> </P><P> <A NAME="commands"></A> </P><!--TOC subsection Commands-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc62">4.1.1</A>&#XA0;&#XA0;<A HREF="#commands">Commands</A></H3><!--SEC END --><P> <A NAME="commands"></A> </P><P>The <TT>ejabberdctl</TT> command line administration script allows to start, stop and perform 
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc62">4.1.1</A>&#XA0;&#XA0;<A HREF="#commands">Commands</A></H3><!--SEC END --><P> <A NAME="commands"></A> </P><P>The <TT>ejabberdctl</TT> command line administration script allows to start, stop and perform
 many other administrative tasks in a local or remote <TT>ejabberd</TT> server.</P><P>When <TT>ejabberdctl</TT> is executed without any parameter,
-it displays the available options. If there isn&#X2019;t an <TT>ejabberd</TT> server running, 
+it displays the available options. If there isn&#X2019;t an <TT>ejabberd</TT> server running,
 the available parameters are:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>start</TT></B></DT><DD CLASS="dd-description"> Start <TT>ejabberd</TT> in background mode. This is the default method.
@@ -2854,10 +2885,24 @@ The more interesting ones are:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>status</TT></B></DT><DD CLASS="dd-description"> Check the status of the <TT>ejabberd</TT> server.
 </DD><DT CLASS="dt-description"><B><TT>stop</TT></B></DT><DD CLASS="dd-description"> Stop the <TT>ejabberd</TT> server which is running in the machine.
-</DD><DT CLASS="dt-description"><B><TT>reopen-log</TT></B></DT><DD CLASS="dd-description"> If you use a tool to rotate logs, you have to configure it
-so that this command is executed after each rotation.
-</DD><DT CLASS="dt-description"><B><TT>backup, restore, install-fallback, dump, load</TT></B></DT><DD CLASS="dd-description"> You can use these
-commands to create and restore backups. 
+</DD><DT CLASS="dt-description"><B><TT>reopen-log</TT></B></DT><DD CLASS="dd-description"> Reopen the log files after they were renamed.
+If the old files were not renamed before calling this command,
+they are automatically renamed to <TT>"*-old.log"</TT>. See section <A HREF="#logfiles">7.1</A>.
+</DD><DT CLASS="dt-description"><B><TT>backup ejabberd.backup</TT></B></DT><DD CLASS="dd-description">
+Store internal Mnesia database to a binary backup file.
+</DD><DT CLASS="dt-description"><B><TT>restore ejabberd.backup</TT></B></DT><DD CLASS="dd-description">
+Restore immediately from a binary backup file the internal Mnesia database.
+This will comsume quite some memory for big servers.
+</DD><DT CLASS="dt-description"><B><TT>install-fallback ejabberd.backup</TT></B></DT><DD CLASS="dd-description">
+The binary backup file is installed as fallback:
+it will be used to restore the database at the next ejabberd start.
+Similar to <TT>restore</TT>, but requires less memory.
+</DD><DT CLASS="dt-description"><B><TT>dump ejabberd.dump</TT></B></DT><DD CLASS="dd-description">
+Dump internal Mnesia database to a text file dump.
+</DD><DT CLASS="dt-description"><B><TT>load ejabberd.dump</TT></B></DT><DD CLASS="dd-description">
+Restore immediately from a text file dump.
+This is not recommended for big databases, as it will consume much time,
+memory and processor. In that case it&#X2019;s preferable to use <TT>backup</TT> and <TT>install-fallback</TT>.
 </DD><DT CLASS="dt-description"><B><TT>import-file, import-dir</TT></B></DT><DD CLASS="dd-description"> 
 These options can be used to migrate from other Jabber/XMPP servers. There
 exist tutorials to <A HREF="http://www.ejabberd.im/migrate-to-ejabberd">migrate from other software to ejabberd</A>.
@@ -2872,66 +2917,66 @@ error is represented by <TT>1</TT>,
 and other codes may be used for specifical results.
 This can be used by other scripts to determine automatically
 if a command succedded or failed,
-for example using: <TT>echo $?</TT></P><P> <A NAME="erlangconfiguration"></A> </P><!--TOC subsection Erlang runtime system-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc63">4.1.2</A>&#XA0;&#XA0;<A HREF="#erlangconfiguration">Erlang runtime system</A></H3><!--SEC END --><P> <A NAME="erlangconfiguration"></A> </P><P><TT>ejabberd</TT> is an Erlang/OTP application that runs inside an Erlang runtime system.
+for example using: <TT>echo $?</TT></P><P> <A NAME="erlangconfiguration"></A> </P><!--TOC subsection Erlang Runtime System-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc63">4.1.2</A>&#XA0;&#XA0;<A HREF="#erlangconfiguration">Erlang Runtime System</A></H3><!--SEC END --><P> <A NAME="erlangconfiguration"></A> </P><P><TT>ejabberd</TT> is an Erlang/OTP application that runs inside an Erlang runtime system.
 This system is configured using environment variables and command line parameters.
 The <TT>ejabberdctl</TT> administration script uses many of those possibilities.
-You can configure some of them with the file <TT>ejabberdctl.cfg</TT>, 
+You can configure some of them with the file <TT>ejabberdctl.cfg</TT>,
 which includes detailed description about them.
-This section describes for reference purposes 
+This section describes for reference purposes
 all the environment variables and command line parameters.</P><P>The environment variables:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>EJABBERD_CONFIG_PATH</TT></B></DT><DD CLASS="dd-description"> 
+<B><TT>EJABBERD_CONFIG_PATH</TT></B></DT><DD CLASS="dd-description">
 	Path to the ejabberd configuration file.
-</DD><DT CLASS="dt-description"><B><TT>EJABBERD_MSGS_PATH</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>EJABBERD_MSGS_PATH</TT></B></DT><DD CLASS="dd-description">
 	Path to the directory with translated strings.
-</DD><DT CLASS="dt-description"><B><TT>EJABBERD_LOG_PATH</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>EJABBERD_LOG_PATH</TT></B></DT><DD CLASS="dd-description">
 	Path to the ejabberd service log file.
-</DD><DT CLASS="dt-description"><B><TT>EJABBERD_SO_PATH</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>EJABBERD_SO_PATH</TT></B></DT><DD CLASS="dd-description">
 	Path to the directory with binary system libraries.
-</DD><DT CLASS="dt-description"><B><TT>HOME</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>HOME</TT></B></DT><DD CLASS="dd-description">
 	Path to the directory that is considered <TT>ejabberd</TT>&#X2019;s home.
 	This path is used to read the file <TT>.erlang.cookie</TT>.
-</DD><DT CLASS="dt-description"><B><TT>ERL_CRASH_DUMP</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>ERL_CRASH_DUMP</TT></B></DT><DD CLASS="dd-description">
 	Path to the file where crash reports will be dumped.
-</DD><DT CLASS="dt-description"><B><TT>ERL_INETRC</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>ERL_INETRC</TT></B></DT><DD CLASS="dd-description">
 	Indicates which IP name resolution to use. It is required if using <TT>-sname</TT>.
-</DD><DT CLASS="dt-description"><B><TT>ERL_MAX_PORTS</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>ERL_MAX_PORTS</TT></B></DT><DD CLASS="dd-description">
 	Maximum number of simultaneously open Erlang ports.
-</DD><DT CLASS="dt-description"><B><TT>ERL_MAX_ETS_TABLES</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>ERL_MAX_ETS_TABLES</TT></B></DT><DD CLASS="dd-description">
 	Maximum number of ETS and Mnesia tables.
 </DD></DL><P>The command line parameters:
 </P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>-sname ejabberd</TT></B></DT><DD CLASS="dd-description"> 
+<B><TT>-sname ejabberd</TT></B></DT><DD CLASS="dd-description">
 	The Erlang node will be identified using only the first part
 	of the host name, i.&#XA0;e. other Erlang nodes outside this domain cannot contact
 	this node. This is the preferable option in most cases.
-</DD><DT CLASS="dt-description"><B><TT>-name ejabberd</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-name ejabberd</TT></B></DT><DD CLASS="dd-description">
 	The Erlang node will be fully identified.
 This is only useful if you plan to setup an <TT>ejabberd</TT> cluster with nodes in different networks.
-</DD><DT CLASS="dt-description"><B><TT>-kernel inetrc "/etc/ejabberd/inetrc"</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-kernel inetrc "/etc/ejabberd/inetrc"</TT></B></DT><DD CLASS="dd-description">
 	Indicates which IP name resolution to use. It is required if using <TT>-sname</TT>.
-</DD><DT CLASS="dt-description"><B><TT>-detached</TT></B></DT><DD CLASS="dd-description"> 
-Starts the Erlang system detached from the system console. 
-	Useful for running daemons and backgrounds processes. 
-</DD><DT CLASS="dt-description"><B><TT>-noinput</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-detached</TT></B></DT><DD CLASS="dd-description">
+Starts the Erlang system detached from the system console.
+	Useful for running daemons and backgrounds processes.
+</DD><DT CLASS="dt-description"><B><TT>-noinput</TT></B></DT><DD CLASS="dd-description">
 	Ensures that the Erlang system never tries to read any input.
-	Useful for running daemons and backgrounds processes. 
-</DD><DT CLASS="dt-description"><B><TT>-pa /var/lib/ejabberd/ebin</TT></B></DT><DD CLASS="dd-description"> 
+	Useful for running daemons and backgrounds processes.
+</DD><DT CLASS="dt-description"><B><TT>-pa /var/lib/ejabberd/ebin</TT></B></DT><DD CLASS="dd-description">
 	Specify the directory where Erlang binary files (*.beam) are located.
-</DD><DT CLASS="dt-description"><B><TT>-s ejabberd</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-s ejabberd</TT></B></DT><DD CLASS="dd-description">
 	Tell Erlang runtime system to start the <TT>ejabberd</TT> application.
 </DD><DT CLASS="dt-description"><B><TT>-mnesia dir "/var/lib/ejabberd/db/nodename"</TT></B></DT><DD CLASS="dd-description">
 	Specify the Mnesia database directory.
 </DD><DT CLASS="dt-description"><B><TT>-sasl sasl_error_logger {file, "/var/log/ejabberd/sasl.log"}</TT></B></DT><DD CLASS="dd-description">
 	Path to the Erlang/OTP system log file.
-</DD><DT CLASS="dt-description"><B><TT>+K [true|false]</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>+K [true|false]</TT></B></DT><DD CLASS="dd-description">
 	Kernel polling.
-</DD><DT CLASS="dt-description"><B><TT>-smp [auto|enable|disable]</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-smp [auto|enable|disable]</TT></B></DT><DD CLASS="dd-description">
 	SMP support.
-</DD><DT CLASS="dt-description"><B><TT>+P 250000</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>+P 250000</TT></B></DT><DD CLASS="dd-description">
 	Maximum number of Erlang processes.
-</DD><DT CLASS="dt-description"><B><TT>-remsh ejabberd@localhost</TT></B></DT><DD CLASS="dd-description"> 
+</DD><DT CLASS="dt-description"><B><TT>-remsh ejabberd@localhost</TT></B></DT><DD CLASS="dd-description">
 	Open an Erlang shell in a remote Erlang node.
 </DD></DL><P>
 Note that some characters need to be escaped when used in shell scripts, for instance <CODE>"</CODE> and <CODE>{}</CODE>.
@@ -2939,7 +2984,7 @@ You can find other options in the Erlang manual page (<TT>erl -man erl</TT>).</P
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc64">4.2</A>&#XA0;&#XA0;<A HREF="#webadmin">Web Admin</A></H2><!--SEC END --><P> <A NAME="webadmin"></A> 
 </P><P>The <TT>ejabberd</TT> Web Admin allows to administer most of <TT>ejabberd</TT> using a web browser.</P><P>This feature is enabled by default:
 a <TT>ejabberd_http</TT> listener with the option <TT>web_admin</TT> (see
-section&#XA0;<A HREF="#listened">3.1.3</A>) is included in the listening ports. Then you can open 
+section&#XA0;<A HREF="#listened">3.1.3</A>) is included in the listening ports. Then you can open
 <CODE>http://server:port/admin/</CODE> in your favourite web browser. You
 will be asked to enter the username (the <EM>full</EM> Jabber ID) and password
 of an <TT>ejabberd</TT> user with administrator rights. After authentication
@@ -3002,7 +3047,7 @@ with a Jabber client.
 The client must support Ad-Hoc Commands (<A HREF="http://www.xmpp.org/extensions/xep-0050.html">XEP-0050</A>),
 and you must login in the Jabber server with
 an account with proper privileges.</P><P> <A NAME="changeerlangnodename"></A> </P><!--TOC section Change Computer Hostname-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc66">4.4</A>&#XA0;&#XA0;<A HREF="#changeerlangnodename">Change Computer Hostname</A></H2><!--SEC END --><P> <A NAME="changeerlangnodename"></A> </P><P><TT>ejabberd</TT> uses the distributed Mnesia database. 
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc66">4.4</A>&#XA0;&#XA0;<A HREF="#changeerlangnodename">Change Computer Hostname</A></H2><!--SEC END --><P> <A NAME="changeerlangnodename"></A> </P><P><TT>ejabberd</TT> uses the distributed Mnesia database.
 Being distributed, Mnesia enforces consistency of its file,
 so it stores the name of the Erlang node in it (see section <A HREF="#nodename">5.4</A>).
 The name of an Erlang node includes the hostname of the computer.
@@ -3012,7 +3057,7 @@ or when you move <TT>ejabberd</TT> to a different machine.</P><P>So, if you want
 you must follow these instructions:
 </P><OL CLASS="enumerate" type=1><LI CLASS="li-enumerate">
 	In the old server, backup the Mnesia database using the Web Admin or <TT>ejabberdctl</TT>.
-	For example: 
+	For example:
 <PRE CLASS="verbatim">ejabberdctl backup /tmp/ejabberd-oldhost.backup
 </PRE>	</LI><LI CLASS="li-enumerate">In the new server, restore the backup file using the Web Admin or <TT>ejabberdctl</TT>.
 	For example:
@@ -3031,13 +3076,13 @@ you must follow these instructions:
 </TABLE>
 <DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></DIV></BLOCKQUOTE><P> <A NAME="epmd"></A> </P><!--TOC section epmd-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc69">5.2</A>&#XA0;&#XA0;<A HREF="#epmd">epmd</A></H2><!--SEC END --><P> <A NAME="epmd"></A> </P><P><A HREF="http://www.erlang.org/doc/man/epmd.html">epmd (Erlang Port Mapper Daemon)</A>
-is a small name server included in Erlang/OTP 
-and used by Erlang programs when establishing distributed Erlang communications. 
-<TT>ejabberd</TT> needs <TT>epmd</TT> to use <TT>ejabberdctl</TT> and also when clustering <TT>ejabberd</TT> nodes. 
+is a small name server included in Erlang/OTP
+and used by Erlang programs when establishing distributed Erlang communications.
+<TT>ejabberd</TT> needs <TT>epmd</TT> to use <TT>ejabberdctl</TT> and also when clustering <TT>ejabberd</TT> nodes.
 This small program is automatically started by Erlang, and is never stopped.
-If <TT>ejabberd</TT> is stopped, and there aren&#X2019;t any other Erlang programs 
-running in the system, you can safely stop <TT>epmd</TT> if you want.</P><P><TT>ejabberd</TT> runs inside an Erlang node. 
-To communicate with <TT>ejabberd</TT>, the script <TT>ejabberdctl</TT> starts a new Erlang node 
+If <TT>ejabberd</TT> is stopped, and there aren&#X2019;t any other Erlang programs
+running in the system, you can safely stop <TT>epmd</TT> if you want.</P><P><TT>ejabberd</TT> runs inside an Erlang node.
+To communicate with <TT>ejabberd</TT>, the script <TT>ejabberdctl</TT> starts a new Erlang node
 and connects to the Erlang node that holds <TT>ejabberd</TT>.
 In order for this communication to work,
 <TT>epmd</TT> must be running and listening for name requests in the port 4369.
@@ -3050,34 +3095,34 @@ So, if you plan to build a cluster of <TT>ejabberd</TT> nodes
 you must open the port 4369 for the machines involved in the cluster.
 Remember to block the port so Internet doesn&#X2019;t have access to it.</P><P>Once an Erlang node solved the node name of another Erlang node using EPMD and port 4369,
 the nodes communicate directly.
-The ports used in this case are random. 
+The ports used in this case are random.
 You can limit the range of ports when starting Erlang with a command-line parameter, for example:
 </P><PRE CLASS="verbatim">erl ... -kernel inet_dist_listen_min 4370 inet_dist_listen_max 4375
 </PRE><P> <A NAME="cookie"></A> </P><!--TOC section Erlang Cookie-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc70">5.3</A>&#XA0;&#XA0;<A HREF="#cookie">Erlang Cookie</A></H2><!--SEC END --><P> <A NAME="cookie"></A> </P><P>The Erlang cookie is a string with numbers and letters. 
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc70">5.3</A>&#XA0;&#XA0;<A HREF="#cookie">Erlang Cookie</A></H2><!--SEC END --><P> <A NAME="cookie"></A> </P><P>The Erlang cookie is a string with numbers and letters.
 An Erlang node reads the cookie at startup from the command-line parameter <TT>-setcookie</TT>.
 If not indicated, the cookie is read from the cookie file <TT>$HOME/.erlang.cookie</TT>.
 If this file does not exist, it is created immediately with a random cookie.
 Two Erlang nodes communicate only if they have the same cookie.
-Setting a cookie on the Erlang node allows you to structure your Erlang network 
+Setting a cookie on the Erlang node allows you to structure your Erlang network
 and define which nodes are allowed to connect to which.</P><P>Thanks to Erlang cookies, you can prevent access to the Erlang node by mistake,
 for example when there are several Erlang nodes running different programs in the same machine.</P><P>Setting a secret cookie is a simple method
 to difficult unauthorized access to your Erlang node.
-However, the cookie system is not ultimately effective 
+However, the cookie system is not ultimately effective
 to prevent unauthorized access or intrusion to an Erlang node.
 The communication between Erlang nodes are not encrypted,
 so the cookie could be read sniffing the traffic on the network.
-The recommended way to secure the Erlang node is to block the port 4369.</P><P> <A NAME="nodename"></A> </P><!--TOC section Erlang node name-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc71">5.4</A>&#XA0;&#XA0;<A HREF="#nodename">Erlang node name</A></H2><!--SEC END --><P> <A NAME="nodename"></A> </P><P>An Erlang node may have a node name.
-The name can be short (if indicated with the command-line parameter <TT>-sname</TT>) 
-or long (if indicated with the parameter <TT>-name</TT>). 
-Starting an Erlang node with -sname limits the communication between Erlang nodes to the LAN.</P><P>Using the option <TT>-sname</TT> instead of <TT>-name</TT> is a simple method 
+The recommended way to secure the Erlang node is to block the port 4369.</P><P> <A NAME="nodename"></A> </P><!--TOC section Erlang Node Name-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc71">5.4</A>&#XA0;&#XA0;<A HREF="#nodename">Erlang Node Name</A></H2><!--SEC END --><P> <A NAME="nodename"></A> </P><P>An Erlang node may have a node name.
+The name can be short (if indicated with the command-line parameter <TT>-sname</TT>)
+or long (if indicated with the parameter <TT>-name</TT>).
+Starting an Erlang node with -sname limits the communication between Erlang nodes to the LAN.</P><P>Using the option <TT>-sname</TT> instead of <TT>-name</TT> is a simple method
 to difficult unauthorized access to your Erlang node.
 However, it is not ultimately effective to prevent access to the Erlang node,
-because it may be possible to fake the fact that you are on another network 
+because it may be possible to fake the fact that you are on another network
 using a modified version of Erlang <TT>epmd</TT>.
-The recommended way to secure the Erlang node is to block the port 4369.</P><P> <A NAME="secure-files"></A> </P><!--TOC section Securing sensible files-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc72">5.5</A>&#XA0;&#XA0;<A HREF="#secure-files">Securing sensible files</A></H2><!--SEC END --><P> <A NAME="secure-files"></A> </P><P><TT>ejabberd</TT> stores sensible data in the file system either in plain text or binary files.
+The recommended way to secure the Erlang node is to block the port 4369.</P><P> <A NAME="secure-files"></A> </P><!--TOC section Securing Sensible Files-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc72">5.5</A>&#XA0;&#XA0;<A HREF="#secure-files">Securing Sensible Files</A></H2><!--SEC END --><P> <A NAME="secure-files"></A> </P><P><TT>ejabberd</TT> stores sensible data in the file system either in plain text or binary files.
 The file system permissions should be set to only allow the proper user to read,
 write and execute those files and directories.</P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>ejabberd configuration file: /etc/ejabberd/ejabberd.cfg</TT></B></DT><DD CLASS="dd-description">
@@ -3143,11 +3188,15 @@ Copy <CODE>~ejabberd/.erlang.cookie</CODE> file from <TT>first</TT> to
 <TT>second</TT>.<P>(alt) You can also add &#X2018;<CODE>-cookie content_of_.erlang.cookie</CODE>&#X2019;
 option to all &#X2018;<TT>erl</TT>&#X2019; commands below.</P></LI><LI CLASS="li-enumerate">On <TT>second</TT> run the following command as the <TT>ejabberd</TT> daemon user,
 in the working directory of <TT>ejabberd</TT>:<PRE CLASS="verbatim">erl -sname ejabberd \
+    -mnesia dir "/var/lib/ejabberd/" \
     -mnesia extra_db_nodes "['ejabberd@first']" \
     -s mnesia
 </PRE><P>This will start Mnesia serving the same database as <TT>ejabberd@first</TT>.
 You can check this by running the command &#X2018;<CODE>mnesia:info().</CODE>&#X2019;. You
-should see a lot of remote tables and a line like the following:</P><PRE CLASS="verbatim">running db nodes   = [ejabberd@first, ejabberd@second]
+should see a lot of remote tables and a line like the following:</P><P>Note: the Mnesia directory may be different in your system.
+To know where does ejabberd expect Mnesia to be installed by default,
+call <A HREF="#ejabberdctl">4.1</A> without options and it will show some help,
+including the Mnesia database spool dir.</P><PRE CLASS="verbatim">running db nodes   = [ejabberd@first, ejabberd@second]
 </PRE></LI><LI CLASS="li-enumerate">Now run the following in the same &#X2018;<TT>erl</TT>&#X2019; session:<PRE CLASS="verbatim">mnesia:change_table_copy_type(schema, node(), disc_copies).
 </PRE><P>This will create local disc storage for the database.</P><P>(alt) Change storage type of the <TT>scheme</TT> table to &#X2018;RAM and disc
 copy&#X2019; on the second node via the Web Admin.</P></LI><LI CLASS="li-enumerate">Now you can add replicas of various tables to this node with
@@ -3173,7 +3222,7 @@ domain.</P><P> <A NAME="servicelb"></A> </P><!--TOC section Service Load-Balanci
 </P><P> <A NAME="componentlb"></A> </P><!--TOC subsection Components Load-Balancing-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc81">6.3.1</A>&#XA0;&#XA0;<A HREF="#componentlb">Components Load-Balancing</A></H3><!--SEC END --><P> <A NAME="componentlb"></A> </P><P> <A NAME="domainlb"></A> </P><!--TOC subsection Domain Load-Balancing Algorithm-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc82">6.3.2</A>&#XA0;&#XA0;<A HREF="#domainlb">Domain Load-Balancing Algorithm</A></H3><!--SEC END --><P> <A NAME="domainlb"></A> 
-</P><P><TT>ejabberd</TT> includes an algorithm to load balance the components that are plugged on an <TT>ejabberd</TT> cluster. It means that you can plug one or several instances of the same component on each <TT>ejabberd</TT> cluster and that the traffic will be automatically distributed.</P><P>The default distribution algorithm try to deliver to a local instance of a component. If several local instances are available, one instance is chosen randomly. If no instance is available locally, one instance is chosen randomly among the remote component instances.</P><P>If you need a different behaviour, you can change the load balancing behaviour with the option <TT>domain_balancing</TT>. The syntax of the option is the following:</P><PRE CLASS="verbatim">{domain_balancing, "component.example.com", &lt;balancing_criterium&gt;}.                                   
+</P><P><TT>ejabberd</TT> includes an algorithm to load balance the components that are plugged on an <TT>ejabberd</TT> cluster. It means that you can plug one or several instances of the same component on each <TT>ejabberd</TT> cluster and that the traffic will be automatically distributed.</P><P>The default distribution algorithm try to deliver to a local instance of a component. If several local instances are available, one instance is chosen randomly. If no instance is available locally, one instance is chosen randomly among the remote component instances.</P><P>If you need a different behaviour, you can change the load balancing behaviour with the option <TT>domain_balancing</TT>. The syntax of the option is the following:</P><PRE CLASS="verbatim">{domain_balancing, "component.example.com", &lt;balancing_criterium&gt;}.
 </PRE><P>Several balancing criteria are available:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
 <TT>destination</TT>: the full JID of the packet <TT>to</TT> attribute is used.
@@ -3186,20 +3235,8 @@ domain.</P><P> <A NAME="servicelb"></A> </P><!--TOC section Service Load-Balanci
 </P><PRE CLASS="verbatim">{domain_balancing_component_number, "component.example.com", N}
 </PRE><P> <A NAME="debugging"></A> </P><!--TOC chapter Debugging-->
 <H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc84">Chapter&#XA0;7</A>&#XA0;&#XA0;<A HREF="#debugging">Debugging</A></H1><!--SEC END --><P> <A NAME="debugging"></A> 
-</P><P> <A NAME="watchdog"></A> </P><!--TOC section Watchdog Alerts-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc85">7.1</A>&#XA0;&#XA0;<A HREF="#watchdog">Watchdog Alerts</A></H2><!--SEC END --><P> <A NAME="watchdog"></A> 
-</P><P><TT>ejabberd</TT> includes a watchdog mechanism.
-If a process in the <TT>ejabberd</TT> server consumes too much memory,
-a message is sent to the Jabber accounts defined with the option
-<TT>watchdog_admins</TT>
- in the <TT>ejabberd</TT> configuration file.
-Example configuration:
-</P><PRE CLASS="verbatim">{watchdog_admins, ["admin2@localhost", "admin2@example.org"]}.
-</PRE><P>To remove watchdog admins, remove them in the option.
-To remove all watchdog admins, set the option with an empty list:
-</P><PRE CLASS="verbatim">{watchdog_admins, []}.
-</PRE><P> <A NAME="logfiles"></A> </P><!--TOC section Log Files-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc86">7.2</A>&#XA0;&#XA0;<A HREF="#logfiles">Log Files</A></H2><!--SEC END --><P> <A NAME="logfiles"></A> </P><P>An <TT>ejabberd</TT> node writes two log files:
+</P><P> <A NAME="logfiles"></A> </P><!--TOC section Log Files-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc85">7.1</A>&#XA0;&#XA0;<A HREF="#logfiles">Log Files</A></H2><!--SEC END --><P> <A NAME="logfiles"></A> </P><P>An <TT>ejabberd</TT> node writes two log files:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 	<B><TT>ejabberd.log</TT></B></DT><DD CLASS="dd-description"> is the ejabberd service log, with the messages reported by <TT>ejabberd</TT> code
 	</DD><DT CLASS="dt-description"><B><TT>sasl.log</TT></B></DT><DD CLASS="dd-description"> is the Erlang/OTP system log, with the messages reported by Erlang/OTP using SASL (System Architecture Support Libraries)
@@ -3215,12 +3252,32 @@ The possible levels are:
 </DD></DL><P>
 For example, the default configuration is:
 </P><PRE CLASS="verbatim">{loglevel, 4}.
-</PRE><P> <A NAME="debugconsole"></A> </P><!--TOC section Debug Console-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc87">7.3</A>&#XA0;&#XA0;<A HREF="#debugconsole">Debug Console</A></H2><!--SEC END --><P> <A NAME="debugconsole"></A> </P><P>The Debug Console is an Erlang shell attached to an already running <TT>ejabberd</TT> server.
+</PRE><P>The log files grow continually, so it is recommended to rotate them periodically.
+To rotate the log files, rename the files and then reopen them.
+The ejabberd command <TT>reopen-log</TT> 
+(please refer to section <A HREF="#commands">4.1.1</A>)
+reopens the log files,
+and also renames the old ones if you didn&#X2019;t rename them.</P><P> <A NAME="debugconsole"></A> </P><!--TOC section Debug Console-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc86">7.2</A>&#XA0;&#XA0;<A HREF="#debugconsole">Debug Console</A></H2><!--SEC END --><P> <A NAME="debugconsole"></A> </P><P>The Debug Console is an Erlang shell attached to an already running <TT>ejabberd</TT> server.
 With this Erlang shell, an experienced administrator can perform complex tasks.</P><P>This shell gives complete control over the <TT>ejabberd</TT> server,
 so it is important to use it with extremely care.
-There are some simple and safe examples in the article 
-<A HREF="http://www.ejabberd.im/interconnect-erl-nodes">Interconnecting Erlang Nodes</A></P><P>To exit the shell, close the window or press the keys: control+c control+c.</P><P> <A NAME="i18ni10n"></A> </P><!--TOC chapter Internationalization and Localization-->
+There are some simple and safe examples in the article
+<A HREF="http://www.ejabberd.im/interconnect-erl-nodes">Interconnecting Erlang Nodes</A></P><P>To exit the shell, close the window or press the keys: control+c control+c.</P><P> <A NAME="watchdog"></A> </P><!--TOC section Watchdog Alerts-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc87">7.3</A>&#XA0;&#XA0;<A HREF="#watchdog">Watchdog Alerts</A></H2><!--SEC END --><P> <A NAME="watchdog"></A> 
+</P><P><TT>ejabberd</TT> includes a watchdog mechanism that may be useful to developers
+when troubleshooting a problem related to memory usage.
+If a process in the <TT>ejabberd</TT> server consumes a lot of memory,
+a message is sent to the Jabber accounts defined with the option
+<TT>watchdog_admins</TT>
+ in the <TT>ejabberd</TT> configuration file.
+Note that the threshold to define what is too much memory usage 
+is only configurable editing the source code.
+Example configuration:
+</P><PRE CLASS="verbatim">{watchdog_admins, ["admin2@localhost", "admin2@example.org"]}.
+</PRE><P>To remove watchdog admins, remove them in the option.
+To remove all watchdog admins, set the option with an empty list:
+</P><PRE CLASS="verbatim">{watchdog_admins, []}.
+</PRE><P> <A NAME="i18ni10n"></A> </P><!--TOC chapter Internationalization and Localization-->
 <H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc88">Appendix&#XA0;A</A>&#XA0;&#XA0;<A HREF="#i18ni10n">Internationalization and Localization</A></H1><!--SEC END --><P> <A NAME="i18ni10n"></A> 
 </P><P>All built-in modules support the <TT>xml:lang</TT> attribute inside IQ queries.
 Figure&#XA0;<A HREF="#fig:discorus">A.1</A>, for example, shows the reply to the following query:
@@ -3243,7 +3300,7 @@ Figure&#XA0;<A HREF="#fig:discorus">A.1</A>, for example, shows the reply to the
 <IMG SRC="webadmmainru.png" ALT="webadmmainru.png">
 
 
-<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Figure A.2: Web Admin showing a virtual host when the web browser provides the 
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Figure A.2: Web Admin showing a virtual host when the web browser provides the
 HTTP header &#X2018;Accept-Language: ru&#X2019;</TD></TR>
 </TABLE></DIV>
 <A NAME="fig:webadmmainru"></A>
@@ -3263,7 +3320,7 @@ Alexey Shchepin (<A HREF="xmpp:aleksey@jabber.ru"><TT>xmpp:aleksey@jabber.ru</TT
 </LI><LI CLASS="li-itemize">Vsevolod Pelipas (<A HREF="xmpp:vsevoload@jabber.ru"><TT>xmpp:vsevoload@jabber.ru</TT></A>)
 </LI></UL><P> <A NAME="copyright"></A> </P><!--TOC chapter Copyright Information-->
 <H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc91">Appendix&#XA0;D</A>&#XA0;&#XA0;<A HREF="#copyright">Copyright Information</A></H1><!--SEC END --><P> <A NAME="copyright"></A> </P><P>Ejabberd Installation and Operation Guide.<BR>
-Copyright &#XA9; 2003 &#X2014; 2008 ProcessOne</P><P>This document is free software; you can redistribute it and/or
+Copyright &#XA9; 2003 &#X2014; 2009 ProcessOne</P><P>This document is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.</P><P>This document is distributed in the hope that it will be useful,
