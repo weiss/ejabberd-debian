@@ -126,9 +126,6 @@ the processing discipline for #1 IQ queries (see section~\ref{modiqdiscoption}).
 {\rule{\larg}{1mm}}
 \begin{latexonly}
 \vspace{2mm} \\
-\begin{center}
-    {\large  \bf \today}
-\end{center}
 \vspace{5.5cm}
 \end{latexonly}
 }
@@ -1035,6 +1032,8 @@ The following authentication methods are supported by \ejabberd{}:
 \item pam --- See section~\ref{pam}.
 \end{itemize}
 
+Account creation is only supported by internal and odbc methods.
+
 \makesubsubsection{internalauth}{Internal}
 \ind{internal authentication}\ind{Mnesia}
 
@@ -1387,17 +1386,10 @@ can be seen by \Jabber{} clients. If a \Jabber{} client do not support
 \term{en}. In order to take effect there must be a translation file
 \term{<language>.msg} in \ejabberd{}'s \term{msgs} directory.
 
-Examples:
-\begin{itemize}
-\item To set Russian as default language:
+For example, to set Russian as default language:
 \begin{verbatim}
 {language, "ru"}.
 \end{verbatim}
-\item To set Spanish as default language:
-\begin{verbatim}
-{language, "es"}.
-\end{verbatim}
-\end{itemize}
 
 \makesection{database}{Database and LDAP Configuration}
 \ind{database}
@@ -1433,7 +1425,7 @@ if you define several domains in ejabberd.cfg (see section \ref{hostnames}),
 you probably want that each virtual host uses a different configuration of database, authentication and storage,
 so that usernames do not conflict and mix between different virtual hosts.
 For that purpose, the options described in the next sections
-must be set inside a \term{host\_cofig} for each vhost (see section \ref{virtualhost}).
+must be set inside a \term{host\_config} for each vhost (see section \ref{virtualhost}).
 For example:
 \begin{verbatim}
 {host_config, "public.example.org", [
@@ -2994,7 +2986,7 @@ Options:
 \iqdiscitem{In-Band Registration (\ns{jabber:iq:register})}
 \end{description}
 
-This module reads also another option defined globably for the server:
+This module reads also another option defined globally for the server:
 \term{\{registration\_timeout, Timeout\}}. \ind{options!registratimeout}
 This option limits the frequency of registration from a given IP or username.
 So, a user can't register a new account from the same IP address or JID during
@@ -3584,7 +3576,7 @@ The more interesting ones are:
   Store internal Mnesia database to a binary backup file.
 \titem {restore ejabberd.backup}
   Restore immediately from a binary backup file the internal Mnesia database.
-  This will comsume quite some memory for big servers.
+  This will consume quite some memory for big servers.
 \titem {install-fallback ejabberd.backup}
   The binary backup file is installed as fallback:
   it will be used to restore the database at the next ejabberd start.
@@ -3614,9 +3606,9 @@ This file includes detailed information about each configurable option.
 The \term{ejabberdctl} script returns a numerical status code.
 Success is represented by \term{0},
 error is represented by \term{1},
-and other codes may be used for specifical results.
+and other codes may be used for specific results.
 This can be used by other scripts to determine automatically
-if a command succedded or failed,
+if a command succeeded or failed,
 for example using: \term{echo \$?}
 
 
@@ -4048,11 +4040,11 @@ mnesia:change_table_copy_type(schema, node(), disc_copies).
   transfered and processed all data it needed from \term{first}.
 
 
-\item Now run \ejabberd{} on \term{second} with almost the same config as
-  on \term{first} (you probably do not need to duplicate `\verb|acl|'
-  and `\verb|access|' options --- they will be taken from
-  \term{first}, and \verb|mod_muc| and \verb|mod_irc| should be
-  enabled only on one machine in the cluster).
+\item Now run \ejabberd{} on \term{second} with a configuration similar as
+  on \term{first}: you probably do not need to duplicate `\verb|acl|'
+  and `\verb|access|' options because they will be taken from
+  \term{first}; and \verb|mod_irc| should be
+  enabled only on one machine in the cluster.
 \end{enumerate}
 
 You can repeat these steps for other machines supposed to serve this

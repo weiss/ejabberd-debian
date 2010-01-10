@@ -40,6 +40,10 @@ typedef struct {
 typedef unsigned __int32 uint32_t;
 #endif
 
+#ifndef SSL_OP_NO_TICKET
+#define SSL_OP_NO_TICKET 0
+#endif
+
 /*
  * str_hash is based on the public domain code from
  * http://www.burtleburtle.net/bob/hash/doobs.html
@@ -340,6 +344,7 @@ static int tls_drv_control(ErlDrvData handle,
 	    res = SSL_CTX_check_private_key(ctx);
 	    die_unless(res > 0, "SSL_CTX_check_private_key failed");
 
+	    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
 	    SSL_CTX_set_default_verify_paths(ctx);
 
 	    if (command == SET_CERTIFICATE_FILE_ACCEPT)
@@ -367,7 +372,7 @@ static int tls_drv_control(ErlDrvData handle,
 	 if (command == SET_CERTIFICATE_FILE_ACCEPT)
 	    SSL_set_accept_state(d->ssl);
 	 else {
-	    SSL_set_options(d->ssl, SSL_OP_NO_SSLv2);
+	    SSL_set_options(d->ssl, SSL_OP_NO_SSLv2|SSL_OP_NO_TICKET);
 	    SSL_set_connect_state(d->ssl);
 	 }
 	 break;

@@ -59,6 +59,7 @@
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 -include("ejabberd_ctl.hrl").
+-include("mod_privacy.hrl").
 
 -record(session, {sid, usr, us, priority, info}).
 -record(state, {}).
@@ -384,28 +385,32 @@ do_route(From, To, Packet) ->
 				Reason = xml:get_path_s(
 					   Packet,
 					   [{elem, "status"}, cdata]),
-				{ejabberd_hooks:run_fold(
+				{is_privacy_allow(From, To, Packet) andalso
+				 ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
 				   [User, Server, From, subscribe, Reason]),
 				 true};
 			    "subscribed" ->
-				{ejabberd_hooks:run_fold(
+				{is_privacy_allow(From, To, Packet) andalso
+				 ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
 				   [User, Server, From, subscribed, ""]),
 				 true};
 			    "unsubscribe" ->
-				{ejabberd_hooks:run_fold(
+				{is_privacy_allow(From, To, Packet) andalso
+				 ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
 				   [User, Server, From, unsubscribe, ""]),
 				 true};
 			    "unsubscribed" ->
-				{ejabberd_hooks:run_fold(
+				{is_privacy_allow(From, To, Packet) andalso
+				 ejabberd_hooks:run_fold(
 				   roster_in_subscription,
 				   LServer,
 				   false,
@@ -468,6 +473,31 @@ do_route(From, To, Packet) ->
 		    Pid ! {route, From, To, Packet}
 	    end
     end.
+
+%% The default list applies to the user as a whole,
+%% and is processed if there is no active list set
+%% for the target session/resource to which a stanza is addressed,
+%% or if there are no current sessions for the user.
+is_privacy_allow(From, To, Packet) ->
+    User = To#jid.user,
+    Server = To#jid.server,
+    PrivacyList = ejabberd_hooks:run_fold(privacy_get_user_list, Server,
+					  #userlist{}, [User, Server]),
+    is_privacy_allow(From, To, Packet, PrivacyList).
+
+%% Check if privacy rules allow this delivery
+%% Function copied from ejabberd_c2s.erl
+is_privacy_allow(From, To, Packet, PrivacyList) ->
+    User = To#jid.user,
+    Server = To#jid.server,
+    allow == ejabberd_hooks:run_fold(
+	       privacy_check_packet, Server,
+	       allow,
+	       [User,
+		Server,
+		PrivacyList,
+		{From, To, Packet},
+		in]).
 
 route_message(From, To, Packet) ->
     LUser = To#jid.luser,

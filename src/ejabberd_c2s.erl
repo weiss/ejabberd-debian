@@ -1091,13 +1091,17 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 			Attrs1 = lists:keydelete("type", 1, Attrs),
 			{true, [{"type", "unavailable"} | Attrs1], StateData};
 		    "subscribe" ->
-			{true, Attrs, StateData};
+			SRes = is_privacy_allow(From, To, Packet, StateData#state.privacy_list),
+			{SRes, Attrs, StateData};
 		    "subscribed" ->
-			{true, Attrs, StateData};
+			SRes = is_privacy_allow(From, To, Packet, StateData#state.privacy_list),
+			{SRes, Attrs, StateData};
 		    "unsubscribe" ->
-			{true, Attrs, StateData};
+			SRes = is_privacy_allow(From, To, Packet, StateData#state.privacy_list),
+			{SRes, Attrs, StateData};
 		    "unsubscribed" ->
-			{true, Attrs, StateData};
+			SRes = is_privacy_allow(From, To, Packet, StateData#state.privacy_list),
+			{SRes, Attrs, StateData};
 		    _ ->
 			case ejabberd_hooks:run_fold(
 			       privacy_check_packet, StateData#state.server,
@@ -1113,7 +1117,9 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 				%% Note contact availability
 				case xml:get_attr_s("type", Attrs) of
 				    "unavailable" -> 
-					mod_caps:clear_caps(From);
+					%mod_caps:clear_caps(From);
+					% caps clear disabled cause it breaks things
+					ok;
 				    _ -> 
 					Caps = mod_caps:read_caps(Els),
 					mod_caps:note_caps(StateData#state.server, From, Caps)
@@ -1171,7 +1177,7 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 			    NewPL ->
 				PrivPushIQ =
 				    #iq{type = set, xmlns = ?NS_PRIVACY,
-					id = "push",
+					id = "push" ++ randoms:get_string(),
 					sub_el = [{xmlelement, "query",
 						   [{"xmlns", ?NS_PRIVACY}],
 						   [{xmlelement, "list",
@@ -1616,6 +1622,19 @@ presence_track(From, To, Packet, StateData) ->
 	    StateData#state{pres_i = I,
 			    pres_a = A}
     end.
+
+%% Check if privacy rules allow this delivery
+is_privacy_allow(From, To, Packet, PrivacyList) ->
+    User = To#jid.user,
+    Server = To#jid.server,
+    allow == ejabberd_hooks:run_fold(
+	       privacy_check_packet, Server,
+	       allow,
+	       [User,
+		Server,
+		PrivacyList,
+		{From, To, Packet},
+		in]).
 
 presence_broadcast(StateData, From, JIDSet, Packet) ->
     lists:foreach(fun(JID) ->

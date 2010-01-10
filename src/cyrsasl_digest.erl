@@ -3,7 +3,7 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : DIGEST-MD5 SASL mechanism
 %%% Created : 11 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_digest.erl 1743 2008-12-23 01:02:44Z badlop $
+%%% Id      : $Id: cyrsasl_digest.erl 1927 2009-02-27 15:57:35Z badlop $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_digest).
@@ -101,15 +101,17 @@ parse1([], [], T) ->
 parse1([], _S, _T) ->
     bad.
 
-parse2([$" | Cs], Key, Val, Ts) ->
+parse2([$\" | Cs], Key, Val, Ts) ->
     parse3(Cs, Key, Val, Ts);
 parse2([C | Cs], Key, Val, Ts) ->
     parse4(Cs, Key, [C | Val], Ts);
 parse2([], _, _, _) ->
     bad.
 
-parse3([$" | Cs], Key, Val, Ts) ->
+parse3([$\" | Cs], Key, Val, Ts) ->
     parse4(Cs, Key, Val, Ts);
+parse3([$\\, C | Cs], Key, Val, Ts) ->
+    parse3(Cs, Key, [C | Val], Ts);
 parse3([C | Cs], Key, Val, Ts) ->
     parse3(Cs, Key, [C | Val], Ts);
 parse3([], _, _, _) ->

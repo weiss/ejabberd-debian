@@ -1,8 +1,8 @@
-%% $Id: ejabberd.app 1819 2009-01-14 09:52:31Z cromain $
+%% $Id: ejabberd.app 2003 2009-04-01 15:05:29Z cromain $
 
 {application, ejabberd,
  [{description, "ejabberd"},
-  {vsn, "2.0.3"},
+  {vsn, "2.0.5"},
   {modules, [acl,
 	     adhoc,
 	     configure,

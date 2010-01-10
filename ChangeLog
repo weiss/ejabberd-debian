@@ -1,3 +1,180 @@
+2009-04-01  Badlop  <badlop@process-one.net>
+
+	* doc/release_notes_2.0.5.txt: Added file for new release
+
+2009-03-25  Badlop  <badlop@process-one.net>
+
+	* src/expat_erl.c: Fix implicit declaration of function
+	x_fix_buff (thanks to Dennis Schridde)(EJAB-900)
+
+2009-03-24  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_sm.erl: Partially retract SVN r1976
+	EJAB-300 (EJAB-890). Check default privacy list when account, not
+	a specific session, receives a presence subscription
+	stanza (EJAB-300).
+	* src/ejabberd_c2s.erl: Likewise
+
+2009-03-10  Badlop  <badlop@process-one.net>
+
+	* doc/release_notes_2.0.4.txt: Added file for new release
+
+	* src/tls/tls_drv.c: Fix encryption problem for ejabberd_http
+	after timeout (thanks to Alexey Shchepin)(EJAB-880)
+
+2009-03-10  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Fix PEP with other domains and s2s
+	(EJAB-825). Also fixes send last published items in subscription.
+
+2009-03-09  Badlop  <badlop@process-one.net>
+
+	* src/tls/tls_drv.c: Fix to support OpenSSL older than
+	0.9.8f (EJAB-877)(thanks to Jonathan Schleifer)
+	* doc/guide.tex: It is again supported OpenSSL older than 0.9.8f
+	* doc/guide.html: Likewise
+
+	* src/mod_proxy65/mod_proxy65_service.erl: if an ip option is not
+	defined, the module takes an IP address of a local
+	hostname (thanks to Evgeniy Khramtsov)
+
+2009-03-07  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_c2s.erl: Enforce privacy rules also for
+	subscription requests (EJAB-300)
+	* src/ejabberd_sm.erl: Likewise
+
+2009-03-06  Badlop  <badlop@process-one.net>
+
+	* src/eldap/eldap.erl: moves waiting for response queries to
+	pending queue on an LDAP connection failure (thanks to Evgeniy
+	Khramtsov)
+
+	* src/eldap/eldap.erl: implemented queue for pending
+	queries (thanks to Evgeniy Khramtsov)
+
+	* src/eldap/eldap.erl: Close a connection on tcp_error (thanks to
+	Evgeniy Khramtsov)
+
+	* src/eldap/Makefile.in: added +optimize and +driver compilation
+	options (thanks to Evgeniy Khramtsov)
+	* src/eldap/Makefile.win32: Likewise
+
+2009-03-05  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_app.erl: In a Windows machine, explicitly add the
+	nameservers, as it seems Erlang does not do itself (EJAB-860)
+	* src/win32_dns.erl: Get name servers from Windows registy (thanks
+	to Geoff Cant)
+
+	* doc/guide.tex: Require OpenSSL 0.9.8f or higher (EJAB-877)
+	* doc/guide.html: Likewise
+
+2009-03-04  Badlop  <badlop@process-one.net>
+
+	* src/ejabberd_auth.erl: If anonymous auth is enabled, when
+	checking if the account already exists in other auth methods, take
+	into account if the auth method failed (EJAB-882)
+	* src/ejabberd_auth_anonymous.erl: Likewise
+	* src/ejabberd_auth_external.erl: Likewise
+	* src/ejabberd_auth_internal.erl: Likewise
+	* src/ejabberd_auth_ldap.erl: Likewise
+	* src/ejabberd_auth_odbc.erl: Likewise
+	* src/ejabberd_auth_pam.erl: Likewise
+
+2009-03-04  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Allow node creation without configure
+	item
+
+2009-03-03  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: Add roster subscriptions handling
+	so on_sub_and_presence if fully supported.
+
+	* src/mod_pubsub/mod_pubsub.erl: Allow to send PEP events to all
+	connected ressources, even via s2s.
+	* src/mod_caps.erl: Likewise
+
+2009-02-27  Badlop  <badlop@process-one.net>
+
+	* src/web/ejabberd_http.erl: Added a workaround for inet:peername
+	returning 'ebadf'
+
+	* src/cyrsasl_digest.erl: Unquote backslash in DIGEST-MD5 quoted
+	strings (EJAB-304)
+
+	* src/tls/tls_drv.c: S2S connection with STARTTLS fails to Gtalk
+	and recent Openfire (thanks to Philipp Hancke)(EJAB-877)
+
+	* doc/guide.tex: No mention to the release date in ejabberd Guide
+	or release notes. The date of an ejabberd release is determined by
+	the date of the corresponding release announcement.
+
+2009-02-23  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/ejabberd_c2s.erl: Do not call mod_caps:clear_caps, this previous
+	optimization is too agressive and breaks PubSub/PEP standard behavior
+	(EJAB-854)
+
+2009-02-21  Badlop  <badlop@process-one.net>
+
+ 	* src/mod_muc/mod_muc_room.erl: Owner of a password protected room
+ 	must provide the password, like other participants (EJAB-867)
+
+ 	* src/mod_muc/mod_muc_log.erl: Prevent XSS in MUC logs by
+ 	linkifying only a few known protocols (EJAB-850)
+
+ 	* src/mod_roster.erl: When account is deleted, cancel presence
+ 	subscription for all roster items (EJAB-790)
+ 	* src/mod_roster_odbc.erl: Likewise
+
+ 	* src/mod_shared_roster.erl: Fix bug: a pending subscription
+ 	request, and later the requester added to the roster due to a
+ 	shared roster group, that request could neither be accepted or
+ 	rejected (thanks to Brian Cully)(EJAB-869)
+
+ 	* src/mod_pubsub/mod_pubsub.erl: The table pubsub_node in ejabberd
+ 	older than 2.0.2 had indexes for parentid and type. This is not
+ 	required since ejabberd 2.0.2, so those indexes can be
+ 	deleted. (EJAB-669)
+
+ 	* doc/Makefile: In Clean do not remove html. In new Distclean,
+	remove also html.
+
+ 	* doc/Makefile: When cleaning, remove contributed_modules.tex
+
+ 	* doc/guide.tex: Provide only an example of language option
+ 	* doc/guide.html: Likewise
+
+ 	* doc/guide.tex: mod_muc can run in several nodes of cluster
+ 	* doc/guide.html: Likewise
+
+ 	* src/odbc/mysql.sql: Fix complain about comment syntax
+ 	* src/odbc/pg.sql: Likewise
+
+ 	* doc/guide.tex: Explain that account creation is only supported
+ 	by internal and odbc authentication methods
+ 	* doc/guide.html: Likewise
+
+ 	* src/mod_privacy.erl: Privacy list items must be processed in the
+ 	specified order (EJAB-848)
+ 	* src/mod_privacy_odbc.erl: Likewise
+
+ 	* src/ejabberd_c2s.erl: Ensure unique ID in roster push (EJAB-721)
+ 	* src/mod_roster.erl: Likewise
+ 	* src/mod_roster_odbc.erl: Likewise
+ 	* src/mod_shared_roster.erl: Likewise
+
+2009-02-19  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/mod_pubsub/mod_pubsub.erl: fix nodetree plugin resolver
+
+2009-02-13  Christophe Romain <christophe.romain@process-one.net>
+
+	* src/ejabberd_auth.erl: prevent from calling
+	get_vh_registered_users/2 when not available
+
 2009-01-13  Badlop  <badlop@process-one.net>
 
 	* doc/release_notes_2.0.3.txt: Minor changes
