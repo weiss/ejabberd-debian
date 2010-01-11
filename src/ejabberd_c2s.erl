@@ -5,7 +5,7 @@
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -37,6 +37,7 @@
 	 send_element/2,
 	 socket_type/0,
 	 get_presence/1,
+	 get_subscribed/1,
 	 get_subscribed_and_online/1]).
 
 %% gen_fsm callbacks
@@ -176,29 +177,40 @@ init([{SockMod, Socket}, Opts]) ->
 			      (_) -> false
 			   end, Opts),
     IP = peerip(SockMod, Socket),
-    Socket1 =
-	if
-	    TLSEnabled ->
-		SockMod:starttls(Socket, TLSOpts);
-	    true ->
-		Socket
-	end,
-    SocketMonitor = SockMod:monitor(Socket1),
-    {ok, wait_for_stream, #state{socket         = Socket1,
-				 sockmod        = SockMod,
-				 socket_monitor = SocketMonitor,
-				 zlib           = Zlib,
-				 tls            = TLS,
-				 tls_required   = StartTLSRequired,
-				 tls_enabled    = TLSEnabled,
-				 tls_options    = TLSOpts,
-				 streamid       = new_id(),
-				 access         = Access,
-				 shaper         = Shaper,
-				 ip             = IP}, ?C2S_OPEN_TIMEOUT}.
+    %% Check if IP is blacklisted:
+    case is_ip_blacklisted(IP) of
+	true ->
+	    ?INFO_MSG("Connection attempt from blacklisted IP: ~s",
+	              [jlib:ip_to_list(IP)]),
+	    {stop, normal};
+	false ->
+	    Socket1 =
+		if
+		    TLSEnabled ->
+			SockMod:starttls(Socket, TLSOpts);
+		    true ->
+			Socket
+		end,
+	    SocketMonitor = SockMod:monitor(Socket1),
+	    {ok, wait_for_stream, #state{socket         = Socket1,
+					sockmod        = SockMod,
+					socket_monitor = SocketMonitor,
+					zlib           = Zlib,
+					tls            = TLS,
+					tls_required   = StartTLSRequired,
+					tls_enabled    = TLSEnabled,
+					tls_options    = TLSOpts,
+					streamid       = new_id(),
+					access         = Access,
+					shaper         = Shaper,
+					ip             = IP}, ?C2S_OPEN_TIMEOUT}
+    end.
 
 %% Return list of all available resources of contacts,
 %% in form [{JID, Caps}].
+get_subscribed(FsmRef) ->
+    gen_fsm:sync_send_all_state_event(
+      FsmRef, get_subscribed, 1000).
 get_subscribed_and_online(FsmRef) ->
     gen_fsm:sync_send_all_state_event(
       FsmRef, get_subscribed_and_online, 1000).
@@ -997,6 +1009,20 @@ handle_sync_event({get_presence}, _From, StateName, StateData) ->
     Reply = {User, Resource, Show, Status},
     fsm_reply(Reply, StateName, StateData);
 
+handle_sync_event(get_subscribed, _From, StateName, StateData) ->
+    Subscribed = StateData#state.pres_f,
+    Online = StateData#state.pres_available,
+    Pred = fun(User, _Caps) ->
+		   ?SETS:is_element(jlib:jid_remove_resource(User),
+				    Subscribed) orelse
+		       ?SETS:is_element(User, Subscribed)
+	   end,
+    SubscribedAndOnline = ?DICT:filter(Pred, Online),
+    SubscribedWithCaps  = ?SETS:fold(fun(User, Acc) ->
+	    [{User, undefined}|Acc]
+	end, ?DICT:to_list(SubscribedAndOnline), Subscribed),
+    {reply, SubscribedWithCaps, StateName, StateData};
+
 handle_sync_event(get_subscribed_and_online, _From, StateName, StateData) ->
     Subscribed = StateData#state.pres_f,
     Online = StateData#state.pres_available,
@@ -1448,7 +1474,8 @@ presence_update(From, Packet, StateData) ->
 			 StatusTag ->
 			    xml:get_tag_cdata(StatusTag)
 		     end,
-	    Info = [{ip, StateData#state.ip},{conn, StateData#state.conn}],
+	    Info = [{ip, StateData#state.ip}, {conn, StateData#state.conn},
+		    {auth_module, StateData#state.auth_module}],
 	    ejabberd_sm:unset_presence(StateData#state.sid,
 				       StateData#state.user,
 				       StateData#state.server,
@@ -1780,7 +1807,8 @@ roster_change(IJID, ISubscription, StateData) ->
 
 
 update_priority(Priority, Packet, StateData) ->
-    Info = [{ip, StateData#state.ip},{conn, StateData#state.conn}],
+    Info = [{ip, StateData#state.ip}, {conn, StateData#state.conn},
+	    {auth_module, StateData#state.auth_module}],
     ejabberd_sm:set_presence(StateData#state.sid,
 			     StateData#state.user,
 			     StateData#state.server,
@@ -1952,3 +1980,7 @@ fsm_reply(Reply, session_established, StateData) ->
     {reply, Reply, session_established, StateData, ?C2S_HIBERNATE_TIMEOUT};
 fsm_reply(Reply, StateName, StateData) ->
     {reply, Reply, StateName, StateData, ?C2S_OPEN_TIMEOUT}.
+
+%% Used by c2s blacklist plugins
+is_ip_blacklisted({IP,_Port}) ->
+    ejabberd_hooks:run_fold(check_bl_c2s, false, [IP]).

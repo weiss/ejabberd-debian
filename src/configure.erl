@@ -5,7 +5,7 @@
 %%% Created : 27 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -60,6 +60,8 @@ start() ->
     EVersion = "ERLANG_VERSION = " ++ erlang:system_info(version) ++ "\n",
     EIDirS   = "EI_DIR = " ++ code:lib_dir("erl_interface") ++ "\n",
     RootDirS = "ERLANG_DIR = " ++ code:root_dir() ++ "\n",
+    %% Load the ejabberd application description so that ?VERSION can read the vsn key
+    application:load(ejabberd),
     Version  = "EJABBERD_VERSION = " ++ ?VERSION ++ "\n",
     ExpatDir = "EXPAT_DIR = c:\\sdk\\Expat-2.0.0\n",
     OpenSSLDir = "OPENSSL_DIR = c:\\sdk\\OpenSSL\n",

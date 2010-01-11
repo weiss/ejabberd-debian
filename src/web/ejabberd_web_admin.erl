@@ -5,7 +5,7 @@
 %%% Created :  9 Apr 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -2022,7 +2022,7 @@ node_backup_parse_query(Node, Query) ->
 					  rpc:call(Node, mnesia,
 						   install_fallback, [Path]);
 				      "dump" ->
-					  rpc:call(Node, mnesia,
+					  rpc:call(Node, ejabberd_ctl,
 						   dump_to_textfile, [Path]);
 				      "load" ->
 					  rpc:call(Node, mnesia,

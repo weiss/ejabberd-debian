@@ -10,13 +10,13 @@
 %%% the License for the specific language governing rights and limitations
 %%% under the License.
 %%% 
-%%% The Initial Developer of the Original Code is Process-one.
-%%% Portions created by Process-one are Copyright 2006-2008, Process-one
+%%% The Initial Developer of the Original Code is ProcessOne.
+%%% Portions created by ProcessOne are Copyright 2006-2008, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2008, Process-one.
+%%% This software is copyright 2006-2008, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2008 Process-one
+%%% @copyright 2006-2008 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -29,6 +29,7 @@
 -module(node_pep).
 -author('christophe.romain@process-one.net').
 
+-include("ejabberd.hrl").
 -include("pubsub.hrl").
 -include("jlib.hrl").
 
@@ -57,13 +58,16 @@
 	 get_states/2,
 	 get_state/3,
 	 set_state/1,
+	 get_items/7,
 	 get_items/2,
+	 get_item/8,
 	 get_item/3,
 	 set_item/1
 	]).
 
 init(Host, ServerHost, Opts) ->
     node_default:init(Host, ServerHost, Opts),
+    complain_if_modcaps_disabled(ServerHost),
     ok.
 
 terminate(Host, ServerHost) ->
@@ -93,7 +97,6 @@ features() ->
      "auto-subscribe", %*
      "delete-nodes", %*
      "filtered-notifications", %*
-     "item-ids",
      "modify-affiliations",
      "outcast-affiliation",
      "persistent-items",
@@ -106,9 +109,24 @@ features() ->
      "subscribe" %*
     ].
 
-create_node_permission(_Host, _ServerHost, _Node, _ParentNode, _Owner, _Access) ->
-    %% TODO may we check bare JID match ?
-    {result, true}.
+create_node_permission(Host, ServerHost, _Node, _ParentNode, Owner, Access) ->
+    LOwner = jlib:jid_tolower(Owner),
+    {User, Server, _Resource} = LOwner, 
+    Allowed = case LOwner of
+	{"", Host, ""} ->
+	    true; % pubsub service always allowed
+	_ ->
+	    case acl:match_rule(ServerHost, Access, LOwner) of
+		allow ->
+		    case Host of 
+			{User, Server, _} -> true;
+			_ -> false
+		    end;    
+		_ ->
+		    false
+	    end
+    end,    
+    {result, Allowed}.
 
 create_node(Host, Node, Owner) ->
     case node_default:create_node(Host, Node, Owner) of
@@ -182,7 +200,7 @@ get_node_subscriptions(_Host, _Node) ->
     {result, []}.
 
 get_subscription(_Host, _Node, _Owner) ->
-    {result, unknown}.
+    {result, none}.
 
 set_subscription(_Host, _Node, _Owner, _Subscription) ->
     ok.
@@ -199,8 +217,35 @@ set_state(State) ->
 get_items(Host, Node) ->
     node_default:get_items(Host, Node).
 
+get_items(Host, Node, JID, AccessModel, PresenceSubscription, RosterGroup, SubId) ->
+    node_default:get_items(Host, Node, JID, AccessModel, PresenceSubscription, RosterGroup, SubId).
+
 get_item(Host, Node, ItemId) ->
     node_default:get_item(Host, Node, ItemId).
 
+get_item(Host, Node, ItemId, JID, AccessModel, PresenceSubscription, RosterGroup, SubId) ->
+    node_default:get_item(Host, Node, ItemId, JID, AccessModel, PresenceSubscription, RosterGroup, SubId).
+
 set_item(Item) ->
     node_default:set_item(Item).
+ 
+
+%%%
+%%% Internal
+%%%
+
+%% @doc Check mod_caps is enabled, otherwise show warning.
+%% The PEP plugin for mod_pubsub requires mod_caps to be enabled in the host.
+%% Check that the mod_caps module is enabled in that Jabber Host
+%% If not, show a warning message in the ejabberd log file.
+complain_if_modcaps_disabled(ServerHost) ->
+    Modules = ejabberd_config:get_local_option({modules, ServerHost}),
+    ModCaps = [mod_caps_enabled || {mod_caps, _Opts} <- Modules],
+    case ModCaps of
+	[] ->
+	    ?WARNING_MSG("The PEP plugin is enabled in mod_pubsub of host ~p. "
+			 "This plugin requires mod_caps to be enabled, "
+			 "but it isn't.", [ServerHost]);
+	_ ->
+	    ok
+    end.
