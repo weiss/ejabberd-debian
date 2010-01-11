@@ -29,11 +29,12 @@
 
 -export([start_link/0, init/1, start/3,
 	 init/3,
-	 init_ssl/4,
+	 start_listeners/0,
 	 start_listener/3,
-	 stop_listener/1,
+	 stop_listener/2,
+	 parse_listener_portip/2,
 	 add_listener/3,
-	 delete_listener/1
+	 delete_listener/2
 	]).
 
 -include("ejabberd.hrl").
@@ -46,51 +47,85 @@ start_link() ->
 
 
 init(_) ->
+    {ok, {{one_for_one, 10, 1}, []}}.
+
+start_listeners() ->
     case ejabberd_config:get_local_option(listen) of
 	undefined ->
 	    ignore;
 	Ls ->
-	    {ok, {{one_for_one, 10, 1},
-		  lists:map(
-		    fun({Port, Module, Opts}) ->
-			    {Port,
-			     {?MODULE, start, [Port, Module, Opts]},
-			     transient,
-			     brutal_kill,
-			     worker,
-			     [?MODULE]}
-		    end, Ls)}}
+	    Ls2 = lists:map(
+	        fun({Port, Module, Opts}) ->
+		        case start_listener(Port, Module, Opts) of
+			    {ok, _Pid} = R -> R;
+			    {error, Error} ->
+				throw(Error)
+			end
+		end, Ls),
+	    report_duplicated_portips(Ls),
+	    {ok, {{one_for_one, 10, 1}, Ls2}}
     end.
 
+report_duplicated_portips(L) ->
+    LKeys = [Port || {Port, _, _} <- L],
+    LNoDupsKeys = proplists:get_keys(L),
+    case LKeys -- LNoDupsKeys of
+	[] -> ok;
+	Dups ->
+	    ?CRITICAL_MSG("In the ejabberd configuration there are duplicated "
+			  "Port number + IP address:~n  ~p",
+			  [Dups])
+  end.
 
 start(Port, Module, Opts) ->
-    SSLError = "There is a problem with your ejabberd configuration file: the option 'ssl' for listening sockets is no longer available. To get SSL encryption use the option 'tls'.",
-    case lists:keysearch(ssl, 1, Opts) of
-	{value, {ssl, _SSLOpts}} ->
-	    %%{ok, proc_lib:spawn_link(?MODULE, init_ssl,
-	    %%		     [Port, Module, Opts, SSLOpts])};
-	    ?ERROR_MSG(SSLError, []),
-	    {error, SSLError};
-	_ ->
-	    case lists:member(ssl, Opts) of
-		true ->
-		    %%{ok, proc_lib:spawn_link(?MODULE, init_ssl,
-		    %%		     [Port, Module, Opts, []])};
-		    ?ERROR_MSG(SSLError, []),
-		    {error, SSLError};
-		false ->
-		    {ok, proc_lib:spawn_link(?MODULE, init,
-					     [Port, Module, Opts])}
-	    end
+    %% Check if the module is an ejabberd listener or an independent listener
+    ModuleRaw = strip_frontend(Module),
+    case ModuleRaw:socket_type() of
+	independent -> ModuleRaw:start_listener(Port, Opts);
+	_ -> start_dependent(Port, Module, Opts)
     end.
 
-init(Port, Module, Opts) ->
+%% @spec(Port, Module, Opts) -> {ok, Pid} | {error, ErrorMessage}
+start_dependent(Port, Module, Opts) ->
+    try check_listener_options(Opts) of
+	ok ->
+	    proc_lib:start_link(?MODULE, init, [Port, Module, Opts])
+    catch
+	throw:{error, Error} ->
+	    ?ERROR_MSG(Error, []),
+	    {error, Error}
+    end.
+
+init(PortIP, Module, RawOpts) ->
+    {Port, IPT, IPS, IPV, Proto, OptsClean} = parse_listener_portip(PortIP, RawOpts),
+    %% The first inet|inet6 and the last {ip, _} work,
+    %% so overriding those in Opts
+    Opts = [IPV | OptsClean] ++ [{ip, IPT}],
     SockOpts = lists:filter(fun({ip, _}) -> true;
 			       (inet6) -> true;
 			       (inet) -> true;
 			       (_) -> false
 			    end, Opts),
+    if Proto == udp ->
+	    init_udp(PortIP, Module, Opts, SockOpts, Port, IPS);
+       true ->
+	    init_tcp(PortIP, Module, Opts, SockOpts, Port, IPS)
+    end.
 
+init_udp(PortIP, Module, Opts, SockOpts, Port, IPS) ->
+    case gen_udp:open(Port, [binary,
+			     {active, false},
+			     {reuseaddr, true} |
+			     SockOpts]) of
+	{ok, Socket} ->
+	    %% Inform my parent that this port was opened succesfully
+	    proc_lib:init_ack({ok, self()}),
+	    udp_recv(Socket, Module, Opts);
+	{error, Reason} ->
+	    socket_error(Reason, PortIP, Module, SockOpts, Port, IPS)
+    end.
+
+init_tcp(PortIP, Module, Opts, SockOpts, Port, IPS) ->
     Res = gen_tcp:listen(Port, [binary,
 				{packet, 0},
 				{active, false},
@@ -101,12 +136,85 @@ init(Port, Module, Opts) ->
 				SockOpts]),
     case Res of
 	{ok, ListenSocket} ->
+	    %% Inform my parent that this port was opened succesfully
+	    proc_lib:init_ack({ok, self()}),
+	    %% And now start accepting connection attempts
 	    accept(ListenSocket, Module, Opts);
 	{error, Reason} ->
-	    ?ERROR_MSG("Failed to open socket for ~p: ~p",
-		       [{Port, Module, Opts}, Reason]),
-	    error
+	    socket_error(Reason, PortIP, Module, SockOpts, Port, IPS)
     end.
+
+%% @spec (PortIP, Opts) -> {Port, IPT, IPS, IPV, OptsClean}
+%% where
+%%      PortIP = Port | {Port, IPT | IPS}
+%%      Port = integer()
+%%      IPT = tuple()
+%%      IPS = string()
+%%      IPV = inet | inet6
+%%      Opts = [IPV | {ip, IPT} | atom() | tuple()]
+%%      OptsClean = [atom() | tuple()]
+%% @doc Parse any kind of ejabberd listener specification.
+%% The parsed options are returned in several formats.
+%% OptsClean does not include inet/inet6 or ip options.
+%% Opts can include the options inet6 and {ip, Tuple},
+%% but they are only used when no IP address was specified in the PortIP.
+%% The IP version (either IPv4 or IPv6) is inferred from the IP address type,
+%% so the option inet/inet6 is only used when no IP is specified at all.
+parse_listener_portip(PortIP, Opts) ->
+    {IPOpt, Opts2} = strip_ip_option(Opts),
+    {IPVOpt, OptsClean} = case lists:member(inet6, Opts2) of
+			      true -> {inet6, Opts2 -- [inet6]};
+			      false -> {inet, Opts2}
+			  end,
+    {Port, IPT, IPS, Proto} =
+	case add_proto(PortIP, Opts) of
+	    {P, Prot} ->
+		T = get_ip_tuple(IPOpt, IPVOpt),
+		S = inet_parse:ntoa(T),
+		{P, T, S, Prot};
+	    {P, T, Prot} when is_integer(P) and is_tuple(T) ->
+		S = inet_parse:ntoa(T),
+		{P, T, S, Prot};
+	    {P, S, Prot} when is_integer(P) and is_list(S) ->
+		[S | _] = string:tokens(S, "/"),
+		{ok, T} = inet_parse:address(S),
+		{P, T, S, Prot}
+	end,
+    IPV = case size(IPT) of
+	      4 -> inet;
+	      8 -> inet6
+	  end,
+    {Port, IPT, IPS, IPV, Proto, OptsClean}.
+
+add_proto(Port, Opts) when is_integer(Port) ->
+    {Port, get_proto(Opts)};
+add_proto({Port, Proto}, _Opts) when is_atom(Proto) ->
+    {Port, normalize_proto(Proto)};
+add_proto({Port, Addr}, Opts) ->
+    {Port, Addr, get_proto(Opts)};
+add_proto({Port, Addr, Proto}, _Opts) ->
+    {Port, Addr, normalize_proto(Proto)}.
+
+strip_ip_option(Opts) ->
+    {IPL, OptsNoIP} = lists:partition(
+			fun({ip, _}) -> true;
+			   (_) -> false
+			end,
+			Opts),
+    case IPL of
+	%% Only the first ip option is considered
+	[{ip, T1} | _] when is_tuple(T1) ->
+	    {T1, OptsNoIP};
+	[] ->
+	    {no_ip_option, OptsNoIP}
+    end.
+
+get_ip_tuple(no_ip_option, inet) ->
+    {0, 0, 0, 0};
+get_ip_tuple(no_ip_option, inet6) ->
+    {0, 0, 0, 0, 0, 0, 0, 0};
+get_ip_tuple(IPOpt, _IPVOpt) ->
+    IPOpt.
 
 accept(ListenSocket, Module, Opts) ->
     case gen_tcp:accept(ListenSocket) of
@@ -118,12 +226,11 @@ accept(ListenSocket, Module, Opts) ->
 		_ ->
 		    ok
 	    end,
-	    case Module of
-		{frontend, Mod} ->
-		    ejabberd_frontend_socket:start(Mod, gen_tcp, Socket, Opts);
-		_ ->
-		    ejabberd_socket:start(Module, gen_tcp, Socket, Opts)
-	    end,
+	    CallMod = case is_frontend(Module) of
+			  true -> ejabberd_frontend_socket;
+			  false -> ejabberd_socket
+		      end,
+	    CallMod:start(strip_frontend(Module), gen_tcp, Socket, Opts),
 	    accept(ListenSocket, Module, Opts);
 	{error, Reason} ->
 	    ?INFO_MSG("(~w) Failed TCP accept: ~w",
@@ -131,58 +238,59 @@ accept(ListenSocket, Module, Opts) ->
 	    accept(ListenSocket, Module, Opts)
     end.
 
-
-init_ssl(Port, Module, Opts, SSLOpts) ->
-    SockOpts = lists:filter(fun({ip, _}) -> true;
-			       (inet6) -> true;
-			       (inet) -> true;
-			       ({verify, _}) -> true;
-			       ({depth, _}) -> true;
-			       ({certfile, _}) -> true;
-			       ({keyfile, _}) -> true;
-			       ({password, _}) -> true;
-			       ({cacertfile, _}) -> true;
-			       ({ciphers, _}) -> true;
-			       (_) -> false
-			    end, Opts),
-    Res = ssl:listen(Port, [binary,
-			    {packet, 0}, 
-			    {active, false},
-			    {nodelay, true} |
-			    SockOpts ++ SSLOpts]),
-    case Res of
-	{ok, ListenSocket} ->
-	    accept_ssl(ListenSocket, Module, Opts);
-	{error, Reason} ->
-	    ?ERROR_MSG("Failed to open socket for ~p: ~p",
-		       [{Port, Module, Opts}, Reason]),
-	    error
-    end.
-
-accept_ssl(ListenSocket, Module, Opts) ->
-    case ssl:accept(ListenSocket, 200) of
-	{ok, Socket} ->
-	    case {ssl:sockname(Socket), ssl:peername(Socket)} of
-		{{ok, Addr}, {ok, PAddr}} ->
-		    ?INFO_MSG("(~w) Accepted SSL connection ~w -> ~w",
-			      [Socket, PAddr, Addr]);
+udp_recv(Socket, Module, Opts) ->
+    case gen_udp:recv(Socket, 0) of
+	{ok, {Addr, Port, Packet}} ->
+	    case catch Module:udp_recv(Socket, Addr, Port, Packet, Opts) of
+		{'EXIT', Reason} ->
+		    ?ERROR_MSG("failed to process UDP packet:~n"
+			       "** Source: {~p, ~p}~n"
+			       "** Reason: ~p~n** Packet: ~p",
+			       [Addr, Port, Reason, Packet]);
 		_ ->
 		    ok
 	    end,
-	    {ok, Pid} = Module:start({ssl, Socket}, Opts),
-	    catch ssl:controlling_process(Socket, Pid),
-	    Module:become_controller(Pid),
-	    accept_ssl(ListenSocket, Module, Opts);
-	{error, timeout} ->
-	    accept_ssl(ListenSocket, Module, Opts);
+	    udp_recv(Socket, Module, Opts);
 	{error, Reason} ->
-	    ?INFO_MSG("(~w) Failed SSL handshake: ~w",
-		      [ListenSocket, Reason]),
-	    accept_ssl(ListenSocket, Module, Opts)
+	    ?ERROR_MSG("unexpected UDP error: ~s", [format_error(Reason)]),
+	    throw({error, Reason})
     end.
 
-
+%% @spec (Port, Module, Opts) -> {ok, Pid} | {error, Error}
 start_listener(Port, Module, Opts) ->
+    case start_listener2(Port, Module, Opts) of
+	{ok, _Pid} = R -> R;
+	{error, {{'EXIT', {undef, [{M, _F, _A}|_]}}, _} = Error} ->
+	    ?ERROR_MSG("Error starting the ejabberd listener: ~p.~n"
+		       "It could not be loaded or is not an ejabberd listener.~n"
+		       "Error: ~p~n", [Module, Error]),
+	    {error, {module_not_available, M}};
+	{error, {already_started, Pid}} ->
+	    {ok, Pid};
+	{error, Error} ->
+	    {error, Error}
+    end.
+
+%% @spec (Port, Module, Opts) -> {ok, Pid} | {error, Error}
+start_listener2(Port, Module, Opts) ->
+    %% It is only required to start the supervisor in some cases.
+    %% But it doesn't hurt to attempt to start it for any listener.
+    %% So, it's normal (and harmless) that in most cases this call returns: {error, {already_started, pid()}}
+    start_module_sup(Port, Module),
+    start_listener_sup(Port, Module, Opts).
+
+start_module_sup(_Port, Module) ->
+    Proc1 = gen_mod:get_module_proc("sup", Module),
+    ChildSpec1 =
+	{Proc1,
+	 {ejabberd_tmp_sup, start_link, [Proc1, strip_frontend(Module)]},
+	 permanent,
+	 infinity,
+	 supervisor,
+	 [ejabberd_tmp_sup]},
+    supervisor:start_child(ejabberd_sup, ChildSpec1).
+
+start_listener_sup(Port, Module, Opts) ->
     ChildSpec = {Port,
 		 {?MODULE, start, [Port, Module, Opts]},
 		 transient,
@@ -191,30 +299,159 @@ start_listener(Port, Module, Opts) ->
 		 [?MODULE]},
     supervisor:start_child(ejabberd_listeners, ChildSpec).
 
-stop_listener(Port) ->
-    supervisor:terminate_child(ejabberd_listeners, Port),
-    supervisor:delete_child(ejabberd_listeners, Port).
+%% @spec (PortIP, Module) -> ok
+%% where
+%%      PortIP = {Port, IPT | IPS}
+%%      Port = integer()
+%%      IPT = tuple()
+%%      IPS = string()
+%%      Module = atom()
+stop_listener(PortIP, _Module) ->
+    supervisor:terminate_child(ejabberd_listeners, PortIP),
+    supervisor:delete_child(ejabberd_listeners, PortIP).
 
-add_listener(Port, Module, Opts) ->
+%% @spec (PortIP, Module, Opts) -> {ok, Pid} | {error, Error}
+%% where
+%%      PortIP = {Port, IPT | IPS}
+%%      Port = integer()
+%%      IPT = tuple()
+%%      IPS = string()
+%%      IPV = inet | inet6
+%%      Module = atom()
+%%      Opts = [IPV | {ip, IPT} | atom() | tuple()]
+%% @doc Add a listener and store in config if success
+add_listener(PortIP, Module, Opts) ->
+    {Port, IPT, _, _, Proto, _} = parse_listener_portip(PortIP, Opts),
+    PortIP1 = {Port, IPT, Proto},
+    case start_listener(PortIP1, Module, Opts) of
+	{ok, _Pid} ->
+	    Ports = case ejabberd_config:get_local_option(listen) of
+			undefined ->
+			    [];
+			Ls ->
+			    Ls
+		    end,
+	    Ports1 = lists:keydelete(PortIP1, 1, Ports),
+	    Ports2 = [{PortIP1, Module, Opts} | Ports1],
+	    ejabberd_config:add_local_option(listen, Ports2),
+	    ok;
+	{error, {already_started, _Pid}} ->
+	    {error, {already_started, PortIP}};
+	{error, Error} ->
+	    {error, Error}
+    end.
+
+delete_listener(PortIP, Module) ->
+    delete_listener(PortIP, Module, []).
+
+%% @spec (PortIP, Module, Opts) -> ok
+%% where
+%%      PortIP = {Port, IPT | IPS}
+%%      Port = integer()
+%%      IPT = tuple()
+%%      IPS = string()
+%%      Module = atom()
+%%      Opts = [term()]
+delete_listener(PortIP, Module, Opts) ->
+    {Port, IPT, _, _, Proto, _} = parse_listener_portip(PortIP, Opts),
+    PortIP1 = {Port, IPT, Proto},
     Ports = case ejabberd_config:get_local_option(listen) of
 		undefined ->
 		    [];
 		Ls ->
 		    Ls
 	    end,
-    Ports1 = lists:keydelete(Port, 1, Ports),
-    Ports2 = [{Port, Module, Opts} | Ports1],
-    ejabberd_config:add_local_option(listen, Ports2),
-    start_listener(Port, Module, Opts).
-
-delete_listener(Port) ->
-    Ports = case ejabberd_config:get_local_option(listen) of
-		undefined ->
-		    [];
-		Ls ->
-		    Ls
-	    end,
-    Ports1 = lists:keydelete(Port, 1, Ports),
+    Ports1 = lists:keydelete(PortIP1, 1, Ports),
     ejabberd_config:add_local_option(listen, Ports1),
-    stop_listener(Port).
+    stop_listener(PortIP1, Module).
 
+is_frontend({frontend, _Module}) -> true;
+is_frontend(_) -> false.
+
+%% @doc(FrontMod) -> atom()
+%% where FrontMod = atom() | {frontend, atom()}
+strip_frontend({frontend, Module}) -> Module;
+strip_frontend(Module) when is_atom(Module) -> Module.
+
+
+%%%
+%%% Check options
+%%%
+
+check_listener_options(Opts) ->
+    case includes_deprecated_ssl_option(Opts) of
+	false -> ok;
+	true ->
+	    Error = "There is a problem with your ejabberd configuration file: "
+		"the option 'ssl' for listening sockets is no longer available."
+		" To get SSL encryption use the option 'tls'.",
+	    throw({error, Error})
+    end,
+    case certfile_readable(Opts) of
+	true -> ok;
+	{false, Path} ->
+            ErrorText = "There is a problem in the configuration: "
+		"the specified file is not readable: ",
+	    throw({error, ErrorText ++ Path})
+    end,
+    ok.
+
+%% Parse the options of the socket,
+%% and return if the deprecated option 'ssl' is included
+%% @spec (Opts) -> true | false
+includes_deprecated_ssl_option(Opts) ->
+    case lists:keysearch(ssl, 1, Opts) of
+	{value, {ssl, _SSLOpts}} ->
+	    true;
+	_ ->
+	    lists:member(ssl, Opts)
+    end.
+
+%% @spec (Opts) -> true | {false, Path::string()}
+certfile_readable(Opts) ->
+    case proplists:lookup(certfile, Opts) of
+	none -> true;
+	{certfile, Path} ->
+	    case ejabberd_config:is_file_readable(Path) of
+		true -> true;
+		false -> {false, Path}
+	    end
+    end.
+
+get_proto(Opts) ->
+    case proplists:get_value(proto, Opts) of
+	undefined ->
+	    tcp;
+	Proto ->
+	    normalize_proto(Proto)
+    end.
+
+normalize_proto(tcp) -> tcp;
+normalize_proto(udp) -> udp;
+normalize_proto(UnknownProto) ->
+    ?WARNING_MSG("There is a problem in the configuration: "
+		 "~p is an unknown IP protocol. Using tcp as fallback",
+		 [UnknownProto]),
+    tcp.
+
+socket_error(Reason, PortIP, Module, SockOpts, Port, IPS) ->
+    ReasonT = case Reason of
+		  eaddrnotavail ->
+		      "IP address not available: " ++ IPS;
+		  eaddrinuse ->
+		      "IP address and port number already used: "
+			  ++IPS++" "++integer_to_list(Port);
+		  _ ->
+		      format_error(Reason)
+	      end,
+    ?ERROR_MSG("Failed to open socket:~n  ~p~nReason: ~s",
+	       [{Port, Module, SockOpts}, ReasonT]),
+    throw({Reason, PortIP}).
+
+format_error(Reason) ->
+    case inet:format_error(Reason) of
+	"unknown POSIX error" ->
+	    atom_to_list(Reason);
+	ReasonStr ->
+	    ReasonStr
+    end.

@@ -11,6 +11,7 @@ all: docs
 clean:
 	rm -f *.html
 	rm edoc-info
+	rm erlang.png
 
 docs:
 	erl -noshell -run edoc_run application \

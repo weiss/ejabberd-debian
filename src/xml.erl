@@ -34,6 +34,7 @@
 	 get_attr/2, get_attr_s/2,
 	 get_tag_attr/2, get_tag_attr_s/2,
 	 get_subtag/2, get_subtag_cdata/2,
+	 append_subtags/2,
 	 get_path_s/2,
 	 replace_tag_attr/3]).
 
@@ -47,18 +48,26 @@
 -endif.
 
 element_to_string(El) ->
+    case catch element_to_string_nocatch(El) of
+	{'EXIT', Reason} ->
+	    erlang:error({badxml, El, Reason});
+	Result ->
+	    Result
+    end.
+
+element_to_string_nocatch(El) ->
     case El of
 	{xmlelement, Name, Attrs, Els} ->
 	    if
 		Els /= [] ->
 		    [$<, Name, attrs_to_list(Attrs), $>,
-		     [element_to_string(E) || E <- Els],
+		     [element_to_string_nocatch(E) || E <- Els],
 		     $<, $/, Name, $>];
 	       true ->
 		    [$<, Name, attrs_to_list(Attrs), $/, $>]
 	       end;
 	%% We do not crypt CDATA binary, but we enclose it in XML CDATA
-	{xmlcdata, CData} when binary(CData) ->
+	{xmlcdata, CData} when is_binary(CData) ->
 	    ?ESCAPE_BINARY(CData);
 	%% We crypt list and possibly binaries if full XML usage is
 	%% disabled unsupported (implies a conversion to list).
@@ -210,6 +219,9 @@ get_subtag_cdata(Tag, Name) ->
 	Subtag ->
 	    get_tag_cdata(Subtag)
     end.
+
+append_subtags({xmlelement, Name, Attrs, SubTags1}, SubTags2) ->
+    {xmlelement, Name, Attrs, SubTags1 ++ SubTags2}.
 
 get_path_s(El, []) ->
     El;

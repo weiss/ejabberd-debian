@@ -95,7 +95,7 @@ get_db_used() ->
 	    [], Domains),
     lists:usort(DBs).
 
-%% @doc Depending in the DB definition, return which type of DB this is
+%% @doc Depending in the DB definition, return which type of DB this is.
 %% Note that MSSQL is detected as ODBC.
 %% @spec (DB) -> mysql | pgsql | odbc
 get_db_type(DB) when is_tuple(DB) ->

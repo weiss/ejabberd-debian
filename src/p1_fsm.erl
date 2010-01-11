@@ -26,7 +26,7 @@
 %%   message processing does not return in a given period of time, the
 %%   process will be terminated.
 %% 
-%%     $Id: p1_fsm.erl 1805 2009-01-12 14:52:59Z badlop $
+%%     $Id: p1_fsm.erl 2057 2009-05-06 16:54:43Z badlop $
 %%
 -module(p1_fsm).
 
@@ -663,7 +663,7 @@ limit_options([], Limits) ->
     Limits;
 %% Maximum number of messages allowed in the process message queue
 limit_options([{max_queue,N}|Options], Limits) 
-  when integer(N) ->
+  when is_integer(N) ->
     NewLimits = Limits#limits{max_queue=N},
     limit_options(Options, NewLimits);
 limit_options([_|Options], Limits) ->

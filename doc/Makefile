@@ -3,12 +3,9 @@
 SHELL = /bin/bash
 
 CONTRIBUTED_MODULES = ""
-ifeq ($(shell ls mod_http_bind.tex),mod_http_bind.tex)
-	CONTRIBUTED_MODULES += "\\n\\setboolean{modhttpbind}{true}"
-endif
-ifeq ($(shell ls mod_http_fileserver.tex),mod_http_fileserver.tex)
-	CONTRIBUTED_MODULES += "\\n\\setboolean{modhttpfileserver}{true}"
-endif
+#ifeq ($(shell ls mod_http_bind.tex),mod_http_bind.tex)
+#	CONTRIBUTED_MODULES += "\\n\\setboolean{modhttpbind}{true}"
+#endif
 
 
 all:	release pdf html
@@ -16,7 +13,7 @@ all:	release pdf html
 release:
 	@echo "Notes for the releaser:"
 	@echo "* Do not forget to add a link to the release notes in guide.tex"
-	@echo "* Do not forget to update the version number in src/ejabberd.hrl!"
+	@echo "* Do not forget to update the version number in src/ejabberd.app!"
 	@echo "* Do not forget to update the features in introduction.tex (including \new{} and \improved{} tags)."
 	@echo "Press any key to continue"
 	@read foo

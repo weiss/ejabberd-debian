@@ -1,4 +1,4 @@
-# $Id: Makefile.in 1971 2009-03-06 11:34:27Z badlop $
+# $Id: Makefile.in 1682 2008-11-24 13:27:04Z ekhramtsov $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -11,7 +11,9 @@ ASN_FLAGS = -bber_bin +optimize +driver
 ERLANG_CFLAGS = @ERLANG_CFLAGS@
 ERLANG_LIBS = @ERLANG_LIBS@
 
-EFLAGS = -I .. -pz ..
+EFLAGS += -I ..
+EFLAGS += -pz ..
+
 # make debug=true to compile Erlang module with debug informations.
 ifdef debug
 	EFLAGS+=+debug_info

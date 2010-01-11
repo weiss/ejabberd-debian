@@ -542,15 +542,28 @@ is_user_in_group({_U, S} = US, Group, Host) ->
 %% @spec (Host::string(), {User::string(), Server::string()}, Group::string()) -> {atomic, ok}
 add_user_to_group(Host, US, Group) ->
     {LUser, LServer} = US,
-    %% Push this new user to members of groups where this group is displayed
-    push_user_to_displayed(LUser, LServer, Group, both),
-    %% Push members of groups that are displayed to this group
-    push_displayed_to_user(LUser, LServer, Group, Host, both),
-    R = #sr_user{us = US, group_host = {Group, Host}},
-    F = fun() ->
-		mnesia:write(R)
-	end,
-    mnesia:transaction(F).
+    case regexp:match(LUser, "^@.+@$") of
+	{match,_,_} ->
+	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    AllUsersOpt =
+		case LUser == "@all@" of
+		    true -> [{all_users, true}];
+		    false -> []
+		end,
+            mod_shared_roster:set_group_opts(
+	      Host, Group,
+	      GroupOpts ++ AllUsersOpt);
+	nomatch ->
+	    %% Push this new user to members of groups where this group is displayed
+	    push_user_to_displayed(LUser, LServer, Group, both),
+	    %% Push members of groups that are displayed to this group
+	    push_displayed_to_user(LUser, LServer, Group, Host, both),
+	    R = #sr_user{us = US, group_host = {Group, Host}},
+	    F = fun() ->
+			mnesia:write(R)
+	        end,
+	    mnesia:transaction(F)
+    end.
 
 push_displayed_to_user(LUser, LServer, Group, Host, Subscription) ->
     GroupsOpts = groups_with_opts(LServer),
@@ -560,17 +573,29 @@ push_displayed_to_user(LUser, LServer, Group, Host, Subscription) ->
 
 remove_user_from_group(Host, US, Group) ->
     GroupHost = {Group, Host},
-    R = #sr_user{us = US, group_host = GroupHost},
-    F = fun() ->
-		mnesia:delete_object(R)
-	end,
-    Result = mnesia:transaction(F),
     {LUser, LServer} = US,
-    %% Push removal of the old user to members of groups where the group that this user was members was displayed
-    push_user_to_displayed(LUser, LServer, Group, remove),
-    %% Push removal of members of groups that where displayed to the group which this user has left
-    push_displayed_to_user(LUser, LServer, Group, Host, remove),
-    Result.
+    case regexp:match(LUser, "^@.+@$") of
+	{match,_,_} ->
+	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    NewGroupOpts =
+		case LUser of
+		    "@all@" ->
+			lists:filter(fun(X) -> X/={all_users,true} end, GroupOpts)
+		end,
+	    mod_shared_roster:set_group_opts(Host, Group, NewGroupOpts);
+	nomatch ->
+	    R = #sr_user{us = US, group_host = GroupHost},
+	    F = fun() ->
+			mnesia:delete_object(R)
+		end,
+	    Result = mnesia:transaction(F),
+	    %% Push removal of the old user to members of groups where the group that this user was members was displayed
+	    push_user_to_displayed(LUser, LServer, Group, remove),
+	    %% Push removal of members of groups that where displayed to the group which this user has left
+	    push_displayed_to_user(LUser, LServer, Group, Host, remove),
+	    Result
+    end.
+
 
 push_members_to_user(LUser, LServer, Group, Host, Subscription) ->
     GroupsOpts = groups_with_opts(LServer),
@@ -748,10 +773,10 @@ list_shared_roster_groups(Host, Query, Lang) ->
 		       ]
 		      )]
 		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
+    ?H1GL(?T("Shared Roster Groups"), "modsharedroster", "mod_shared_roster") ++
 	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
+	    ok -> [?XREST("Submitted")];
+	    error -> [?XREST("Bad format")];
 	    nothing -> []
 	end ++
 	[?XAE("form", [{"action", ""}, {"method", "post"}],
@@ -814,8 +839,9 @@ shared_roster_group(Host, Group, Query, Lang) ->
 		[]
 	end ++ [[us_to_list(Member), $\n] || Member <- Members],
     FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
+    DescNL = length(element(2, regexp:split(Description, "\n"))),
     FGroup =
-	?XAE("table", [],
+	?XAE("table", [{"class", "withtextareas"}],
 	     [?XE("tbody",
 		  [?XE("tr",
 		       [?XCT("td", "Name:"),
@@ -824,34 +850,34 @@ shared_roster_group(Host, Group, Query, Lang) ->
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Description:"),
-			?XE("td", [?XAC("textarea", [{"name", "description"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					Description)])
+			?XE("td", [
+				   ?TEXTAREA("description", integer_to_list(lists:max([3, DescNL])), "20", Description)
+				  ]
+			   )
 		       ]
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Members:"),
-			?XE("td", [?XAC("textarea", [{"name", "members"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FMembers)])
+			?XE("td", [
+				   ?TEXTAREA("members", integer_to_list(lists:max([3, length(FMembers)])), "20", FMembers)
+				  ]
+			   )
 		       ]
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Displayed Groups:"),
-			?XE("td", [?XAC("textarea", [{"name", "dispgroups"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FDisplayedGroups)])
+			?XE("td", [
+				   ?TEXTAREA("dispgroups", integer_to_list(lists:max([3, length(FDisplayedGroups)])), "20", FDisplayedGroups)
+				  ]
+			   )
 		       ]
 		      )]
 		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
+    ?H1GL(?T("Shared Roster Groups"), "modsharedroster", "mod_shared_roster") ++
 	[?XC("h2", ?T("Group ") ++ Group)] ++
 	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
+	    ok -> [?XREST("Submitted")];
+	    error -> [?XREST("Bad format")];
 	    nothing -> []
 	end ++
 	[?XAE("form", [{"action", ""}, {"method", "post"}],

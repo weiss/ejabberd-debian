@@ -66,6 +66,7 @@
 		servers,
 		backups,
 		port,
+		encrypt,
 		dn,
 		password,
 		base,
@@ -112,11 +113,8 @@ start_link(Host) ->
     Proc = gen_mod:get_module_proc(Host, ?MODULE),
     gen_server:start_link({local, Proc}, ?MODULE, Host, []).
 
-terminate(_Reason, State) ->
-    ejabberd_ctl:unregister_commands(
-      State#state.host,
-      [{"registered-users", "list all registered users"}],
-      ejabberd_auth, ctl_process_get_registered).
+terminate(_Reason, _State) ->
+    ok.
 
 init(Host) ->
     State = parse_options(Host),
@@ -125,17 +123,15 @@ init(Host) ->
 		     State#state.backups,
 		     State#state.port,
 		     State#state.dn,
-		     State#state.password),
+		     State#state.password,
+		     State#state.encrypt),
     eldap_pool:start_link(State#state.bind_eldap_id,
 		     State#state.servers,
 		     State#state.backups,
 		     State#state.port,
 		     State#state.dn,
-		     State#state.password),
-    ejabberd_ctl:register_commands(
-      Host,
-      [{"registered-users", "list all registered users"}],
-      ejabberd_auth, ctl_process_get_registered),
+		     State#state.password,
+		     State#state.encrypt),
     {ok, State}.
 
 plain_password_required() ->
@@ -154,7 +150,7 @@ check_password(User, Server, Password) ->
         end
     end.
 
-check_password(User, Server, Password, _StreamID, _Digest) ->
+check_password(User, Server, Password, _Digest, _DigestGen) ->
     check_password(User, Server, Password).
 
 set_password(_User, _Server, _Password) ->
@@ -361,8 +357,13 @@ parse_options(Host) ->
 		   undefined -> [];
 		   Backups -> Backups
 		   end,
+    LDAPEncrypt = ejabberd_config:get_local_option({ldap_encrypt, Host}),
     LDAPPort = case ejabberd_config:get_local_option({ldap_port, Host}) of
-		   undefined -> 389;
+		   undefined -> case LDAPEncrypt of
+				    tls -> ?LDAPS_PORT;
+				    starttls -> ?LDAP_PORT;
+				    _ -> ?LDAP_PORT
+				end;
 		   P -> P
 	       end,
     RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
@@ -397,6 +398,7 @@ parse_options(Host) ->
 	   servers = LDAPServers,
 	   backups = LDAPBackups,
 	   port = LDAPPort,
+	   encrypt = LDAPEncrypt,
 	   dn = RootDN,
 	   password = Password,
 	   base = LDAPBase,
