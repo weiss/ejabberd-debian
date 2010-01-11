@@ -1,4 +1,4 @@
-# $Id: Makefile.in 2521 2009-08-24 19:44:07Z badlop $
+# $Id: Makefile.in 2598 2009-09-11 08:59:53Z badlop $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -277,6 +277,7 @@ distclean: distclean-recursive clean-local
 	rm -f config.status
 	rm -f config.log
 	rm -f Makefile
+	[ ! -f ../ChangeLog ] || rm -f ../ChangeLog
 
 TAGS:
 	etags *.erl

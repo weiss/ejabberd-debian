@@ -81,7 +81,9 @@
 	 get_item/2,
 	 set_item/1,
 	 get_item_name/3,
-	 get_last_items/3
+	 get_last_items/3,
+	 path_to_node/1,
+	 node_to_path/1
 	]).
 
 -export([
@@ -142,11 +144,12 @@ options() ->
      {notify_delete, false},
      {notify_retract, true},
      {persist_items, true},
-     {max_items, ?MAXITEMS div 2},
+     {max_items, ?MAXITEMS},
      {subscribe, true},
      {access_model, open},
      {roster_groups_allowed, []},
      {publish_model, publishers},
+     {notification_type, headline},
      {max_payload_size, ?MAX_PAYLOAD_SIZE},
      {send_last_published_item, on_sub_and_presence},
      {deliver_notifications, true},
@@ -209,7 +212,7 @@ create_node_permission(Host, ServerHost, Node, _ParentNode, Owner, Access) ->
 	_ ->
 	    case acl:match_rule(ServerHost, Access, LOwner) of
 		allow ->
-		    case Node of
+		    case node_to_path(Node) of
 			["home", Server, User | _] -> true;
 			_ -> false
 		    end;
@@ -318,9 +321,6 @@ subscribe_node(NodeId, Sender, Subscriber, AccessModel,
 	(AccessModel == whitelist) and (not Whitelisted) ->
 	    %% Node has whitelist access model and entity lacks required affiliation
 	    {error, ?ERR_EXTENDED(?ERR_NOT_ALLOWED, "closed-node")};
-	(AccessModel == authorize) -> % TODO: to be done
-	    %% Node has authorize access model
-	    {error, ?ERR_FORBIDDEN};
 	%%MustPay ->
 	%%	% Payment is required for a subscription
 	%%	{error, ?ERR_PAYMENT_REQUIRED};
@@ -982,7 +982,17 @@ get_items(NodeId, _From) ->
 	{result, []}
     end.
 get_items(NodeId, From, none) ->
-    get_items(NodeId, From, #rsm_in{max=?MAXITEMS div 2});
+    MaxItems = case catch ejabberd_odbc:sql_query_t(
+	["select val from pubsub_node_option "
+	 "where nodeid='", NodeId, "' "
+	 "and name='max_items';"]) of
+    {selected, ["val"], [{Value}]} ->
+	Tokens = element(2, erl_scan:string(Value++".")),
+	element(2, erl_parse:parse_term(Tokens));
+    _ ->
+	?MAXITEMS
+    end,
+    get_items(NodeId, From, #rsm_in{max=MaxItems});
 get_items(NodeId, _From, #rsm_in{max=M, direction=Direction, id=I, index=IncIndex})->
 	Max =  ?PUBSUB:escape(i2l(M)),
 	
@@ -1074,7 +1084,7 @@ get_items(NodeId, JID, AccessModel, PresenceSubscription, RosterGroup, _SubId, R
 	(AccessModel == whitelist) and (not Whitelisted) ->
 	    %% Node has whitelist access model and entity lacks required affiliation
 	    {error, ?ERR_EXTENDED(?ERR_NOT_ALLOWED, "closed-node")};
-	(AccessModel == authorize) -> % TODO: to be done
+	(AccessModel == authorize) and (not Whitelisted) ->
 	    %% Node has authorize access model
 	    {error, ?ERR_FORBIDDEN};
 	%%MustPay ->
@@ -1137,7 +1147,7 @@ get_item(NodeId, ItemId, JID, AccessModel, PresenceSubscription, RosterGroup, _S
 	(AccessModel == whitelist) and (not Whitelisted) ->
 	    %% Node has whitelist access model and entity lacks required affiliation
 	    {error, ?ERR_EXTENDED(?ERR_NOT_ALLOWED, "closed-node")};
-	(AccessModel == authorize) -> % TODO: to be done
+	(AccessModel == authorize) and (not Whitelisted) ->
 	    %% Node has authorize access model
 	    {error, ?ERR_FORBIDDEN};
 	%%MustPay ->
@@ -1200,6 +1210,14 @@ del_items(NodeId, ItemIds) ->
 %% node id.</p>
 get_item_name(_Host, _Node, Id) ->
     Id.
+
+node_to_path(Node) ->
+    string:tokens(binary_to_list(Node), "/").
+
+path_to_node([]) ->
+    <<>>;
+path_to_node(Path) ->
+    list_to_binary(string:join([""|Path], "/")).
 
 %% @spec (Affiliation, Subscription) -> true | false
 %%       Affiliation = owner | member | publisher | outcast | none
@@ -1295,6 +1313,7 @@ decode_node(N) -> ?PUBSUB:string_to_node(N).
 
 decode_affiliation("o") -> owner;
 decode_affiliation("p") -> publisher;
+decode_affiliation("m") -> member;
 decode_affiliation("c") -> outcast;
 decode_affiliation(_) -> none.
 
@@ -1314,6 +1333,7 @@ encode_jid(JID) -> ?PUBSUB:escape(jlib:jid_to_string(JID)).
 
 encode_affiliation(owner) -> "o";
 encode_affiliation(publisher) -> "p";
+encode_affiliation(member) -> "m";
 encode_affiliation(outcast) -> "c";
 encode_affiliation(_) -> "n".
 

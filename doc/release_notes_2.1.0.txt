@@ -43,8 +43,10 @@
 
 * Configuration
 - Added option access_max_user_messages for mod_offline
+- Added option backlog for ejabberd_listener to increase TCP backlog
 - Added option define_macro and use_macro
 - Added option include_config_file to include additional configuration files
+- Added option max_fsm_queue
 - Added option outgoing_s2s_options to define IP address families and timeout
 - Added option registration_timeout to ejabberd.cfg.example
 - Added option s2s_dns_options to define DNS timeout and retries
@@ -63,6 +65,7 @@
 - New syntax to specify the network protocol: tcp or udp
 - Report error at startup if a listener module isn't available
 - Only listen in a port when actually ready to serve requests
+- In default config, only local accounts can create rooms and PubSub nodes
 
 * Core architecture
 - More verbose error reporting for xml:element_to_string
@@ -105,6 +108,8 @@
 * Localization
 - Use Gettext PO for translators, export to ejabberd MSG
 - Support translation files for additional projects
+- Most translations are updated to latest code
+- New translation to Greek language
 
 * Multi-User Chat (MUC)
 - Allow admins to send messages to rooms
@@ -130,6 +135,8 @@
 - Implicit item deletion is not notified when deleting node
 - Make PubSub x-data configuration form handles list value
 - Make default node name convention XEP-compatible, document usage of hierarchy
+- Node names are used verbatim, without separating by slash, unless a
+  node plugin uses its own separator
 - Send authorization update event (XEP-0060, 8.6)
 - Support of collection node subscription options
 - Support ODBC storage. Experimental, needs more testing.
@@ -202,11 +209,24 @@
 
    Upgrading From ejabberd 2.0.x:
 
-- The database schemas didn't change since ejabberd 1.1.4.
-  Anyway, it is recommended to backup the Mnesia spool directory and
+- The database schemas have three changes since ejabberd 2.0.x.
+  Check the database creation SQL files and update your database.
+  1) New table roster_version to support roster versioning.
+  2) Six new tables for optional pubsub ODBC storage.
+  3) Some tables in the MySQL database have a new created_at column.
+
+- As usual, it is recommended to backup the Mnesia spool directory and
   your SQL database (if used) before upgrading ejabberd.
 
-- The listener options 'ip' and inet6' are not documented anymore
+- Between ejabberd 2.0.0 and 2.0.5, mod_pubsub used "default" as the
+  default node plugin. But in 2.1.0 this is renamed to "hometree".
+  You have to edit your ejabberd config file and replace those names.
+  If you used ejabberd 2.0.5 or older, the database will be updated
+  automatically. But if you were using ejabberd from SVN, you must
+  manually run ejabberdctl with the command: rename_default_nodeplugin.
+  Running this command on already updated database does nothing.
+
+- The listener options 'ip' and 'inet6' are not documented anymore
   but they are supported and you can continue using them.
   There is a new syntax to define IP address and IP version.
   As usual, check the ejabberd Guide for more information.
