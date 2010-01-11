@@ -5,7 +5,7 @@
 %%% Created : 23 Aug 2006 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -65,19 +65,27 @@ start(Module, SockMod, Socket, Opts) ->
 	    SocketData = #socket_state{sockmod = SockMod,
 				       socket = Socket,
 				       receiver = Receiver},
-	    {ok, Pid} = Module:start({?MODULE, SocketData}, Opts),
-	    case SockMod:controlling_process(Socket, Receiver) of
-		ok ->
-		    ok;
+	    case Module:start({?MODULE, SocketData}, Opts) of
+		{ok, Pid} ->
+		    case SockMod:controlling_process(Socket, Receiver) of
+			ok ->
+			    ok;
+			{error, _Reason} ->
+			    SockMod:close(Socket)
+		    end,
+		    ejabberd_receiver:become_controller(Receiver, Pid);
 		{error, _Reason} ->
 		    SockMod:close(Socket)
-	    end,
-	    ejabberd_receiver:become_controller(Receiver, Pid);
+	    end;
 	raw ->
-	    {ok, Pid} = Module:start({SockMod, Socket}, Opts),
-	    case SockMod:controlling_process(Socket, Pid) of
-		ok ->
-		    ok;
+	    case Module:start({SockMod, Socket}, Opts) of
+		{ok, Pid} ->
+		    case SockMod:controlling_process(Socket, Pid) of
+			ok ->
+			    ok;
+			{error, _Reason} ->
+			    SockMod:close(Socket)
+		    end;
 		{error, _Reason} ->
 		    SockMod:close(Socket)
 	    end

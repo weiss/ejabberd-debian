@@ -5,7 +5,7 @@
 %%% Created : 12 Mar 2006 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -120,9 +120,11 @@ init([Host, Opts]) ->
     NoFollow = gen_mod:get_opt(spam_prevention, Opts, true),
     Lang = case ejabberd_config:get_local_option({language, Host}) of
 	       undefined ->
-		   "";
-	       L ->
-		   L
+		   case ejabberd_config:get_global_option(language) of
+		       undefined -> "en";
+		       L -> L
+		   end;
+	       L -> L
 	   end,
     {ok, #state{host = Host,
 		out_dir = OutDir,
@@ -286,9 +288,10 @@ add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
 	   top_link = TopLink} = State,
     Room = get_room_info(RoomJID, Opts),
 
+    Now = now(),
     TimeStamp = case Timezone of
-		    local -> calendar:now_to_local_time(now());
-		    universal -> calendar:now_to_universal_time(now())
+		    local -> calendar:now_to_local_time(Now);
+		    universal -> calendar:now_to_universal_time(Now)
 		end,
     {Fd, Fn, _Dir} = build_filename_string(TimeStamp, OutDir, Room#room.jid, DirType),
     {Date, Time} = TimeStamp,
@@ -382,10 +385,12 @@ add_message_to_log(Nick1, Message, RoomJID, Opts, State) ->
     {Hour, Minute, Second} = Time,
     STime = lists:flatten(
 	      io_lib:format("~2..0w:~2..0w:~2..0w", [Hour, Minute, Second])),
+    {_, _, Microsecs} = Now,
+    STimeUnique = io_lib:format("~s.~w", [STime, Microsecs]),
 
     % Write message
-    file:write(F, io_lib:format("<a name=\"~s\" href=\"#~s\" class=\"ts\">[~s]</a> ~s~n", 
-				[STime, STime, STime, Text])),
+    file:write(F, io_lib:format("<a id=\"~s\" name=\"~s\" href=\"#~s\" class=\"ts\">[~s]</a> ~s~n",
+				[STimeUnique, STimeUnique, STimeUnique, STime, Text])),
 
     % Close file
     file:close(F),
@@ -696,7 +701,8 @@ htmlize2(S1, NoFollow) ->
     S2 = element(2, regexp:gsub(S1, "\\&", "\\&amp;")),
     S3 = element(2, regexp:gsub(S2, "<", "\\&lt;")),
     S4 = element(2, regexp:gsub(S3, ">", "\\&gt;")),
-    S5 = element(2, regexp:gsub(S4, "[-+.a-zA-Z0-9]+://[^] )\'\"}]+", link_regexp(NoFollow))),
+    S5 = element(2, regexp:gsub(S4, "(http|https|ftp|mailto|xmpp)://[^] )\'\"}]+",
+				link_regexp(NoFollow))),
     %% Remove 'right-to-left override' unicode character 0x202e
     element(2, regexp:gsub(S5, [226,128,174], "[RLO]")).
 

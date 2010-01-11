@@ -5,7 +5,7 @@
 %%% Created : 11 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -253,34 +253,7 @@ process_item_set(From, To, {xmlelement, _Name, Attrs, Els}) ->
 		    push_item(User, LServer, To, Item),
 		    case Item#roster.subscription of
 			remove ->
-			    IsTo = case OldItem#roster.subscription of
-				       both -> true;
-				       to -> true;
-				       _ -> false
-				   end,
-			    IsFrom = case OldItem#roster.subscription of
-					 both -> true;
-					 from -> true;
-					 _ -> false
-				     end,
-			    if IsTo ->
-				    ejabberd_router:route(
-				      jlib:jid_remove_resource(From),
-				      jlib:make_jid(OldItem#roster.jid),
-				      {xmlelement, "presence",
-				       [{"type", "unsubscribe"}],
-				       []});
-			       true -> ok
-			    end,
-			    if IsFrom ->
-				    ejabberd_router:route(
-				      jlib:jid_remove_resource(From),
-				      jlib:make_jid(OldItem#roster.jid),
-				      {xmlelement, "presence",
-				       [{"type", "unsubscribed"}],
-				       []});
-			       true -> ok
-			    end,
+			    send_unsubscribing_presence(From, OldItem),
 			    ok;
 			_ ->
 			    ok
@@ -371,7 +344,7 @@ push_item(User, Server, Resource, _From, Item) ->
 
 push_item(User, Server, Resource, From, Item) ->
     ResIQ = #iq{type = set, xmlns = ?NS_ROSTER,
-		id = "push",
+		id = "push" ++ randoms:get_string(),
 		sub_el = [{xmlelement, "query",
 			   [{"xmlns", ?NS_ROSTER}],
 			   [item_to_xml(Item)]}]},
@@ -607,6 +580,7 @@ remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
     US = {LUser, LServer},
+    send_unsubscription_to_rosteritems(LUser, LServer),
     F = fun() ->
 		lists:foreach(fun(R) ->
 				      mnesia:delete_object(R)
@@ -614,6 +588,51 @@ remove_user(User, Server) ->
 			      mnesia:index_read(roster, US, #roster.us))
         end,
     mnesia:transaction(F).
+
+%% For each contact with Subscription:
+%% Both or From, send a "unsubscribed" presence stanza;
+%% Both or To, send a "unsubscribe" presence stanza.
+send_unsubscription_to_rosteritems(LUser, LServer) ->
+    RosterItems = get_user_roster([], {LUser, LServer}),
+    From = jlib:make_jid({LUser, LServer, ""}),
+    lists:foreach(fun(RosterItem) ->
+			  send_unsubscribing_presence(From, RosterItem)
+		  end,
+		  RosterItems).
+
+%% @spec (From::jid(), Item::roster()) -> ok
+send_unsubscribing_presence(From, Item) ->
+    IsTo = case Item#roster.subscription of
+	       both -> true;
+	       to -> true;
+	       _ -> false
+	   end,
+    IsFrom = case Item#roster.subscription of
+		 both -> true;
+		 from -> true;
+		 _ -> false
+	     end,
+    if IsTo ->
+	    send_presence_type(
+	      jlib:jid_remove_resource(From),
+	      jlib:make_jid(Item#roster.jid), "unsubscribe");
+       true -> ok
+    end,
+    if IsFrom ->
+	    send_presence_type(
+	      jlib:jid_remove_resource(From),
+	      jlib:make_jid(Item#roster.jid), "unsubscribed");
+       true -> ok
+    end,
+    ok.
+
+send_presence_type(From, To, Type) ->
+    ejabberd_router:route(
+      From, To,
+      {xmlelement, "presence",
+       [{"type", Type}],
+       []}).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

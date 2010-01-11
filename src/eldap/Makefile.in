@@ -1,10 +1,12 @@
-# $Id: Makefile.in 1250 2008-03-22 16:44:23Z mremond $
+# $Id: Makefile.in 1971 2009-03-06 11:34:27Z badlop $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
+
+ASN_FLAGS = -bber_bin +optimize +driver
 
 ERLANG_CFLAGS = @ERLANG_CFLAGS@
 ERLANG_LIBS = @ERLANG_LIBS@
@@ -22,8 +24,10 @@ BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
 
 all:    $(BEAMS) ELDAPv3.beam
 
+ELDAPv3.beam: ELDAPv3.erl
+
 ELDAPv3.erl:       ELDAPv3.asn
-	@ERLC@ -bber_bin -W $(EFLAGS) $<
+	@ERLC@ $(ASN_FLAGS) -W $(EFLAGS) $<
 
 $(OUTDIR)/%.beam:	%.erl ELDAPv3.erl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<

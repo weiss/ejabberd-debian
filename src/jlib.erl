@@ -5,7 +5,7 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -34,6 +34,8 @@
 	 make_correct_from_to_attrs/3,
 	 replace_from_to_attrs/3,
 	 replace_from_to/3,
+	 replace_from_attrs/2,
+	 replace_from/2,
 	 remove_attr/2,
 	 make_jid/3,
 	 make_jid/1,
@@ -59,7 +61,8 @@
 	 now_to_local_string/1,
 	 datetime_string_to_timestamp/1,
 	 decode_base64/1,
-	 encode_base64/1]).
+	 encode_base64/1,
+	 ip_to_list/1]).
 
 -include("jlib.hrl").
 
@@ -152,6 +155,13 @@ replace_from_to(From, To, {xmlelement, Name, Attrs, Els}) ->
 				     Attrs),
     {xmlelement, Name, NewAttrs, Els}.
 
+replace_from_attrs(From, Attrs) ->
+    Attrs1 = lists:keydelete("from", 1, Attrs),
+    [{"from", From} | Attrs1].
+
+replace_from(From, {xmlelement, Name, Attrs, Els}) ->
+    NewAttrs = replace_from_attrs(jlib:jid_to_string(From), Attrs),
+    {xmlelement, Name, NewAttrs, Els}.
 
 remove_attr(Attr, {xmlelement, Name, Attrs, Els}) ->
     NewAttrs = lists:keydelete(Attr, 1, Attrs),
@@ -676,3 +686,9 @@ e(X) when X>51, X<62 ->     X-4;
 e(62) ->                    $+;
 e(63) ->                    $/;
 e(X) ->                     exit({bad_encode_base64_token, X}).
+
+%% Convert Erlang inet IP to list
+ip_to_list({IP, _Port}) ->
+    ip_to_list(IP);
+ip_to_list({A,B,C,D}) ->
+    lists:flatten(io_lib:format("~w.~w.~w.~w",[A,B,C,D])).

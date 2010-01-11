@@ -5,7 +5,7 @@
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -98,6 +98,8 @@ check_password(User, Server, Password, StreamID, Digest) ->
 	    false
     end.
 
+%% @spec (User::string(), Server::string(), Password::string()) ->
+%%       ok | {error, invalid_jid}
 set_password(User, Server, Password) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
@@ -110,10 +112,12 @@ set_password(User, Server, Password) ->
 			mnesia:write(#passwd{us = US,
 					     password = Password})
 		end,
-	    mnesia:transaction(F)
+	    {atomic, ok} = mnesia:transaction(F),
+	    ok
     end.
 
 
+%% @spec (User, Server, Password) -> {atomic, ok} | {atomic, exists} | {error, invalid_jid} | {aborted, Reason}
 try_register(User, Server, Password) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
@@ -226,6 +230,7 @@ get_password_s(User, Server) ->
 	    []
     end.
 
+%% @spec (User, Server) -> true | false | {error, Error}
 is_user_exists(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
@@ -235,10 +240,13 @@ is_user_exists(User, Server) ->
 	    false;
 	[_] ->
 	    true;
-	_ ->
-	    false
+	Other ->
+	    {error, Other}
     end.
 
+%% @spec (User, Server) -> ok
+%% @doc Remove user.
+%% Note: it returns ok even if there was some problem removing the user.
 remove_user(User, Server) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
@@ -247,8 +255,10 @@ remove_user(User, Server) ->
 		mnesia:delete({passwd, US})
         end,
     mnesia:transaction(F),
-    ejabberd_hooks:run(remove_user, LServer, [User, Server]).
+	ok.
 
+%% @spec (User, Server, Password) -> ok | not_exists | not_allowed | bad_request
+%% @doc Remove user if the provided password is correct.
 remove_user(User, Server, Password) ->
     LUser = jlib:nodeprep(User),
     LServer = jlib:nameprep(Server),
@@ -266,7 +276,6 @@ remove_user(User, Server, Password) ->
         end,
     case mnesia:transaction(F) of
 	{atomic, ok} ->
-	    ejabberd_hooks:run(remove_user, LServer, [User, Server]),
 	    ok;
 	{atomic, Res} ->
 	    Res;

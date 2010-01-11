@@ -21,7 +21,7 @@ release:
 	@echo "Press any key to continue"
 	@read foo
 	@echo "% ejabberd version (automatically generated)." > version.tex
-	@echo "\newcommand{\version}{"`sed '/VERSION/!d;s/\(.*\)"\(.*\)"\(.*\)/\2/' ../src/ejabberd.hrl`"}" >> version.tex
+	@echo "\newcommand{\version}{"`sed '/vsn/!d;s/\(.*\)"\(.*\)"\(.*\)/\2/' ../src/ejabberd.app`"}" >> version.tex
 	@echo -n "% Contributed modules (automatically generated)."  > contributed_modules.tex
 	@echo -e "$(CONTRIBUTED_MODULES)" >> contributed_modules.tex
 
@@ -32,7 +32,6 @@ pdf:	guide.pdf features.pdf
 clean:
 	rm -f *.aux
 	rm -f *.haux
-	rm -f *.html
 	rm -f *.htoc
 	rm -f *.idx
 	rm -f *.ilg
@@ -41,6 +40,10 @@ clean:
 	rm -f *.out
 	rm -f *.pdf
 	rm -f *.toc
+	[ ! -f contributed_modules.tex ] || rm contributed_modules.tex
+
+distclean: clean
+	rm -f *.html
 
 guide.html:	guide.tex
 		hevea -fix -pedantic guide.tex

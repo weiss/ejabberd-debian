@@ -13,8 +13,8 @@
 %% Portions created by Ericsson are Copyright 1999, Ericsson Utvecklings
 %% AB. All Rights Reserved.''
 %% 
-%% The code has been modified and improved by Process-one.
-%% Copyright 2007-2008, Process-one
+%% The code has been modified and improved by ProcessOne.
+%% Copyright 2007-2009, ProcessOne
 %%
 %%  The change adds the following features:
 %%   - You can send exit(priority_shutdown) to the p1_fsm process to
@@ -26,7 +26,7 @@
 %%   message processing does not return in a given period of time, the
 %%   process will be terminated.
 %% 
-%%     $Id: p1_fsm.erl 1153 2008-01-15 17:02:57Z badlop $
+%%     $Id: p1_fsm.erl 1805 2009-01-12 14:52:59Z badlop $
 %%
 -module(p1_fsm).
 

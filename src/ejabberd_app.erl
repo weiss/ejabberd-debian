@@ -5,7 +5,7 @@
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -46,13 +46,13 @@ start(normal, _Args) ->
     sha:start(),
     catch ssl:start(),
     stringprep_sup:start_link(),
+    start(),
     translate:start(),
     acl:start(),
     ejabberd_ctl:init(),
     gen_mod:start(),
     ejabberd_config:start(),
     ejabberd_check:config(),
-    start(),
     connect_nodes(),
     Sup = ejabberd_sup:start_link(),
     ejabberd_rdbms:start(),
@@ -62,6 +62,7 @@ start(normal, _Args) ->
     %eprof:start(),
     %eprof:profile([self()]),
     %fprof:trace(start, "/tmp/fprof"),
+    maybe_add_nameservers(),
     start_modules(),
     Sup;
 start(_, _) ->
@@ -153,7 +154,7 @@ stop_modules() ->
 		  Modules ->
 		      lists:foreach(
 			fun({Module, _Args}) ->
-				gen_mod:stop_module(Host, Module)
+				gen_mod:stop_module_keep_config(Host, Module)
 			end, Modules)
 	      end
       end, ?MYHOSTS).
@@ -168,3 +169,15 @@ connect_nodes() ->
 			  end, Nodes)
     end.
 
+
+%% If ejabberd is running on some Windows machine, get nameservers and add to Erlang
+maybe_add_nameservers() ->
+    case os:type() of
+	{win32, _} -> add_windows_nameservers();
+	_ -> ok
+    end.
+
+add_windows_nameservers() ->
+    IPTs = win32_dns:get_nameservers(),
+    ?INFO_MSG("Adding machine's DNS IPs to Erlang system:~n~p", [IPTs]),
+    lists:foreach(fun(IPT) -> inet_db:add_ns(IPT) end, IPTs).

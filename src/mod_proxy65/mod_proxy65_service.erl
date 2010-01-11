@@ -5,7 +5,7 @@
 %%% Created : 12 Oct 2006 by Evgeniy Khramtsov <xram@jabber.ru>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -179,7 +179,6 @@ iq_disco_info(Lang, Name) ->
        {"type", "bytestreams"},
        {"name", translate:translate(Lang, Name)}], []},
      ?FEATURE(?NS_DISCO_INFO),
-     ?FEATURE(?NS_DISCO_ITEMS),
      ?FEATURE(?NS_VCARD),
      ?FEATURE(?NS_BYTESTREAMS)].
 
@@ -190,7 +189,7 @@ iq_vcard(Lang) ->
       [{xmlcdata, ?EJABBERD_URI}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(Lang, "ejabberd SOCKS5 Bytestreams module") ++
-       "\nCopyright (c) 2003-2008 Alexey Shchepin"}]}].
+       "\nCopyright (c) 2003-2009 Alexey Shchepin"}]}].
 
 parse_options(ServerHost, Opts) ->
     MyHost = gen_mod:get_opt_host(ServerHost, Opts, "proxy.@HOST@"),
@@ -198,9 +197,9 @@ parse_options(ServerHost, Opts) ->
     ACL = gen_mod:get_opt(access, Opts, all),
     Name = gen_mod:get_opt(name, Opts, "SOCKS5 Bytestreams"),
     IP = case gen_mod:get_opt(ip, Opts, none) of
-	         none -> get_proxy_or_domainip(ServerHost, MyHost);
-	         Addr -> Addr
-	     end,
+	     none -> get_my_ip();
+	     Addr -> Addr
+	 end,
     StrIP = inet_parse:ntoa(IP),
     StreamAddr = [{"jid", MyHost}, {"host", StrIP}, {"port", integer_to_list(Port)}],
     {IP, #state{myhost      = MyHost,
@@ -210,13 +209,9 @@ parse_options(ServerHost, Opts) ->
 		stream_addr = StreamAddr, 
 		acl         = ACL}}.
 
-%% Return the IP of the proxy host, or if not found, the ip of the xmpp domain
-get_proxy_or_domainip(ServerHost, MyHost) ->
-    case inet:getaddr(MyHost, inet) of
+get_my_ip() ->
+    {ok, MyHostName} = inet:gethostname(),
+    case inet:getaddr(MyHostName, inet) of
         {ok, Addr} -> Addr;
-        {error, _} ->
-            case inet:getaddr(ServerHost, inet) of
-                {ok, Addr} -> Addr;
-                {error, _} -> {127,0,0,1}
-            end
+        {error, _} -> {127,0,0,1}
     end.

@@ -1,5 +1,6 @@
-% $Id: ru.msg 1202 2008-02-20 15:48:48Z badlop $
+% $Id: ru.msg 1776 2009-01-06 15:09:53Z badlop $
 % Language: Russian (русский)
+% Author: Evgeniy Khramtsov
 % Author: Konstantin Khomoutov
 % Author: Sergei Golovan
 
@@ -112,6 +113,7 @@
 {"ejabberd SOCKS5 Bytestreams module", "ejabberd SOCKS5 Bytestreams модуль"}.
 
 % mod_register.erl
+{"Users are not allowed to register accounts so fast", "Пользователи не могут регистрировать учётные записи так быстро"}.
 {"Choose a username and password to register with this server", "Выберите имя пользователя и пароль для регистрации на этом сервере"}.
 
 % mod_vcard.erl
@@ -139,6 +141,7 @@
 {"Fill in fields to search for any matching Jabber User", "Заполните форму для поиска пользователя Jabber"}.
 
 % mod_pubsub/mod_pubsub.erl
+{"A friendly name for the node", "Легко запоминаемое имя для узла"}.
 {"Roster groups allowed to subscribe", "Группы списка контактов, которым разрешена подписка"}.
 {"Deliver payloads with event notifications", "Доставлять вместе с уведомлениями o публикациях сами публикации"}.
 {"Notify subscribers when the node configuration changes", "Уведомлять подписчиков об изменении конфигурации сборника"}.
@@ -206,6 +209,10 @@
 {"Room Configuration", "Конфигурация комнаты"}.
 
 % mod_muc/mod_muc_room.erl
+{"It is not allowed to send private messages", "Запрещено посылать приватные сообщения"}.
+{"Visitors are not allowed to change their nicknames in this room", "Посетителям запрещено изменять свои псевдонимы в этой комнате"}.
+{"Allow visitors to send status text in presence updates", "Разрешить посетителям вставлять текcт статуса в сообщения о присутствии"}.
+{"Allow visitors to change nickname", "Разрешить посетителям изменять псевдоним"}.
 {"This participant is kicked from the room because he sent an error message", "Этого участника выгнали из комнаты за то, что он послал сообщение об ошибке"}.
 {"This participant is kicked from the room because he sent an error message to another participant", "Этого участника выгнали из комнаты за то, что он послал сообщение об ошибке другому участнику"}.
 {"This participant is kicked from the room because he sent an error presence", "Этого участника выгнали из комнаты за то, что он послал присутствие с ошибкой"}.
@@ -237,7 +244,7 @@
 {"It is not allowed to send private messages to the conference", "Не разрешается посылать частные сообщения прямо в конференцию"}.
 {"Improper message type", "Неправильный тип сообщения"}.
 {"Nickname is already in use by another occupant", "Псевдоним занят кем-то из присутствующих"}.
-{"Nickname is registered by another person", "Псевдоним зарегистирован кем-то другим"}.
+{"Nickname is registered by another person", "Псевдоним зарегистрирован кем-то другим"}.
 {"It is not allowed to send private messages of type \"groupchat\"", "Нельзя посылать частные сообщения типа \"groupchat\""}.
 {"Recipient is not in the conference room", "Адресата нет в конференции"}.
 {"Only occupants are allowed to send queries to the conference", "Только присутствующим разрешается посылать запросы в конференцию"}.

@@ -5,7 +5,7 @@
 %%% Created : 7 Oct 2006 by Magnus Henoch <henoch@dtek.chalmers.se>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -31,8 +31,11 @@
 -behaviour(gen_mod).
 
 -export([read_caps/1,
+	 get_caps/1,
 	 note_caps/3,
+	 clear_caps/1,
 	 get_features/2,
+	 get_user_resources/2,
 	 handle_disco_response/3]).
 
 %% gen_mod callbacks
@@ -53,9 +56,12 @@
 
 -define(PROCNAME, ejabberd_mod_caps).
 -define(DICT, dict).
+-define(CAPS_QUERY_TIMEOUT, 60000). % 1mn without answer, consider client never answer
 
 -record(caps, {node, version, exts}).
 -record(caps_features, {node_pair, features}).
+-record(user_caps, {jid, caps}).
+-record(user_caps_resources, {uid, resource}).
 -record(state, {host,
 		disco_requests = ?DICT:new(),
 		feature_queries = []}).
@@ -88,12 +94,41 @@ read_caps([_ | Tail], Result) ->
 read_caps([], Result) ->
     Result.
 
+%% get_caps reads user caps from database
+get_caps(JID) ->
+    case catch mnesia:dirty_read({user_caps, list_to_binary(jlib:jid_to_string(JID))}) of
+	[#user_caps{caps=Caps}] -> 
+	    Caps;
+	_ -> 
+	    nothing
+    end.
+
+%% clear_caps removes user caps from database
+clear_caps(JID) ->
+    {U, S, R} = jlib:jid_tolower(JID),
+    BJID = list_to_binary(jlib:jid_to_string(JID)),
+    BUID = list_to_binary(jlib:jid_to_string({U, S, []})),
+    catch mnesia:dirty_delete({user_caps, BJID}),
+    catch mnesia:dirty_delete_object(#user_caps_resources{uid = BUID, resource = list_to_binary(R)}),
+    ok.
+
+%% give default user resource
+get_user_resources(LUser, LServer) ->
+    BUID = list_to_binary(jlib:jid_to_string({LUser, LServer, []})),
+    case catch mnesia:dirty_read({user_caps_resources, BUID}) of
+	{'EXIT', _} ->
+	    [];
+	Resources ->
+	    lists:map(fun(#user_caps_resources{resource=R}) -> binary_to_list(R) end, Resources)
+    end.
+
 %% note_caps should be called to make the module request disco
 %% information.  Host is the host that asks, From is the full JID that
 %% sent the caps packet, and Caps is what read_caps returned.
 note_caps(Host, From, Caps) ->
     case Caps of
-	nothing -> ok;
+	nothing -> 
+	    ok;
 	_ ->
 	    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
 	    gen_server:cast(Proc, {note_caps, From, Caps})
@@ -104,7 +139,8 @@ note_caps(Host, From, Caps) ->
 %% timeout error.
 get_features(Host, Caps) ->
     case Caps of
-	nothing -> [];
+	nothing -> 
+	    [];
 	#caps{} ->
 	    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
 	    gen_server:call(Proc, {get_features, Caps})
@@ -137,7 +173,14 @@ init([Host, _Opts]) ->
     mnesia:create_table(caps_features,
 			[{ram_copies, [node()]},
 			 {attributes, record_info(fields, caps_features)}]),
-    mnesia:add_table_copy(caps_features, node(), ram_copies),
+    mnesia:create_table(user_caps,
+			[{disc_copies, [node()]},
+			 {attributes, record_info(fields, user_caps)}]),
+    mnesia:create_table(user_caps_resources,
+			[{disc_copies, [node()]},
+			 {type, bag},
+			 {attributes, record_info(fields, user_caps_resources)}]),
+    mnesia:delete_table(user_caps_default),
     {ok, #state{host = Host}}.
 
 maybe_get_features(#caps{node = Node, version = Version, exts = Exts}) ->
@@ -185,10 +228,21 @@ handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
 
 handle_cast({note_caps, From, 
-	     #caps{node = Node, version = Version, exts = Exts}}, 
+	     #caps{node = Node, version = Version, exts = Exts} = Caps}, 
 	    #state{host = Host, disco_requests = Requests} = State) ->
     %% XXX: this leads to race conditions where ejabberd will send
     %% lots of caps disco requests.
+    {U, S, R} = jlib:jid_tolower(From),
+    BJID = list_to_binary(jlib:jid_to_string(From)),
+    mnesia:dirty_write(#user_caps{jid = BJID, caps = Caps}),
+    case ejabberd_sm:get_user_resources(U, S) of
+	[] ->
+	    % only store resources of caps aware external contacts
+	    BUID = list_to_binary(jlib:jid_to_string(jlib:jid_remove_resource(From))),
+	    mnesia:dirty_write(#user_caps_resources{uid = BUID, resource = list_to_binary(R)});
+	_ ->
+	    ok
+    end,
     SubNodes = [Version | Exts],
     %% Now, find which of these are not already in the database.
     Fun = fun() ->
@@ -203,11 +257,9 @@ handle_cast({note_caps, From,
 	  end,
     case mnesia:transaction(Fun) of
 	{atomic, Missing} ->
-	    %% For each unknown caps "subnode", we send a disco
-	    %% request.
-	    NewRequests =
-		lists:foldl(
-		  fun(SubNode, Dict) ->
+	    %% For each unknown caps "subnode", we send a disco request.
+	    NewRequests = lists:foldl(
+		fun(SubNode, Dict) ->
 			  ID = randoms:get_string(),
 			  Stanza =
 			      {xmlelement, "iq",
@@ -220,6 +272,7 @@ handle_cast({note_caps, From,
 			  ejabberd_local:register_iq_response_handler
 			    (Host, ID, ?MODULE, handle_disco_response),
 			  ejabberd_router:route(jlib:make_jid("", Host, ""), From, Stanza),
+			  timer:send_after(?CAPS_QUERY_TIMEOUT, self(), {disco_timeout, ID}),
 			  ?DICT:store(ID, {Node, SubNode}, Dict)
 		  end, Requests, Missing),
 	    {noreply, State#state{disco_requests = NewRequests}};
@@ -273,6 +326,16 @@ handle_cast({disco_response, From, _To,
 	    ok
     end,
     NewRequests = ?DICT:erase(ID, Requests),
+    {noreply, State#state{disco_requests = NewRequests}};
+handle_cast({disco_timeout, ID}, #state{host = Host, disco_requests = Requests} = State) ->
+    %% do not wait a response anymore for this IQ, client certainly will never answer
+    NewRequests = case ?DICT:is_key(ID, Requests) of
+    true ->
+	ejabberd_local:unregister_iq_response_handler(Host, ID),
+	?DICT:erase(ID, Requests);
+    false ->
+	Requests
+    end,
     {noreply, State#state{disco_requests = NewRequests}};
 handle_cast(visit_feature_queries, #state{feature_queries = FeatureQueries} = State) ->
     Timestamp = timestamp(),

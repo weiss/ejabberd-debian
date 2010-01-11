@@ -10,13 +10,13 @@
 %%% the License for the specific language governing rights and limitations
 %%% under the License.
 %%% 
-%%% The Initial Developer of the Original Code is Process-one.
-%%% Portions created by Process-one are Copyright 2006-2008, Process-one
+%%% The Initial Developer of the Original Code is ProcessOne.
+%%% Portions created by ProcessOne are Copyright 2006-2009, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2008, Process-one.
+%%% This software is copyright 2006-2009, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2008 Process-one
+%%% Copyright 2006-2009 ProcessOne
 %%%
 %%% This file contains pubsub types definition.
 %%% ====================================================================
@@ -72,7 +72,7 @@
 %%%    lserver = string(),
 %%%    lresource = string()}.
 
-%%% @type usr() = {User::string(), Server::string(), Resource::string()}.
+%%% @type ljid() = {User::string(), Server::string(), Resource::string()}.
 
 %%% @type affiliation() = none | owner | publisher | outcast.
 %%% @type subscription() = none | pending | unconfigured | subscribed.
@@ -81,7 +81,7 @@
 %%%    nodeid = {Host::host(), Node::pubsubNode()},
 %%%    parentid = {Host::host(), Node::pubsubNode()},
 %%%    type = nodeType(),
-%%%    owners = [usr()],
+%%%    owners = [ljid()],
 %%%    options = [nodeOption()]}.
 %%% <p>This is the format of the <tt>nodes</tt> table. The type of the table
 %%% is: <tt>set</tt>,<tt>ram/disc</tt>.</p>
@@ -94,7 +94,7 @@
 		     }).
 
 %%% @type pubsubState() = #pubsub_state{
-%%%    stateid = {jid(), {Host::host(), Node::pubsubNode()}},
+%%%    stateid = {ljid(), {Host::host(), Node::pubsubNode()}},
 %%%    items = [ItemId::string()],
 %%%    affiliation = affiliation(),
 %%%    subscription = subscription()}.
@@ -108,8 +108,8 @@
 
 %% @type pubsubItem() = #pubsub_item{
 %%        itemid = {ItemId::string(), {Host::host(),Node::pubsubNode()}},
-%%     creation = {JID::jid(), now()},
-%%     modification = {JID::jid(), now()},
+%%     creation = {ljid(), now()},
+%%     modification = {ljid(), now()},
 %%     payload = XMLContent::string()}.
 %%% <p>This is the format of the <tt>published items</tt> table. The type of the
 %%% table is: <tt>set</tt>,<tt>disc</tt>,<tt>fragmented</tt>.</p>
@@ -118,14 +118,4 @@
 		      modification = {unknown,unknown},
 		      payload = []
 		     }).
-
-
-%% @type pubsubPresence() = #pubsub_presence{
-%%     key = {Host::host(), User::string(), Server::string()},
-%%     presence = list().
-%%% <p>This is the format of the <tt>published presence</tt> table. The type of the
-%%% table is: <tt>set</tt>,<tt>ram</tt>.</p>
--record(pubsub_presence, {key,
-			  resource
-			 }).
 
