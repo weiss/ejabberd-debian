@@ -167,6 +167,7 @@ start_link(Host, ServerHost, Access, Room, HistorySize, RoomShaper, Opts) ->
 %%          {stop, StopReason}
 %%----------------------------------------------------------------------
 init([Host, ServerHost, Access, Room, HistorySize, RoomShaper, Creator, _Nick, DefRoomOpts]) ->
+    process_flag(trap_exit, true),
     Shaper = shaper:new(RoomShaper),
     State = set_affiliation(Creator, owner,
 			    #state{host = Host,
@@ -182,6 +183,7 @@ init([Host, ServerHost, Access, Room, HistorySize, RoomShaper, Creator, _Nick, D
 	      [Room, Host, jlib:jid_to_string(Creator)]),
     {ok, normal_state, State1};
 init([Host, ServerHost, Access, Room, HistorySize, RoomShaper, Opts]) ->
+    process_flag(trap_exit, true),
     Shaper = shaper:new(RoomShaper),
     State = set_opts(Opts, #state{host = Host,
 				  server_host = ServerHost,
@@ -695,31 +697,27 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 %%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 handle_info({process_user_presence, From}, normal_state = _StateName, StateData) ->
-    Activity = get_user_activity(From, StateData),
-    Now = now_to_usec(now()),
-    {Nick, Packet} = Activity#activity.presence,
-    NewActivity = Activity#activity{presence_time = Now,
-				    presence = undefined},
-    StateData1 =
-	StateData#state{
-	  activity = ?DICT:store(
-			jlib:jid_tolower(From),
-			NewActivity,
-			StateData#state.activity)},
-    process_presence(From, Nick, Packet, StateData1);
+    RoomQueueEmpty = queue:is_empty(StateData#state.room_queue),
+    RoomQueue = queue:in({presence, From}, StateData#state.room_queue),
+    StateData1 = StateData#state{room_queue = RoomQueue},
+    if
+	RoomQueueEmpty ->
+	    StateData2 = prepare_room_queue(StateData1),
+	    {next_state, normal_state, StateData2};
+	true ->
+	    {next_state, normal_state, StateData1}
+    end;
 handle_info({process_user_message, From}, normal_state = _StateName, StateData) ->
-    Activity = get_user_activity(From, StateData),
-    Now = now_to_usec(now()),
-    Packet = Activity#activity.message,
-    NewActivity = Activity#activity{message_time = Now,
-				    message = undefined},
-    StateData1 =
-	StateData#state{
-	  activity = ?DICT:store(
-			jlib:jid_tolower(From),
-			NewActivity,
-			StateData#state.activity)},
-    process_groupchat_message(From, Packet, StateData1);
+    RoomQueueEmpty = queue:is_empty(StateData#state.room_queue),
+    RoomQueue = queue:in({message, From}, StateData#state.room_queue),
+    StateData1 = StateData#state{room_queue = RoomQueue},
+    if
+	RoomQueueEmpty ->
+	    StateData2 = prepare_room_queue(StateData1),
+	    {next_state, normal_state, StateData2};
+	true ->
+	    {next_state, normal_state, StateData1}
+    end;
 handle_info(process_room_queue, normal_state = StateName, StateData) ->
     case queue:out(StateData#state.room_queue) of
 	{{value, {message, From}}, RoomQueue} ->

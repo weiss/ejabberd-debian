@@ -50,9 +50,13 @@
 -include("jlib.hrl").
 -ifdef(SSL39).
 -include_lib("ssl/include/ssl_pkix.hrl").
+-define(PKIXEXPLICIT, 'OTP-PKIX').
+-define(PKIXIMPLICIT, 'OTP-PKIX').
 -else.
 -include_lib("ssl/include/PKIX1Explicit88.hrl").
 -include_lib("ssl/include/PKIX1Implicit88.hrl").
+-define(PKIXEXPLICIT, 'PKIX1Explicit88').
+-define(PKIXIMPLICIT, 'PKIX1Implicit88').
 -endif.
 -include("XmppAddr.hrl").
 
@@ -348,6 +352,7 @@ stream_established({xmlstreamelement, El}, StateData) ->
             case {ejabberd_s2s:allow_host(To, From),
                   lists:member(LTo, ejabberd_router:dirty_get_all_domains())} of
                 {true, true} ->
+		    ejabberd_s2s_out:terminate_if_waiting_delay(To, From),
 		    ejabberd_s2s_out:start(To, From,
 					   {verify, self(),
 					    Key, StateData#state.streamid}),
@@ -603,7 +608,7 @@ get_cert_domains(Cert) ->
     lists:flatmap(
       fun(#'AttributeTypeAndValue'{type = ?'id-at-commonName',
 				   value = Val}) ->
-	      case 'PKIX1Explicit88':decode('X520CommonName', Val) of
+	      case ?PKIXEXPLICIT:decode('X520CommonName', Val) of
 		  {ok, {_, D1}} ->
 		      D = if
 			      is_list(D1) -> D1;
@@ -637,7 +642,7 @@ get_cert_domains(Cert) ->
 			     is_binary(Val) -> Val;
 			     true -> Val
 			 end,
-		  case 'PKIX1Implicit88':decode('SubjectAltName', BVal) of
+		  case ?PKIXIMPLICIT:decode('SubjectAltName', BVal) of
 		      {ok, SANs} ->
 			  lists:flatmap(
 			    fun({otherName,

@@ -156,6 +156,8 @@ process_term(Term, State) ->
 	    add_option({domain_balancing_component_number, Domain}, N, State);
 	{watchdog_admins, Admins} ->
 	    add_option(watchdog_admins, Admins, State);
+	{registration_timeout, Timeout} ->
+	    add_option(registration_timeout, Timeout, State);
 	{loglevel, Loglevel} ->
 	    ejabberd_loglevel:set(Loglevel),
 	    State;
@@ -182,7 +184,6 @@ process_host_term(Term, Host, State) ->
 	{hosts, _Hosts} ->
 	    State;
 	{odbc_server, ODBC_server} ->
-	    odbc_modules_found = check_odbc_modules(ODBC_server),
 	    add_option({odbc_server, Host}, ODBC_server, State);
 	{Opt, Val} ->
 	    add_option({Opt, Host}, Val, State)
@@ -212,11 +213,16 @@ add_option(Opt, Val, State) ->
 	    end
     end.
 
-compact(Opt, Val, [], Os) ->
+compact({OptName, Host} = Opt, Val, [], Os) ->
+    ?WARNING_MSG("The option '~p' is defined for the host ~p using host_config "
+    "before the global '~p' option. This host_config option may get overwritten.", [OptName, Host, OptName]),
     [#local_config{key = Opt, value = Val}] ++ Os;
+%% Traverse the list of the options already parsed
 compact(Opt, Val, [O | Os1], Os2) ->
-    case O#local_config.key of
+    case catch O#local_config.key of
+	%% If the key of a local_config matches the Opt that wants to be added
 	Opt ->
+	    %% Then prepend the new value to the list of old values
 	    Os2 ++ [#local_config{key = Opt,
 				  value = Val++O#local_config.value}
 		   ] ++ Os1;
@@ -309,33 +315,3 @@ get_vh_by_auth_method(AuthMethod) ->
     mnesia:dirty_select(local_config,
 			[{#local_config{key = {auth_method, '$1'},
 					value=AuthMethod},[],['$1']}]).
-
-check_odbc_modules(ODBC_server) ->
-    case catch check_odbc_modules2(ODBC_server) of
-	{'EXIT', {undef, [{Module, module_info, []} | _]}} ->
-	    ?CRITICAL_MSG("ejabberd is configured to use ODBC, but the Erlang module '~p' is not installed.", [Module]),
-	    odbc_module_not_found;
-	_ -> odbc_modules_found
-    end.
-
-check_odbc_modules2(ODBC_server) ->
-    check_modules_exists([ejabberd_odbc, ejabberd_odbc_sup, odbc_queries]),
-    case ODBC_server of
-	{mysql, _Server, _DB, _Username, _Password} ->
-	    check_modules_exists([mysql, mysql_auth, mysql_conn, mysql_recv]);
-
-	{mysql, _Server, _Port, _DB, _Username, _Password} ->
-	    check_modules_exists([mysql, mysql_auth, mysql_conn, mysql_recv]);
-
-	{pgsql, _Server, _DB, _Username, _Password} ->
-	    check_modules_exists([pgsql, pgsql_proto, pgsql_tcp, pgsql_util]);
-
-	{pgsql, _Server, _Port, _DB, _Username, _Password} ->
-	    check_modules_exists([pgsql, pgsql_proto, pgsql_tcp, pgsql_util]);
-
-	Server when is_list(Server) ->
-	    ok
-    end.
-
-check_modules_exists(Modules) ->
-    [true = is_list(Module:module_info()) || Module <- Modules].

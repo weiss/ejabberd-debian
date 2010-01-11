@@ -341,11 +341,20 @@
 %%{acl, test, {user_regexp, "^test"}}.
 %%{acl, test, {user_glob, "test*"}}.
 
+%%
+%% Define specific ACLs in a virtual host.
+%%
+%%{host_config, "localhost",
+%% [
+%%  {acl, admin, {user, "bob-local", "localhost"}}
+%% ]
+%%}.
+
 
 %%%   ============
 %%%   ACCESS RULES
 
-%% Define the maximum number of time a single user is allowed to connect:
+%% Maximum number of simultaneous sessions allowed for a single user:
 {access, max_user_sessions, [{10, all}]}.
 
 %% This rule allows access only for local users:
@@ -355,11 +364,11 @@
 {access, c2s, [{deny, blocked},
 	       {allow, all}]}.
 
-%% For all users except admins used "normal" shaper
+%% For C2S connections, all users except admins use "normal" shaper
 {access, c2s_shaper, [{none, admin},
 		      {normal, all}]}.
 
-%% For all S2S connections used "fast" shaper
+%% All S2S connections use "fast" shaper
 {access, s2s_shaper, [{fast, all}]}.
 
 %% Only admins can send announcement messages:
@@ -374,12 +383,22 @@
 %% All users are allowed to use MUC service:
 {access, muc, [{allow, all}]}.
 
-%% Every username can be registered via in-band registration:
+%% In-band registration allows registration of any possible username.
 %% To disable in-band registration, replace 'allow' with 'deny'.
 {access, register, [{allow, all}]}.
 
 %% Everybody can create pubsub nodes
 {access, pubsub_createnode, [{allow, all}]}.
+
+%%
+%% Define specific Access rules in a virtual host.
+%%
+%%{host_config, "localhost",
+%% [
+%%  {access, c2s, [{allow, admin}, {deny, all}]},
+%%  {access, register, [{deny, all}]}
+%% ]
+%%}.
 
 
 %%%   ================
@@ -389,6 +408,13 @@
 %% language: Default language used for server messages.
 %%
 {language, "en"}.
+
+%%
+%% Set a different default language in a virtual host.
+%%
+%%{host_config, "localhost",
+%% [{language, "ru"}]
+%%}.
 
 
 %%%   =======
@@ -400,7 +426,7 @@
 {modules,
  [
   {mod_adhoc,    []},
-  {mod_announce, [{access, announce}]}, % requires mod_adhoc
+  {mod_announce, [{access, announce}]}, % recommends mod_adhoc
   {mod_caps,     []}, 
   {mod_configure,[]}, % requires mod_adhoc
   {mod_disco,    []},
@@ -448,8 +474,19 @@
   {mod_version,  []}
  ]}.
 
+%%
+%% Enable modules with custom options in a specific virtual host
+%%
+%%{host_config, "localhost",
+%% [{{add, modules},
+%%   [
+%%    {mod_echo, [{host, "mirror.localhost"}]}
+%%   ]
+%%  }
+%% ]}.
 
-%%% $Id: ejabberd.cfg.example 1178 2008-02-08 18:28:36Z badlop $
+
+%%% $Id: ejabberd.cfg.example 1310 2008-04-29 16:44:12Z badlop $
 
 %%% Local Variables:
 %%% mode: erlang
