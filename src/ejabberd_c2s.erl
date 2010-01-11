@@ -5,7 +5,7 @@
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -37,8 +37,7 @@
 	 send_element/2,
 	 socket_type/0,
 	 get_presence/1,
-	 get_subscribed/1,
-	 get_subscribed_and_online/1]).
+	 get_subscribed/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -62,6 +61,8 @@
 -define(SETS, gb_sets).
 -define(DICT, dict).
 
+%% pres_a contains all the presence available send (either through roster mechanism or directed).
+%% Directed presence unavailable remove user from pres_a.
 -record(state, {socket,
 		sockmod,
 		socket_monitor,
@@ -82,7 +83,6 @@
 		pres_f = ?SETS:new(),
 		pres_a = ?SETS:new(),
 		pres_i = ?SETS:new(),
-		pres_available = ?DICT:new(),
 		pres_last, pres_pri,
 		pres_timestamp,
 		pres_invis = false,
@@ -131,6 +131,9 @@
 	xml:element_to_string(?SERR_HOST_UNKNOWN)).
 -define(POLICY_VIOLATION_ERR(Lang, Text),
 	xml:element_to_string(?SERRT_POLICY_VIOLATION(Lang, Text))).
+-define(INVALID_FROM,
+	xml:element_to_string(?SERR_INVALID_FROM)).
+
 
 %%%----------------------------------------------------------------------
 %%% API
@@ -173,9 +176,11 @@ init([{SockMod, Socket}, Opts]) ->
     StartTLSRequired = lists:member(starttls_required, Opts),
     TLSEnabled = lists:member(tls, Opts),
     TLS = StartTLS orelse StartTLSRequired orelse TLSEnabled,
-    TLSOpts = lists:filter(fun({certfile, _}) -> true;
-			      (_) -> false
-			   end, Opts),
+    TLSOpts1 =
+	lists:filter(fun({certfile, _}) -> true;
+			(_) -> false
+		     end, Opts),
+    TLSOpts = [verify_none | TLSOpts1],
     IP = peerip(SockMod, Socket),
     %% Check if IP is blacklisted:
     case is_ip_blacklisted(IP) of
@@ -207,14 +212,8 @@ init([{SockMod, Socket}, Opts]) ->
     end.
 
 %% Return list of all available resources of contacts,
-%% in form [{JID, Caps}].
 get_subscribed(FsmRef) ->
-    gen_fsm:sync_send_all_state_event(
-      FsmRef, get_subscribed, 1000).
-get_subscribed_and_online(FsmRef) ->
-    gen_fsm:sync_send_all_state_event(
-      FsmRef, get_subscribed_and_online, 1000).
-
+    gen_fsm:sync_send_all_state_event(FsmRef, get_subscribed, 1000).
 
 %%----------------------------------------------------------------------
 %% Func: StateName/2
@@ -861,13 +860,41 @@ wait_for_session(closed, StateData) ->
     {stop, normal, StateData}.
 
 
-
-
 session_established({xmlstreamelement, El}, StateData) ->
+    FromJID = StateData#state.jid,
+    % Check 'from' attribute in stanza RFC 3920 Section 9.1.2
+    case check_from(El, FromJID) of
+	'invalid-from' ->
+	    send_text(StateData, ?INVALID_FROM ++ ?STREAM_TRAILER),
+	    {stop, normal, StateData};
+	_NewEl ->
+	    session_established2(El, StateData)
+    end;
+
+%% We hibernate the process to reduce memory consumption after a
+%% configurable activity timeout
+session_established(timeout, StateData) ->
+    %% TODO: Options must be stored in state:
+    Options = [],
+    proc_lib:hibernate(gen_fsm, enter_loop,
+		       [?MODULE, Options, session_established, StateData]),
+    fsm_next_state(session_established, StateData);
+
+session_established({xmlstreamend, _Name}, StateData) ->
+    send_text(StateData, ?STREAM_TRAILER),
+    {stop, normal, StateData};
+
+session_established({xmlstreamerror, _}, StateData) ->
+    send_text(StateData, ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    {stop, normal, StateData};
+
+session_established(closed, StateData) ->
+    {stop, normal, StateData}.
+
+session_established2(El, StateData) ->
     {xmlelement, Name, Attrs, _Els} = El,
     User = StateData#state.user,
     Server = StateData#state.server,
-    % TODO: check 'from' attribute in stanza
     FromJID = StateData#state.jid,
     To = xml:get_attr_s("to", Attrs),
     ToJID = case To of
@@ -943,27 +970,7 @@ session_established({xmlstreamelement, El}, StateData) ->
 		end
 	end,
     ejabberd_hooks:run(c2s_loop_debug, [{xmlstreamelement, El}]),
-    fsm_next_state(session_established, NewState);
-
-%% We hibernate the process to reduce memory consumption after a
-%% configurable activity timeout
-session_established(timeout, StateData) ->
-    %% TODO: Options must be stored in state:
-    Options = [],
-    proc_lib:hibernate(gen_fsm, enter_loop,
-		       [?MODULE, Options, session_established, StateData]),
-    fsm_next_state(session_established, StateData);
-
-session_established({xmlstreamend, _Name}, StateData) ->
-    send_text(StateData, ?STREAM_TRAILER),
-    {stop, normal, StateData};
-
-session_established({xmlstreamerror, _}, StateData) ->
-    send_text(StateData, ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
-    {stop, normal, StateData};
-
-session_established(closed, StateData) ->
-    {stop, normal, StateData}.
+    fsm_next_state(session_established, NewState).
 
 
 
@@ -1010,29 +1017,8 @@ handle_sync_event({get_presence}, _From, StateName, StateData) ->
     fsm_reply(Reply, StateName, StateData);
 
 handle_sync_event(get_subscribed, _From, StateName, StateData) ->
-    Subscribed = StateData#state.pres_f,
-    Online = StateData#state.pres_available,
-    Pred = fun(User, _Caps) ->
-		   ?SETS:is_element(jlib:jid_remove_resource(User),
-				    Subscribed) orelse
-		       ?SETS:is_element(User, Subscribed)
-	   end,
-    SubscribedAndOnline = ?DICT:filter(Pred, Online),
-    SubscribedWithCaps  = ?SETS:fold(fun(User, Acc) ->
-	    [{User, undefined}|Acc]
-	end, ?DICT:to_list(SubscribedAndOnline), Subscribed),
-    {reply, SubscribedWithCaps, StateName, StateData};
-
-handle_sync_event(get_subscribed_and_online, _From, StateName, StateData) ->
-    Subscribed = StateData#state.pres_f,
-    Online = StateData#state.pres_available,
-    Pred = fun(User, _Caps) ->
-		   ?SETS:is_element(jlib:jid_remove_resource(User),
-				    Subscribed) orelse
-		       ?SETS:is_element(User, Subscribed)
-	   end,
-    SubscribedAndOnline = ?DICT:filter(Pred, Online),
-    {reply, ?DICT:to_list(SubscribedAndOnline), StateName, StateData};
+    Subscribed = ?SETS:to_list(StateData#state.pres_f),
+    {reply, Subscribed, StateName, StateData};
 
 handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
@@ -1125,41 +1111,39 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 				LFrom = jlib:jid_tolower(From),
 				LBFrom = jlib:jid_remove_resource(LFrom),
 				%% Note contact availability
-				Caps = mod_caps:read_caps(Els),
-				mod_caps:note_caps(StateData#state.server, From, Caps),
-				NewAvailable = case xml:get_attr_s("type", Attrs) of
-						   "unavailable" ->
-						       ?DICT:erase(LFrom, StateData#state.pres_available);
-						   _ ->
-						       ?DICT:store(LFrom, Caps, StateData#state.pres_available)
-					       end,
-				NewStateData = StateData#state{pres_available = NewAvailable},
+				case xml:get_attr_s("type", Attrs) of
+				    "unavailable" -> 
+					mod_caps:clear_caps(From);
+				    _ -> 
+					Caps = mod_caps:read_caps(Els),
+					mod_caps:note_caps(StateData#state.server, From, Caps)
+				end,
 				case ?SETS:is_element(
-					LFrom, NewStateData#state.pres_a) orelse
+					LFrom, StateData#state.pres_a) orelse
 				    ?SETS:is_element(
-				       LBFrom, NewStateData#state.pres_a) of
+				       LBFrom, StateData#state.pres_a) of
 				    true ->
-					{true, Attrs, NewStateData};
+					{true, Attrs, StateData};
 				    false ->
 					case ?SETS:is_element(
-						LFrom, NewStateData#state.pres_f) of
+						LFrom, StateData#state.pres_f) of
 					    true ->
 						A = ?SETS:add_element(
 						       LFrom,
-						       NewStateData#state.pres_a),
+						       StateData#state.pres_a),
 						{true, Attrs,
-						 NewStateData#state{pres_a = A}};
+						 StateData#state{pres_a = A}};
 					    false ->
 						case ?SETS:is_element(
-							LBFrom, NewStateData#state.pres_f) of
+							LBFrom, StateData#state.pres_f) of
 						    true ->
 							A = ?SETS:add_element(
 							       LBFrom,
-							       NewStateData#state.pres_a),
+							       StateData#state.pres_a),
 							{true, Attrs,
-							 NewStateData#state{pres_a = A}};
+							 StateData#state{pres_a = A}};
 						    false ->
-							{true, Attrs, NewStateData}
+							{true, Attrs, StateData}
 						end
 					end
 				end;
@@ -1984,3 +1968,30 @@ fsm_reply(Reply, StateName, StateData) ->
 %% Used by c2s blacklist plugins
 is_ip_blacklisted({IP,_Port}) ->
     ejabberd_hooks:run_fold(check_bl_c2s, false, [IP]).
+
+%% Check from attributes
+%% returns invalid-from|NewElement
+check_from(El, FromJID) ->
+    case xml:get_tag_attr("from", El) of
+	false ->
+	    El;
+	{value, SJID} ->
+	    JID = jlib:string_to_jid(SJID),
+	    case JID of
+		error ->
+		    'invalid-from';
+		#jid{} ->
+		    if
+			(JID#jid.luser == FromJID#jid.luser) and
+			(JID#jid.lserver == FromJID#jid.lserver) and
+			(JID#jid.lresource == FromJID#jid.lresource) ->
+			    El;
+			(JID#jid.luser == FromJID#jid.luser) and
+			(JID#jid.lserver == FromJID#jid.lserver) and
+			(JID#jid.lresource == "") ->
+			    El;
+			true ->
+			    'invalid-from'
+		    end
+	    end
+    end.

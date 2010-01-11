@@ -11,12 +11,12 @@
 %%% under the License.
 %%% 
 %%% The Initial Developer of the Original Code is ProcessOne.
-%%% Portions created by ProcessOne are Copyright 2006-2008, ProcessOne
+%%% Portions created by ProcessOne are Copyright 2006-2009, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2008, ProcessOne.
+%%% This software is copyright 2006-2009, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2008 ProcessOne
+%%% @copyright 2006-2009 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -168,14 +168,9 @@ get_entity_affiliations(_Host, Owner) ->
     OwnerKey = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
     node_default:get_entity_affiliations(OwnerKey, Owner).
 
-get_node_affiliations(_Host, Node) ->
-    States = mnesia:match_object(
-	#pubsub_state{stateid = {'_', {'_', Node}},
-	_ = '_'}),
-    Tr = fun(#pubsub_state{stateid = {J, {_, _}}, affiliation = A}) ->
-	{J, A}
-	end,
-    {result, lists:map(Tr, States)}.
+get_node_affiliations(Host, Node) ->
+    OwnerKey = jlib:jid_remove_resource(Host),
+    node_default:get_node_affiliations(OwnerKey, Node).
 
 get_affiliation(_Host, Node, Owner) ->
     OwnerKey = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
@@ -183,15 +178,9 @@ get_affiliation(_Host, Node, Owner) ->
 
 set_affiliation(_Host, Node, Owner, Affiliation) ->
     OwnerKey = jlib:jid_tolower(jlib:jid_remove_resource(Owner)),
-    Record = case get_state(OwnerKey, Node, OwnerKey) of
-	    {error, ?ERR_ITEM_NOT_FOUND} ->
-		#pubsub_state{stateid = {OwnerKey, {OwnerKey, Node}},
-			      affiliation = Affiliation};
-	    {result, State} ->
-		State#pubsub_state{affiliation = Affiliation}
-    end,    
-    set_state(Record),
-    ok.
+    State = get_state(OwnerKey, Node, OwnerKey),
+    set_state(State#pubsub_state{affiliation = Affiliation}),
+    ok. 
 
 get_entity_subscriptions(_Host, _Owner) ->
     {result, []}.

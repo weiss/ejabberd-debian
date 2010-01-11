@@ -5,7 +5,7 @@
 %%% Created : 11 Jan 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -99,6 +99,14 @@ process(["restart"]) ->
 
 process(["reopen-log"]) ->
     ejabberd_logger_h:reopen_log(),
+    case application:get_env(sasl,sasl_error_logger) of
+ 	{ok, {file, SASLfile}} ->
+ 	    error_logger:delete_report_handler(sasl_report_file_h),
+ 	    ejabberd_logger_h:rotate_log(SASLfile),
+ 	    error_logger:add_report_handler(sasl_report_file_h,
+					    {SASLfile, get_sasl_error_logger_type()});
+ 	_ -> false
+    end,
     ?STATUS_SUCCESS;
 
 process(["register", User, Server, Password]) ->
@@ -401,3 +409,13 @@ dump_tab(F, T) ->
 		     fun() -> mnesia:match_object(T, W, read) end),
     lists:foreach(
       fun(Term) -> io:format(F,"~p.~n", [setelement(1, Term, T)]) end, All).
+
+%% Function copied from Erlang/OTP lib/sasl/src/sasl.erl which doesn't export it
+get_sasl_error_logger_type () ->
+    case application:get_env (sasl, errlog_type) of
+	{ok, error} -> error;
+	{ok, progress} -> progress;
+	{ok, all} -> all;
+	{ok, Bad} -> exit ({bad_config, {sasl, {errlog_type, Bad}}});
+	_ -> all
+    end.

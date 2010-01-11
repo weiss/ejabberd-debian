@@ -72,8 +72,9 @@
 {loglevel, 4}.
 
 %%
-%% watchdog_admins: If an ejabberd process consumes too much memory, 
-%% send live notifications to those Jabber accounts.
+%% watchdog_admins: Only useful for developers: if an ejabberd process
+%% consumes a lot of memory, send live notifications to these Jabber
+%% accounts.
 %%
 %%{watchdog_admins, ["bob@example.com"]}.
 
@@ -490,7 +491,7 @@
 %% ]}.
 
 
-%%% $Id: ejabberd.cfg.example 1437 2008-07-11 13:47:15Z badlop $
+%%% $Id: ejabberd.cfg.example 1733 2008-12-16 17:39:05Z badlop $
 
 %%% Local Variables:
 %%% mode: erlang

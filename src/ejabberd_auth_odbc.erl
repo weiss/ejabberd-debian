@@ -5,7 +5,7 @@
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2008   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 %%% but WITHOUT ANY WARRANTY; without even the implied warranty of
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
-%%%                         
+%%%
 %%% You should have received a copy of the GNU General Public License
 %%% along with this program; if not, write to the Free Software
 %%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -118,6 +118,7 @@ set_password(User, Server, Password) ->
     end.
 
 
+%% @spec (User, Server, Password) -> {atomic, ok} | {atomic, exists} | {error, invalid_jid}
 try_register(User, Server, Password) ->
     case jlib:nodeprep(User) of
 	error ->
@@ -222,6 +223,9 @@ is_user_exists(User, Server) ->
 	    end
     end.
 
+%% @spec (User, Server) -> ok | error
+%% @doc Remove user.
+%% Note: it may return ok even if there was some problem removing the user.
 remove_user(User, Server) ->
     case jlib:nodeprep(User) of
 	error ->
@@ -230,10 +234,11 @@ remove_user(User, Server) ->
 	    Username = ejabberd_odbc:escape(LUser),
 	    LServer = jlib:nameprep(Server),
 	    catch odbc_queries:del_user(LServer, Username),
-	    ejabberd_hooks:run(remove_user, jlib:nameprep(Server),
-			       [User, Server])
+		ok
     end.
 
+%% @spec (User, Server, Password) -> ok | error | not_exists | not_allowed
+%% @doc Remove user if the provided password is correct.
 remove_user(User, Server, Password) ->
     case jlib:nodeprep(User) of
 	error ->
@@ -247,8 +252,6 @@ remove_user(User, Server, Password) ->
 				   LServer, Username, Pass),
 			case Result of
 			    {selected, ["password"], [{Password}]} ->
-				ejabberd_hooks:run(remove_user, jlib:nameprep(Server),
-						   [User, Server]),
 				ok;
 			    {selected, ["password"], []} ->
 				not_exists;
