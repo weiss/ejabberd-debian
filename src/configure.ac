@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(ejabberd.erl,, ejabberd@process-one.net)
+AC_INIT(ejabberd.erl, version, [ejabberd@process-one.net], [ejabberd])
 
 # Checks for programs.
 AC_PROG_CC
@@ -103,6 +103,7 @@ AC_CONFIG_FILES([Makefile
                  $make_pam
                  $make_web
                  stringprep/Makefile
+                 stun/Makefile
                  $make_tls
                  $make_odbc
                  $make_ejabberd_zlib])
@@ -123,5 +124,19 @@ else
         done
 fi
 AC_CHECK_HEADER(krb5.h,,)
+
+ENABLEUSER=""
+AC_ARG_ENABLE(user,
+  [AS_HELP_STRING([--enable-user[[[[=USER]]]]], [allow this system user to start ejabberd (default: no)])],
+  [case "${enableval}" in
+     yes) ENABLEUSER=`whoami` ;;
+     no) ENABLEUSER="" ;;
+     *) ENABLEUSER=$enableval
+   esac],
+  [])
+if test "$ENABLEUSER" != ""; then
+  echo "allow this system user to start ejabberd: $ENABLEUSER"
+  AC_SUBST([INSTALLUSER], [$ENABLEUSER])
+fi
 
 AC_OUTPUT

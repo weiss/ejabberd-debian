@@ -32,6 +32,9 @@
 
 -include("ejabberd.hrl").
 
+-define(INIT_TIMEOUT, 60000). % Timeout is in milliseconds: 60 seconds == 60000
+-define(CALL_TIMEOUT, 10000). % Timeout is in milliseconds: 10 seconds == 10000
+
 start(Host, ExtPrg) ->
     spawn(?MODULE, init, [Host, ExtPrg]).
 
@@ -39,7 +42,7 @@ init(Host, ExtPrg) ->
     register(gen_mod:get_module_proc(Host, eauth), self()),
     process_flag(trap_exit,true),
     Port = open_port({spawn, ExtPrg}, [{packet,2}]),
-    loop(Port).
+    loop(Port, ?INIT_TIMEOUT).
 
 stop(Host) ->
     gen_mod:get_module_proc(Host, eauth) ! stop.
@@ -61,15 +64,23 @@ call_port(Server, Msg) ->
 	    Result
     end.
 
-loop(Port) ->
+loop(Port, Timeout) ->
     receive
 	{call, Caller, Msg} ->
 	    Port ! {self(), {command, encode(Msg)}},
 	    receive
 		{Port, {data, Data}} ->
-		    Caller ! {eauth, decode(Data)}
+                    ?DEBUG("extauth call '~p' received data response:~n~p", [Msg, Data]),
+                    Caller ! {eauth, decode(Data)};
+		{Port, Other} ->
+                    ?ERROR_MSG("extauth call '~p' received strange response:~n~p", [Msg, Other]),
+                    Caller ! {eauth, false}
+            after
+                Timeout ->
+                    ?ERROR_MSG("extauth call '~p' didn't receive response", [Msg]),
+                    Caller ! {eauth, false}
 	    end,
-	    loop(Port);
+	    loop(Port, ?CALL_TIMEOUT);
 	stop ->
 	    Port ! {self(), close},
 	    receive

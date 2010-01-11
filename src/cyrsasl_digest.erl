@@ -3,7 +3,25 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : DIGEST-MD5 SASL mechanism
 %%% Created : 11 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_digest.erl 1927 2009-02-27 15:57:35Z badlop $
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_digest).
@@ -11,14 +29,14 @@
 
 -export([start/1,
 	 stop/0,
-	 mech_new/3,
+	 mech_new/4,
 	 mech_step/2]).
 
 -include("ejabberd.hrl").
 
 -behaviour(cyrsasl).
 
--record(state, {step, nonce, username, authzid, get_password, auth_module,
+-record(state, {step, nonce, username, authzid, get_password, check_password, auth_module,
 		host}).
 
 start(_Opts) ->
@@ -27,11 +45,12 @@ start(_Opts) ->
 stop() ->
     ok.
 
-mech_new(Host, GetPassword, _CheckPassword) ->
+mech_new(Host, GetPassword, _CheckPassword, CheckPasswordDigest) ->
     {ok, #state{step = 1,
 		nonce = randoms:get_string(),
 		host = Host,
-		get_password = GetPassword}}.
+		get_password = GetPassword,
+		check_password = CheckPasswordDigest}}.
 
 mech_step(#state{step = 1, nonce = Nonce} = State, _) ->
     {continue,
@@ -56,10 +75,11 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 			{false, _} ->
 			    {error, "not-authorized", UserName};
 			{Passwd, AuthModule} ->
-			    Response = response(KeyVals, UserName, Passwd,
-						Nonce, AuthzId, "AUTHENTICATE"),
-			    case xml:get_attr_s("response", KeyVals) of
-				Response ->
+				case (State#state.check_password)(UserName, "",
+					xml:get_attr_s("response", KeyVals),
+					fun(PW) -> response(KeyVals, UserName, PW, Nonce, AuthzId,
+						"AUTHENTICATE") end) of
+				{true, _} ->
 				    RspAuth = response(KeyVals,
 						       UserName, Passwd,
 						       Nonce, AuthzId, ""),
@@ -69,7 +89,9 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 						 auth_module = AuthModule,
 						 username = UserName,
 						 authzid = AuthzId}};
-				_ ->
+				false ->
+				    {error, "not-authorized", UserName};
+				{false, _} ->
 				    {error, "not-authorized", UserName}
 			    end
 		    end
