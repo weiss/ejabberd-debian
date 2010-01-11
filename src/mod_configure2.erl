@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_configure2.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Support for online configuration of ejabberd
-%%% Created : 26 Oct 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_configure2.erl 370 2005-06-20 03:18:13Z alexey $
+%%% Created : 26 Oct 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_configure2).
--author('alexey@sevcom.net').
--vsn('$Revision: 370 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_mod).
 
@@ -31,7 +48,7 @@ stop(Host) ->
     gen_iq_handler:remove_iq_handler(ejabberd_local, Host, ?NS_ECONFIGURE).
 
 
-process_local_iq(From, To, #iq{type = Type, lang = Lang, sub_el = SubEl} = IQ) ->
+process_local_iq(From, To, #iq{type = Type, lang = _Lang, sub_el = SubEl} = IQ) ->
     case acl:match_rule(To#jid.lserver, configure, From) of
 	deny ->
 	    IQ#iq{type = error, sub_el = [SubEl, ?ERR_NOT_ALLOWED]};
@@ -40,38 +57,38 @@ process_local_iq(From, To, #iq{type = Type, lang = Lang, sub_el = SubEl} = IQ) -
 		set ->
 		    IQ#iq{type = error,
 			  sub_el = [SubEl, ?ERR_FEATURE_NOT_IMPLEMENTED]};
-		    %case xml:get_tag_attr_s("type", SubEl) of
-		    %    "cancel" ->
-		    %        IQ#iq{type = result,
-		    %		   sub_el = [{xmlelement, "query",
-		    %			      [{"xmlns", XMLNS}], []}]};
-		    %    "submit" ->
-		    %        XData = jlib:parse_xdata_submit(SubEl),
-		    %        case XData of
-		    %    	invalid ->
-		    %    	    IQ#iq{type = error,
-		    %			  sub_el = [SubEl, ?ERR_BAD_REQUEST]};
-		    %    	_ ->
-		    %    	    Node =
-		    %    		string:tokens(
-		    %    		  xml:get_tag_attr_s("node", SubEl),
-		    %    		  "/"),
-		    %    	    case set_form(Node, Lang, XData) of
-		    %    		{result, Res} ->
-		    %    		    IQ#iq{type = result,
-		    %				  sub_el = [{xmlelement, "query",
-		    %					     [{"xmlns", XMLNS}],
-		    %					     Res
-		    %					    }]};
-		    %    		{error, Error} ->
-		    %    		    IQ#iq{type = error,
-		    %				  sub_el = [SubEl, Error]}
-		    %    	    end
-		    %        end;
-		    %    _ ->
-		    %        IQ#iq{type = error,
-		    %		   sub_el = [SubEl, ?ERR_NOT_ALLOWED]}
-		    %end;
+		    %%case xml:get_tag_attr_s("type", SubEl) of
+		    %%    "cancel" ->
+		    %%        IQ#iq{type = result,
+		    %%		   sub_el = [{xmlelement, "query",
+		    %%			      [{"xmlns", XMLNS}], []}]};
+		    %%    "submit" ->
+		    %%        XData = jlib:parse_xdata_submit(SubEl),
+		    %%        case XData of
+		    %%    	invalid ->
+		    %%    	    IQ#iq{type = error,
+		    %%			  sub_el = [SubEl, ?ERR_BAD_REQUEST]};
+		    %%    	_ ->
+		    %%    	    Node =
+		    %%    		string:tokens(
+		    %%    		  xml:get_tag_attr_s("node", SubEl),
+		    %%    		  "/"),
+		    %%    	    case set_form(Node, Lang, XData) of
+		    %%    		{result, Res} ->
+		    %%    		    IQ#iq{type = result,
+		    %%				  sub_el = [{xmlelement, "query",
+		    %%					     [{"xmlns", XMLNS}],
+		    %%					     Res
+		    %%					    }]};
+		    %%    		{error, Error} ->
+		    %%    		    IQ#iq{type = error,
+		    %%				  sub_el = [SubEl, Error]}
+		    %%    	    end
+		    %%        end;
+		    %%    _ ->
+		    %%        IQ#iq{type = error,
+		    %%		   sub_el = [SubEl, ?ERR_NOT_ALLOWED]}
+		    %%end;
 		get ->
 		    case process_get(SubEl) of
 			{result, Res} ->
@@ -146,8 +163,8 @@ process_get({xmlelement, "last", Attrs, _SubEls}) ->
 		      [[integer_to_list(TimeStamp - V), " "] || V <- Vals])),
 	    {result, {xmlelement, "last", Attrs, [{xmlcdata, Str}]}}
     end;
-%process_get({xmlelement, Name, Attrs, SubEls}) ->
-%    {result, };
+%%process_get({xmlelement, Name, Attrs, SubEls}) ->
+%%    {result, };
 process_get(_) ->
     {error, ?ERR_BAD_REQUEST}.
 

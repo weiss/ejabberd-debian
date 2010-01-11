@@ -1,4 +1,4 @@
-/* $Id: expat_erl.c 526 2006-04-05 23:56:16Z alexey $ */
+/* $Id: expat_erl.c 970 2007-11-15 10:33:18Z mremond $ */
 
 #include <stdio.h>
 #include <string.h>

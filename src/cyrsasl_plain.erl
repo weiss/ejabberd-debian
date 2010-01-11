@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : cyrsasl_plain.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : PLAIN SASL mechanism
-%%% Created :  8 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_plain.erl 527 2006-04-07 00:39:24Z alexey $
+%%% Created :  8 Mar 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_plain).
--author('alexey@sevcom.net').
--vsn('$Revision: 527 $ ').
+-author('alexey@process-one.net').
 
 -export([start/1, stop/0, mech_new/3, mech_step/2, parse/1]).
 
@@ -33,7 +50,7 @@ mech_step(State, ClientIn) ->
 		true ->
 		    {ok, [{username, User}, {authzid, AuthzId}]};
 		_ ->
-		    {error, "bad-auth"}
+		    {error, "not-authorized", User}
 	    end;
 	_ ->
 	    {error, "bad-protocol"}

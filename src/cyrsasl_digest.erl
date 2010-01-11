@@ -3,12 +3,11 @@
 %%% Author  : Alexey Shchepin <alexey@sevcom.net>
 %%% Purpose : DIGEST-MD5 SASL mechanism
 %%% Created : 11 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: cyrsasl_digest.erl 527 2006-04-07 00:39:24Z alexey $
+%%% Id      : $Id: cyrsasl_digest.erl 1044 2007-12-06 22:12:27Z badlop $
 %%%----------------------------------------------------------------------
 
 -module(cyrsasl_digest).
 -author('alexey@sevcom.net').
--vsn('$Revision: 527 $ ').
 
 -export([start/1,
 	 stop/0,
@@ -44,7 +43,7 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 	    AuthzId = xml:get_attr_s("authzid", KeyVals),
 	    case (State#state.get_password)(UserName) of
 		false ->
-		    {error, "not-authorized"};
+		    {error, "not-authorized", UserName};
 		Passwd ->
 		    Response = response(KeyVals, UserName, Passwd,
 					Nonce, AuthzId, "AUTHENTICATE"),
@@ -59,7 +58,7 @@ mech_step(#state{step = 3, nonce = Nonce} = State, ClientIn) ->
 					 username = UserName,
 					 authzid = AuthzId}};
 			_ ->
-			    {error, "not-authorized"}
+			    {error, "not-authorized", UserName}
 		    end
 	    end
     end;

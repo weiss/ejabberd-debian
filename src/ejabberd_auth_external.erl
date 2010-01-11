@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_auth_external.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Authentification via LDAP external script
-%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_external.erl 374 2005-07-13 03:24:13Z alexey $
+%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_external).
--author('alexey@sevcom.net').
--vsn('$Revision: 374 $ ').
+-author('alexey@process-one.net').
 
 %% External exports
 -export([start/1,
@@ -49,6 +66,8 @@ set_password(User, Server, Password) ->
 try_register(_User, _Server, _Password) ->
     {error, not_allowed}.
 
+%% TODO
+%% Return the list of all users handled by external
 dirty_get_registered_users() ->
     [].
 

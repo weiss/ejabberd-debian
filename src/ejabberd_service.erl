@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_service.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
-%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_service.erl 532 2006-04-13 02:08:24Z alexey $
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
+%%% Purpose : External component management
+%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_service).
--author('alexey@sevcom.net').
--vsn('$Revision: 532 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_fsm).
 
@@ -17,7 +34,7 @@
 	 start_link/2,
 	 send_text/2,
 	 send_element/2,
-	 become_controller/1]).
+	 socket_type/0]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -33,8 +50,9 @@
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 
--record(state, {socket, receiver, streamid, sockmod,
-		hosts, password, access}).
+-record(state, {socket, sockmod, streamid,
+		hosts, password, access,
+		check_from}).
 
 %-define(DBGFSM, true).
 
@@ -79,8 +97,8 @@ start(SockData, Opts) ->
 start_link(SockData, Opts) ->
     gen_fsm:start_link(ejabberd_service, [SockData, Opts], ?FSMOPTS).
 
-become_controller(Pid) ->
-    gen_fsm:send_all_state_event(Pid, become_controller).
+socket_type() ->
+    xml_stream.
 
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_fsm
@@ -91,9 +109,10 @@ become_controller(Pid) ->
 %% Returns: {ok, StateName, StateData}          |
 %%          {ok, StateName, StateData, Timeout} |
 %%          ignore                              |
-%%          {stop, StopReason}                   
+%%          {stop, StopReason}
 %%----------------------------------------------------------------------
 init([{SockMod, Socket}, Opts]) ->
+    ?INFO_MSG("(~w) External service connected", [Socket]),
     Access = case lists:keysearch(access, 1, Opts) of
 		 {value, {_, A}} -> A;
 		 _ -> all
@@ -123,21 +142,29 @@ init([{SockMod, Socket}, Opts]) ->
 			false
 		end
 	end,
-    ReceiverPid = ejabberd_receiver:start(Socket, SockMod, none),
+    Shaper = case lists:keysearch(shaper_rule, 1, Opts) of
+		 {value, {_, S}} -> S;
+		 _ -> none
+	     end,
+    CheckFrom = case lists:keysearch(service_check_from, 1, Opts) of
+		 {value, {_, CF}} -> CF;
+		 _ -> true
+	     end,
+    SockMod:change_shaper(Socket, Shaper),
     {ok, wait_for_stream, #state{socket = Socket,
-				 receiver = ReceiverPid,
-				 streamid = new_id(),
 				 sockmod = SockMod,
+				 streamid = new_id(),
 				 hosts = Hosts,
 				 password = Password,
-				 access = Access
+				 access = Access,
+				 check_from = CheckFrom
 				 }}.
 
 %%----------------------------------------------------------------------
 %% Func: StateName/2
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 
 wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
@@ -174,7 +201,8 @@ wait_for_handshake({xmlstreamelement, El}, StateData) ->
 		    send_text(StateData, "<handshake/>"),
 		    lists:foreach(
 		      fun(H) ->
-			      ejabberd_router:register_route(H)
+			      ejabberd_router:register_route(H),
+			      ?INFO_MSG("Route registered for service ~p~n", [H])
 		      end, StateData#state.hosts),
 		    {next_state, stream_established, StateData};
 		_ ->
@@ -200,14 +228,23 @@ stream_established({xmlstreamelement, El}, StateData) ->
     NewEl = jlib:remove_attr("xmlns", El),
     {xmlelement, Name, Attrs, _Els} = NewEl,
     From = xml:get_attr_s("from", Attrs),
-    FromJID1 = jlib:string_to_jid(From),
-    FromJID = case FromJID1 of
-		  #jid{lserver = Server} ->
-		      case lists:member(Server, StateData#state.hosts) of
-			  true -> FromJID1;
-			  false -> error
-		      end;
-		  _ -> error
+    FromJID = case StateData#state.check_from of
+		  %% If the admin does not want to check the from field
+		  %% when accept packets from any address.
+		  %% In this case, the component can send packet of
+		  %% behalf of the server users.
+		  false -> jlib:string_to_jid(From);
+		  %% The default is the standard behaviour in XEP-0114
+		  _ ->
+		      FromJID1 = jlib:string_to_jid(From),
+		      case FromJID1 of
+			  #jid{lserver = Server} ->
+			      case lists:member(Server, StateData#state.hosts) of
+				  true -> FromJID1;
+				  false -> error
+			      end;
+			  _ -> error
+		      end
 	      end,
     To = xml:get_attr_s("to", Attrs),
     ToJID = case To of
@@ -247,7 +284,7 @@ stream_established(closed, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 %state_name(Event, From, StateData) ->
 %    Reply = ok,
@@ -257,14 +294,8 @@ stream_established(closed, StateData) ->
 %% Func: handle_event/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
-handle_event(become_controller, StateName, StateData) ->
-    ok = (StateData#state.sockmod):controlling_process(
-	   StateData#state.socket,
-	   StateData#state.receiver),
-    ejabberd_receiver:become_controller(StateData#state.receiver),
-    {next_state, StateName, StateData};
 handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
@@ -275,7 +306,7 @@ handle_event(_Event, StateName, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
@@ -288,7 +319,7 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 %% Func: handle_info/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 handle_info({send_text, Text}, StateName, StateData) ->
     send_text(StateData, Text),
@@ -328,7 +359,7 @@ terminate(Reason, StateName, StateData) ->
 	_ ->
 	    ok
     end,
-    ejabberd_receiver:close(StateData#state.receiver),
+    (StateData#state.sockmod):close(StateData#state.socket),
     ok.
 
 %%%----------------------------------------------------------------------
@@ -336,12 +367,10 @@ terminate(Reason, StateName, StateData) ->
 %%%----------------------------------------------------------------------
 
 send_text(StateData, Text) ->
-    (StateData#state.sockmod):send(StateData#state.socket,Text).
+    (StateData#state.sockmod):send(StateData#state.socket, Text).
 
 send_element(StateData, El) ->
     send_text(StateData, xml:element_to_string(El)).
 
-
 new_id() ->
     randoms:get_string().
-

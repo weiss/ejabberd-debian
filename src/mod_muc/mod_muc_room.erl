@@ -1,23 +1,40 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_muc_room.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : MUC room stuff
-%%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_muc_room.erl 863 2007-08-09 13:04:29Z mremond $
+%%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_muc_room).
--author('alexey@sevcom.net').
--vsn('$Revision: 863 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_fsm).
 
 
 %% External exports
--export([start_link/7,
-	 start_link/6,
+-export([start_link/9,
+	 start_link/7,
+	 start/9,
 	 start/7,
-	 start/6,
 	 route/4]).
 
 %% gen_fsm callbacks
@@ -32,6 +49,10 @@
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 
+-define(MAX_USERS_DEFAULT, 200).
+-define(MAX_USERS_DEFAULT_LIST,
+	[5, 10, 20, 30, 50, 100, 200, 500, 1000, 2000, 5000]).
+
 -define(SETS, gb_sets).
 -define(DICT, dict).
 
@@ -44,13 +65,14 @@
 		 public = true,
 		 public_list = true,
 		 persistent = false,
-		 moderated = false, % TODO
+		 moderated = true,
 		 members_by_default = true,
 		 members_only = false,
 		 allow_user_invites = false,
 		 password_protected = false,
 		 password = "",
 		 anonymous = true,
+		 max_users = ?MAX_USERS_DEFAULT,
 		 logging = false
 		}).
 
@@ -58,6 +80,13 @@
 	       nick,
 	       role,
 	       last_presence}).
+
+-record(activity, {message_time = 0,
+		   presence_time = 0,
+		   message_shaper,
+		   presence_shaper,
+		   message,
+		   presence}).
 
 -record(state, {room,
 		host,
@@ -70,7 +99,14 @@
 		history = lqueue_new(20),
 		subject = "",
 		subject_author = "",
-		just_created = false}).
+		just_created = false,
+		activity = ?DICT:new(),
+		room_shaper,
+		room_queue = queue:new()}).
+
+-record(muc_online_users, {us,
+			   room,
+			   host}).
 
 
 %-define(DBGFSM, true).
@@ -81,30 +117,42 @@
 -define(FSMOPTS, []).
 -endif.
 
+%% Module start with or without supervisor:
+-ifdef(NO_TRANSIENT_SUPERVISORS).
+-define(SUPERVISOR_START, 
+	gen_fsm:start(?MODULE, [Host, ServerHost, Access, Room, HistorySize,
+				RoomShaper, Creator, Nick, DefRoomOpts],
+		      ?FSMOPTS)).
+-else.
+-define(SUPERVISOR_START, 
+	Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
+	supervisor:start_child(
+	  Supervisor, [Host, ServerHost, Access, Room, HistorySize, RoomShaper,
+		       Creator, Nick, DefRoomOpts])).
+-endif.
 
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
-start(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
-    Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
-    %%supervisor:start_child(
-    %%  Supervisor, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick]).
-    gen_fsm:start(?MODULE, [Host, ServerHost, Access, Room, HistorySize,
-			    Creator, Nick], ?FSMOPTS).
+start(Host, ServerHost, Access, Room, HistorySize, RoomShaper,
+      Creator, Nick, DefRoomOpts) ->
+    ?SUPERVISOR_START.
 
-start(Host, ServerHost, Access, Room, HistorySize, Opts) ->
+start(Host, ServerHost, Access, Room, HistorySize, RoomShaper, Opts) ->
     Supervisor = gen_mod:get_module_proc(ServerHost, ejabberd_mod_muc_sup),
-    %%supervisor:start_child(
-    %%  Supervisor, [Host, ServerHost, Access, Room, HistorySize, Opts]).
-    gen_fsm:start(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Opts],
-		  ?FSMOPTS).
+    supervisor:start_child(
+      Supervisor, [Host, ServerHost, Access, Room, HistorySize, RoomShaper,
+		   Opts]).
 
-start_link(Host, ServerHost, Access, Room, HistorySize, Creator, Nick) ->
-    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Creator, Nick],
+start_link(Host, ServerHost, Access, Room, HistorySize, RoomShaper,
+	   Creator, Nick, DefRoomOpts) ->
+    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize,
+				 RoomShaper, Creator, Nick, DefRoomOpts],
 		       ?FSMOPTS).
 
-start_link(Host, ServerHost, Access, Room, HistorySize, Opts) ->
-    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize, Opts],
+start_link(Host, ServerHost, Access, Room, HistorySize, RoomShaper, Opts) ->
+    gen_fsm:start_link(?MODULE, [Host, ServerHost, Access, Room, HistorySize,
+				 RoomShaper, Opts],
 		       ?FSMOPTS).
 
 %%%----------------------------------------------------------------------
@@ -116,9 +164,10 @@ start_link(Host, ServerHost, Access, Room, HistorySize, Opts) ->
 %% Returns: {ok, StateName, StateData}          |
 %%          {ok, StateName, StateData, Timeout} |
 %%          ignore                              |
-%%          {stop, StopReason}                   
+%%          {stop, StopReason}
 %%----------------------------------------------------------------------
-init([Host, ServerHost, Access, Room, HistorySize, Creator, _Nick]) ->
+init([Host, ServerHost, Access, Room, HistorySize, RoomShaper, Creator, _Nick, DefRoomOpts]) ->
+    Shaper = shaper:new(RoomShaper),
     State = set_affiliation(Creator, owner,
 			    #state{host = Host,
 				   server_host = ServerHost,
@@ -126,22 +175,28 @@ init([Host, ServerHost, Access, Room, HistorySize, Creator, _Nick]) ->
 				   room = Room,
 				   history = lqueue_new(HistorySize),
 				   jid = jlib:make_jid(Room, Host, ""),
-				   just_created = true}),
-    {ok, normal_state, State};
-init([Host, ServerHost, Access, Room, HistorySize, Opts]) ->
+				   just_created = true,
+				   room_shaper = Shaper}),
+    State1 = set_opts(DefRoomOpts, State),
+    ?INFO_MSG("Created MUC room ~s@~s by ~s", 
+	      [Room, Host, jlib:jid_to_string(Creator)]),
+    {ok, normal_state, State1};
+init([Host, ServerHost, Access, Room, HistorySize, RoomShaper, Opts]) ->
+    Shaper = shaper:new(RoomShaper),
     State = set_opts(Opts, #state{host = Host,
 				  server_host = ServerHost,
 				  access = Access,
 				  room = Room,
 				  history = lqueue_new(HistorySize),
-				  jid = jlib:make_jid(Room, Host, "")}),
+				  jid = jlib:make_jid(Room, Host, ""),
+				  room_shaper = Shaper}),
     {ok, normal_state, State}.
 
 %%----------------------------------------------------------------------
 %% Func: StateName/2
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 normal_state({route, From, "",
 	      {xmlelement, "message", Attrs, Els} = Packet},
@@ -151,96 +206,99 @@ normal_state({route, From, "",
 	true ->
 	    case xml:get_attr_s("type", Attrs) of
 		"groupchat" ->
-		    {ok, #user{nick = FromNick, role = Role}} =
-			?DICT:find(jlib:jid_tolower(From),
-				   StateData#state.users),
+		    Activity = get_user_activity(From, StateData),
+		    Now = now_to_usec(now()),
+		    MinMessageInterval =
+			trunc(gen_mod:get_module_opt(
+				StateData#state.server_host,
+				mod_muc, min_message_interval, 0) * 1000000),
+		    Size = lists:flatlength(xml:element_to_string(Packet)),
+		    {MessageShaper, MessageShaperInterval} =
+			shaper:update(Activity#activity.message_shaper, Size),
 		    if
-			(Role == moderator) or (Role == participant) ->
-			    {NewStateData1, IsAllowed} =
-				case check_subject(Packet) of
-				    false ->
-					{StateData, true};
-				    Subject ->
-					case can_change_subject(Role,
-								StateData) of
-					    true ->
-						NSD =
-						    StateData#state{
-						      subject = Subject,
-						      subject_author =
-						      FromNick},
-						case (NSD#state.config)#config.persistent of
-						    true ->
-							mod_muc:store_room(
-							  NSD#state.host,
-							  NSD#state.room,
-							  make_opts(NSD));
-						    _ ->
-							ok
-						end,
-						{NSD, true};
-					    _ ->
-						{StateData, false}
-					end
-				end,
-			    case IsAllowed of
-				true ->
-				    lists:foreach(
-				      fun({_LJID, Info}) ->
-					      ejabberd_router:route(
-						jlib:jid_replace_resource(
-						  StateData#state.jid,
-						  FromNick),
-						Info#user.jid,
-						Packet)
-				      end,
-				      ?DICT:to_list(StateData#state.users)),
-				    NewStateData2 =
-					add_message_to_history(FromNick,
-							       Packet,
-							       NewStateData1),
-				    {next_state, normal_state, NewStateData2};
-				_ ->
-				    Err = 
-					case (StateData#state.config)#config.allow_change_subj of
-					    true ->
-						?ERRT_FORBIDDEN(
-						  Lang,
-						  "Only moderators and participants "
-						  "are allowed to change subject in this room");
-					    _ ->
-						?ERRT_FORBIDDEN(
-						  Lang,
-						  "Only moderators "
-						  "are allowed to change subject in this room")
-					end,
-				    ejabberd_router:route(
-				      StateData#state.jid,
-				      From,
-				      jlib:make_error_reply(Packet, Err)),
-			    {next_state, normal_state, StateData}
-			    end;
-			true ->
-			    ErrText = "Visitors are not allowed to send messages to all occupants",
+			Activity#activity.message /= undefined ->
+			    ErrText = "Traffic rate limit is exceeded",
 			    Err = jlib:make_error_reply(
-				    Packet, ?ERRT_FORBIDDEN(Lang, ErrText)),
+				    Packet, ?ERRT_RESOURCE_CONSTRAINT(Lang, ErrText)),
 			    ejabberd_router:route(
 			      StateData#state.jid,
 			      From, Err),
-			    {next_state, normal_state, StateData}
+			    {next_state, normal_state, StateData};
+			Now >= Activity#activity.message_time + MinMessageInterval,
+			MessageShaperInterval == 0 ->
+			    {RoomShaper, RoomShaperInterval} =
+				shaper:update(StateData#state.room_shaper, Size),
+			    RoomQueueEmpty = queue:is_empty(
+					       StateData#state.room_queue),
+			    if
+				RoomShaperInterval == 0,
+				RoomQueueEmpty ->
+				    NewActivity = Activity#activity{
+						    message_time = Now,
+						    message_shaper = MessageShaper},
+				    StateData1 =
+					StateData#state{
+					  activity = ?DICT:store(
+							jlib:jid_tolower(From),
+							NewActivity,
+							StateData#state.activity),
+					  room_shaper = RoomShaper},
+				    process_groupchat_message(From, Packet, StateData1);
+				true ->
+				    StateData1 =
+					if
+					    RoomQueueEmpty ->
+						erlang:send_after(
+						  RoomShaperInterval, self(),
+						  process_room_queue),
+						StateData#state{
+						  room_shaper = RoomShaper};
+					    true ->
+						StateData
+					end,
+				    NewActivity = Activity#activity{
+						    message_time = Now,
+						    message_shaper = MessageShaper,
+						    message = Packet},
+				    RoomQueue = queue:in(
+						  {message, From},
+						  StateData#state.room_queue),
+				    StateData2 =
+					StateData1#state{
+					  activity = ?DICT:store(
+							jlib:jid_tolower(From),
+							NewActivity,
+							StateData#state.activity),
+					  room_queue = RoomQueue},
+				    {next_state, normal_state, StateData2}
+			    end;
+			true ->
+			    MessageInterval =
+				(Activity#activity.message_time +
+				 MinMessageInterval - Now) div 1000,
+			    Interval = lists:max([MessageInterval,
+						  MessageShaperInterval]),
+			    erlang:send_after(
+			      Interval, self(), {process_user_message, From}),
+			    NewActivity = Activity#activity{
+					    message = Packet,
+					    message_shaper = MessageShaper},
+			    StateData1 =
+				StateData#state{
+				  activity = ?DICT:store(
+						jlib:jid_tolower(From),
+						NewActivity,
+						StateData#state.activity)},
+			    {next_state, normal_state, StateData1}
 		    end;
 		"error" ->
 		    case is_user_online(From, StateData) of
 			true ->
-			    NewState =
-				add_user_presence_un(
-				  From,
-				  {xmlelement, "presence",
-				   [{"type", "unavailable"}], []},
-			      StateData),
-			    send_new_presence(From, NewState),
-			    {next_state, normal_state,
-			     remove_online_user(From, NewState)};
+			    ErrorText = "This participant is kicked from the room because "
+				"he sent an error message",
+			    NewState = expulse_participant(Packet, From, StateData, 
+					 translate:translate(Lang, ErrorText)),
+			    {next_state, normal_state, NewState};
 			_ ->
 			    {next_state, normal_state, StateData}
 		    end;
@@ -253,11 +311,10 @@ normal_state({route, From, "",
 		      From, Err),
 		    {next_state, normal_state, StateData};
 		Type when (Type == "") or (Type == "normal") ->
-		    case check_invitation(From, Els, StateData) of
-			error ->
-			    ErrText = "It is not allowed to send normal messages to the conference",
+		    case catch check_invitation(From, Els, Lang, StateData) of
+			{error, Error} ->
 			    Err = jlib:make_error_reply(
-				    Packet, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)),
+				    Packet, Error),
 			    ejabberd_router:route(
 			      StateData#state.jid,
 			      From, Err),
@@ -304,10 +361,10 @@ normal_state({route, From, "",
 		"error" ->
 		    ok;
 		_ ->
-		    ErrText = "Only occupants are allowed to send messages to the conference",
-		    Err = jlib:make_error_reply(
-			    Packet, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)),
-		    ejabberd_router:route(StateData#state.jid, From, Err)
+                    ErrText = "Only occupants are allowed to send messages to the conference",
+                    Err = jlib:make_error_reply(
+                            Packet, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)),
+                    ejabberd_router:route(StateData#state.jid, From, Err)
 	    end,
 	    {next_state, normal_state, StateData}
     end;
@@ -364,133 +421,75 @@ normal_state({route, From, "",
     end;
 
 normal_state({route, From, Nick,
-	      {xmlelement, "presence", Attrs, _Els} = Packet},
+	      {xmlelement, "presence", _Attrs, _Els} = Packet},
 	     StateData) ->
-    Type = xml:get_attr_s("type", Attrs),
-    Lang = xml:get_attr_s("xml:lang", Attrs),
-    StateData1 =
-	case Type of
-	    "unavailable" ->
-		case is_user_online(From, StateData) of
-		    true ->
-			NewState =
-			    add_user_presence_un(From, Packet, StateData),
-			send_new_presence(From, NewState),
-			Reason = case xml:get_subtag(Packet, "status") of
-				false -> "";
-				Status_el -> xml:get_tag_cdata(Status_el)
-			end,
-			remove_online_user(From, NewState, Reason);
-		    _ ->
-			StateData
-		end;
-	    "error" ->
-		case is_user_online(From, StateData) of
-		    true ->
-			NewState =
-			    add_user_presence_un(
-			      From,
-			      {xmlelement, "presence",
-			       [{"type", "unavailable"}], []},
-			      StateData),
-			send_new_presence(From, NewState),
-			remove_online_user(From, NewState);
-		    _ ->
-			StateData
-		end;
-	    "" ->
-		case is_user_online(From, StateData) of
-		    true ->
-			case is_nick_change(From, Nick, StateData) of
-			    true ->
-				case {is_nick_exists(Nick, StateData),
-				      mod_muc:can_use_nick(
-					StateData#state.host, From, Nick)} of
-				    {true, _} ->
-					Lang = xml:get_attr_s("xml:lang", Attrs),
-					ErrText = "Nickname is already in use by another occupant",
-					Err = jlib:make_error_reply(
-						Packet,
-						?ERRT_CONFLICT(Lang, ErrText)),
-					ejabberd_router:route(
-					  jlib:jid_replace_resource(
-					    StateData#state.jid,
-					    Nick), % TODO: s/Nick/""/
-					  From, Err),
-					StateData;
-				    {_, false} ->
-					ErrText = "Nickname is registered by another person",
-					Err = jlib:make_error_reply(
-						Packet,
-						?ERRT_CONFLICT(Lang, ErrText)),
-					ejabberd_router:route(
-					  % TODO: s/Nick/""/
-					  jlib:jid_replace_resource(
-					    StateData#state.jid,
-					    Nick),
-					  From, Err),
-					StateData;
-				    _ ->
-					change_nick(From, Nick, StateData)
-				end;
-			    _ ->
-				NewState =
-				    add_user_presence(From, Packet, StateData),
-				send_new_presence(From, NewState),
-				NewState
-			end;
-		    _ ->
-			add_new_user(From, Nick, Packet, StateData)
-		end;
-	    _ ->
-		StateData
-	end,
-    %io:format("STATE1: ~p~n", [?DICT:to_list(StateData#state.users)]),
-    %io:format("STATE2: ~p~n", [?DICT:to_list(StateData1#state.users)]),
-    case (not (StateData1#state.config)#config.persistent) andalso
-	(?DICT:to_list(StateData1#state.users) == []) of
+    Activity = get_user_activity(From, StateData),
+    Now = now_to_usec(now()),
+    MinPresenceInterval =
+	trunc(gen_mod:get_module_opt(
+		StateData#state.server_host,
+		mod_muc, min_presence_interval, 0) * 1000000),
+    if
+	(Now >= Activity#activity.presence_time + MinPresenceInterval) and
+	(Activity#activity.presence == undefined) ->
+	    NewActivity = Activity#activity{presence_time = Now},
+	    StateData1 =
+		StateData#state{
+		  activity = ?DICT:store(
+				jlib:jid_tolower(From),
+				NewActivity,
+				StateData#state.activity)},
+	    process_presence(From, Nick, Packet, StateData1);
 	true ->
-	    {stop, normal, StateData1};
-	_ ->
+	    if
+		Activity#activity.presence == undefined ->
+		    Interval = (Activity#activity.presence_time +
+				MinPresenceInterval - Now) div 1000,
+		    erlang:send_after(
+		      Interval, self(), {process_user_presence, From});
+		true ->
+		    ok
+	    end,
+	    NewActivity = Activity#activity{presence = {Nick, Packet}},
+	    StateData1 =
+		StateData#state{
+		  activity = ?DICT:store(
+				jlib:jid_tolower(From),
+				NewActivity,
+				StateData#state.activity)},
 	    {next_state, normal_state, StateData1}
     end;
 
 normal_state({route, From, ToNick,
-	      {xmlelement, "message", Attrs, _Els} = Packet},
+	      {xmlelement, "message", Attrs, _} = Packet},
 	     StateData) ->
     Type = xml:get_attr_s("type", Attrs),
     Lang = xml:get_attr_s("xml:lang", Attrs),
-    case Type of
-	"error" ->
-	    case is_user_online(From, StateData) of
-		true ->
-		    NewState =
-			add_user_presence_un(
-			  From,
-			  {xmlelement, "presence",
-			   [{"type", "unavailable"}], []},
-			  StateData),
-		    send_new_presence(From, NewState),
-		    {next_state, normal_state,
-		     remove_online_user(From, NewState)};
-		_ ->
-		    {next_state, normal_state, StateData}
-	    end;
-	_ ->
+    case decide_fate_message(Type, Packet, From, StateData) of
+	{expulse_sender, Reason} ->
+	    ?DEBUG(Reason, []),
+	    ErrorText = "This participant is kicked from the room because "
+		"he sent an error message to another participant",
+	    NewState = expulse_participant(Packet, From, StateData, 
+					   translate:translate(Lang, ErrorText)),
+	    {next_state, normal_state, NewState};
+	forget_message ->
+	    {next_state, normal_state, StateData};
+	continue_delivery ->
 	    case (StateData#state.config)#config.allow_private_messages
 		andalso is_user_online(From, StateData) of
 		true ->
 		    case Type of
 			"groupchat" ->
 			    ErrText = "It is not allowed to send private "
-				      "messages of type \"groupchat\"",
+				"messages of type \"groupchat\"",
 			    Err = jlib:make_error_reply(
 				    Packet, ?ERRT_BAD_REQUEST(Lang, ErrText)),
 			    ejabberd_router:route(
-				jlib:jid_replace_resource(
-				    StateData#state.jid,
-				    ToNick),
-				From, Err);
+			      jlib:jid_replace_resource(
+				StateData#state.jid,
+				ToNick),
+			      From, Err);
 			_ ->
 			    case find_jid_by_nick(ToNick, StateData) of
 				false ->
@@ -498,19 +497,19 @@ normal_state({route, From, ToNick,
 				    Err = jlib:make_error_reply(
 					    Packet, ?ERRT_ITEM_NOT_FOUND(Lang, ErrText)),
 				    ejabberd_router:route(
-					jlib:jid_replace_resource(
-					    StateData#state.jid,
-					    ToNick),
-					From, Err);
+				      jlib:jid_replace_resource(
+					StateData#state.jid,
+					ToNick),
+				      From, Err);
 				ToJID ->
 				    {ok, #user{nick = FromNick}} =
 					?DICT:find(jlib:jid_tolower(From),
-						StateData#state.users),
+						   StateData#state.users),
 				    ejabberd_router:route(
-					jlib:jid_replace_resource(
-					    StateData#state.jid,
-					    FromNick),
-					ToJID, Packet)
+				      jlib:jid_replace_resource(
+					StateData#state.jid,
+					FromNick),
+				      ToJID, Packet)
 			    end
 		    end;
 		_ ->
@@ -518,10 +517,10 @@ normal_state({route, From, ToNick,
 		    Err = jlib:make_error_reply(
 			    Packet, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)),
 		    ejabberd_router:route(
-			jlib:jid_replace_resource(
-			    StateData#state.jid,
-			    ToNick),
-			From, Err)
+		      jlib:jid_replace_resource(
+			StateData#state.jid,
+			ToNick),
+		      From, Err)
 	    end,
 	    {next_state, normal_state, StateData}
     end;
@@ -591,7 +590,7 @@ normal_state(_Event, StateData) ->
 %% Func: handle_event/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 handle_event({service_message, Msg}, _StateName, StateData) ->
     MessagePkt = {xmlelement, "message",
@@ -610,6 +609,28 @@ handle_event({service_message, Msg}, _StateName, StateData) ->
 				 StateData),
     {next_state, normal_state, NSD};
 
+handle_event({destroy, Reason}, _StateName, StateData) ->
+    {result, [], stop} =
+        destroy_room(
+          {xmlelement, "destroy",
+           [{"xmlns", ?NS_MUC_OWNER}],
+           case Reason of
+               none -> [];
+               _Else ->
+                   [{xmlelement, "reason",
+                     [], [{xmlcdata, Reason}]}]
+           end}, StateData),
+    ?INFO_MSG("Destroyed MUC room ~s with reason: ~p", 
+	      [jlib:jid_to_string(StateData#state.jid), Reason]),
+    {stop, normal, StateData};
+handle_event(destroy, StateName, StateData) ->
+    ?INFO_MSG("Destroyed MUC room ~s", 
+	      [jlib:jid_to_string(StateData#state.jid)]),
+    handle_event({destroy, none}, StateName, StateData);
+
+handle_event({set_affiliations, Affiliations}, StateName, StateData) ->
+    {next_state, StateName, StateData#state{affiliations = Affiliations}};
+
 handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
@@ -620,7 +641,7 @@ handle_event(_Event, StateName, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 handle_sync_event({get_disco_item, JID, Lang}, _From, StateName, StateData) ->
     FAffiliation = get_affiliation(JID, StateData),
@@ -637,7 +658,8 @@ handle_sync_event({get_disco_item, JID, Lang}, _From, StateName, StateData) ->
 			   _ ->
 			       translate:translate(Lang, "private, ")
 		       end,
-		Len = length(?DICT:to_list(StateData#state.users)),
+		Len = ?DICT:fold(fun(_, _, Acc) -> Acc + 1 end, 0,
+				 StateData#state.users),
 		" (" ++ Desc ++ integer_to_list(Len) ++ ")";
 	    _ ->
 		""
@@ -652,6 +674,13 @@ handle_sync_event({get_disco_item, JID, Lang}, _From, StateName, StateData) ->
 		    false
 	    end,
     {reply, Reply, StateName, StateData};
+handle_sync_event(get_config, _From, StateName, StateData) ->
+    {reply, {ok, StateData#state.config}, StateName, StateData};
+handle_sync_event(get_state, _From, StateName, StateData) ->
+    {reply, {ok, StateData}, StateName, StateData};
+handle_sync_event({change_config, Config}, _From, StateName, StateData) ->
+    {result, [], NSD} = change_config(Config, StateData),
+    {reply, {ok, NSD#state.config}, StateName, NSD};
 handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
     {reply, Reply, StateName, StateData}.
@@ -663,8 +692,65 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 %% Func: handle_info/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
+handle_info({process_user_presence, From}, normal_state = _StateName, StateData) ->
+    Activity = get_user_activity(From, StateData),
+    Now = now_to_usec(now()),
+    {Nick, Packet} = Activity#activity.presence,
+    NewActivity = Activity#activity{presence_time = Now,
+				    presence = undefined},
+    StateData1 =
+	StateData#state{
+	  activity = ?DICT:store(
+			jlib:jid_tolower(From),
+			NewActivity,
+			StateData#state.activity)},
+    process_presence(From, Nick, Packet, StateData1);
+handle_info({process_user_message, From}, normal_state = _StateName, StateData) ->
+    Activity = get_user_activity(From, StateData),
+    Now = now_to_usec(now()),
+    Packet = Activity#activity.message,
+    NewActivity = Activity#activity{message_time = Now,
+				    message = undefined},
+    StateData1 =
+	StateData#state{
+	  activity = ?DICT:store(
+			jlib:jid_tolower(From),
+			NewActivity,
+			StateData#state.activity)},
+    process_groupchat_message(From, Packet, StateData1);
+handle_info(process_room_queue, normal_state = StateName, StateData) ->
+    case queue:out(StateData#state.room_queue) of
+	{{value, {message, From}}, RoomQueue} ->
+	    Activity = get_user_activity(From, StateData),
+	    Packet = Activity#activity.message,
+	    NewActivity = Activity#activity{message = undefined},
+	    StateData1 =
+		StateData#state{
+		  activity = ?DICT:store(
+				jlib:jid_tolower(From),
+				NewActivity,
+				StateData#state.activity),
+		  room_queue = RoomQueue},
+	    StateData2 = prepare_room_queue(StateData1),
+	    process_groupchat_message(From, Packet, StateData2);
+	{{value, {presence, From}}, RoomQueue} ->
+	    Activity = get_user_activity(From, StateData),
+	    {Nick, Packet} = Activity#activity.presence,
+	    NewActivity = Activity#activity{presence = undefined},
+	    StateData1 =
+		StateData#state{
+		  activity = ?DICT:store(
+				jlib:jid_tolower(From),
+				NewActivity,
+				StateData#state.activity),
+		  room_queue = RoomQueue},
+	    StateData2 = prepare_room_queue(StateData1),
+	    process_presence(From, Nick, Packet, StateData2);
+	{empty, _} ->
+	    {next_state, StateName, StateData}
+    end;
 handle_info(_Info, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
@@ -674,7 +760,11 @@ handle_info(_Info, StateName, StateData) ->
 %% Returns: any
 %%----------------------------------------------------------------------
 terminate(_Reason, _StateName, StateData) ->
-    mod_muc:room_destroyed(StateData#state.host, StateData#state.room,
+    ?DICT:fold(
+       fun(J, _, _) ->
+	       tab_remove_online_user(J, StateData)
+       end, [], StateData#state.users),
+    mod_muc:room_destroyed(StateData#state.host, StateData#state.room, self(),
 			   StateData#state.server_host),
     ok.
 
@@ -685,6 +775,184 @@ terminate(_Reason, _StateName, StateData) ->
 route(Pid, From, ToNick, Packet) ->
     gen_fsm:send_event(Pid, {route, From, ToNick, Packet}).
 
+process_groupchat_message(From, {xmlelement, "message", Attrs, _Els} = Packet,
+			  StateData) ->
+    Lang = xml:get_attr_s("xml:lang", Attrs),
+    case is_user_online(From, StateData) of
+	true ->
+	    {ok, #user{nick = FromNick, role = Role}} =
+		?DICT:find(jlib:jid_tolower(From),
+			   StateData#state.users),
+	    if
+		(Role == moderator) or (Role == participant) 
+		or ((StateData#state.config)#config.moderated == false) ->
+		    {NewStateData1, IsAllowed} =
+			case check_subject(Packet) of
+			    false ->
+				{StateData, true};
+			    Subject ->
+				case can_change_subject(Role,
+							StateData) of
+				    true ->
+					NSD =
+					    StateData#state{
+					      subject = Subject,
+					      subject_author =
+					      FromNick},
+					case (NSD#state.config)#config.persistent of
+					    true ->
+						mod_muc:store_room(
+						  NSD#state.host,
+						  NSD#state.room,
+						  make_opts(NSD));
+					    _ ->
+						ok
+					end,
+					{NSD, true};
+				    _ ->
+					{StateData, false}
+				end
+			end,
+		    case IsAllowed of
+			true ->
+			    lists:foreach(
+			      fun({_LJID, Info}) ->
+				      ejabberd_router:route(
+					jlib:jid_replace_resource(
+					  StateData#state.jid,
+					  FromNick),
+					Info#user.jid,
+					Packet)
+			      end,
+			      ?DICT:to_list(StateData#state.users)),
+			    NewStateData2 =
+				add_message_to_history(FromNick,
+						       Packet,
+						       NewStateData1),
+			    {next_state, normal_state, NewStateData2};
+			_ ->
+			    Err =
+				case (StateData#state.config)#config.allow_change_subj of
+				    true ->
+					?ERRT_FORBIDDEN(
+					   Lang,
+					   "Only moderators and participants "
+					   "are allowed to change subject in this room");
+				    _ ->
+					?ERRT_FORBIDDEN(
+					   Lang,
+					   "Only moderators "
+					   "are allowed to change subject in this room")
+				end,
+			    ejabberd_router:route(
+			      StateData#state.jid,
+			      From,
+			      jlib:make_error_reply(Packet, Err)),
+			    {next_state, normal_state, StateData}
+		    end;
+		true ->
+		    ErrText = "Visitors are not allowed to send messages to all occupants",
+		    Err = jlib:make_error_reply(
+			    Packet, ?ERRT_FORBIDDEN(Lang, ErrText)),
+		    ejabberd_router:route(
+		      StateData#state.jid,
+		      From, Err),
+		    {next_state, normal_state, StateData}
+	    end;
+	false ->
+	    ErrText = "Only occupants are allowed to send messages to the conference",
+	    Err = jlib:make_error_reply(
+		    Packet, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)),
+	    ejabberd_router:route(StateData#state.jid, From, Err),
+	    {next_state, normal_state, StateData}
+    end.
+
+process_presence(From, Nick, {xmlelement, "presence", Attrs, _Els} = Packet,
+		 StateData) ->
+    Type = xml:get_attr_s("type", Attrs),
+    Lang = xml:get_attr_s("xml:lang", Attrs),
+    StateData1 =
+	case Type of
+	    "unavailable" ->
+		case is_user_online(From, StateData) of
+		    true ->
+			NewState =
+			    add_user_presence_un(From, Packet, StateData),
+			send_new_presence(From, NewState),
+			Reason = case xml:get_subtag(Packet, "status") of
+				false -> "";
+				Status_el -> xml:get_tag_cdata(Status_el)
+			end,
+			remove_online_user(From, NewState, Reason);
+		    _ ->
+			StateData
+		end;
+	    "error" ->
+		case is_user_online(From, StateData) of
+		    true ->
+			ErrorText = "This participant is kicked from the room because "
+			    "he sent an error presence",
+			expulse_participant(Packet, From, StateData,
+					    translate:translate(Lang, ErrorText));
+		    _ ->
+			StateData
+		end;
+	    "" ->
+		case is_user_online(From, StateData) of
+		    true ->
+			case is_nick_change(From, Nick, StateData) of
+			    true ->
+				case {is_nick_exists(Nick, StateData),
+				      mod_muc:can_use_nick(
+					StateData#state.host, From, Nick)} of
+				    {true, _} ->
+					Lang = xml:get_attr_s("xml:lang", Attrs),
+					ErrText = "Nickname is already in use by another occupant",
+					Err = jlib:make_error_reply(
+						Packet,
+						?ERRT_CONFLICT(Lang, ErrText)),
+					ejabberd_router:route(
+					  jlib:jid_replace_resource(
+					    StateData#state.jid,
+					    Nick), % TODO: s/Nick/""/
+					  From, Err),
+					StateData;
+				    {_, false} ->
+					ErrText = "Nickname is registered by another person",
+					Err = jlib:make_error_reply(
+						Packet,
+						?ERRT_CONFLICT(Lang, ErrText)),
+					ejabberd_router:route(
+					  % TODO: s/Nick/""/
+					  jlib:jid_replace_resource(
+					    StateData#state.jid,
+					    Nick),
+					  From, Err),
+					StateData;
+				    _ ->
+					change_nick(From, Nick, StateData)
+				end;
+			    _ ->
+				NewState =
+				    add_user_presence(From, Packet, StateData),
+				send_new_presence(From, NewState),
+				NewState
+			end;
+		    _ ->
+			add_new_user(From, Nick, Packet, StateData)
+		end;
+	    _ ->
+		StateData
+	end,
+    case (not (StateData1#state.config)#config.persistent) andalso
+	(?DICT:to_list(StateData1#state.users) == []) of
+	true ->
+	    ?INFO_MSG("Destroyed MUC room ~s because it's temporary and empty", 
+		      [jlib:jid_to_string(StateData#state.jid)]),
+	    {stop, normal, StateData1};
+	_ ->
+	    {next_state, normal_state, StateData1}
+    end.
 
 is_user_online(JID, StateData) ->
     LJID = jlib:jid_tolower(JID),
@@ -724,6 +992,76 @@ list_to_affiliation(Affiliation) ->
 	"none" ->    none
     end.
 
+%% Decide the fate of the message and its sender
+%% Returns: continue_delivery | forget_message | {expulse_sender, Reason}
+decide_fate_message("error", Packet, From, StateData) ->
+    %% Make a preliminary decision
+    PD = case check_error_kick(Packet) of
+	     %% If this is an error stanza and its condition matches a criteria
+	     true ->
+		 Reason = io_lib:format("This participant is considered a ghost and is expulsed: ~s",
+					[jlib:jid_to_string(From)]),
+		 {expulse_sender, Reason};
+	     false ->
+		 continue_delivery
+	 end,
+    case PD of
+	{expulse_sender, R} ->
+	    case is_user_online(From, StateData) of
+		true ->
+		    {expulse_sender, R};
+		false ->
+		    forget_message
+	    end;
+	Other ->
+	    Other
+    end;
+
+decide_fate_message(_, _, _, _) ->
+    continue_delivery.
+
+%% Check if the elements of this error stanza indicate
+%% that the sender is a dead participant.
+%% If so, return true to kick the participant.
+check_error_kick(Packet) ->
+    case get_error_condition(Packet) of
+	"gone" -> true;
+	"internal-server-error" -> true;
+	"item-not-found" -> true;
+	"jid-malformed" -> true;
+	"recipient-unavailable" -> true;
+	"redirect" -> true;
+	"remote-server-not-found" -> true;
+	"remote-server-timeout" -> true;
+	"service-unavailable" -> true;
+	_ -> false
+    end.
+
+get_error_condition(Packet) ->
+	case catch get_error_condition2(Packet) of
+	     {condition, ErrorCondition} ->
+		ErrorCondition;
+	     {'EXIT', _} ->
+		"badformed error stanza"
+	end.
+get_error_condition2(Packet) ->
+	{xmlelement, _, _, EEls} = xml:get_subtag(Packet, "error"),
+	[Condition] = [Name || {xmlelement, Name, [{"xmlns", ?NS_STANZAS}], []} <- EEls],
+	{condition, Condition}.
+
+expulse_participant(Packet, From, StateData, Reason1) ->
+	ErrorCondition = get_error_condition(Packet),
+	Reason2 = io_lib:format(Reason1 ++ ": " ++ "~s", [ErrorCondition]),
+	NewState = add_user_presence_un(
+		From,
+		{xmlelement, "presence",
+		[{"type", "unavailable"}],
+		[{xmlelement, "status", [],
+		[{xmlcdata, Reason2}]
+		}]},
+	StateData),
+	send_new_presence(From, NewState),
+	remove_online_user(From, NewState).
 
 
 set_affiliation(JID, Affiliation, StateData) ->
@@ -753,7 +1091,7 @@ set_affiliation_and_reason(JID, Affiliation, Reason, StateData) ->
     StateData#state{affiliations = Affiliations}.
 
 get_affiliation(JID, StateData) ->
-    {_AccessRoute, _AccessCreate, AccessAdmin} = StateData#state.access,
+    {_AccessRoute, _AccessCreate, AccessAdmin, _AccessPersistent} = StateData#state.access,
     Res =
 	case acl:match_rule(StateData#state.server_host, AccessAdmin, JID) of
 	    allow ->
@@ -790,6 +1128,16 @@ get_affiliation(JID, StateData) ->
 	    A;
 	_ ->
 	    Res
+    end.
+
+get_service_affiliation(JID, StateData) ->
+    {_AccessRoute, _AccessCreate, AccessAdmin, _AccessPersistent} =
+	StateData#state.access,
+    case acl:match_rule(StateData#state.server_host, AccessAdmin, JID) of
+	allow ->
+	    owner;
+	_ ->
+	    none
     end.
 
 set_role(JID, Role, StateData) ->
@@ -858,6 +1206,67 @@ get_default_role(Affiliation, StateData) ->
 	    end
     end.
 
+get_max_users(StateData) ->
+    MaxUsers = (StateData#state.config)#config.max_users,
+    ServiceMaxUsers = get_service_max_users(StateData),
+    if
+	MaxUsers =< ServiceMaxUsers -> MaxUsers;
+	true -> ServiceMaxUsers
+    end.
+
+get_service_max_users(StateData) ->
+    gen_mod:get_module_opt(StateData#state.server_host,
+			   mod_muc, max_users, ?MAX_USERS_DEFAULT).
+
+get_max_users_admin_threshold(StateData) ->
+    gen_mod:get_module_opt(StateData#state.server_host,
+			   mod_muc, max_users_admin_threshold, 5).
+
+get_user_activity(JID, StateData) ->
+    case ?DICT:find(jlib:jid_tolower(JID),
+		    StateData#state.activity) of
+	{ok, A} -> A;
+	error ->
+	    MessageShaper =
+		shaper:new(gen_mod:get_module_opt(
+			     StateData#state.server_host,
+			     mod_muc, user_message_shaper, none)),
+	    PresenceShaper =
+		shaper:new(gen_mod:get_module_opt(
+			     StateData#state.server_host,
+			     mod_muc, user_presence_shaper, none)),
+	    #activity{message_shaper = MessageShaper,
+		      presence_shaper = PresenceShaper}
+    end.
+
+prepare_room_queue(StateData) ->
+    case queue:out(StateData#state.room_queue) of
+	{{value, {message, From}}, _RoomQueue} ->
+	    Activity = get_user_activity(From, StateData),
+	    Packet = Activity#activity.message,
+	    Size = lists:flatlength(xml:element_to_string(Packet)),
+	    {RoomShaper, RoomShaperInterval} =
+		shaper:update(StateData#state.room_shaper, Size),
+	    erlang:send_after(
+	      RoomShaperInterval, self(),
+	      process_room_queue),
+	    StateData#state{
+	      room_shaper = RoomShaper};
+	{{value, {presence, From}}, _RoomQueue} ->
+	    Activity = get_user_activity(From, StateData),
+	    {_Nick, Packet} = Activity#activity.presence,
+	    Size = lists:flatlength(xml:element_to_string(Packet)),
+	    {RoomShaper, RoomShaperInterval} =
+		shaper:update(StateData#state.room_shaper, Size),
+	    erlang:send_after(
+	      RoomShaperInterval, self(),
+	      process_room_queue),
+	    StateData#state{
+	      room_shaper = RoomShaper};
+	{empty, _} ->
+	    StateData
+    end.
+
 
 add_online_user(JID, Nick, Role, StateData) ->
     LJID = jlib:jid_tolower(JID),
@@ -867,6 +1276,7 @@ add_online_user(JID, Nick, Role, StateData) ->
 			      role = Role},
 			StateData#state.users),
     add_to_log(join, Nick, StateData),
+    tab_add_online_user(JID, StateData),
     StateData#state{users = Users}.
 
 remove_online_user(JID, StateData) ->
@@ -877,6 +1287,7 @@ remove_online_user(JID, StateData, Reason) ->
     {ok, #user{nick = Nick}} =
     	?DICT:find(LJID, StateData#state.users),
     add_to_log(leave, {Nick, Reason}, StateData),
+    tab_remove_online_user(JID, StateData),
     Users = ?DICT:erase(LJID, StateData#state.users),
     StateData#state{users = Users}.
 
@@ -950,9 +1361,50 @@ is_nick_change(JID, Nick, StateData) ->
 
 add_new_user(From, Nick, {xmlelement, _, Attrs, Els} = Packet, StateData) ->
     Lang = xml:get_attr_s("xml:lang", Attrs),
-    case {is_nick_exists(Nick, StateData),
-	  mod_muc:can_use_nick(StateData#state.host, From, Nick)} of
-	{true, _} ->
+    MaxUsers = get_max_users(StateData),
+    MaxAdminUsers = MaxUsers + get_max_users_admin_threshold(StateData),
+    NUsers = dict:fold(fun(_, _, Acc) -> Acc + 1 end, 0,
+		       StateData#state.users),
+    Affiliation = get_affiliation(From, StateData),
+    ServiceAffiliation = get_service_affiliation(From, StateData),
+    NConferences = tab_count_user(From),
+    MaxConferences = gen_mod:get_module_opt(
+		       StateData#state.server_host,
+		       mod_muc, max_user_conferences, 10),
+    case {(ServiceAffiliation == owner orelse
+	   MaxUsers == none orelse
+	   ((Affiliation == admin orelse Affiliation == owner) andalso
+	    NUsers < MaxAdminUsers) orelse
+	   NUsers < MaxUsers) andalso
+	  NConferences < MaxConferences,
+	  is_nick_exists(Nick, StateData),
+	  mod_muc:can_use_nick(StateData#state.host, From, Nick),
+	  get_default_role(Affiliation, StateData)} of
+	{false, _, _, _} ->
+	    % max user reached and user is not admin or owner
+	    Err = jlib:make_error_reply(
+		    Packet,
+		    ?ERR_SERVICE_UNAVAILABLE),
+	    ejabberd_router:route( % TODO: s/Nick/""/
+	      jlib:jid_replace_resource(StateData#state.jid, Nick),
+	      From, Err),
+	    StateData;
+	{_, _, _, none} ->
+	    Err = jlib:make_error_reply(
+		    Packet,
+		    case Affiliation of
+			outcast ->
+			    ErrText = "You have been banned from this room",
+			    ?ERRT_FORBIDDEN(Lang, ErrText);
+			_ ->
+			    ErrText = "Membership required to enter this room",
+			    ?ERRT_REGISTRATION_REQUIRED(Lang, ErrText)
+		    end),
+	    ejabberd_router:route( % TODO: s/Nick/""/
+	      jlib:jid_replace_resource(StateData#state.jid, Nick),
+	      From, Err),
+	    StateData;
+	{_, true, _, _} ->
 	    ErrText = "Nickname is already in use by another occupant",
 	    Err = jlib:make_error_reply(Packet, ?ERRT_CONFLICT(Lang, ErrText)),
 	    ejabberd_router:route(
@@ -960,7 +1412,7 @@ add_new_user(From, Nick, {xmlelement, _, Attrs, Els} = Packet, StateData) ->
 	      jlib:jid_replace_resource(StateData#state.jid, Nick),
 	      From, Err),
 	    StateData;
-	{_, false} ->
+	{_, _, false, _} ->
 	    ErrText = "Nickname is registered by another person",
 	    Err = jlib:make_error_reply(Packet, ?ERRT_CONFLICT(Lang, ErrText)),
 	    ejabberd_router:route(
@@ -968,81 +1420,61 @@ add_new_user(From, Nick, {xmlelement, _, Attrs, Els} = Packet, StateData) ->
 	      jlib:jid_replace_resource(StateData#state.jid, Nick),
 	      From, Err),
 	    StateData;
-	_ ->
-	    Affiliation = get_affiliation(From, StateData),
-	    Role = get_default_role(Affiliation, StateData),
-	    case Role of
-		none ->
+	{_, _, _, Role} ->
+	    case check_password(Affiliation, Els, StateData) of
+		true ->
+		    NewState =
+			add_user_presence(
+			  From, Packet,
+			  add_online_user(From, Nick, Role, StateData)),
+		    if not (NewState#state.config)#config.anonymous ->
+			    WPacket = {xmlelement, "message", [{"type", "groupchat"}],
+				       [{xmlelement, "body", [],
+					 [{xmlcdata, translate:translate(
+						       Lang,
+						       "This room is not anonymous")}]},
+					{xmlelement, "x", [{"xmlns", ?NS_MUC_USER}],
+					 [{xmlelement, "status", [{"code", "100"}], []}]}]},
+			    ejabberd_router:route(
+			      StateData#state.jid,
+			      From, WPacket);
+			true ->
+			    ok
+		    end,
+		    send_existing_presences(From, NewState),
+		    send_new_presence(From, NewState),
+		    Shift = count_stanza_shift(Nick, Els, NewState),
+		    case send_history(From, Shift, NewState) of
+			true ->
+			    ok;
+			_ ->
+			    send_subject(From, Lang, StateData)
+		    end,
+		    case NewState#state.just_created of
+			true ->
+			    NewState#state{just_created = false};
+			false ->
+			    NewState
+		    end;
+		nopass ->
+		    ErrText = "Password required to enter this room",
 		    Err = jlib:make_error_reply(
-			    Packet,
-			    case Affiliation of
-				outcast ->
-				    ErrText = "You have been banned from this room",
-				    ?ERRT_FORBIDDEN(Lang, ErrText);
-				_ ->
-				    ErrText = "Membership required to enter this room",
-				    ?ERRT_REGISTRATION_REQUIRED(Lang, ErrText)
-			    end),
+			    Packet, ?ERRT_NOT_AUTHORIZED(Lang, ErrText)),
 		    ejabberd_router:route( % TODO: s/Nick/""/
-		      jlib:jid_replace_resource(StateData#state.jid, Nick),
+		      jlib:jid_replace_resource(
+			StateData#state.jid, Nick),
 		      From, Err),
 		    StateData;
 		_ ->
-		    case check_password(Affiliation, Els, StateData) of
-			true ->
-			    NewState =
-				add_user_presence(
-				  From, Packet,
-				  add_online_user(From, Nick, Role, StateData)),
-			    if not (NewState#state.config)#config.anonymous ->
-				    WPacket = {xmlelement, "message", [{"type", "groupchat"}],
-					       [{xmlelement, "body", [],
-						 [{xmlcdata, translate:translate(
-							       Lang,
-							       "This room is not anonymous")}]},
-						{xmlelement, "x", [{"xmlns", ?NS_MUC_USER}],
-						 [{xmlelement, "status", [{"code", "100"}], []}]}]},
-				    ejabberd_router:route(
-				      StateData#state.jid,
-				      From, WPacket);
-				true ->
-				    ok
-			    end,
-			    send_existing_presences(From, NewState),
-			    send_new_presence(From, NewState),
-			    Shift = count_stanza_shift(Nick, Els, NewState),
-			    case send_history(From, Shift, NewState) of
-				true ->
-				    ok;
-				_ ->
-				    send_subject(From, Lang, StateData)
-			    end,
-			    case NewState#state.just_created of
-				true ->
-				    NewState#state{just_created = false};
-				false ->
-				    NewState
-			    end;
-			nopass ->
-			    ErrText = "Password required to enter this room",
-			    Err = jlib:make_error_reply(
-				    Packet, ?ERRT_NOT_AUTHORIZED(Lang, ErrText)),
-			    ejabberd_router:route( % TODO: s/Nick/""/
-			      jlib:jid_replace_resource(
-				StateData#state.jid, Nick),
-			      From, Err),
-			    StateData;
-			_ ->
-			    ErrText = "Incorrect password",
-			    Err = jlib:make_error_reply(
-				    Packet, ?ERRT_NOT_AUTHORIZED(Lang, ErrText)),
-			    ejabberd_router:route( % TODO: s/Nick/""/
-			      jlib:jid_replace_resource(
-				StateData#state.jid, Nick),
-			      From, Err),
-			    StateData
-		    end
-	    end
+		    ErrText = "Incorrect password",
+		    Err = jlib:make_error_reply(
+			    Packet, ?ERRT_NOT_AUTHORIZED(Lang, ErrText)),
+		    ejabberd_router:route( % TODO: s/Nick/""/
+		      jlib:jid_replace_resource(
+			StateData#state.jid, Nick),
+		      From, Err),
+		    StateData
+	   end
     end.
 
 check_password(owner, _Els, _StateData) ->
@@ -1301,6 +1733,10 @@ send_existing_presences(ToJID, StateData) ->
 
 append_subtags({xmlelement, Name, Attrs, SubTags1}, SubTags2) ->
     {xmlelement, Name, Attrs, SubTags1 ++ SubTags2}.
+
+
+now_to_usec({MSec, Sec, USec}) ->
+    (MSec*1000000 + Sec)*1000000 + USec.
 
 
 change_nick(JID, Nick, StateData) ->
@@ -1578,11 +2014,18 @@ process_admin_items_set(UJID, Items, Lang, StateData) ->
     URole = get_role(UJID, StateData),
     case find_changed_items(UJID, UAffiliation, URole, Items, Lang, StateData, []) of
 	{result, Res} ->
+	    ?INFO_MSG("Processing MUC admin query from ~s in room ~s:~n ~p",
+		      [jlib:jid_to_string(UJID), jlib:jid_to_string(StateData#state.jid), Res]),
 	    NSD =
 		lists:foldl(
 		  fun(E, SD) ->
 			  case catch (
 				 case E of
+				     {JID, affiliation, owner, _} 
+				     when (JID#jid.luser == "") ->
+					 %% If the provided JID does not have username,
+					 %% forget the affiliation completely
+					 SD;
 				     {JID, role, none, Reason} ->
 					 catch send_kickban_presence(
 						 JID, Reason, "307", SD),
@@ -1647,7 +2090,7 @@ process_admin_items_set(UJID, Items, Lang, StateData) ->
 	    Err
     end.
 
-    
+
 find_changed_items(_UJID, _UAffiliation, _URole, [], _Lang, _StateData, Res) ->
     {result, Res};
 find_changed_items(UJID, UAffiliation, URole, [{xmlcdata, _} | Items],
@@ -1977,6 +2420,7 @@ send_kickban_presence(JID, Reason, Code, StateData) ->
 			  {ok, #user{nick = Nick}} =
 			      ?DICT:find(J, StateData#state.users),
 			  add_to_log(kickban, {Nick, Reason, Code}, StateData),
+			  tab_remove_online_user(J, StateData),
 			  send_kickban_presence1(J, Reason, Code, StateData)
 		  end, LJIDs).
 
@@ -2024,14 +2468,17 @@ process_iq_owner(From, set, Lang, SubEl, StateData) ->
 			{?NS_XDATA, "cancel"} ->
 			    {result, [], StateData};
 			{?NS_XDATA, "submit"} ->
-			    case check_allowed_log_change(XEl, StateData, From) of
-					allow -> set_config(XEl, StateData);
-					deny -> {error, ?ERR_BAD_REQUEST}
+			    case {check_allowed_log_change(XEl, StateData, From),
+					check_allowed_persistent_change(XEl, StateData, From)} of
+					{allow, allow} -> set_config(XEl, StateData);
+					_ -> {error, ?ERR_BAD_REQUEST}
 				end;
 			_ ->
 			    {error, ?ERR_BAD_REQUEST}
 		    end;
 		[{xmlelement, "destroy", _Attrs1, _Els1} = SubEl1] ->
+		    ?INFO_MSG("Destroyed MUC room ~s by the owner ~s", 
+			      [jlib:jid_to_string(StateData#state.jid), jlib:jid_to_string(From)]),
 		    destroy_room(SubEl1, StateData);
 		Items ->
 		    process_admin_items_set(From, Items, Lang, StateData)
@@ -2087,6 +2534,15 @@ check_allowed_log_change(XEl, StateData, From) ->
 	      StateData#state.server_host, From)
     end.
 
+check_allowed_persistent_change(XEl, StateData, From) ->
+    case lists:keymember("muc#roomconfig_persistentroom", 1,
+			 jlib:parse_xdata_submit(XEl)) of
+	false ->
+	    allow;
+	true ->
+		{_AccessRoute, _AccessCreate, _AccessAdmin, AccessPersistent} = StateData#state.access,
+		acl:match_rule(StateData#state.server_host, AccessPersistent, From)
+    end.
 
 -define(XFIELD(Type, Label, Var, Val),
 	{xmlelement, "field", [{"type", Type},
@@ -2109,6 +2565,8 @@ check_allowed_log_change(XEl, StateData, From) ->
 
 
 get_config(Lang, StateData, From) ->
+    {_AccessRoute, _AccessCreate, _AccessAdmin, AccessPersistent} = StateData#state.access,
+    ServiceMaxUsers = get_service_max_users(StateData),
     Config = StateData#state.config,
     Res =
 	[{xmlelement, "title", [],
@@ -2120,10 +2578,16 @@ get_config(Lang, StateData, From) ->
 	    [{xmlcdata, "http://jabber.org/protocol/muc#roomconfig"}]}]},
 	 ?STRINGXFIELD("Room title",
 		       "muc#roomconfig_roomname",
-		       Config#config.title),
-	 ?BOOLXFIELD("Make room persistent",
-		     "muc#roomconfig_persistentroom",
-		     Config#config.persistent),
+		       Config#config.title)
+	] ++
+	 case acl:match_rule(StateData#state.server_host, AccessPersistent, From) of
+		allow ->
+			[?BOOLXFIELD(
+			 "Make room persistent",
+			 "muc#roomconfig_persistentroom",
+			 Config#config.persistent)];
+		_ -> []
+	 end ++ [
 	 ?BOOLXFIELD("Make room public searchable",
 		     "muc#roomconfig_publicroom",
 		     Config#config.public),
@@ -2139,6 +2603,29 @@ get_config(Lang, StateData, From) ->
 			    true -> Config#config.password;
 			    false -> ""
 			end),
+	 {xmlelement, "field",
+	  [{"type", "list-single"},
+	   {"label", translate:translate(Lang, "Maximum Number of Occupants")},
+	   {"var", "muc#roomconfig_maxusers"}],
+	  [{xmlelement, "value", [], [{xmlcdata,
+				       case get_max_users(StateData) of
+					   N when is_integer(N) ->
+					       erlang:integer_to_list(N);
+					   _ -> "none"
+				       end
+				      }]}] ++
+	  if
+	      is_integer(ServiceMaxUsers) -> [];
+	      true ->
+		  [{xmlelement, "option",
+		    [{"label", translate:translate(Lang, "No limit")}],
+		    [{xmlelement, "value", [], [{xmlcdata, "none"}]}]}]
+	  end ++
+	  [{xmlelement, "option", [{"label", erlang:integer_to_list(N)}],
+	    [{xmlelement, "value", [],
+	      [{xmlcdata, erlang:integer_to_list(N)}]}]} ||
+	      N <- ?MAX_USERS_DEFAULT_LIST, N =< ServiceMaxUsers]
+	 },
 	 {xmlelement, "field",
 	  [{"type", "list-single"},
 	   {"label", translate:translate(Lang, "Present real JIDs to")},
@@ -2187,7 +2674,7 @@ get_config(Lang, StateData, From) ->
     {result, [{xmlelement, "instructions", [],
 	       [{xmlcdata,
 		 translate:translate(
-		   Lang, "You need an x:data capable client to configure room")}]}, 
+		   Lang, "You need an x:data capable client to configure room")}]},
 	      {xmlelement, "x", [{"xmlns", ?NS_XDATA},
 				 {"type", "form"}],
 	       Res}],
@@ -2219,6 +2706,15 @@ set_config(XEl, StateData) ->
 	    "1" -> set_xoption(Opts, Config#config{Opt = true});
 	    "true" -> set_xoption(Opts, Config#config{Opt = true});
 	    _ -> {error, ?ERR_BAD_REQUEST}
+	end).
+
+-define(SET_NAT_XOPT(Opt, Val),
+	case catch list_to_integer(Val) of
+	    I when is_integer(I),
+	           I > 0 ->
+		set_xoption(Opts, Config#config{Opt = I});
+	    _ ->
+		{error, ?ERR_BAD_REQUEST}
 	end).
 
 -define(SET_STRING_XOPT(Opt, Val),
@@ -2263,6 +2759,13 @@ set_xoption([{"muc#roomconfig_whois", [Val]} | Opts], Config) ->
 	    ?SET_BOOL_XOPT(anonymous, "0");
 	_ ->
 	    {error, ?ERR_BAD_REQUEST}
+    end;
+set_xoption([{"muc#roomconfig_maxusers", [Val]} | Opts], Config) ->
+    case Val of
+	"none" ->
+	    ?SET_STRING_XOPT(max_users, none);
+	_ ->
+	    ?SET_NAT_XOPT(max_users, Val)
     end;
 set_xoption([{"muc#roomconfig_enablelogging", [Val]} | Opts], Config) ->
     ?SET_BOOL_XOPT(logging, Val);
@@ -2331,6 +2834,15 @@ set_opts([{Opt, Val} | Opts], StateData) ->
 	      ?CASE_CONFIG_OPT(password);
 	      ?CASE_CONFIG_OPT(anonymous);
 	      ?CASE_CONFIG_OPT(logging);
+	      max_users ->
+		  ServiceMaxUsers = get_service_max_users(StateData),
+		  MaxUsers = if
+				 Val =< ServiceMaxUsers -> Val;
+				 true -> ServiceMaxUsers
+			     end,
+		  StateData#state{
+		    config = (StateData#state.config)#config{
+			       max_users = MaxUsers}};
 	      affiliations ->
 		  StateData#state{affiliations = ?DICT:from_list(Val)};
 	      subject ->
@@ -2361,6 +2873,7 @@ make_opts(StateData) ->
      ?MAKE_CONFIG_OPT(password),
      ?MAKE_CONFIG_OPT(anonymous),
      ?MAKE_CONFIG_OPT(logging),
+     ?MAKE_CONFIG_OPT(max_users),
      {affiliations, ?DICT:to_list(StateData#state.affiliations)},
      {subject, StateData#state.subject},
      {subject_author, StateData#state.subject_author}
@@ -2445,9 +2958,6 @@ iq_disco_info_extras(Lang, StateData) ->
     [{xmlelement, "x", [{"xmlns", ?NS_XDATA}, {"type", "result"}],
       [?RFIELDT("hidden", "FORM_TYPE",
 		"http://jabber.org/protocol/muc#roominfo"),
-       ?RFIELD("Description", "muc#roominfo_description",
-	       (StateData#state.config)#config.title),
-       %?RFIELD("Subject", "muc#roominfo_subject", StateData#state.subject),
        ?RFIELD("Number of occupants", "muc#roominfo_occupants",
 	       integer_to_list(Len))
       ]}].
@@ -2492,74 +3002,106 @@ get_title(StateData) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Invitation support
 
-check_invitation(From, Els, StateData) ->
+check_invitation(From, Els, Lang, StateData) ->
     FAffiliation = get_affiliation(From, StateData),
     CanInvite = (StateData#state.config)#config.allow_user_invites
 	orelse (FAffiliation == admin) orelse (FAffiliation == owner),
-    case xml:remove_cdata(Els) of
-	[{xmlelement, "x", _Attrs1, Els1} = XEl] ->
-	    case xml:get_tag_attr_s("xmlns", XEl) of
-		?NS_MUC_USER ->
-		    case xml:remove_cdata(Els1) of
-			[{xmlelement, "invite", Attrs2, _Els2} = InviteEl] ->
-			    case jlib:string_to_jid(
-				   xml:get_attr_s("to", Attrs2)) of
-				error ->
-				    error;
-				JID ->
-				    case CanInvite of
-					true ->
-					    Reason =
-						xml:get_path_s(
-						  InviteEl,
-						  [{elem, "reason"}, cdata]),
-					    IEl =
-						[{xmlelement, "invite",
-						  [{"from",
-						    jlib:jid_to_string(From)}],
-						  [{xmlelement, "reason", [],
-						    [{xmlcdata, Reason}]}]}],
-					    PasswdEl = 
-						case (StateData#state.config)#config.password_protected of
-						    true ->
-							[{xmlelement, "password", [],
-							[{xmlcdata, (StateData#state.config)#config.password}]}];
-						    _ ->
-							[]
-						end,
-					    Msg =
-						{xmlelement, "message",
-						 [{"type", "normal"}],
-						 [{xmlelement, "x",
-						   [{"xmlns", ?NS_MUC_USER}],
-						   IEl ++ PasswdEl},
-						  {xmlelement, "x",
-						   [{"xmlns",
-						     ?NS_XCONFERENCE},
-						    {"jid",
-						     jlib:jid_to_string(
-						       {StateData#state.room,
-							StateData#state.host,
-							""})}],
-						   [{xmlcdata, Reason}]}]},
-					    ejabberd_router:route(
-					      StateData#state.jid,
-					      JID,
-					      Msg),
-					    JID;
-					_ ->
-					    error
-				    end
-			    end;
-			_ ->
-			    error
-		    end;
-		_ ->
-		    error
-	    end;
-	_ ->
-	    error
+    InviteEl = case xml:remove_cdata(Els) of
+		   [{xmlelement, "x", _Attrs1, Els1} = XEl] ->
+		       case xml:get_tag_attr_s("xmlns", XEl) of
+			   ?NS_MUC_USER ->
+			       ok;
+			   _ ->
+			       throw({error, ?ERR_BAD_REQUEST})
+		       end,
+		       case xml:remove_cdata(Els1) of
+			   [{xmlelement, "invite", _Attrs2, _Els2} = InviteEl1] ->
+			       InviteEl1;
+			   _ ->
+			       throw({error, ?ERR_BAD_REQUEST})
+		       end;
+		   _ ->
+		       throw({error, ?ERR_BAD_REQUEST})
+	       end,
+    JID = case jlib:string_to_jid(
+		 xml:get_tag_attr_s("to", InviteEl)) of
+	      error ->
+		  throw({error, ?ERR_JID_MALFORMED});
+	      JID1 ->
+		  JID1
+	  end,
+    case CanInvite of
+	false ->
+	    throw({error, ?ERR_NOT_ALLOWED});
+	true ->
+	    Reason =
+		xml:get_path_s(
+		  InviteEl,
+		  [{elem, "reason"}, cdata]),
+	    ContinueEl =
+		case xml:get_path_s(
+		       InviteEl,
+		       [{elem, "continue"}]) of
+		    [] -> [];
+		    Continue1 -> [Continue1]
+		end,
+	    IEl =
+		[{xmlelement, "invite",
+		  [{"from",
+		    jlib:jid_to_string(From)}],
+		  [{xmlelement, "reason", [],
+		    [{xmlcdata, Reason}]}] ++ ContinueEl}],
+	    PasswdEl =
+		case (StateData#state.config)#config.password_protected of
+		    true ->
+			[{xmlelement, "password", [],
+			  [{xmlcdata, (StateData#state.config)#config.password}]}];
+		    _ ->
+			[]
+		end,
+	    Body =
+		{xmlelement, "body", [],
+		 [{xmlcdata,
+		   lists:flatten(
+		     io_lib:format(
+		       translate:translate(
+			 Lang,
+			 "~s invites you to the room ~s"),
+		       [jlib:jid_to_string(From),
+			jlib:jid_to_string({StateData#state.room,
+					    StateData#state.host,
+					    ""})
+		       ])) ++
+		   case (StateData#state.config)#config.password_protected of
+		       true ->
+			   ", " ++
+			       translate:translate(Lang, "the password is") ++
+			       " '" ++
+			       (StateData#state.config)#config.password ++ "'";
+		       _ ->
+			   ""
+		   end ++
+		   case Reason of
+		       "" -> "";
+		       _ -> " (" ++ Reason ++ ") "
+		   end
+		  }]},
+	    Msg =
+		{xmlelement, "message",
+		 [{"type", "normal"}],
+		 [{xmlelement, "x", [{"xmlns", ?NS_MUC_USER}], IEl ++ PasswdEl},
+		  {xmlelement, "x",
+		   [{"xmlns", ?NS_XCONFERENCE},
+		    {"jid", jlib:jid_to_string(
+			      {StateData#state.room,
+			       StateData#state.host,
+			       ""})}],
+		   [{xmlcdata, Reason}]},
+		  Body]},
+	    ejabberd_router:route(StateData#state.jid, JID, Msg),
+	    JID
     end.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2573,4 +3115,38 @@ add_to_log(Type, Data, StateData) ->
 	      StateData#state.jid, make_opts(StateData));
 	false ->
 	    ok
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Users number checking
+
+tab_add_online_user(JID, StateData) ->
+    {LUser, LServer, _} = jlib:jid_tolower(JID),
+    US = {LUser, LServer},
+    Room = StateData#state.room,
+    Host = StateData#state.host,
+    catch ets:insert(
+	    muc_online_users,
+	    #muc_online_users{us = US, room = Room, host = Host}).
+
+
+tab_remove_online_user(JID, StateData) ->
+    {LUser, LServer, _} = jlib:jid_tolower(JID),
+    US = {LUser, LServer},
+    Room = StateData#state.room,
+    Host = StateData#state.host,
+    catch ets:delete_object(
+	    muc_online_users,
+	    #muc_online_users{us = US, room = Room, host = Host}).
+
+tab_count_user(JID) ->
+    {LUser, LServer, _} = jlib:jid_tolower(JID),
+    US = {LUser, LServer},
+    case catch ets:select(
+		 muc_online_users,
+		 [{#muc_online_users{us = US, _ = '_'}, [], [[]]}]) of
+	Res when is_list(Res) ->
+	    length(Res);
+	_ ->
+	    0
     end.

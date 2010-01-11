@@ -1,3 +1,21 @@
+--
+-- ejabberd, Copyright (C) 2002-2008   Process-one
+--
+-- This program is free software; you can redistribute it and/or
+-- modify it under the terms of the GNU General Public License as
+-- published by the Free Software Foundation; either version 2 of the
+-- License, or (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-- General Public License for more details.
+--                         
+-- You should have received a copy of the GNU General Public License
+-- along with this program; if not, write to the Free Software
+-- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+-- 02111-1307 USA
+--
 
 CREATE TABLE users (
     username text PRIMARY KEY,
@@ -8,17 +26,17 @@ CREATE TABLE users (
 CREATE TABLE last (
     username text PRIMARY KEY,
     seconds text NOT NULL,
-    state text
+    state text NOT NULL
 );
 
 
 CREATE TABLE rosterusers (
     username text NOT NULL,
     jid text NOT NULL,
-    nick text,
+    nick text NOT NULL,
     subscription character(1) NOT NULL,
     ask character(1) NOT NULL,
-    askmessage text,
+    askmessage text NOT NULL,
     server character(1) NOT NULL,
     subscribe text,
     "type" text
@@ -40,7 +58,7 @@ CREATE INDEX pk_rosterg_user_jid ON rostergroups USING btree (username, jid);
 
 CREATE TABLE spool (
     username text NOT NULL,
-    xml text,
+    xml text NOT NULL,
     seq SERIAL
 );
 
@@ -90,6 +108,43 @@ CREATE INDEX i_vcard_search_llocality ON vcard_search(llocality);
 CREATE INDEX i_vcard_search_lemail    ON vcard_search(lemail);
 CREATE INDEX i_vcard_search_lorgname  ON vcard_search(lorgname);
 CREATE INDEX i_vcard_search_lorgunit  ON vcard_search(lorgunit);
+
+CREATE TABLE privacy_default_list (
+    username text PRIMARY KEY,
+    name text NOT NULL
+);
+
+CREATE TABLE privacy_list (
+    username text NOT NULL,
+    name text NOT NULL,
+    id SERIAL UNIQUE
+);
+
+CREATE INDEX i_privacy_list_username ON privacy_list USING btree (username);
+CREATE UNIQUE INDEX i_privacy_list_username_name ON privacy_list USING btree (username, name);
+
+CREATE TABLE privacy_list_data (
+    id bigint REFERENCES privacy_list(id) ON DELETE CASCADE,
+    t character(1) NOT NULL,
+    value text NOT NULL,
+    action character(1) NOT NULL,
+    ord NUMERIC NOT NULL,
+    match_all boolean NOT NULL,
+    match_iq boolean NOT NULL,
+    match_message boolean NOT NULL,
+    match_presence_in boolean NOT NULL,
+    match_presence_out boolean NOT NULL
+);
+
+CREATE TABLE private_storage (
+    username text NOT NULL,
+    namespace text NOT NULL,
+    data text NOT NULL
+);
+
+CREATE INDEX i_private_storage_username ON private_storage USING btree (username);
+CREATE UNIQUE INDEX i_private_storage_username_namespace ON private_storage USING btree (username, namespace);
+
 
 --- To update from 0.9.8:
 -- CREATE SEQUENCE spool_seq_seq;

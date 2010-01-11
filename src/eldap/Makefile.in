@@ -1,21 +1,26 @@
-# $Id: Makefile.in 615 2006-09-22 08:36:09Z mremond $
+# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
 
 CC = @CC@
-CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@ 
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@ @ERLANG_LIBS@
+LIBS = @LIBS@
 
-SUBDIRS = 
+ERLANG_CFLAGS = @ERLANG_CFLAGS@
+ERLANG_LIBS = @ERLANG_LIBS@
+
+EFLAGS = -I .. -pz ..
+# make debug=true to compile Erlang module with debug informations.
+ifdef debug
+	EFLAGS+=+debug_info
+endif
 
 OUTDIR = ..
-EFLAGS = -I .. -pz ..
-OBJS   = \
-	$(OUTDIR)/eldap.beam \
-	$(OUTDIR)/ELDAPv3.beam \
-	$(OUTDIR)/eldap_filter.beam
+SOURCES = $(wildcard *.erl)
+BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
 
-all:    $(OBJS)
+
+all:    $(BEAMS)
 
 ELDAPv3.erl:       ELDAPv3.asn
 	@ERLC@ -bber_bin -W $(EFLAGS) $<
@@ -23,13 +28,12 @@ ELDAPv3.erl:       ELDAPv3.asn
 $(OUTDIR)/%.beam:	%.erl ELDAPv3.erl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
 
-
 clean:
 	rm -f ELDAPv3.asn1db
 	rm -f ELDAPv3.erl
 	rm -f ELDAPv3.hrl
 	rm -f ELDAPv3.beam
-	rm -f $(OBJS)
+	rm -f $(BEAMS)
 
 distclean: clean
 	rm -f Makefile

@@ -1,16 +1,33 @@
 %%%----------------------------------------------------------------------
 %%% File    : idna.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Support for IDNA (RFC3490)
-%%% Created : 10 Apr 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: idna.erl 222 2004-04-10 19:15:02Z aleksey $
+%%% Created : 10 Apr 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(idna).
--author('alexey@sevcom.net').
--vsn('$Revision: 222 $ ').
+-author('alexey@process-one.net').
 
-%-compile(export_all).
+%%-compile(export_all).
 -export([domain_utf8_to_ascii/1,
 	 domain_ucs2_to_ascii/1]).
 
@@ -27,11 +44,11 @@ utf8_to_ucs2([C | S], R) when C < 16#80 ->
     utf8_to_ucs2(S, [C | R]);
 utf8_to_ucs2([C1, C2 | S], R) when C1 < 16#E0 ->
     utf8_to_ucs2(S, [((C1 band 16#1F) bsl 6) bor
-		      (C2 band 16#3F) | R]);
+		     (C2 band 16#3F) | R]);
 utf8_to_ucs2([C1, C2, C3 | S], R) when C1 < 16#F0 ->
     utf8_to_ucs2(S, [((C1 band 16#0F) bsl 12) bor
-		      ((C2 band 16#3F) bsl 6) bor
-		      (C3 band 16#3F) | R]).
+		     ((C2 band 16#3F) bsl 6) bor
+		     (C3 band 16#3F) | R]).
 
 
 domain_ucs2_to_ascii(Domain) ->
@@ -50,15 +67,15 @@ domain_ucs2_to_ascii1(Domain) ->
     string:strip(lists:flatmap(fun(P) -> [$. | P] end, ASCIIParts),
 		 left, $.).
 
-% Domain names are already nameprep'ed in ejabberd, so we skiping this step
+%% Domain names are already nameprep'ed in ejabberd, so we skiping this step
 to_ascii(Name) ->
     false = lists:any(
 	      fun(C) when
-			(    0 =< C) and (C =< 16#2C) or
-			(16#2E =< C) and (C =< 16#2F) or
-			(16#3A =< C) and (C =< 16#40) or
-			(16#5B =< C) and (C =< 16#60) or
-			(16#7B =< C) and (C =< 16#7F) ->
+		 (    0 =< C) and (C =< 16#2C) or
+		 (16#2E =< C) and (C =< 16#2F) or
+		 (16#3A =< C) and (C =< 16#40) or
+		 (16#5B =< C) and (C =< 16#60) or
+		 (16#7B =< C) and (C =< 16#7F) ->
 		      true;
 		 (_) ->
 		      false
@@ -102,9 +119,9 @@ punycode_encode(Input) ->
     B = length(Basic),
     SNonBasic = lists:usort(NonBasic),
     Output1 = if
-		 B > 0 -> Basic ++ "-";
-		 true -> ""
-	     end,
+		  B > 0 -> Basic ++ "-";
+		  true -> ""
+	      end,
     Output2 = punycode_encode1(Input, SNonBasic, B, B, L, N, Delta, Bias, ""),
     Output1 ++ Output2.
 
@@ -112,7 +129,7 @@ punycode_encode(Input) ->
 punycode_encode1(Input, [M | SNonBasic], B, H, L, N, Delta, Bias, Out)
   when H < L ->
     Delta1 = Delta + (M - N) * (H + 1),
-    % let n = m
+						% let n = m
     {NewDelta, NewBias, NewH, NewOut} =
 	lists:foldl(
 	  fun(C, {ADelta, ABias, AH, AOut}) ->
@@ -130,7 +147,7 @@ punycode_encode1(Input, [M | SNonBasic], B, H, L, N, Delta, Bias, Out)
     punycode_encode1(
       Input, SNonBasic, B, NewH, L, M + 1, NewDelta + 1, NewBias, NewOut);
 
-punycode_encode1(Input, SNonBasic, B, H, L, N, Delta, Bias, Out) ->
+punycode_encode1(_Input, _SNonBasic, _B, _H, _L, _N, _Delta, _Bias, Out) ->
     lists:reverse(Out).
 
 
@@ -168,7 +185,7 @@ adapt1(Delta, K) ->
 	true ->
 	    K + (((?BASE - ?TMIN + 1) * Delta) div (Delta + ?SKEW))
     end.
-	
+
 
 codepoint(C) ->
     if

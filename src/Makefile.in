@@ -1,4 +1,4 @@
-# $Id: Makefile.in 756 2007-04-30 07:08:01Z cromain $
+# $Id: Makefile.in 1152 2008-01-15 16:09:07Z badlop $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -12,6 +12,9 @@ ERLANG_CFLAGS= @ERLANG_CFLAGS@
 EXPAT_LIBS = @EXPAT_LIBS@
 ERLANG_LIBS = @ERLANG_LIBS@
 
+ERLC_FLAGS += @ERLANG_SSL39@
+
+ASN_FLAGS = -bber_bin +der +compact_bit_string +optimize +noobj
 # make debug=true to compile Erlang module with debug informations.
 ifdef debug
   ERLC_FLAGS+=+debug_info
@@ -21,18 +24,31 @@ ifdef ejabberd_debug
   ERLC_FLAGS+=-Dejabberd_debug
 endif
 
+ifeq (@hipe@, true)
+  ERLC_FLAGS+=+native
+endif
+
 ifeq (@roster_gateway_workaround@, true)
   ERLC_FLAGS+=-DROSTER_GATEWAY_WORKAROUND
 endif
 
+ifeq (@full_xml@, true)
+  ERLC_FLAGS+=-DFULL_XML_SUPPORT
+endif
+
+ifeq (@transient_supervisors@, false)
+  ERLC_FLAGS+=-DNO_TRANSIENT_SUPERVISORS
+endif
+
 prefix = @prefix@
 
-SUBDIRS = @mod_irc@ @mod_pubsub@ @mod_muc@ @eldap@ @web@ stringprep @tls@ @odbc@ @ejabberd_zlib@
+SUBDIRS = @mod_irc@ @mod_pubsub@ @mod_muc@ @mod_proxy65@ @eldap@ @pam@ @web@ stringprep @tls@ @odbc@ @ejabberd_zlib@
 ERLSHLIBS = expat_erl.so
-SOURCES = $(wildcard *.erl)
+ERLBEHAVS = cyrsasl.erl gen_mod.erl p1_fsm.erl
+SOURCES = $(ERLBEHAVS) $(wildcard *.erl)
 BEAMS = $(SOURCES:.erl=.beam)
 
-DESTDIR = 
+DESTDIR =
 
 EJABBERDDIR = $(DESTDIR)@prefix@/var/lib/ejabberd
 BEAMDIR = $(EJABBERDDIR)/ebin
@@ -41,8 +57,7 @@ SODIR = $(PRIVDIR)/lib
 MSGSDIR = $(PRIVDIR)/msgs
 LOGDIR = $(DESTDIR)@prefix@/var/log/ejabberd
 ETCDIR = $(DESTDIR)@prefix@/etc/ejabberd
-
-ASN_FLAGS = -bber_bin +der +compact_bit_string +optimize +noobj
+SBINDIR = $(DESTDIR)@prefix@/sbin
 
 ifeq ($(shell uname),Darwin)
 DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
@@ -71,9 +86,10 @@ mostlyclean-recursive maintainer-clean-recursive:
 
 %.hrl: %.asn1
 	@ERLC@ $(ASN_FLAGS) $<
+	@ERLC@ -W $(ERLC_FLAGS) $*.erl
 
 $(ERLSHLIBS):	%.so:	%.c
-			gcc -Wall $(CFLAGS) $(LDFLAGS) $(LIBS) \
+			$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) \
 			$(subst ../,,$(subst .so,.c,$@)) \
 			$(EXPAT_LIBS) $(EXPAT_CFLAGS) \
 			$(ERLANG_LIBS) $(ERLANG_CFLAGS) \
@@ -86,16 +102,36 @@ install: all
 	install -m 644 *.app $(BEAMDIR)
 	install -d $(SODIR)
 	install -m 644 *.so $(SODIR)
+	-install -m 750 epam $(SODIR)
 	install -d $(MSGSDIR)
 	install -m 644 msgs/*.msg $(MSGSDIR)
 	install -d $(ETCDIR)
 	[ -f $(ETCDIR)/ejabberd.cfg ] && install -b -m 644 ejabberd.cfg.example $(ETCDIR)/ejabberd.cfg-new || install -b -m 644 ejabberd.cfg.example $(ETCDIR)/ejabberd.cfg
+	sed -e "s*@rootdir@*@prefix@*" ejabberdctl.template > ejabberdctl.example
+	[ -f $(ETCDIR)/ejabberdctl.cfg ] && install -b -m 644 ejabberdctl.cfg.example $(ETCDIR)/ejabberdctl.cfg-new || install -b -m 644 ejabberdctl.cfg.example $(ETCDIR)/ejabberdctl.cfg
+	install -b -m 644 inetrc $(ETCDIR)/inetrc
+	install -d $(SBINDIR)
+	install -m 755 ejabberdctl.example $(SBINDIR)/ejabberdctl
 	install -d $(LOGDIR)
+
+uninstall: uninstall-binary
+
+uninstall-binary:
+	rm -rf $(BEAMDIR)
+	rm -rf $(SODIR)
+	rm -rf $(MSGSDIR)
+	rm -rf $(PRIVDIR)
+	rm -rf $(SBINDIR)/ejabberdctl
+
+uninstall-all: uninstall-binary
+	rm -rf $(ETCDIR)
+	rm -rf $(LOGDIR)
+	rm -rf $(EJABBERDDIR)
 
 clean: clean-recursive clean-local
 
 clean-local:
-	rm -f *.beam $(ERLSHLIBS)
+	rm -f *.beam $(ERLSHLIBS) epam
 	rm -f XmppAddr.asn1db XmppAddr.erl XmppAddr.hrl
 
 distclean: distclean-recursive clean-local
@@ -107,3 +143,6 @@ TAGS:
 	etags *.erl
 
 Makefile: Makefile.in
+
+dialyzer: $(BEAMS)
+	@dialyzer -c .

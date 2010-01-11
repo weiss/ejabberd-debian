@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_roster.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Roster management
-%%% Created : 11 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_roster.erl 586 2006-07-06 14:08:09Z mremond $
+%%% Created : 11 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_roster).
--author('alexey@sevcom.net').
--vsn('$Revision: 586 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_mod).
 
@@ -22,11 +39,15 @@
 	 out_subscription/4,
 	 set_items/3,
 	 remove_user/2,
-	 get_jid_info/4]).
+	 get_jid_info/4,
+	 webadmin_page/3,
+	 webadmin_user/4]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 -include("mod_roster.hrl").
+-include("web/ejabberd_http.hrl").
+-include("web/ejabberd_web_admin.hrl").
 
 
 start(Host, Opts) ->
@@ -47,8 +68,14 @@ start(Host, Opts) ->
 		       ?MODULE, get_jid_info, 50),
     ejabberd_hooks:add(remove_user, Host,
 		       ?MODULE, remove_user, 50),
+    ejabberd_hooks:add(anonymous_purge_hook, Host,
+		       ?MODULE, remove_user, 50),
     ejabberd_hooks:add(resend_subscription_requests_hook, Host,
 		       ?MODULE, get_in_pending_subscriptions, 50),
+    ejabberd_hooks:add(webadmin_page_host, Host,
+		       ?MODULE, webadmin_page, 50),
+    ejabberd_hooks:add(webadmin_user, Host,
+		       ?MODULE, webadmin_user, 50),
     gen_iq_handler:add_iq_handler(ejabberd_sm, Host, ?NS_ROSTER,
 				  ?MODULE, process_iq, IQDisc).
 
@@ -65,8 +92,14 @@ stop(Host) ->
 			  ?MODULE, get_jid_info, 50),
     ejabberd_hooks:delete(remove_user, Host,
 			  ?MODULE, remove_user, 50),
+    ejabberd_hooks:delete(anonymous_purge_hook, Host,
+			  ?MODULE, remove_user, 50),
     ejabberd_hooks:delete(resend_subscription_requests_hook, Host,
-		       ?MODULE, get_in_pending_subscriptions, 50),
+			  ?MODULE, get_in_pending_subscriptions, 50),
+    ejabberd_hooks:delete(webadmin_page_host, Host,
+			  ?MODULE, webadmin_page, 50),
+    ejabberd_hooks:delete(webadmin_user, Host,
+			  ?MODULE, webadmin_user, 50),
     gen_iq_handler:remove_iq_handler(ejabberd_sm, Host, ?NS_ROSTER).
 
 
@@ -129,7 +162,11 @@ process_iq_get(From, To, #iq{sub_el = SubEl} = IQ) ->
 get_user_roster(Acc, US) ->
     case catch mnesia:dirty_index_read(roster, US, #roster.us) of
 	Items when is_list(Items) ->
-	    Items ++ Acc;
+	    lists:filter(fun(#roster{subscription = none, ask = in}) ->
+				 false;
+			    (_) ->
+				 true
+			 end, Items) ++ Acc;
 	_ ->
 	    Acc
     end.
@@ -426,6 +463,10 @@ process_subscription(Direction, User, Server, JID1, Type, Reason) ->
 		case NewState of
 		    none ->
 			{none, AutoReply};
+		    {none, none} when Item#roster.subscription == none,
+		                      Item#roster.ask == in ->
+			mnesia:delete({roster, {LUser, LServer, LJID}}),
+			{none, AutoReply};
 		    {Subscription, Pending} ->
 			NewItem = Item#roster{subscription = Subscription,
 					      ask = Pending,
@@ -450,8 +491,14 @@ process_subscription(Direction, User, Server, JID1, Type, Reason) ->
 	    end,
 	    case Push of
 		{push, Item} ->
-		    push_item(User, Server,
-			      jlib:make_jid("", Server, ""), Item),
+		    if
+			Item#roster.subscription == none,
+			Item#roster.ask == in ->
+			    ok;
+			true ->
+			    push_item(User, Server,
+				      jlib:make_jid("", Server, ""), Item)
+		    end,
 		    true;
 		none ->
 		    false
@@ -764,3 +811,164 @@ convert_table2(Fields) ->
     ?INFO_MSG("Converting roster table from "
 	      "{usj, us, jid, name, subscription, ask, groups, xattrs, xs} format", []),
     mnesia:transform_table(roster, ignore, Fields).
+
+
+webadmin_page(_, Host,
+	      #request{us = _US,
+		       path = ["user", U, "roster"],
+		       q = Query,
+		       lang = Lang} = _Request) ->
+    Res = user_roster(U, Host, Query, Lang),
+    {stop, Res};
+
+webadmin_page(Acc, _, _) -> Acc.
+
+user_roster(User, Server, Query, Lang) ->
+    US = {jlib:nodeprep(User), jlib:nameprep(Server)},
+    Items1 = mnesia:dirty_index_read(roster, US, #roster.us),
+    Res = user_roster_parse_query(User, Server, Items1, Query),
+    Items = mnesia:dirty_index_read(roster, US, #roster.us),
+    SItems = lists:sort(Items),
+    FItems =
+	case SItems of
+	    [] ->
+		[?CT("None")];
+	    _ ->
+		[?XE("table",
+		     [?XE("thead",
+			  [?XE("tr",
+			       [?XCT("td", "Jabber ID"),
+				?XCT("td", "Nickname"),
+				?XCT("td", "Subscription"),
+				?XCT("td", "Pending"),
+				?XCT("td", "Groups")
+			       ])]),
+		      ?XE("tbody",
+			  lists:map(
+			    fun(R) ->
+				    Groups =
+					lists:flatmap(
+					  fun(Group) ->
+						  [?C(Group), ?BR]
+					  end, R#roster.groups),
+				    Pending = ask_to_pending(R#roster.ask),
+				    ?XE("tr",
+					[?XAC("td", [{"class", "valign"}],
+					      jlib:jid_to_string(R#roster.jid)),
+					 ?XAC("td", [{"class", "valign"}],
+					      R#roster.name),
+					 ?XAC("td", [{"class", "valign"}],
+					      atom_to_list(R#roster.subscription)),
+					 ?XAC("td", [{"class", "valign"}],
+					      atom_to_list(Pending)),
+					 ?XAE("td", [{"class", "valign"}], Groups),
+					 if
+					     Pending == in ->
+						 ?XAE("td", [{"class", "valign"}],
+						      [?INPUTT("submit",
+							       "validate" ++
+							       ejabberd_web_admin:term_to_id(R#roster.jid),
+							       "Validate")]);
+					     true ->
+						 ?X("td")
+					 end,
+					 ?XAE("td", [{"class", "valign"}],
+					      [?INPUTT("submit",
+						       "remove" ++
+						       ejabberd_web_admin:term_to_id(R#roster.jid),
+						       "Remove")])])
+			    end, SItems))])]
+	end,
+    [?XC("h1", ?T("Roster of ") ++ us_to_list(US))] ++
+	case Res of
+	    ok -> [?CT("Submitted"), ?P];
+	    error -> [?CT("Bad format"), ?P];
+	    nothing -> []
+	end ++
+	[?XAE("form", [{"action", ""}, {"method", "post"}],
+	      FItems ++
+	      [?P,
+	       ?INPUT("text", "newjid", ""), ?C(" "),
+	       ?INPUTT("submit", "addjid", "Add Jabber ID")
+	      ])].
+
+user_roster_parse_query(User, Server, Items, Query) ->
+    case lists:keysearch("addjid", 1, Query) of
+	{value, _} ->
+	    case lists:keysearch("newjid", 1, Query) of
+		{value, {_, undefined}} ->
+		    error;
+		{value, {_, SJID}} ->
+		    case jlib:string_to_jid(SJID) of
+			JID when is_record(JID, jid) ->
+			    user_roster_subscribe_jid(User, Server, JID),
+			    ok;
+			error ->
+			    error
+		    end;
+		false ->
+		    error
+	    end;
+	false ->
+	    case catch user_roster_item_parse_query(
+			 User, Server, Items, Query) of
+		submitted ->
+		    ok;
+		{'EXIT', _Reason} ->
+		    error;
+		_ ->
+		    nothing
+	    end
+    end.
+
+
+user_roster_subscribe_jid(User, Server, JID) ->
+    out_subscription(User, Server, JID, subscribe),
+    UJID = jlib:make_jid(User, Server, ""),
+    ejabberd_router:route(
+      UJID, JID, {xmlelement, "presence", [{"type", "subscribe"}], []}).
+
+user_roster_item_parse_query(User, Server, Items, Query) ->
+    lists:foreach(
+      fun(R) ->
+	      JID = R#roster.jid,
+	      case lists:keysearch(
+		     "validate" ++ ejabberd_web_admin:term_to_id(JID), 1, Query) of
+		  {value, _} ->
+		      JID1 = jlib:make_jid(JID),
+		      out_subscription(
+			User, Server, JID1, subscribed),
+		      UJID = jlib:make_jid(User, Server, ""),
+		      ejabberd_router:route(
+			UJID, JID1, {xmlelement, "presence",
+				     [{"type", "subscribed"}], []}),
+		      throw(submitted);
+		  false ->
+		      case lists:keysearch(
+			     "remove" ++ ejabberd_web_admin:term_to_id(JID), 1, Query) of
+			  {value, _} ->
+			      UJID = jlib:make_jid(User, Server, ""),
+			      process_iq(
+				UJID, UJID,
+				#iq{type = set,
+				    sub_el = {xmlelement, "query",
+					      [{"xmlns", ?NS_ROSTER}],
+					      [{xmlelement, "item",
+						[{"jid", jlib:jid_to_string(JID)},
+						 {"subscription", "remove"}],
+						[]}]}}),
+			      throw(submitted);
+			  false ->
+			      ok
+		      end
+
+	      end
+      end, Items),
+    nothing.
+
+us_to_list({User, Server}) ->
+    jlib:jid_to_string({User, Server, ""}).
+
+webadmin_user(Acc, _User, _Server, Lang) ->
+    Acc ++ [?XE("h3", [?ACT("roster/", "Roster")])].
+

@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_http_poll.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : HTTP Polling support (JEP-0025)
-%%% Created :  4 Mar 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_http_poll.erl 909 2007-09-03 07:43:41Z mremond $
+%%% Created :  4 Mar 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_http_poll).
--author('alexey@sevcom.net').
--vsn('$Revision: 909 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_fsm).
 
@@ -22,9 +39,10 @@
 	 terminate/3,
 	 send/2,
 	 setopts/2,
+	 sockname/1, peername/1,
 	 controlling_process/2,
 	 close/1,
-	 process_request/1]).
+	 process/2]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -71,10 +89,16 @@ send({http_poll, FsmRef}, Packet) ->
 setopts({http_poll, FsmRef}, Opts) ->
     case lists:member({active, once}, Opts) of
 	true ->
-	    gen_fsm:sync_send_all_state_event(FsmRef, activate);
+	    gen_fsm:send_all_state_event(FsmRef, {activate, self()});
 	_ ->
 	    ok
     end.
+
+sockname(_Socket) ->
+    {ok, {{0, 0, 0, 0}, 0}}.
+
+peername(_Socket) ->
+    {ok, {{0, 0, 0, 0}, 0}}.
 
 controlling_process(_Socket, _Pid) ->
     ok.
@@ -83,8 +107,7 @@ close({http_poll, FsmRef}) ->
     catch gen_fsm:sync_send_all_state_event(FsmRef, close).
 
 
-process_request(#request{path = [],
-			 data = Data} = Request) ->
+process([], #request{data = Data} = _Request) ->
     case catch parse_request(Data) of
 	{ok, ID1, Key, NewKey, Packet} ->
 	    ID = if
@@ -130,7 +153,7 @@ process_request(#request{path = [],
 	_ ->
 	    {200, [?CT, {"Set-Cookie", "ID=-2:0; expires=-1"}], ""}
     end;
-process_request(_Request) ->
+process(_, _Request) ->
     {400, [], {xmlelement, "h1", [],
 	       [{xmlcdata, "400 Bad Request"}]}}.
 
@@ -147,9 +170,18 @@ process_request(_Request) ->
 %%----------------------------------------------------------------------
 init([ID, Key]) ->
     ?INFO_MSG("started: ~p", [{ID, Key}]),
-    Opts = [], % TODO
-    {ok, C2SPid} = ejabberd_c2s:start({?MODULE, {http_poll, self()}}, Opts),
-    ejabberd_c2s:become_controller(C2SPid),
+
+    %% Read c2s options from the first ejabberd_c2s configuration in
+    %% the config file listen section
+    %% TODO: We should have different access and shaper values for
+    %% each connector. The default behaviour should be however to use
+    %% the default c2s restrictions if not defined for the current
+    %% connector.
+    Opts = ejabberd_c2s_config:get_c2s_limits(),
+
+    ejabberd_socket:start(ejabberd_c2s, ?MODULE, {http_poll, self()}, Opts),
+    %{ok, C2SPid} = ejabberd_c2s:start({?MODULE, {http_poll, self()}}, Opts),
+    %ejabberd_c2s:become_controller(C2SPid),
     Timer = erlang:start_timer(?HTTP_POLL_TIMEOUT, self(), []),
     {ok, loop, #state{id = ID,
 		      key = Key,
@@ -182,7 +214,21 @@ init([ID, Key]) ->
 %%          {next_state, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                         
 %%----------------------------------------------------------------------
-handle_event(Event, StateName, StateData) ->
+handle_event({activate, From}, StateName, StateData) ->
+    case StateData#state.input of
+	"" ->
+	    {next_state, StateName,
+	     StateData#state{waiting_input = {From, ok}}};
+	Input ->
+            Receiver = From,
+	    Receiver ! {tcp, {http_poll, self()}, list_to_binary(Input)},
+	    {next_state, StateName, StateData#state{input = "",
+						    waiting_input = false,
+						    last_receiver = Receiver
+						   }}
+    end;
+
+handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData}.
 
 %%----------------------------------------------------------------------
@@ -194,30 +240,17 @@ handle_event(Event, StateName, StateData) ->
 %%          {stop, Reason, NewStateData}                          |
 %%          {stop, Reason, Reply, NewStateData}                    
 %%----------------------------------------------------------------------
-handle_sync_event({send, Packet}, From, StateName, StateData) ->
+handle_sync_event({send, Packet}, _From, StateName, StateData) ->
     Output = StateData#state.output ++ [lists:flatten(Packet)],
     Reply = ok,
     {reply, Reply, StateName, StateData#state{output = Output}};
 
-handle_sync_event(activate, From, StateName, StateData) ->
-    case StateData#state.input of
-	"" ->
-	    {reply, ok, StateName, StateData#state{waiting_input = From}};
-	Input ->
-            {Receiver, _Tag} = From,
-	    Receiver ! {tcp, {http_poll, self()}, list_to_binary(Input)},
-	    {reply, ok, StateName, StateData#state{input = "",
-						   waiting_input = false,
-						   last_receiver = Receiver
-						  }}
-    end;
-
-handle_sync_event(stop, From, StateName, StateData) ->
+handle_sync_event(stop, _From, _StateName, StateData) ->
     Reply = ok,
     {stop, normal, Reply, StateData};
 
 handle_sync_event({http_put, Key, NewKey, Packet},
-		  From, StateName, StateData) ->
+		  _From, StateName, StateData) ->
     Allow = case StateData#state.key of
 		"" ->
 		    true;
@@ -256,15 +289,15 @@ handle_sync_event({http_put, Key, NewKey, Packet},
 	    {reply, Reply, StateName, StateData}
     end;
 
-handle_sync_event(http_get, From, StateName, StateData) ->
+handle_sync_event(http_get, _From, StateName, StateData) ->
     Reply = {ok, StateData#state.output},
     {reply, Reply, StateName, StateData#state{output = ""}};
 
-handle_sync_event(Event, From, StateName, StateData) ->
+handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
     {reply, Reply, StateName, StateData}.
 
-code_change(OldVsn, StateName, StateData, Extra) ->
+code_change(_OldVsn, StateName, StateData, _Extra) ->
     {ok, StateName, StateData}.
 
 %%----------------------------------------------------------------------
@@ -273,7 +306,7 @@ code_change(OldVsn, StateName, StateData, Extra) ->
 %%          {next_state, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                         
 %%----------------------------------------------------------------------
-handle_info({timeout, Timer, _}, StateName,
+handle_info({timeout, Timer, _}, _StateName,
 	    #state{timer = Timer} = StateData) ->
     {stop, normal, StateData};
 
@@ -285,7 +318,7 @@ handle_info(_, StateName, StateData) ->
 %% Purpose: Shutdown the fsm
 %% Returns: any
 %%----------------------------------------------------------------------
-terminate(Reason, StateName, StateData) ->
+terminate(_Reason, _StateName, StateData) ->
     mnesia:transaction(
       fun() ->
 	      mnesia:delete({http_poll, StateData#state.id})
@@ -303,13 +336,12 @@ terminate(Reason, StateName, StateData) ->
 	{Receiver, _Tag} ->
 	    Receiver ! {tcp_closed, {http_poll, self()}}
     end,
-    resend_messages(StateData#state.output),
+    catch resend_messages(StateData#state.output),
     ok.
 
 %%%----------------------------------------------------------------------
 %%% Internal functions
 %%%----------------------------------------------------------------------
-
 
 http_put(ID, Key, NewKey, Packet) ->
     case mnesia:dirty_read({http_poll, ID}) of

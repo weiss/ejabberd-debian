@@ -2,11 +2,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+AC_INIT(ejabberd.erl,, ejabberd@process-one.net)
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_MAKE_SET
+
+if test "x$GCC" = "xyes"; then
+    CFLAGS="$CFLAGS -Wall"
+fi
 
 #locating erlang
 AM_WITH_ERLANG
@@ -16,12 +20,14 @@ AM_ICONV
 AM_WITH_EXPAT
 #locating zlib
 AM_WITH_ZLIB
+#locating PAM
+AM_WITH_PAM
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
 # Change default prefix
-AC_PREFIX_DEFAULT /
+AC_PREFIX_DEFAULT(/)
 
 # Checks for library functions.
 AC_FUNC_MALLOC
@@ -30,11 +36,22 @@ AC_HEADER_STDC
 AC_MOD_ENABLE(mod_pubsub, yes)
 AC_MOD_ENABLE(mod_irc, yes)
 AC_MOD_ENABLE(mod_muc, yes)
+AC_MOD_ENABLE(mod_proxy65, yes)
 AC_MOD_ENABLE(eldap, yes)
+AC_MOD_ENABLE(pam, no)
 AC_MOD_ENABLE(web, yes)
 AC_MOD_ENABLE(tls, yes)
 AC_MOD_ENABLE(odbc, no)
 AC_MOD_ENABLE(ejabberd_zlib, yes)
+
+AC_ARG_ENABLE(hipe,
+[  --enable-hipe        Compile natively with HiPE, not recommended (default: no)],
+[case "${enableval}" in
+  yes) hipe=true ;;
+  no)  hipe=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-hipe) ;;
+esac],[hipe=false])
+AC_SUBST(hipe)
 
 AC_ARG_ENABLE(roster_gateway_workaround,
 [  --enable-roster-gateway-workaround    Turn on workaround for processing gateway subscriptions (default: no)],
@@ -54,11 +71,31 @@ AC_ARG_ENABLE(mssql,
 esac],[db_type=generic])
 AC_SUBST(db_type)
 
+AC_ARG_ENABLE(transient_supervisors,
+[  --enable-transient_supervisors    Use Erlang supervision for transient process (default: yes)],
+[case "${enableval}" in
+  yes) transient_supervisors=true ;;
+  no)  transient_supervisors=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-full-xml) ;;
+esac],[transient_supervisors=true])
+AC_SUBST(transient_supervisors)
+
+AC_ARG_ENABLE(full_xml,
+[  --enable-full-xml    Use XML features in XMPP stream (ex: CDATA) (default: no, requires XML compliant clients)],
+[case "${enableval}" in
+  yes) full_xml=true ;;
+  no)  full_xml=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-full-xml) ;;
+esac],[full_xml=false])
+AC_SUBST(full_xml)
+
 AC_CONFIG_FILES([Makefile
                  $make_mod_irc
                  $make_mod_muc
                  $make_mod_pubsub
+                 $make_mod_proxy65
                  $make_eldap
+                 $make_pam
                  $make_web
                  stringprep/Makefile
                  $make_tls
@@ -83,3 +120,12 @@ fi
 AC_CHECK_HEADER(krb5.h,,)
 
 AC_OUTPUT
+
+if test -n "$ERLANG_SSL39" ; then
+	echo
+	echo "**************** WARNING ! ********************"
+	echo "ejabberd will be compiled with Erlang R12."
+	echo "This version of Erlang is not supported"
+	echo "and not recommended for production servers"
+	echo "***********************************************"
+fi

@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_auth_internal.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Authentification via mnesia
-%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_auth_internal.erl 510 2006-02-20 04:07:42Z alexey $
+%%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_internal).
--author('alexey@sevcom.net').
--vsn('$Revision: 510 $ ').
+-author('alexey@process-one.net').
 
 %% External exports
 -export([start/1,
@@ -18,6 +35,9 @@
 	 try_register/3,
 	 dirty_get_registered_users/0,
 	 get_vh_registered_users/1,
+	 get_vh_registered_users/2,
+	 get_vh_registered_users_number/1,
+	 get_vh_registered_users_number/2,
 	 get_password/2,
 	 get_password_s/2,
 	 is_user_exists/2,
@@ -115,6 +135,7 @@ try_register(User, Server, Password) ->
 	    mnesia:transaction(F)
     end.
 
+%% Get all registered users in Mnesia
 dirty_get_registered_users() ->
     mnesia:dirty_all_keys(passwd).
 
@@ -122,9 +143,66 @@ get_vh_registered_users(Server) ->
     LServer = jlib:nameprep(Server),
     mnesia:dirty_select(
       passwd,
-      [{#passwd{us = '$1', _ = '_'},
-	[{'==', {element, 2, '$1'}, LServer}],
+      [{#passwd{us = '$1', _ = '_'}, 
+	[{'==', {element, 2, '$1'}, LServer}], 
 	['$1']}]).
+
+get_vh_registered_users(Server, [{from, Start}, {to, End}]) 
+	when is_integer(Start) and is_integer(End) ->
+    get_vh_registered_users(Server, [{limit, End-Start+1}, {offset, Start}]);
+
+get_vh_registered_users(Server, [{limit, Limit}, {offset, Offset}]) 
+	when is_integer(Limit) and is_integer(Offset) ->
+    case get_vh_registered_users(Server) of
+    [] ->
+	[];
+    Users ->
+	Set = lists:keysort(1, Users),
+	L = length(Set),
+	Start = if Offset < 1 -> 1;
+	           Offset > L -> L;
+	           true -> Offset
+	        end,
+	lists:sublist(Set, Start, Limit)
+    end;
+
+get_vh_registered_users(Server, [{prefix, Prefix}]) 
+	when is_list(Prefix) ->
+    Set = [{U,S} || {U, S} <- get_vh_registered_users(Server), lists:prefix(Prefix, U)],
+    lists:keysort(1, Set);
+
+get_vh_registered_users(Server, [{prefix, Prefix}, {from, Start}, {to, End}]) 
+	when is_list(Prefix) and is_integer(Start) and is_integer(End) ->
+    get_vh_registered_users(Server, [{prefix, Prefix}, {limit, End-Start+1}, {offset, Start}]);
+
+get_vh_registered_users(Server, [{prefix, Prefix}, {limit, Limit}, {offset, Offset}]) 
+	when is_list(Prefix) and is_integer(Limit) and is_integer(Offset) ->
+    case [{U,S} || {U, S} <- get_vh_registered_users(Server), lists:prefix(Prefix, U)] of
+    [] ->
+	[];
+    Users ->
+	Set = lists:keysort(1, Users),
+	L = length(Set),
+	Start = if Offset < 1 -> 1;
+	           Offset > L -> L;
+	           true -> Offset
+	        end,
+	lists:sublist(Set, Start, Limit)
+    end;
+
+get_vh_registered_users(Server, _) ->
+    get_vh_registered_users(Server).
+
+get_vh_registered_users_number(Server) ->
+    Set = get_vh_registered_users(Server),
+    length(Set).
+
+get_vh_registered_users_number(Server, [{prefix, Prefix}]) when is_list(Prefix) ->
+    Set = [{U, S} || {U, S} <- get_vh_registered_users(Server), lists:prefix(Prefix, U)],
+    length(Set);
+    
+get_vh_registered_users_number(Server, _) ->
+    get_vh_registered_users_number(Server).
 
 get_password(User, Server) ->
     LUser = jlib:nodeprep(User),
