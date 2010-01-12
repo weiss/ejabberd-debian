@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_ctl.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Ejabberd admin tool
-%%% Created : 11 Jan 2004 by Alexey Shchepin <alex@alex.sevcom.net>
-%%% Id      : $Id: ejabberd_ctl.erl 565 2006-05-07 21:26:06Z mremond $
+%%% Created : 11 Jan 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_ctl).
--author('alexey@sevcom.net').
--vsn('$Revision: 565 $ ').
+-author('alexey@process-one.net').
 
 -export([start/0,
 	 init/0,
@@ -24,7 +41,21 @@
 start() ->
     case init:get_plain_arguments() of
 	[SNode | Args] ->
-	    Node = list_to_atom(SNode),
+	    SNode1 = case string:tokens(SNode, "@") of
+		[_Node, _Server] ->
+		    SNode;
+		_ ->
+		    case net_kernel:longnames() of
+			 true ->
+			     SNode ++ "@" ++ inet_db:gethostname() ++
+				      "." ++ inet_db:res_option(domain);
+			 false ->
+			     SNode ++ "@" ++ inet_db:gethostname();
+			 _ ->
+			     SNode
+		     end
+	    end,
+	    Node = list_to_atom(SNode1),
 	    Status = case rpc:call(Node, ?MODULE, process, [Args]) of
 			 {badrpc, Reason} ->
 			     io:format("RPC failed on the node ~p: ~p~n",
@@ -175,6 +206,21 @@ process(["delete-expired-messages"]) ->
     mod_offline:remove_expired_messages(),
     ?STATUS_SUCCESS;
 
+process(["mnesia"]) ->
+    io:format("~p~n", [mnesia:system_info(all)]),
+    ?STATUS_SUCCESS;
+
+process(["mnesia", "info"]) ->
+    mnesia:info(),
+    ?STATUS_SUCCESS;
+
+process(["mnesia", Arg]) when is_list(Arg) ->
+    case catch mnesia:system_info(list_to_atom(Arg)) of
+	{'EXIT', Error} -> io:format("Error: ~p~n", [Error]);
+	Return -> io:format("~p~n", [Return])
+    end,
+    ?STATUS_SUCCESS;
+
 process(["delete-old-messages", Days]) ->
     case catch list_to_integer(Days) of
 	{'EXIT',{Reason, _Stack}} ->
@@ -185,7 +231,7 @@ process(["delete-old-messages", Days]) ->
 	    {atomic, _} = mod_offline:remove_old_messages(Integer),
 	    io:format("Removed messages older than ~s days~n", [Days]),
 	    ?STATUS_SUCCESS;
-	Integer ->
+	_Integer ->
 	    io:format("Can't delete old messages. Please pass a positive integer as parameter.~n", []),
 	    ?STATUS_ERROR
     end;
@@ -233,6 +279,7 @@ print_usage() ->
 	 {"import-dir dir", "import user data from jabberd 1.4 spool directory"},
 	 {"delete-expired-messages", "delete expired offline messages from database"},
 	 {"delete-old-messages n", "delete offline messages older than n days from database"},
+	 {"mnesia [info]", "show information of Mnesia system"},
 	 {"vhost host ...", "execute host-specific commands"}] ++
 	ets:tab2list(ejabberd_ctl_cmds),
     MaxCmdLen =
@@ -248,19 +295,21 @@ print_usage() ->
 		   Desc, NewLine]
 	  end, CmdDescs),
     io:format(
-      "Usage: ejabberdctl node command~n"
+      "Usage: ejabberdctl [--node nodename] command [options]~n"
       "~n"
-      "Available commands:~n"
+      "Available commands in this ejabberd node:~n"
       ++ FmtCmdDescs ++
       "~n"
-      "Example:~n"
-      "  ejabberdctl ejabberd@host restart~n"
+      "Examples:~n"
+      "  ejabberdctl restart~n"
+      "  ejabberdctl --node ejabberd@host restart~n"
+      "  ejabberdctl vhost jabber.example.org ...~n"
      ).
 
 print_vhost_usage(Host) ->
     CmdDescs =
 	ets:select(ejabberd_ctl_host_cmds,
-		   [{{Host, '$1', '$2'}, [], [{{'$1', '$2'}}]}]),
+		   [{{{Host, '$1'}, '$2'}, [], [{{'$1', '$2'}}]}]),
     MaxCmdLen =
 	if
 	    CmdDescs == [] ->
@@ -279,11 +328,13 @@ print_vhost_usage(Host) ->
 		   Desc, NewLine]
 	  end, CmdDescs),
     io:format(
-      "Usage: ejabberdctl node vhost host command~n"
+      "Usage: ejabberdctl [--node nodename] vhost hostname command [options]~n"
       "~n"
-      "Available commands:~n"
+      "Available commands in this ejabberd node and this vhost:~n"
       ++ FmtCmdDescs ++
       "~n"
+      "Examples:~n"
+      "  ejabberdctl vhost "++Host++" registered-users~n"
      ).
 
 register_commands(CmdDescs, Module, Function) ->
@@ -294,7 +345,7 @@ register_commands(CmdDescs, Module, Function) ->
 
 register_commands(Host, CmdDescs, Module, Function) ->
     ets:insert(ejabberd_ctl_host_cmds,
-	       [{Host, Cmd, Desc} || {Cmd, Desc} <- CmdDescs]),
+	       [{{Host, Cmd}, Desc} || {Cmd, Desc} <- CmdDescs]),
     ejabberd_hooks:add(ejabberd_ctl_process, Host,
 		       Module, Function, 50),
     ok.
@@ -310,7 +361,7 @@ unregister_commands(CmdDescs, Module, Function) ->
 unregister_commands(Host, CmdDescs, Module, Function) ->
     lists:foreach(fun({Cmd, Desc}) ->
 			  ets:delete_object(ejabberd_ctl_host_cmds,
-					    {Host, Cmd, Desc})
+					    {{Host, Cmd}, Desc})
 		  end, CmdDescs),
     ejabberd_hooks:delete(ejabberd_ctl_process,
 			  Module, Function, 50),

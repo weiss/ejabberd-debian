@@ -1,22 +1,41 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_s2s_out.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
-%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_s2s_out.erl 590 2006-07-28 16:18:50Z mremond $
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
+%%% Purpose : Manage outgoing server-to-server connections
+%%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_s2s_out).
--author('alexey@sevcom.net').
+-author('alexey@process-one.net').
 
--behaviour(gen_fsm).
+-behaviour(p1_fsm).
 
 %% External exports
 -export([start/3,
 	 start_link/3,
-	 start_connection/1]).
+	 start_connection/1,
+	 stop_connection/1]).
 
-%% gen_fsm callbacks
+%% p1_fsm callbacks (same as gen_fsm)
 -export([init/1,
 	 open_socket/2,
 	 wait_for_stream/2,
@@ -25,6 +44,7 @@
 	 wait_for_auth_result/2,
 	 wait_for_starttls_proceed/2,
 	 reopen_socket/2,
+	 wait_before_retry/2,
 	 stream_established/2,
 	 handle_event/3,
 	 handle_sync_event/4,
@@ -36,8 +56,7 @@
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 
--record(state, {socket, receiver,
-		sockmod,
+-record(state, {socket,
 		streamid,
 		use_v10,
 		tls = false,
@@ -51,13 +70,27 @@
 		new = false, verify = false,
 		timer}).
 
-%-define(DBGFSM, true).
+%%-define(DBGFSM, true).
 
 -ifdef(DBGFSM).
 -define(FSMOPTS, [{debug, [trace]}]).
 -else.
 -define(FSMOPTS, []).
 -endif.
+
+%% Module start with or without supervisor:
+-ifdef(NO_TRANSIENT_SUPERVISORS).
+-define(SUPERVISOR_START, p1_fsm:start(ejabberd_s2s_out, [From, Host, Type],
+				       ?FSMLIMITS ++ ?FSMOPTS)).
+-else.
+-define(SUPERVISOR_START, supervisor:start_child(ejabberd_s2s_out_sup,
+						 [From, Host, Type])).
+-endif.
+
+%% Only change this value if you now what your are doing:
+-define(FSMLIMITS,[]).
+%% -define(FSMLIMITS, [{max_queue, 2000}]).
+-define(FSMTIMEOUT, 5000).
 
 -define(STREAM_HEADER,
 	"<?xml version='1.0'?>"
@@ -83,16 +116,20 @@
 %%% API
 %%%----------------------------------------------------------------------
 start(From, Host, Type) ->
-    supervisor:start_child(ejabberd_s2s_out_sup, [From, Host, Type]).
+    ?SUPERVISOR_START.
 
 start_link(From, Host, Type) ->
-    gen_fsm:start_link(ejabberd_s2s_out, [From, Host, Type], ?FSMOPTS).
+    p1_fsm:start_link(ejabberd_s2s_out, [From, Host, Type],
+		      ?FSMLIMITS ++ ?FSMOPTS).
 
 start_connection(Pid) ->
-    gen_fsm:send_event(Pid, init).
+    p1_fsm:send_event(Pid, init).
+
+stop_connection(Pid) ->
+    p1_fsm:send_event(Pid, stop).
 
 %%%----------------------------------------------------------------------
-%%% Callback functions from gen_fsm
+%%% Callback functions from p1_fsm
 %%%----------------------------------------------------------------------
 
 %%----------------------------------------------------------------------
@@ -100,10 +137,11 @@ start_connection(Pid) ->
 %% Returns: {ok, StateName, StateData}          |
 %%          {ok, StateName, StateData, Timeout} |
 %%          ignore                              |
-%%          {stop, StopReason}                   
+%%          {stop, StopReason}
 %%----------------------------------------------------------------------
 init([From, Server, Type]) ->
-    ?INFO_MSG("started: ~p", [{From, Server, Type}]),
+    process_flag(trap_exit, true),
+    ?DEBUG("started: ~p", [{From, Server, Type}]),
     TLS = case ejabberd_config:get_local_option(s2s_use_starttls) of
 	      undefined ->
 		  false;
@@ -139,22 +177,30 @@ init([From, Server, Type]) ->
 %% Func: StateName/2
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 open_socket(init, StateData) ->
-    AddrList = get_addr_port(StateData#state.server),
+    log_s2s_out(StateData#state.new,
+		StateData#state.myname,
+		StateData#state.server),
+    ?DEBUG("open_socket: ~p", [{StateData#state.myname,
+				StateData#state.server,
+				StateData#state.new,
+				StateData#state.verify}]),
+    AddrList = case idna:domain_utf8_to_ascii(StateData#state.server) of
+		   false -> [];
+		   ASCIIAddr ->
+		       get_addr_port(ASCIIAddr)
+	       end,
     case lists:foldl(fun({Addr, Port}, Acc) ->
-			case Acc of
-			    {ok, Socket} ->
-				{ok, Socket};
-			    _ ->
-				open_socket1(Addr, Port)
-			end
+			     case Acc of
+				 {ok, Socket} ->
+				     {ok, Socket};
+				 _ ->
+				     open_socket1(Addr, Port)
+			     end
 		     end, {error, badarg}, AddrList) of
 	{ok, Socket} ->
-	    ReceiverPid = ejabberd_receiver:start(Socket, gen_tcp, none),
-	    ok = gen_tcp:controlling_process(Socket, ReceiverPid),
-	    ejabberd_receiver:become_controller(ReceiverPid),
 	    Version = if
 			  StateData#state.use_v10 ->
 			      " version='1.0'";
@@ -162,43 +208,49 @@ open_socket(init, StateData) ->
 			      ""
 		      end,
 	    NewStateData = StateData#state{socket = Socket,
-					   sockmod = gen_tcp,
 					   tls_enabled = false,
-					   receiver = ReceiverPid,
 					   streamid = new_id()},
 	    send_text(NewStateData, io_lib:format(?STREAM_HEADER,
-					    [StateData#state.server,
-					     Version])),
-	    {next_state, wait_for_stream, NewStateData};
+						  [StateData#state.server,
+						   Version])),
+	    {next_state, wait_for_stream, NewStateData, ?FSMTIMEOUT};
 	{error, _Reason} ->
-	    Error = ?ERR_REMOTE_SERVER_NOT_FOUND,
-	    bounce_messages(Error),
-	    {stop, normal, StateData}
+	    ?INFO_MSG("s2s connection: ~s -> ~s (remote server not found)",
+		      [StateData#state.myname, StateData#state.server]),
+	    wait_before_reconnect(StateData, 300000)
+	    %%{stop, normal, StateData}
     end;
+open_socket(stop, StateData) ->
+    ?INFO_MSG("s2s connection: ~s -> ~s (stopped in open socket)",
+	      [StateData#state.myname, StateData#state.server]),
+    {stop, normal, StateData};
+open_socket(timeout, StateData) ->
+    ?INFO_MSG("s2s connection: ~s -> ~s (timeout in open socket)",
+	      [StateData#state.myname, StateData#state.server]),
+    {stop, normal, StateData};
 open_socket(_, StateData) ->
     {next_state, open_socket, StateData}.
 
 %%----------------------------------------------------------------------
 open_socket1(Addr, Port) ->
-    Res = case idna:domain_utf8_to_ascii(Addr) of
-	      false -> {error, badarg};
-	      ASCIIAddr ->
-		  ?DEBUG("s2s_out: connecting to ~s:~p~n", [ASCIIAddr, Port]),
-		  case catch gen_tcp:connect(ASCIIAddr, Port,
-					     [binary, {packet, 0},
-					      {active, false}]) of
-		      {ok, _Socket} = R -> R;
-		      {error, Reason1} ->
-			  ?DEBUG("s2s_out: connect return ~p~n", [Reason1]),
-			  catch gen_tcp:connect(Addr, Port,
-						[binary, {packet, 0},
-						 {active, false}, inet6]);
-		      {'EXIT', Reason1} ->
-			  ?DEBUG("s2s_out: connect crashed ~p~n", [Reason1]),
-			  catch gen_tcp:connect(Addr, Port,
-						[binary, {packet, 0},
-						 {active, false}, inet6])
-		  end
+    ?DEBUG("s2s_out: connecting to ~s:~p~n", [Addr, Port]),
+    Res = case catch ejabberd_socket:connect(
+		       Addr, Port,
+		       [binary, {packet, 0},
+			{active, false}]) of
+	      {ok, _Socket} = R -> R;
+	      {error, Reason1} ->
+		  ?DEBUG("s2s_out: connect return ~p~n", [Reason1]),
+		  catch ejabberd_socket:connect(
+			  Addr, Port,
+			  [binary, {packet, 0},
+			   {active, false}, inet6]);
+	      {'EXIT', Reason1} ->
+		  ?DEBUG("s2s_out: connect crashed ~p~n", [Reason1]),
+		  catch ejabberd_socket:connect(
+			  Addr, Port,
+			  [binary, {packet, 0},
+			   {active, false}, inet6])
 	  end,
     case Res of
 	{ok, Socket} ->
@@ -214,31 +266,39 @@ open_socket1(Addr, Port) ->
 %%----------------------------------------------------------------------
 
 
-wait_for_stream({xmlstreamstart, Name, Attrs}, StateData) ->
+wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
     case {xml:get_attr_s("xmlns", Attrs),
 	  xml:get_attr_s("xmlns:db", Attrs),
 	  xml:get_attr_s("version", Attrs) == "1.0"} of
 	{"jabber:server", "jabber:server:dialback", false} ->
 	    send_db_request(StateData);
 	{"jabber:server", "jabber:server:dialback", true} when
-	      StateData#state.use_v10 ->
-	    {next_state, wait_for_features, StateData};
+	StateData#state.use_v10 ->
+	    {next_state, wait_for_features, StateData, ?FSMTIMEOUT};
 	{"jabber:server", "", true} when StateData#state.use_v10 ->
-	    {next_state, wait_for_features, StateData#state{db_enabled = false}};
+	    {next_state, wait_for_features, StateData#state{db_enabled = false}, ?FSMTIMEOUT};
 	_ ->
 	    send_text(StateData, ?INVALID_NAMESPACE_ERR),
+	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid namespace)",
+		      [StateData#state.myname, StateData#state.server]),
 	    {stop, normal, StateData}
     end;
 
 wait_for_stream({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid xml)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 wait_for_stream(timeout, StateData) ->
+    ?INFO_MSG("Closing s2s connection: ~s -> ~s (timeout in wait_for_stream)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 wait_for_stream(closed, StateData) ->
+    ?INFO_MSG("Closing s2s connection: ~s -> ~s (close in wait_for_stream)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData}.
 
 
@@ -246,30 +306,37 @@ wait_for_stream(closed, StateData) ->
 wait_for_validation({xmlstreamelement, El}, StateData) ->
     case is_verify_res(El) of
 	{result, To, From, Id, Type} ->
-	    ?INFO_MSG("recv result: ~p", [{From, To, Id, Type}]),
+	    ?DEBUG("recv result: ~p", [{From, To, Id, Type}]),
 	    case Type of
 		"valid" ->
 		    send_queue(StateData, StateData#state.queue),
+		    ?INFO_MSG("Connection established: ~s -> ~s",
+			      [StateData#state.myname, StateData#state.server]),
 		    {next_state, stream_established,
 		     StateData#state{queue = queue:new()}};
 		_ ->
-		    % TODO: bounce packets
+		    %% TODO: bounce packets
+		    ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid dialback key)",
+			      [StateData#state.myname, StateData#state.server]),
 		    {stop, normal, StateData}
 	    end;
 	{verify, To, From, Id, Type} ->
-	    ?INFO_MSG("recv verify: ~p", [{From, To, Id, Type}]),
+	    ?DEBUG("recv verify: ~p", [{From, To, Id, Type}]),
 	    case StateData#state.verify of
 		false ->
-		    {next_state, wait_for_validation, StateData};
+		    NextState = wait_for_validation,
+		    %% TODO: Should'nt we close the connection here ?
+		    {next_state, NextState, StateData,
+		     get_timeout_interval(NextState)};
 		{Pid, _Key, _SID} ->
 		    case Type of
 			"valid" ->
-			    gen_fsm:send_event(
+			    p1_fsm:send_event(
 			      Pid, {valid,
 				    StateData#state.server,
 				    StateData#state.myname});
 			_ ->
-			    gen_fsm:send_event(
+			    p1_fsm:send_event(
 			      Pid, {invalid,
 				    StateData#state.server,
 				    StateData#state.myname})
@@ -278,25 +345,35 @@ wait_for_validation({xmlstreamelement, El}, StateData) ->
 			StateData#state.verify == false ->
 			    {stop, normal, StateData};
 			true ->
-			    {next_state, wait_for_validation, StateData}
+			    NextState = wait_for_validation,
+			    {next_state, NextState, StateData,
+			     get_timeout_interval(NextState)}
 		    end
 	    end;
 	_ ->
-	    {next_state, wait_for_validation, StateData}
+	    {next_state, wait_for_validation, StateData, ?FSMTIMEOUT*3}
     end;
 
-wait_for_validation({xmlstreamend, Name}, StateData) ->
+wait_for_validation({xmlstreamend, _Name}, StateData) ->
+    ?INFO_MSG("wait for validation: ~s -> ~s (xmlstreamend)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 wait_for_validation({xmlstreamerror, _}, StateData) ->
+    ?INFO_MSG("wait for validation: ~s -> ~s (xmlstreamerror)",
+	      [StateData#state.myname, StateData#state.server]),
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
     {stop, normal, StateData};
 
 wait_for_validation(timeout, StateData) ->
+    ?INFO_MSG("wait_for_validation: ~s -> ~s (connect timeout)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 wait_for_validation(closed, StateData) ->
+    ?INFO_MSG("wait for validation: ~s -> ~s (closed)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData}.
 
 
@@ -305,8 +382,8 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 	{xmlelement, "stream:features", _Attrs, Els} ->
 	    {SASLEXT, StartTLS, StartTLSRequired} =
 		lists:foldl(
-		  fun({xmlelement, "mechanisms", Attrs1, Els1} = El1,
-		      {SEXT, STLS, STLSReq} = Acc) ->
+		  fun({xmlelement, "mechanisms", Attrs1, Els1} = _El1,
+		      {_SEXT, STLS, STLSReq} = Acc) ->
 			  case xml:get_attr_s("xmlns", Attrs1) of
 			      ?NS_SASL ->
 				  NewSEXT =
@@ -322,8 +399,8 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 			      _ ->
 				  Acc
 			  end;
-		     ({xmlelement, "starttls", Attrs1, Els1} = El1,
-		      {SEXT, STLS, STLSReq} = Acc) ->
+		     ({xmlelement, "starttls", Attrs1, _Els1} = El1,
+		      {SEXT, _STLS, _STLSReq} = Acc) ->
 			  case xml:get_attr_s("xmlns", Attrs1) of
 			      ?NS_TLS ->
 				  Req = case xml:get_subtag(El1, "required") of
@@ -341,6 +418,8 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 		(not SASLEXT) and (not StartTLS) and
 		StateData#state.authenticated ->
 		    send_queue(StateData, StateData#state.queue),
+		    ?INFO_MSG("Connection established: ~s -> ~s",
+			      [StateData#state.myname, StateData#state.server]),
 		    {next_state, stream_established,
 		     StateData#state{queue = queue:new()}};
 		SASLEXT and StateData#state.try_auth and
@@ -353,49 +432,56 @@ wait_for_features({xmlstreamelement, El}, StateData) ->
 				    jlib:encode_base64(
 				      StateData#state.myname)}]}),
 		    {next_state, wait_for_auth_result,
-		     StateData#state{try_auth = false}};
+		     StateData#state{try_auth = false}, ?FSMTIMEOUT};
 		StartTLS and StateData#state.tls and
 		(not StateData#state.tls_enabled) ->
 		    send_element(StateData,
 				 {xmlelement, "starttls",
 				  [{"xmlns", ?NS_TLS}], []}),
-		    {next_state, wait_for_starttls_proceed, StateData};
+		    {next_state, wait_for_starttls_proceed, StateData,
+		     ?FSMTIMEOUT};
 		StartTLSRequired and (not StateData#state.tls) ->
-		    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
-						 StateData#state.server}]),
-		    ejabberd_receiver:close(StateData#state.receiver),
+		    ?DEBUG("restarted: ~p", [{StateData#state.myname,
+					      StateData#state.server}]),
+		    ejabberd_socket:close(StateData#state.socket),
 		    {next_state, reopen_socket,
 		     StateData#state{socket = undefined,
-				     use_v10 = false}};
+				     use_v10 = false}, ?FSMTIMEOUT};
 		StateData#state.db_enabled ->
 		    send_db_request(StateData);
 		true ->
-		    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
-						 StateData#state.server}]),
-		    % TODO: clear message queue
-		    ejabberd_receiver:close(StateData#state.receiver),
+		    ?DEBUG("restarted: ~p", [{StateData#state.myname,
+					      StateData#state.server}]),
+						% TODO: clear message queue
+		    ejabberd_socket:close(StateData#state.socket),
 		    {next_state, reopen_socket, StateData#state{socket = undefined,
-								use_v10 = false}}
+								use_v10 = false}, ?FSMTIMEOUT}
 	    end;
 	_ ->
 	    send_text(StateData,
 		      xml:element_to_string(?SERR_BAD_FORMAT) ++
 		      ?STREAM_TRAILER),
+	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+		      [StateData#state.myname, StateData#state.server]),
 	    {stop, normal, StateData}
     end;
 
-wait_for_features({xmlstreamend, Name}, StateData) ->
+wait_for_features({xmlstreamend, _Name}, StateData) ->
+    ?INFO_MSG("wait_for_features: xmlstreamend", []),
     {stop, normal, StateData};
 
 wait_for_features({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    ?INFO_MSG("wait for features: xmlstreamerror", []),
     {stop, normal, StateData};
 
 wait_for_features(timeout, StateData) ->
+    ?INFO_MSG("wait for features: timeout", []),
     {stop, normal, StateData};
 
 wait_for_features(closed, StateData) ->
+    ?INFO_MSG("wait for features: closed", []),
     {stop, normal, StateData}.
 
 
@@ -404,10 +490,9 @@ wait_for_auth_result({xmlstreamelement, El}, StateData) ->
 	{xmlelement, "success", Attrs, _Els} ->
 	    case xml:get_attr_s("xmlns", Attrs) of
 		?NS_SASL ->
-		    ?INFO_MSG("auth: ~p", [{StateData#state.myname,
-					    StateData#state.server}]),
-		    ejabberd_receiver:reset_stream(
-		      StateData#state.receiver),
+		    ?DEBUG("auth: ~p", [{StateData#state.myname,
+					 StateData#state.server}]),
+		    ejabberd_socket:reset_stream(StateData#state.socket),
 		    send_text(StateData,
 			      io_lib:format(?STREAM_HEADER,
 					    [StateData#state.server,
@@ -415,46 +500,56 @@ wait_for_auth_result({xmlstreamelement, El}, StateData) ->
 		    {next_state, wait_for_stream,
 		     StateData#state{streamid = new_id(),
 				     authenticated = true
-				    }};
+				    }, ?FSMTIMEOUT};
 		_ ->
 		    send_text(StateData,
 			      xml:element_to_string(?SERR_BAD_FORMAT) ++
 			      ?STREAM_TRAILER),
+		    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+			      [StateData#state.myname, StateData#state.server]),
 		    {stop, normal, StateData}
 	    end;
 	{xmlelement, "failure", Attrs, _Els} ->
 	    case xml:get_attr_s("xmlns", Attrs) of
 		?NS_SASL ->
-		    ?INFO_MSG("restarted: ~p", [{StateData#state.myname,
-						 StateData#state.server}]),
-		    ejabberd_receiver:close(StateData#state.receiver),
+		    ?DEBUG("restarted: ~p", [{StateData#state.myname,
+					      StateData#state.server}]),
+		    ejabberd_socket:close(StateData#state.socket),
 		    {next_state, reopen_socket,
-		     StateData#state{socket = undefined}};
+		     StateData#state{socket = undefined}, ?FSMTIMEOUT};
 		_ ->
 		    send_text(StateData,
 			      xml:element_to_string(?SERR_BAD_FORMAT) ++
 			      ?STREAM_TRAILER),
+		    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+			      [StateData#state.myname, StateData#state.server]),
 		    {stop, normal, StateData}
 	    end;
 	_ ->
 	    send_text(StateData,
 		      xml:element_to_string(?SERR_BAD_FORMAT) ++
 		      ?STREAM_TRAILER),
+	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+		      [StateData#state.myname, StateData#state.server]),
 	    {stop, normal, StateData}
     end;
 
-wait_for_auth_result({xmlstreamend, Name}, StateData) ->
+wait_for_auth_result({xmlstreamend, _Name}, StateData) ->
+    ?INFO_MSG("wait for auth result: xmlstreamend", []),
     {stop, normal, StateData};
 
 wait_for_auth_result({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    ?INFO_MSG("wait for auth result: xmlstreamerror", []),
     {stop, normal, StateData};
 
 wait_for_auth_result(timeout, StateData) ->
+    ?INFO_MSG("wait for auth result: timeout", []),
     {stop, normal, StateData};
 
 wait_for_auth_result(closed, StateData) ->
+    ?INFO_MSG("wait for auth result: closed", []),
     {stop, normal, StateData}.
 
 
@@ -463,8 +558,8 @@ wait_for_starttls_proceed({xmlstreamelement, El}, StateData) ->
 	{xmlelement, "proceed", Attrs, _Els} ->
 	    case xml:get_attr_s("xmlns", Attrs) of
 		?NS_TLS ->
-		    ?INFO_MSG("starttls: ~p", [{StateData#state.myname,
-						StateData#state.server}]),
+		    ?DEBUG("starttls: ~p", [{StateData#state.myname,
+					     StateData#state.server}]),
 		    Socket = StateData#state.socket,
 		    TLSOpts = case ejabberd_config:get_local_option(
 				     {domain_certfile,
@@ -477,11 +572,8 @@ wait_for_starttls_proceed({xmlstreamelement, El}, StateData) ->
 					 certfile, 1,
 					 StateData#state.tls_options)]
 			      end,
-		    {ok, TLSSocket} = tls:tcp_to_tls(Socket, TLSOpts),
-		    ejabberd_receiver:starttls(
-		      StateData#state.receiver, TLSSocket),
-		    NewStateData = StateData#state{sockmod = tls,
-						   socket = TLSSocket,
+		    TLSSocket = ejabberd_socket:starttls(Socket, TLSOpts),
+		    NewStateData = StateData#state{socket = TLSSocket,
 						   streamid = new_id(),
 						   tls_enabled = true
 						  },
@@ -489,60 +581,72 @@ wait_for_starttls_proceed({xmlstreamelement, El}, StateData) ->
 			      io_lib:format(?STREAM_HEADER,
 					    [StateData#state.server,
 					     " version='1.0'"])),
-		    {next_state, wait_for_stream, NewStateData};
+		    {next_state, wait_for_stream, NewStateData, ?FSMTIMEOUT};
 		_ ->
 		    send_text(StateData,
 			      xml:element_to_string(?SERR_BAD_FORMAT) ++
 			      ?STREAM_TRAILER),
+		    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+			      [StateData#state.myname, StateData#state.server]),
 		    {stop, normal, StateData}
 	    end;
 	_ ->
+	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (bad format)",
+		      [StateData#state.myname, StateData#state.server]),
 	    {stop, normal, StateData}
     end;
 
-wait_for_starttls_proceed({xmlstreamend, Name}, StateData) ->
+wait_for_starttls_proceed({xmlstreamend, _Name}, StateData) ->
+    ?INFO_MSG("wait for starttls proceed: xmlstreamend", []),
     {stop, normal, StateData};
 
 wait_for_starttls_proceed({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    ?INFO_MSG("wait for starttls proceed: xmlstreamerror", []),
     {stop, normal, StateData};
 
 wait_for_starttls_proceed(timeout, StateData) ->
+    ?INFO_MSG("wait for starttls proceed: timeout", []),
     {stop, normal, StateData};
 
 wait_for_starttls_proceed(closed, StateData) ->
+    ?INFO_MSG("wait for starttls proceed: closed", []),
     {stop, normal, StateData}.
 
 
-reopen_socket({xmlstreamelement, El}, StateData) ->
-    {next_state, reopen_socket, StateData};
-reopen_socket({xmlstreamend, Name}, StateData) ->
-    {next_state, reopen_socket, StateData};
+reopen_socket({xmlstreamelement, _El}, StateData) ->
+    {next_state, reopen_socket, StateData, ?FSMTIMEOUT};
+reopen_socket({xmlstreamend, _Name}, StateData) ->
+    {next_state, reopen_socket, StateData, ?FSMTIMEOUT};
 reopen_socket({xmlstreamerror, _}, StateData) ->
-    {next_state, reopen_socket, StateData};
+    {next_state, reopen_socket, StateData, ?FSMTIMEOUT};
 reopen_socket(timeout, StateData) ->
+    ?INFO_MSG("reopen socket: timeout", []),
     {stop, normal, StateData};
 reopen_socket(closed, StateData) ->
-    gen_fsm:send_event(self(), init),
-    {next_state, open_socket, StateData}.
+    p1_fsm:send_event(self(), init),
+    {next_state, open_socket, StateData, ?FSMTIMEOUT}.
 
+%% This state is use to avoid reconnecting to often to bad sockets
+wait_before_retry(_Event, StateData) ->
+    {next_state, wait_before_retry, StateData, ?FSMTIMEOUT}.
 
 stream_established({xmlstreamelement, El}, StateData) ->
-    ?INFO_MSG("stream established", []),
+    ?DEBUG("s2S stream established", []),
     case is_verify_res(El) of
 	{verify, VTo, VFrom, VId, VType} ->
-	    ?INFO_MSG("recv verify: ~p", [{VFrom, VTo, VId, VType}]),
+	    ?DEBUG("recv verify: ~p", [{VFrom, VTo, VId, VType}]),
 	    case StateData#state.verify of
 		{VPid, _VKey, _SID} ->
 		    case VType of
 			"valid" ->
-			    gen_fsm:send_event(
+			    p1_fsm:send_event(
 			      VPid, {valid,
 				     StateData#state.server,
 				     StateData#state.myname});
 			_ ->
-			    gen_fsm:send_event(
+			    p1_fsm:send_event(
 			      VPid, {invalid,
 				     StateData#state.server,
 				     StateData#state.myname})
@@ -555,18 +659,26 @@ stream_established({xmlstreamelement, El}, StateData) ->
     end,
     {next_state, stream_established, StateData};
 
-stream_established({xmlstreamend, Name}, StateData) ->
+stream_established({xmlstreamend, _Name}, StateData) ->
+    ?INFO_MSG("stream established: ~s -> ~s (xmlstreamend)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 stream_established({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
+    ?INFO_MSG("stream established: ~s -> ~s (xmlstreamerror)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 stream_established(timeout, StateData) ->
+    ?INFO_MSG("stream established: ~s -> ~s (timeout)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
 stream_established(closed, StateData) ->
+    ?INFO_MSG("stream established: ~s -> ~s (closed)",
+	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData}.
 
 
@@ -578,20 +690,20 @@ stream_established(closed, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
-%state_name(Event, From, StateData) ->
-%    Reply = ok,
-%    {reply, Reply, state_name, StateData}.
+%%state_name(Event, From, StateData) ->
+%%    Reply = ok,
+%%    {reply, Reply, state_name, StateData}.
 
 %%----------------------------------------------------------------------
 %% Func: handle_event/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
-handle_event(Event, StateName, StateData) ->
-    {next_state, StateName, StateData}.
+handle_event(_Event, StateName, StateData) ->
+    {next_state, StateName, StateData, get_timeout_interval(StateName)}.
 
 %%----------------------------------------------------------------------
 %% Func: handle_sync_event/4
@@ -600,58 +712,58 @@ handle_event(Event, StateName, StateData) ->
 %%          {reply, Reply, NextStateName, NextStateData}          |
 %%          {reply, Reply, NextStateName, NextStateData, Timeout} |
 %%          {stop, Reason, NewStateData}                          |
-%%          {stop, Reason, Reply, NewStateData}                    
+%%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
-handle_sync_event(Event, From, StateName, StateData) ->
+handle_sync_event(_Event, _From, StateName, StateData) ->
     Reply = ok,
-    {reply, Reply, StateName, StateData}.
+    {reply, Reply, StateName, StateData, get_timeout_interval(StateName)}.
 
-code_change(OldVsn, StateName, StateData, Extra) ->
+code_change(_OldVsn, StateName, StateData, _Extra) ->
     {ok, StateName, StateData}.
 
 %%----------------------------------------------------------------------
 %% Func: handle_info/3
 %% Returns: {next_state, NextStateName, NextStateData}          |
 %%          {next_state, NextStateName, NextStateData, Timeout} |
-%%          {stop, Reason, NewStateData}                         
+%%          {stop, Reason, NewStateData}
 %%----------------------------------------------------------------------
 handle_info({send_text, Text}, StateName, StateData) ->
     send_text(StateData, Text),
     cancel_timer(StateData#state.timer),
     Timer = erlang:start_timer(?S2STIMEOUT, self(), []),
-    {next_state, StateName, StateData#state{timer = Timer}};
+    {next_state, StateName, StateData#state{timer = Timer},
+     get_timeout_interval(StateName)};
 
 handle_info({send_element, El}, StateName, StateData) ->
-    cancel_timer(StateData#state.timer),
-    Timer = erlang:start_timer(?S2STIMEOUT, self(), []),
     case StateName of
 	stream_established ->
+	    cancel_timer(StateData#state.timer),
+	    Timer = erlang:start_timer(?S2STIMEOUT, self(), []),
 	    send_element(StateData, El),
 	    {next_state, StateName, StateData#state{timer = Timer}};
+	%% In this state we bounce all message: We are waiting before
+	%% trying to reconnect
+	wait_before_retry ->
+	    bounce_element(El, ?ERR_REMOTE_SERVER_NOT_FOUND),
+	    {next_state, StateName, StateData};
 	_ ->
 	    Q = queue:in(El, StateData#state.queue),
-	    {next_state, StateName, StateData#state{queue = Q,
-						    timer = Timer}}
+	    {next_state, StateName, StateData#state{queue = Q},
+	     get_timeout_interval(StateName)}
     end;
 
-%handle_info({tcp, Socket, Data}, StateName, StateData) ->
-%    xml_stream:send_text(StateData#state.xmlpid, Data),
-%    {next_state, StateName, StateData};
-%
-%handle_info({tcp_closed, Socket}, StateName, StateData) ->
-%    gen_fsm:send_event(self(), closed),
-%    {next_state, StateName, StateData};
-%
-%handle_info({tcp_error, Socket, Reason}, StateName, StateData) ->
-%    gen_fsm:send_event(self(), closed),
-%    {next_state, StateName, StateData};
-
-handle_info({timeout, Timer, _}, StateName,
+handle_info({timeout, Timer, _}, wait_before_retry,
 	    #state{timer = Timer} = StateData) ->
+    ?INFO_MSG("Reconnect delay expired: Will now retry to connect to ~s when needed.", [StateData#state.server]),
+    {stop, normal, StateData};
+
+handle_info({timeout, Timer, _}, _StateName,
+	    #state{timer = Timer} = StateData) ->
+    ?INFO_MSG("Closing connection with ~s: timeout", [StateData#state.server]),
     {stop, normal, StateData};
 
 handle_info(_, StateName, StateData) ->
-    {next_state, StateName, StateData}.
+    {next_state, StateName, StateData, get_timeout_interval(StateName)}.
 
 %%----------------------------------------------------------------------
 %% Func: terminate/3
@@ -659,20 +771,22 @@ handle_info(_, StateName, StateData) ->
 %% Returns: any
 %%----------------------------------------------------------------------
 terminate(Reason, StateName, StateData) ->
-    ?INFO_MSG("terminated: ~p", [Reason]),
-    bounce_queue(StateData#state.queue, ?ERR_REMOTE_SERVER_NOT_FOUND),
+    ?DEBUG("terminated: ~p", [{Reason, StateName}]),
     case StateData#state.new of
 	false ->
 	    ok;
 	Key ->
-	    ejabberd_s2s:remove_connection({StateData#state.myname,
-	        			    StateData#state.server})
+	    ejabberd_s2s:remove_connection(
+	      {StateData#state.myname, StateData#state.server}, self(), Key)
     end,
+    %% bounce queue manage by process and Erlang message queue
+    bounce_queue(StateData#state.queue, ?ERR_REMOTE_SERVER_NOT_FOUND),
+    bounce_messages(?ERR_REMOTE_SERVER_NOT_FOUND),
     case StateData#state.socket of
 	undefined ->
 	    ok;
 	_Socket ->
-	    ejabberd_receiver:close(StateData#state.receiver)
+	    ejabberd_socket:close(StateData#state.socket)
     end,
     ok.
 
@@ -681,7 +795,7 @@ terminate(Reason, StateName, StateData) ->
 %%%----------------------------------------------------------------------
 
 send_text(StateData, Text) ->
-    (StateData#state.sockmod):send(StateData#state.socket, Text).
+    ejabberd_socket:send(StateData#state.socket, Text).
 
 send_element(StateData, El) ->
     send_text(StateData, xml:element_to_string(El)).
@@ -691,19 +805,29 @@ send_queue(StateData, Q) ->
 	{{value, El}, Q1} ->
 	    send_element(StateData, El),
 	    send_queue(StateData, Q1);
-	{empty, Q1} ->
+	{empty, _Q1} ->
 	    ok
+    end.
+
+%% Bounce a single message (xmlelement)
+bounce_element(El, Error) ->
+    {xmlelement, _Name, Attrs, _SubTags} = El,
+    case xml:get_attr_s("type", Attrs) of
+	"error" -> ok;
+	"result" -> ok;
+	_ ->
+	    Err = jlib:make_error_reply(El, Error),
+	    From = jlib:string_to_jid(xml:get_tag_attr_s("from", El)),
+	    To = jlib:string_to_jid(xml:get_tag_attr_s("to", El)),
+	    ejabberd_router:route(To, From, Err)
     end.
 
 bounce_queue(Q, Error) ->
     case queue:out(Q) of
 	{{value, El}, Q1} ->
-	    Err = jlib:make_error_reply(El, Error),
-	    From = jlib:string_to_jid(xml:get_tag_attr_s("from", El)),
-	    To = jlib:string_to_jid(xml:get_tag_attr_s("to", El)),
-	    ejabberd_router:route(To, From, Err),
+	    bounce_element(El, Error),
 	    bounce_queue(Q1, Error);
-	{empty, Q1} ->
+	{empty, _} ->
 	    ok
     end.
 
@@ -722,16 +846,7 @@ cancel_timer(Timer) ->
 bounce_messages(Error) ->
     receive
 	{send_element, El} ->
-	    {xmlelement, _Name, Attrs, _SubTags} = El,
-	    case xml:get_attr_s("type", Attrs) of
-	        "error" ->
-	            ok;
-	        _ ->
-	            Err = jlib:make_error_reply(El, Error),
-		    From = jlib:string_to_jid(xml:get_attr_s("from", Attrs)),
-		    To = jlib:string_to_jid(xml:get_attr_s("to", Attrs)),
-		    ejabberd_router:route(To, From, Err)
-	    end,
+	    bounce_element(El, Error),
 	    bounce_messages(Error)
     after 0 ->
 	    ok
@@ -766,7 +881,7 @@ send_db_request(StateData) ->
     case StateData#state.verify of
 	false ->
 	    ok;
-	{Pid, Key2, SID} ->
+	{_Pid, Key2, SID} ->
 	    send_element(StateData,
 			 {xmlelement,
 			  "db:verify",
@@ -775,16 +890,16 @@ send_db_request(StateData) ->
 			   {"id", SID}],
 			  [{xmlcdata, Key2}]})
     end,
-    {next_state, wait_for_validation, StateData#state{new = New}}.
+    {next_state, wait_for_validation, StateData#state{new = New}, ?FSMTIMEOUT*6}.
 
 
-is_verify_res({xmlelement, Name, Attrs, Els}) when Name == "db:result" ->
+is_verify_res({xmlelement, Name, Attrs, _Els}) when Name == "db:result" ->
     {result,
      xml:get_attr_s("to", Attrs),
      xml:get_attr_s("from", Attrs),
      xml:get_attr_s("id", Attrs),
      xml:get_attr_s("type", Attrs)};
-is_verify_res({xmlelement, Name, Attrs, Els}) when Name == "db:verify" ->
+is_verify_res({xmlelement, Name, Attrs, _Els}) when Name == "db:verify" ->
     {verify,
      xml:get_attr_s("to", Attrs),
      xml:get_attr_s("from", Attrs),
@@ -795,7 +910,7 @@ is_verify_res(_) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SRV support
+%% SRV support
 
 -include_lib("kernel/include/inet.hrl").
 
@@ -808,17 +923,16 @@ get_addr_port(Server) ->
     case Res of
 	{error, Reason} ->
 	    ?DEBUG("srv lookup of '~s' failed: ~p~n", [Server, Reason]),
-	    [{Server, ejabberd_config:get_local_option(outgoing_s2s_port)}];
+	    [{Server, outgoing_s2s_port()}];
 	{ok, HEnt} ->
 	    ?DEBUG("srv lookup of '~s': ~p~n",
 		   [Server, HEnt#hostent.h_addr_list]),
 	    case HEnt#hostent.h_addr_list of
 		[] ->
-		    [{Server,
-		      ejabberd_config:get_local_option(outgoing_s2s_port)}];
+		    [{Server, outgoing_s2s_port()}];
 		AddrList ->
-		    % Probabilities are not exactly proportional to weights
-		    % for simplicity (higher weigths are overvalued)
+		    %% Probabilities are not exactly proportional to weights
+		    %% for simplicity (higher weigths are overvalued)
 		    {A1, A2, A3} = now(),
 		    random:seed(A1, A2, A3),
 		    case (catch lists:map(
@@ -830,8 +944,7 @@ get_addr_port(Server) ->
 					  {Priority * 65536 - N, Host, Port}
 				  end, AddrList)) of
 			{'EXIT', _Reasn} ->
-			    [{Server,
-			      ejabberd_config:get_local_option(outgoing_s2s_port)}];
+			    [{Server, outgoing_s2s_port()}];
 			SortedList ->
 			    List = lists:map(
 				     fun({_, Host, Port}) ->
@@ -845,13 +958,52 @@ get_addr_port(Server) ->
 
 test_get_addr_port(Server) ->
     lists:foldl(
-	  fun(_, Acc) ->
-		[HostPort | _] = get_addr_port(Server),
-		case lists:keysearch(HostPort, 1, Acc) of
-		    false ->
-			[{HostPort, 1} | Acc];
-		    {value, {_, Num}} ->
-			lists:keyreplace(HostPort, 1, Acc, {HostPort, Num + 1})
-		end
-	  end, [], lists:seq(1, 100000)).
+      fun(_, Acc) ->
+	      [HostPort | _] = get_addr_port(Server),
+	      case lists:keysearch(HostPort, 1, Acc) of
+		  false ->
+		      [{HostPort, 1} | Acc];
+		  {value, {_, Num}} ->
+		      lists:keyreplace(HostPort, 1, Acc, {HostPort, Num + 1})
+	      end
+      end, [], lists:seq(1, 100000)).
 
+outgoing_s2s_port() ->
+    case ejabberd_config:get_local_option(outgoing_s2s_port) of
+	Port when is_integer(Port) ->
+	    Port;
+	undefined ->
+	    5269
+    end.
+
+%% Human readable S2S logging: Log only new outgoing connections as INFO
+%% Do not log dialback
+log_s2s_out(false, _, _) -> ok;
+%% Log new outgoing connections:
+log_s2s_out(_, Myname, Server) ->
+    ?INFO_MSG("Trying to open s2s connection: ~s -> ~s",[Myname, Server]).
+
+%% Calcultate timeout depending on which state we are in:
+%% Can return integer > 0 | infinity
+get_timeout_interval(StateName) ->
+    case StateName of
+	%% Validation implies dialback: Networking can take longer:
+	wait_for_validation ->
+	    ?FSMTIMEOUT*6;
+	%% When stream is established, we only rely on S2S Timeout timer:
+	stream_established ->
+	    infinity;
+	_ ->
+	    ?FSMTIMEOUT
+    end.
+
+%% This function is intended to be called at the end of a state
+%% function that want to wait for a reconnect delay before stopping.
+wait_before_reconnect(StateData, Delay) ->
+    %% bounce queue manage by process and Erlang message queue
+    bounce_queue(StateData#state.queue, ?ERR_REMOTE_SERVER_NOT_FOUND),
+    bounce_messages(?ERR_REMOTE_SERVER_NOT_FOUND),
+    cancel_timer(StateData#state.timer),
+    Timer = erlang:start_timer(Delay, self(), []),
+    {next_state, wait_before_retry, StateData#state{timer=Timer,
+						    queue = queue:new()}}.

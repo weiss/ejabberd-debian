@@ -1,27 +1,36 @@
-# $Id: Makefile.in 517 2006-03-14 04:26:15Z alexey $
+# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
 
-CC = @CC@ 
-CFLAGS = @CFLAGS@ @ERLANG_CFLAGS@
+CC = @CC@
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@ @ERLANG_LIBS@
+LIBS = @LIBS@
 
-SUBDIRS = 
+ERLANG_CFLAGS = @ERLANG_CFLAGS@
+ERLANG_LIBS = @ERLANG_LIBS@
+
+EFLAGS = -I .. -pz ..
+# make debug=true to compile Erlang module with debug informations.
+ifdef debug
+	EFLAGS+=+debug_info
+endif
+
+ifeq (@transient_supervisors@, false)
+	EFLAGS+=-DNO_TRANSIENT_SUPERVISORS
+endif
 
 OUTDIR = ..
-EFLAGS = -I .. -pz ..
-OBJS   = \
-	$(OUTDIR)/mod_muc.beam \
-	$(OUTDIR)/mod_muc_log.beam \
-	$(OUTDIR)/mod_muc_room.beam
+SOURCES = $(wildcard *.erl)
+BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
 
-all:    $(OBJS)
+
+all:    $(BEAMS)
 
 $(OUTDIR)/%.beam:       %.erl
 	@ERLC@ -W $(EFLAGS) -o $(OUTDIR) $<
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(BEAMS)
 
 distclean: clean
 	rm -f Makefile

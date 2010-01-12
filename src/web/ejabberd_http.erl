@@ -1,19 +1,37 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_http.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
-%%% Created : 27 Feb 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_http.erl 576 2006-06-02 15:02:39Z mremond $
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
+%%% Purpose :
+%%% Created : 27 Feb 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_http).
--author('alexey@sevcom.net').
--vsn('$Revision: 576 $  ').
+-author('alexey@process-one.net').
 
 %% External exports
 -export([start/2,
 	 start_link/2,
 	 become_controller/1,
+	 socket_type/0,
 	 receive_headers/1,
 	 url_encode/1]).
 
@@ -30,8 +48,15 @@
 		request_keepalive,
 		request_content_length,
 		request_lang = "en",
-		use_http_poll = false,
-		use_web_admin = false,
+		%% XXX bard: request handlers are configured in
+		%% ejabberd.cfg under the HTTP service.	 For example,
+		%% to have the module test_web handle requests with
+		%% paths starting with "/test/module":
+		%%
+		%%   {5280, ejabberd_http,    [http_poll, web_admin,
+		%%			       {request_handlers, [{["test", "module"], mod_test_web}]}]}
+		%%
+		request_handlers = [],
 		end_of_request = false,
 		trail = ""
 	       }).
@@ -70,20 +95,44 @@ start_link({SockMod, Socket}, Opts) ->
 	_ ->
 	    ok
     end,
-    UseHTTPPoll = lists:member(http_poll, Opts),
-    UseWebAdmin = lists:member(web_admin, Opts),
-    ?DEBUG("S: ~p~n", [{UseHTTPPoll, UseWebAdmin}]),
+
+    %% XXX bard: for backward compatibility, expand in Opts:
+    %%  web_admin -> {["admin"], ejabberd_web_admin} 
+    %%  http_bind -> {["http-bind"], mod_http_bind}
+    %%  http_poll -> {["http-poll"], ejabberd_http_poll}
+
+    RequestHandlers =
+	case lists:keysearch(request_handlers, 1, Opts) of
+	    {value, {request_handlers, H}} -> H;
+	    false -> []
+        end ++
+        case lists:member(web_admin, Opts) of
+            true -> [{["admin"], ejabberd_web_admin}];
+            false -> []
+        end ++
+        case lists:member(http_bind, Opts) of
+            true -> [{["http-bind"], mod_http_bind}];
+            false -> []
+        end ++
+        case lists:member(http_poll, Opts) of
+            true -> [{["http-poll"], ejabberd_http_poll}];
+            false -> []
+        end,
+    ?DEBUG("S: ~p~n", [RequestHandlers]),
+
     ?INFO_MSG("started: ~p", [{SockMod1, Socket1}]),
     {ok, proc_lib:spawn_link(ejabberd_http,
 			     receive_headers,
 			     [#state{sockmod = SockMod1,
 				     socket = Socket1,
-				     use_http_poll = UseHTTPPoll,
-				     use_web_admin = UseWebAdmin}])}.
+				     request_handlers = RequestHandlers}])}.
 
 
 become_controller(_Pid) ->
     ok.
+
+socket_type() ->
+    raw.
 
 send_text(State, Text) ->
     (State#state.sockmod):send(State#state.socket, Text).
@@ -172,7 +221,7 @@ process_header(State, Data) ->
 	{ok, {http_header, _, _, _, _}} ->
 	    State;
 	{ok, http_eoh} ->
-	    ?INFO_MSG("(~w) http query: ~w ~s~n",
+	    ?DEBUG("(~w) http query: ~w ~s~n",
 		      [State#state.socket,
 		       State#state.request_method,
 		       element(2, State#state.request_path)]),
@@ -188,23 +237,47 @@ process_header(State, Data) ->
 		    end,
 		    #state{sockmod = SockMod,
 			   socket = Socket,
-			   use_http_poll = State#state.use_http_poll,
-			   use_web_admin = State#state.use_web_admin};
+			   request_handlers = State#state.request_handlers};
 		_ ->
-		    #state{end_of_request = true}
+		    #state{end_of_request = true,
+			   request_handlers = State#state.request_handlers}
 	    end;
 	{error, _Reason} ->
-	    #state{end_of_request = true};
+	    #state{end_of_request = true,
+		   request_handlers = State#state.request_handlers};
 	_ ->
-	    #state{end_of_request = true}
+	    #state{end_of_request = true,
+		   request_handlers = State#state.request_handlers}
+    end.
+
+%% XXX bard: search through request handlers looking for one that
+%% matches the requested URL path, and pass control to it.  If none is
+%% found, answer with HTTP 404.
+process([], _) ->
+    ejabberd_web:error(not_found);
+process(Handlers, Request) ->
+    [{HandlerPathPrefix, HandlerModule} | HandlersLeft] = Handlers,
+
+    case lists:prefix(HandlerPathPrefix, Request#request.path) of
+	true ->
+            ?DEBUG("~p matches ~p", [Request#request.path, HandlerPathPrefix]),
+            %% LocalPath is the path "local to the handler", i.e. if
+            %% the handler was registered to handle "/test/" and the
+            %% requested path is "/test/foo/bar", the local path is
+            %% ["foo", "bar"]
+            LocalPath = lists:nthtail(length(HandlerPathPrefix), Request#request.path),
+	    HandlerModule:process(LocalPath, Request);
+	false ->
+	    process(HandlersLeft, Request)
     end.
 
 process_request(#state{request_method = 'GET',
 		       request_path = {abs_path, Path},
 		       request_auth = Auth,
 		       request_lang = Lang,
-		       use_http_poll = UseHTTPPoll,
-		       use_web_admin = UseWebAdmin} = State) ->
+		       request_handlers = RequestHandlers,
+		       sockmod = SockMod,
+		       socket = Socket} = State) ->
     case (catch url_decode_q_split(Path)) of
 	{'EXIT', _} ->
 	    process_request(false);
@@ -216,23 +289,33 @@ process_request(#state{request_method = 'GET',
 			     LQ
 		     end,
 	    LPath = string:tokens(NPath, "/"),
+	    {ok, {IP, _Port}} =
+		case SockMod of
+		    gen_tcp ->
+			inet:peername(Socket);
+		    _ ->
+			SockMod:peername(Socket)
+		end,
 	    Request = #request{method = 'GET',
 			       path = LPath,
 			       q = LQuery,
 			       auth = Auth,
-			       lang = Lang},
-	    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
-					  Request) of
+			       lang = Lang,
+			       ip=IP},
+	    %% XXX bard: This previously passed control to
+	    %% ejabberd_web:process_get, now passes it to a local
+	    %% procedure (process) that handles dispatching based on
+	    %% URL path prefix.
+	    case process(RequestHandlers, Request) of
 		El when element(1, El) == xmlelement ->
 		    make_xhtml_output(State, 200, [], El);
 		{Status, Headers, El} when
 		element(1, El) == xmlelement ->
 		    make_xhtml_output(State, Status, Headers, El);
-		Text when is_list(Text) ->
-		    make_text_output(State, 200, [], Text);
-		{Status, Headers, Text} when
-		is_list(Text) ->
-		    make_text_output(State, Status, Headers, Text)
+		Output when is_list(Output) or is_binary(Output) ->
+		    make_text_output(State, 200, [], Output);
+		{Status, Headers, Output} when is_list(Output) or is_binary(Output) ->
+		    make_text_output(State, Status, Headers, Output)
 	    end
     end;
 
@@ -243,8 +326,7 @@ process_request(#state{request_method = 'POST',
 		       request_lang = Lang,
 		       sockmod = SockMod,
 		       socket = Socket,
-		       use_http_poll = UseHTTPPoll,
-		       use_web_admin = UseWebAdmin} = State)
+		       request_handlers = RequestHandlers} = State)
   when is_integer(Len) ->
     case SockMod of
 	gen_tcp ->
@@ -257,7 +339,7 @@ process_request(#state{request_method = 'POST',
     case (catch url_decode_q_split(Path)) of
 	{'EXIT', _} ->
 	    process_request(false);
-	{NPath, Query} ->
+	{NPath, _Query} ->
 	    LPath = string:tokens(NPath, "/"),
 	    LQuery = case (catch parse_urlencoded(Data)) of
 			 {'EXIT', _Reason} ->
@@ -271,22 +353,21 @@ process_request(#state{request_method = 'POST',
 			       auth = Auth,
 			       data = Data,
 			       lang = Lang},
-	    case ejabberd_web:process_get({UseHTTPPoll, UseWebAdmin},
-					  Request) of
+	    case process(RequestHandlers, Request) of
 		El when element(1, El) == xmlelement ->
 		    make_xhtml_output(State, 200, [], El);
 		{Status, Headers, El} when
 		element(1, El) == xmlelement ->
 		    make_xhtml_output(State, Status, Headers, El);
-		Text when is_list(Text) ->
-		    make_text_output(State, 200, [], Text);
-		{Status, Headers, Text} when is_list(Text) ->
-		    make_text_output(State, Status, Headers, Text)
+		Output when is_list(Output) or is_binary(Output) ->
+		    make_text_output(State, 200, [], Output);
+		{Status, Headers, Output} when is_list(Output) or is_binary(Output) ->
+		    make_text_output(State, Status, Headers, Output)
 	    end
     end;
 
 process_request(State) ->
-    make_xhtml_output(State, 
+    make_xhtml_output(State,
       400,
       [],
       ejabberd_web:make_xhtml([{xmlelement, "h1", [],
@@ -296,7 +377,7 @@ process_request(State) ->
 recv_data(State, Len) ->
     recv_data(State, Len, []).
 
-recv_data(State, 0, Acc) ->
+recv_data(_State, 0, Acc) ->
     binary_to_list(list_to_binary(Acc));
 recv_data(State, Len, Acc) ->
     case State#state.trail of
@@ -317,10 +398,10 @@ make_xhtml_output(State, Status, Headers, XHTML) ->
     Data = case lists:member(html, Headers) of
 	       true ->
 		   list_to_binary([?HTML_DOCTYPE,
-				   xml:element_to_string(XHTML)]);
+				   element_to_string(XHTML)]);
 	       _ ->
 		   list_to_binary([?XHTML_DOCTYPE,
-				   xml:element_to_string(XHTML)])
+				   element_to_string(XHTML)])
 	   end,
     Headers1 = case lists:keysearch("Content-Type", 1, Headers) of
 		   {value, _} ->
@@ -334,9 +415,9 @@ make_xhtml_output(State, Status, Headers, XHTML) ->
     HeadersOut = case {State#state.request_version,
 		       State#state.request_keepalive} of
 		     {{1, 1}, true} -> Headers1;
-		     {_, true} -> 
+		     {_, true} ->
 			 [{"Connection", "keep-alive"} | Headers1];
-		     {_, false} -> 
+		     {_, false} ->
 			 % not required for http versions < 1.1
 			 % but would make no harm
 			 [{"Connection", "close"} | Headers1]
@@ -346,7 +427,7 @@ make_xhtml_output(State, Status, Headers, XHTML) ->
 		  {1, 1} -> "HTTP/1.1 ";
 		  _ -> "HTTP/1.0 "
 	      end,
-	       
+
     H = lists:map(fun({Attr, Val}) ->
 			  [Attr, ": ", Val, "\r\n"];
 		     (_) ->
@@ -356,8 +437,10 @@ make_xhtml_output(State, Status, Headers, XHTML) ->
 	  code_to_phrase(Status), "\r\n"],
     [SL, H, "\r\n", Data].
 
-make_text_output(State, Status, Headers, Text) ->
-    Data = list_to_binary(Text),
+make_text_output(State, Status, Headers, Text) when is_list(Text) ->
+    make_text_output(State, Status, Headers, list_to_binary(Text));
+
+make_text_output(State, Status, Headers, Data) when is_binary(Data) ->
     Headers1 = case lists:keysearch("Content-Type", 1, Headers) of
 		   {value, _} ->
 		       [{"Content-Length", integer_to_list(size(Data))} |
@@ -371,9 +454,9 @@ make_text_output(State, Status, Headers, Text) ->
     HeadersOut = case {State#state.request_version,
 		       State#state.request_keepalive} of
 		     {{1, 1}, true} -> Headers1;
-		     {_, true} -> 
+		     {_, true} ->
 			 [{"Connection", "keep-alive"} | Headers1];
-		     {_, false} -> 
+		     {_, false} ->
 			 % not required for http versions < 1.1
 			 % but would make no harm
 			 [{"Connection", "close"} | Headers1]
@@ -400,6 +483,38 @@ parse_lang(Langs) ->
 	    "en"
     end.
 
+element_to_string(El) ->
+    case El of
+	{xmlelement, Name, Attrs, Els} ->
+	    if
+		Els /= [] ->
+		    [$<, Name, attrs_to_list(Attrs), $>,
+		     [element_to_string(E) || E <- Els],
+		     $<, $/, Name, $>];
+	       true ->
+		    [$<, Name, attrs_to_list(Attrs), $/, $>]
+	       end;
+	{xmlcdata, CData} ->
+	    crypt(CData)
+    end.
+
+attrs_to_list(Attrs) ->
+    [attr_to_list(A) || A <- Attrs].
+
+attr_to_list({Name, Value}) ->
+    [$\s, crypt(Name), $=, $", crypt(Value), $"].
+
+crypt(S) when is_list(S) ->
+    [case C of
+	 $& -> "&amp;";
+	 $< -> "&lt;";
+	 $> -> "&gt;";
+	 $" -> "&quot;";
+	 $' -> "&#39;";
+	 _ -> C
+     end || C <- S];
+crypt(S) when is_binary(S) ->
+    crypt(binary_to_list(S)).
 
 
 % Code below is taken (with some modifications) from the yaws webserver, which
@@ -421,22 +536,16 @@ parse_lang(Langs) ->
 url_decode_q_split(Path) ->
     url_decode_q_split(Path, []).
 
-url_decode_q_split([$%, $C, $2, $%, Hi, Lo | Tail], Ack) ->
-    Hex = hex_to_integer([Hi, Lo]),
-    url_decode_q_split(Tail, [Hex|Ack]);
-url_decode_q_split([$%, $C, $3, $%, Hi, Lo | Tail], Ack) when Hi > $9 ->
-    Hex = hex_to_integer([Hi+4, Lo]),
-    url_decode_q_split(Tail, [Hex|Ack]);
-url_decode_q_split([$%, $C, $3, $%, Hi, Lo | Tail], Ack) when Hi < $A ->
-    Hex = hex_to_integer([Hi+4+7, Lo]),
-    url_decode_q_split(Tail, [Hex|Ack]);
 url_decode_q_split([$%, Hi, Lo | Tail], Ack) ->
     Hex = hex_to_integer([Hi, Lo]),
+    if Hex  == 0 -> exit(badurl);
+       true -> ok
+    end,
     url_decode_q_split(Tail, [Hex|Ack]);
 url_decode_q_split([$?|T], Ack) ->
     %% Don't decode the query string here, that is parsed separately.
     {path_norm_reverse(Ack), T};
-url_decode_q_split([H|T], Ack) ->
+url_decode_q_split([H|T], Ack) when H /= 0 -> 
     url_decode_q_split(T, [H|Ack]);
 url_decode_q_split([], Ack) ->
     {path_norm_reverse(Ack), []}.
@@ -457,8 +566,7 @@ rest_dir (_N, Path, []         ) -> case Path of
 rest_dir (0, Path, [ $/ | T ] ) -> start_dir(0    , [ $/ | Path ], T);
 rest_dir (N, Path, [ $/ | T ] ) -> start_dir(N - 1,        Path  , T);
 rest_dir (0, Path, [  H | T ] ) -> rest_dir (0    , [  H | Path ], T);
-rest_dir (N, Path, [ _H | T ] ) -> rest_dir (N    ,        Path  , T).
-
+rest_dir (N, Path, [  _H | T ] ) -> rest_dir (N    ,        Path  , T).
 
 %% hex_to_integer
 
@@ -522,7 +630,7 @@ code_to_phrase(504) -> "Gateway Timeout";
 code_to_phrase(505) -> "HTTP Version Not Supported".
 
 
-parse_auth(Orig = "Basic " ++ Auth64) ->
+parse_auth(_Orig = "Basic " ++ Auth64) ->
     case decode_base64(Auth64) of
 	{error, _Err} ->
 	    undefined;
@@ -678,7 +786,7 @@ get_req(Data) ->
     {FirstLine, Trail} = lists:splitwith(fun not_eol/1, Data),
     R = parse_req(FirstLine),
     {R, Trail}.
-	    
+
 
 not_eol($\r)->
     false;
@@ -857,11 +965,11 @@ drop_spaces(YS=[X|XS]) ->
 
 is_nb_space(X) ->
     lists:member(X, [$\s, $\t]).
-    
+
 
 % ret: {line, Line, Trail} | {lastline, Line, Trail}
 
-get_line(L) ->    
+get_line(L) ->
     get_line(L, []).
 get_line("\r\n\r\n" ++ Tail, Cur) ->
     {lastline, lists:reverse(Cur), Tail};
@@ -871,7 +979,7 @@ get_line("\r\n" ++ Tail, Cur) ->
 	    {incomplete, lists:reverse(Cur) ++ "\r\n"};
 	_ ->
 	    case is_nb_space(hd(Tail)) of
-		true ->  %% multiline ... continue 
+		true ->  %% multiline ... continue
 		    get_line(Tail, [$\n, $\r | Cur]);
 		false ->
 		    {line, lists:reverse(Cur), Tail}
@@ -879,4 +987,3 @@ get_line("\r\n" ++ Tail, Cur) ->
     end;
 get_line([H|T], Cur) ->
     get_line(T, [H|Cur]).
-

@@ -4,15 +4,28 @@
 %%% Purpose : Anonymous feature support in ejabberd
 %%% Created : 17 Feb 2006 by Mickael Remond <mremond@process-one.net>
 %%%
-%%% Anonymous support is based on the work of Magnus Henoch
-%%% <henoch@dtek.chalmers.se> and heavily extended by Process-one.
 %%%
-%%% Id      : $Id: ejabberd_auth_anonymous.erl 579 2006-06-13 16:52:38Z mremond $
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_auth_anonymous).
 -author('mickael.remond@process-one.net').
--vsn('$Revision: 579 $ ').
 
 -export([start/1,
 	 allow_anonymous/1,
@@ -20,8 +33,8 @@
 	 is_login_anonymous_enabled/1,
 	 anonymous_user_exist/2,
 	 allow_multiple_connections/1,
-	 register_connection/2,
-	 unregister_connection/2
+	 register_connection/3,
+	 unregister_connection/3
 	]).
 
 
@@ -128,15 +141,23 @@ remove_connection(SID, LUser, LServer) ->
     mnesia:transaction(F).
 
 %% Register connection
-register_connection(SID, #jid{luser = LUser, lserver = LServer}) ->
+register_connection(SID, #jid{luser = LUser, lserver = LServer}, _) ->
     US = {LUser, LServer},
     mnesia:sync_dirty(
       fun() -> mnesia:write(#anonymous{us = US, sid=SID})
       end).
 
 %% Remove an anonymous user from the anonymous users table
-unregister_connection(SID, #jid{luser = LUser, lserver = LServer}) ->
+unregister_connection(SID, #jid{luser = LUser, lserver = LServer}, _) ->
+    purge_hook(anonymous_user_exist(LUser, LServer),
+	       LUser, LServer),
     remove_connection(SID, LUser, LServer).
+
+%% Launch the hook to purge user data only for anonymous users
+purge_hook(false, _LUser, _LServer) ->
+    ok;
+purge_hook(true, LUser, LServer) ->
+    ejabberd_hooks:run(anonymous_purge_hook, LServer, [LUser, LServer]).
 
 %% ---------------------------------
 %% Specific anonymous auth functions

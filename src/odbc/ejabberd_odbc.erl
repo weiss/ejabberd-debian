@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_odbc.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Serve ODBC connection
-%%% Created :  8 Dec 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_odbc.erl 869 2007-08-12 15:41:00Z mremond $
+%%% Created :  8 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_odbc).
--author('alexey@sevcom.net').
--vsn('$Revision: 869 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_server).
 
@@ -18,7 +35,8 @@
 	 sql_query_t/1,
 	 sql_transaction/2,
 	 escape/1,
-	 escape_like/1]).
+	 escape_like/1,
+	 keep_alive/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -34,7 +52,10 @@
 
 -define(STATE_KEY, ejabberd_odbc_state).
 -define(MAX_TRANSACTION_RESTARTS, 10).
+-define(PGSQL_PORT, 5432).
 -define(MYSQL_PORT, 3306).
+
+-define(KEEPALIVE_QUERY, "SELECT 1;").
 
 %%%----------------------------------------------------------------------
 %%% API
@@ -50,7 +71,7 @@ sql_query(Host, Query) ->
 		    {sql_query, Query}, 60000).
 
 %% SQL transaction based on a list of queries
-%% This function automatically 
+%% This function automatically
 sql_transaction(Host, Queries) when is_list(Queries) ->
     F = fun() ->
 		lists:foreach(fun(Query) ->
@@ -111,16 +132,29 @@ escape_like(C)  -> odbc_queries:escape(C).
 %%          {stop, Reason}
 %%----------------------------------------------------------------------
 init([Host]) ->
+    case ejabberd_config:get_local_option({odbc_keepalive_interval, Host}) of
+	Interval when is_integer(Interval) ->
+	    timer:apply_interval(Interval*1000, ?MODULE, keep_alive, [self()]);
+	undefined ->
+	    ok;
+	_Other ->
+	    ?ERROR_MSG("Wrong odbc_keepalive_interval definition '~p' for host ~p.~n", [_Other, Host])
+    end,
     SQLServer = ejabberd_config:get_local_option({odbc_server, Host}),
     case SQLServer of
+	%% Default pgsql port
 	{pgsql, Server, DB, Username, Password} ->
-	    pgsql_connect(Server, DB, Username, Password);
+	    pgsql_connect(Server, ?PGSQL_PORT, DB, Username, Password);
+	{pgsql, Server, Port, DB, Username, Password} when is_integer(Port) ->
+	    pgsql_connect(Server, Port, DB, Username, Password);
+	%% Default mysql port
 	{mysql, Server, DB, Username, Password} ->
-	    mysql_connect(Server, DB, Username, Password);
+	    mysql_connect(Server, ?MYSQL_PORT, DB, Username, Password);
+	{mysql, Server, Port, DB, Username, Password} when is_integer(Port) ->
+	    mysql_connect(Server, Port, DB, Username, Password);
 	_ when is_list(SQLServer) ->
 	    odbc_connect(SQLServer)
     end.
-
 
 %%----------------------------------------------------------------------
 %% Func: handle_call/3
@@ -213,7 +247,7 @@ execute_transaction(State, F, NRestarts) ->
 %% Open an ODBC database connection
 odbc_connect(SQLServer) ->
     case odbc:connect(SQLServer,[{scrollable_cursors, off}]) of
-	{ok, Ref} -> 
+	{ok, Ref} ->
 	    erlang:monitor(process, Ref),
 	    {ok, #state{db_ref = Ref, db_type = odbc}};
 	{error, Reason} ->
@@ -229,9 +263,10 @@ odbc_connect(SQLServer) ->
 
 %% part of init/1
 %% Open a database connection to PostgreSQL
-pgsql_connect(Server, DB, Username, Password) ->
-    case pgsql:connect(Server, DB, Username, Password) of
-	{ok, Ref} -> 
+pgsql_connect(Server, Port, DB, Username, Password) ->
+    case pgsql:connect(Server, DB, Username, Password, Port) of
+	{ok, Ref} ->
+	    erlang:monitor(process, Ref),
 	    {ok, #state{db_ref = Ref, db_type = pgsql}};
 	{error, Reason} ->
 	    ?ERROR_MSG("PostgreSQL connection failed: ~p~n", [Reason]),
@@ -267,9 +302,9 @@ pgsql_item_to_odbc(_) ->
 
 %% part of init/1
 %% Open a database connection to MySQL
-mysql_connect(Server, DB, Username, Password) ->
+mysql_connect(Server, Port, DB, Username, Password) ->
     NoLogFun = fun(_Level,_Format,_Argument) -> ok end,
-    case mysql_conn:start(Server, ?MYSQL_PORT, Username, Password, DB, NoLogFun) of
+    case mysql_conn:start(Server, Port, Username, Password, DB, NoLogFun) of
 	{ok, Ref} ->
 	    erlang:monitor(process, Ref),
             mysql_conn:fetch(Ref, ["set names 'utf8';"], self()), 
@@ -287,6 +322,8 @@ mysql_to_odbc({updated, MySQLRes}) ->
 mysql_to_odbc({data, MySQLRes}) ->
     mysql_item_to_odbc(mysql:get_result_field_info(MySQLRes),
 		       mysql:get_result_rows(MySQLRes));
+mysql_to_odbc({error, MySQLRes}) when is_list(MySQLRes) ->
+    {error, MySQLRes};
 mysql_to_odbc({error, MySQLRes}) ->
     {error, mysql:get_result_reason(MySQLRes)}.
 
@@ -297,3 +334,7 @@ mysql_item_to_odbc(Columns, Recs) ->
     {selected,
      [element(2, Column) || Column <- Columns],
      [list_to_tuple(Rec) || Rec <- Recs]}.
+
+% perform a harmless query on all opened connexions to avoid connexion close.
+keep_alive(PID) ->
+    gen_server:call(PID, {sql_query, ?KEEPALIVE_QUERY}, 60000).

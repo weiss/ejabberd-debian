@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_vcard.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : vCard support via ODBC
-%%% Created :  2 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: mod_vcard_odbc.erl 508 2006-02-18 19:56:16Z alexey $
+%%% Created :  2 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(mod_vcard_odbc).
--author('alexey@sevcom.net').
--vsn('$Revision: 508 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_mod).
 
@@ -35,7 +52,7 @@ start(Host, Opts) ->
     gen_iq_handler:add_iq_handler(ejabberd_sm, Host, ?NS_VCARD,
 				  ?MODULE, process_sm_iq, IQDisc),
     ejabberd_hooks:add(disco_sm_features, Host, ?MODULE, get_sm_features, 50),
-    MyHost = gen_mod:get_opt(host, Opts, "vjud." ++ Host),
+    MyHost = gen_mod:get_opt_host(Host, Opts, "vjud.@HOST@"),
     Search = gen_mod:get_opt(search, Opts, true),
     register(gen_mod:get_module_proc(Host, ?PROCNAME),
 	     spawn(?MODULE, init, [MyHost, Host, Search])).
@@ -104,14 +121,13 @@ process_local_iq(_From, _To, #iq{type = Type, lang = Lang, sub_el = SubEl} = IQ)
 			     [{xmlelement, "FN", [],
 			       [{xmlcdata, "ejabberd"}]},
 			      {xmlelement, "URL", [],
-			       [{xmlcdata,
-				 "http://ejabberd.jabberstudio.org/"}]},
+			       [{xmlcdata, ?EJABBERD_URI}]},
 			      {xmlelement, "DESC", [],
 			       [{xmlcdata,
 				 translate:translate(
 				   Lang,
-				   "Erlang Jabber Server\n"
-				   "Copyright (c) 2002-2006 Alexey Shchepin")}]},
+				   "Erlang Jabber Server") ++
+				   "\nCopyright (c) 2002-2008 ProcessOne"}]},
 			      {xmlelement, "BDAY", [],
 			       [{xmlcdata, "2002-11-16"}]}
 			     ]}]}
@@ -274,10 +290,10 @@ set_vcard(User, LServer, VCARD) ->
 					    "match substring)")}]},
 	   ?TLFIELD("text-single", "User", "user"),
 	   ?TLFIELD("text-single", "Full Name", "fn"),
-	   ?TLFIELD("text-single", "Name", "given"),
+	   ?TLFIELD("text-single", "Name", "first"),
 	   ?TLFIELD("text-single", "Middle Name", "middle"),
-	   ?TLFIELD("text-single", "Family Name", "family"),
-	   ?TLFIELD("text-single", "Nickname", "nickname"),
+	   ?TLFIELD("text-single", "Family Name", "last"),
+	   ?TLFIELD("text-single", "Nickname", "nick"),
 	   ?TLFIELD("text-single", "Birthday", "bday"),
 	   ?TLFIELD("text-single", "Country", "ctry"),
 	   ?TLFIELD("text-single", "City", "locality"),
@@ -341,7 +357,7 @@ do_route(ServerHost, From, To, Packet) ->
 						  From,
 						  jlib:iq_to_xml(ResIQ))
 		    end;
-		#iq{type = Type, xmlns = ?NS_DISCO_INFO} ->
+		#iq{type = Type, xmlns = ?NS_DISCO_INFO, lang = Lang} ->
 		    case Type of
 			set ->
 			    Err = jlib:make_error_reply(
@@ -357,7 +373,7 @@ do_route(ServerHost, From, To, Packet) ->
 						   [{"category", "directory"},
 						    {"type", "user"},
 						    {"name",
-						     "vCard User Search"}],
+						     translate:translate(Lang, "vCard User Search")}],
 						   []},
 						  {xmlelement, "feature",
 						   [{"var", ?NS_SEARCH}], []},
@@ -407,13 +423,12 @@ iq_get_vcard(Lang) ->
     [{xmlelement, "FN", [],
       [{xmlcdata, "ejabberd/mod_vcard"}]},
      {xmlelement, "URL", [],
-      [{xmlcdata,
-        "http://ejabberd.jabberstudio.org/"}]},
+      [{xmlcdata, ?EJABBERD_URI}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(
 		    Lang,
-		    "ejabberd vCard module\n"
-		    "Copyright (c) 2003-2006 Alexey Shchepin")}]}].
+		    "ejabberd vCard module") ++
+		    "\nCopyright (c) 2003-2008 ProcessOne"}]}].
 
 find_xdata_el({xmlelement, _Name, _Attrs, SubEls}) ->
     find_xdata_el1(SubEls).
@@ -439,18 +454,18 @@ search_result(Lang, JID, ServerHost, Data) ->
       [{xmlcdata, translate:translate(Lang, "Search Results for ") ++
 	jlib:jid_to_string(JID)}]},
      {xmlelement, "reported", [],
-      [?LFIELD("Jabber ID", "jid"),
-       ?LFIELD("Full Name", "fn"),
-       ?LFIELD("Name", "given"),
-       ?LFIELD("Middle Name", "middle"),
-       ?LFIELD("Family Name", "family"),
-       ?LFIELD("Nickname", "nickname"),
-       ?LFIELD("Birthday", "bday"),
-       ?LFIELD("Country", "ctry"),
-       ?LFIELD("City", "locality"),
-       ?LFIELD("Email", "email"),
-       ?LFIELD("Organization Name", "orgname"),
-       ?LFIELD("Organization Unit", "orgunit")
+      [?TLFIELD("text-single", "Jabber ID", "jid"),
+       ?TLFIELD("text-single", "Full Name", "fn"),
+       ?TLFIELD("text-single", "Name", "first"),
+       ?TLFIELD("text-single", "Middle Name", "middle"),
+       ?TLFIELD("text-single", "Family Name", "last"),
+       ?TLFIELD("text-single", "Nickname", "nick"),
+       ?TLFIELD("text-single", "Birthday", "bday"),
+       ?TLFIELD("text-single", "Country", "ctry"),
+       ?TLFIELD("text-single", "City", "locality"),
+       ?TLFIELD("text-single", "Email", "email"),
+       ?TLFIELD("text-single", "Organization Name", "orgname"),
+       ?TLFIELD("text-single", "Organization Unit", "orgunit")
       ]}] ++ lists:map(fun(R) -> record_to_item(ServerHost, R) end,
 		       search(ServerHost, Data)).
 
@@ -467,10 +482,10 @@ record_to_item(LServer, {Username, FN, Family, Given, Middle,
      [
        ?FIELD("jid",      Username ++ "@" ++ LServer),
        ?FIELD("fn",       FN),
-       ?FIELD("family",   Family),
-       ?FIELD("given",    Given),
+       ?FIELD("last",     Family),
+       ?FIELD("first",    Given),
        ?FIELD("middle",   Middle),
-       ?FIELD("nickname", Nickname),
+       ?FIELD("nick",     Nickname),
        ?FIELD("bday",     BDay),
        ?FIELD("ctry",     CTRY),
        ?FIELD("locality", Locality),
@@ -535,10 +550,10 @@ filter_fields([{SVar, [Val]} | Ds], Match, LServer)
     NewMatch = case SVar of
                    "user"     -> make_val(Match, "lusername", LVal);
                    "fn"       -> make_val(Match, "lfn",       LVal);
-                   "family"   -> make_val(Match, "lfamily",   LVal);
-                   "given"    -> make_val(Match, "lgiven",    LVal);
+                   "last"     -> make_val(Match, "lfamily",   LVal);
+                   "first"    -> make_val(Match, "lgiven",    LVal);
                    "middle"   -> make_val(Match, "lmiddle",   LVal);
-                   "nickname" -> make_val(Match, "lnickname", LVal);
+                   "nick"     -> make_val(Match, "lnickname", LVal);
                    "bday"     -> make_val(Match, "lbday",     LVal);
                    "ctry"     -> make_val(Match, "lctry",     LVal);
                    "locality" -> make_val(Match, "llocality", LVal);

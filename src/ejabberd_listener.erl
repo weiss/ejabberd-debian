@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_listener.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
-%%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_listener.erl 483 2006-01-13 01:55:20Z alexey $
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
+%%% Purpose : Manage socket listener
+%%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_listener).
--author('alexey@sevcom.net').
--vsn('$Revision: 483 $ ').
+-author('alexey@process-one.net').
 
 -export([start_link/0, init/1, start/3,
 	 init/3,
@@ -44,15 +61,20 @@ init(_) ->
 
 
 start(Port, Module, Opts) ->
+    SSLError = "There is a problem with your ejabberd configuration file: the option 'ssl' for listening sockets is no longer available. To get SSL encryption use the option 'tls'.",
     case lists:keysearch(ssl, 1, Opts) of
-	{value, {ssl, SSLOpts}} ->
-	    {ok, proc_lib:spawn_link(?MODULE, init_ssl,
-				     [Port, Module, Opts, SSLOpts])};
+	{value, {ssl, _SSLOpts}} ->
+	    %%{ok, proc_lib:spawn_link(?MODULE, init_ssl,
+	    %%		     [Port, Module, Opts, SSLOpts])};
+	    ?ERROR_MSG(SSLError, []),
+	    {error, SSLError};
 	_ ->
 	    case lists:member(ssl, Opts) of
 		true ->
-		    {ok, proc_lib:spawn_link(?MODULE, init_ssl,
-					     [Port, Module, Opts, []])};
+		    %%{ok, proc_lib:spawn_link(?MODULE, init_ssl,
+		    %%		     [Port, Module, Opts, []])};
+		    ?ERROR_MSG(SSLError, []),
+		    {error, SSLError};
 		false ->
 		    {ok, proc_lib:spawn_link(?MODULE, init,
 					     [Port, Module, Opts])}
@@ -92,14 +114,12 @@ accept(ListenSocket, Module, Opts) ->
 		_ ->
 		    ok
 	    end,
-	    {ok, Pid} = Module:start({gen_tcp, Socket}, Opts),
-	    case gen_tcp:controlling_process(Socket, Pid) of
-		ok ->
-		    ok;
-		{error, _Reason} ->
-		    gen_tcp:close(Socket)
+	    case Module of
+		{frontend, Mod} ->
+		    ejabberd_frontend_socket:start(Mod, gen_tcp, Socket, Opts);
+		_ ->
+		    ejabberd_socket:start(Module, gen_tcp, Socket, Opts)
 	    end,
-	    Module:become_controller(Pid),
 	    accept(ListenSocket, Module, Opts);
 	{error, Reason} ->
 	    ?INFO_MSG("(~w) Failed TCP accept: ~w",

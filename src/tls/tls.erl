@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : tls.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Interface to openssl
-%%% Created : 24 Jul 2004 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: tls.erl 483 2006-01-13 01:55:20Z alexey $
+%%% Created : 24 Jul 2004 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(tls).
--author('alexey@sevcom.net').
--vsn('$Revision: 483 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_server).
 
@@ -17,6 +34,7 @@
 	 send/2,
 	 recv/2, recv/3, recv_data/2,
 	 setopts/2,
+	 sockname/1, peername/1,
 	 controlling_process/2,
 	 close/1,
 	 get_peer_certificate/1,
@@ -179,6 +197,12 @@ send(#tlssock{tcpsock = TCPSocket, tlsport = Port}, Packet) ->
 
 setopts(#tlssock{tcpsock = TCPSocket}, Opts) ->
     inet:setopts(TCPSocket, Opts).
+
+sockname(#tlssock{tcpsock = TCPSocket}) ->
+    inet:sockname(TCPSocket).
+
+peername(#tlssock{tcpsock = TCPSocket}) ->
+    inet:peername(TCPSocket).
 
 controlling_process(#tlssock{tcpsock = TCPSocket}, Pid) ->
     gen_tcp:controlling_process(TCPSocket, Pid).

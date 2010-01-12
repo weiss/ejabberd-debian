@@ -1,8 +1,22 @@
 %%%----------------------------------------------------------------------
-%%% File    : jlib.hrl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
-%%% Purpose : 
-%%% Created :  5 Mar 2003 by Alexey Shchepin <alexey@sevcom.net>
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -define(NS_DISCO_ITEMS,  "http://jabber.org/protocol/disco#items").
@@ -33,7 +47,12 @@
 -define(NS_PUBSUB_EVENT, "http://jabber.org/protocol/pubsub#event").
 -define(NS_PUBSUB_OWNER, "http://jabber.org/protocol/pubsub#owner").
 -define(NS_PUBSUB_NMI,   "http://jabber.org/protocol/pubsub#node-meta-info").
+-define(NS_PUBSUB_ERRORS,"http://jabber.org/protocol/pubsub#errors").
+-define(NS_PUBSUB_NODE_CONFIG, "http://jabber.org/protocol/pubsub#node_config").
+-define(NS_PUBSUB_SUB_AUTH, "http://jabber.org/protocol/pubsub#subscribe_authorization").
 -define(NS_COMMANDS,     "http://jabber.org/protocol/commands").
+-define(NS_BYTESTREAMS,  "http://jabber.org/protocol/bytestreams").
+-define(NS_ADMIN,        "http://jabber.org/protocol/admin").
 
 -define(NS_EJABBERD_CONFIG, "ejabberd:config").
 
@@ -52,6 +71,8 @@
 -define(NS_FEATURE_COMPRESS, "http://jabber.org/features/compress").
 
 -define(NS_COMPRESS,     "http://jabber.org/protocol/compress").
+
+-define(NS_CAPS,          "http://jabber.org/protocol/caps").
 
 % TODO: remove "code" attribute (currently it used for backward-compatibility)
 -define(STANZA_ERROR(Code, Type, Condition),

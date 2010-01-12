@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : configure.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : 
-%%% Created : 27 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: configure.erl 598 2006-09-03 15:15:46Z mremond $
+%%% Created : 27 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(configure).
--author('alexey@sevcom.net').
--vsn('$Revision: 598 $ ').
+-author('alexey@process-one.net').
 
 -export([start/0]).
 
@@ -27,25 +44,25 @@ start() ->
 	true ->
 	    ExpatLib  = "EXPAT_LIB = $(EXPAT_DIR)\\StaticLibs\\libexpatMT.lib\n",
 	    ExpatFlag = "EXPAT_FLAG = -DXML_STATIC\n",
-	    IconvDir  = "ICONV_DIR = c:\\progra~1\\libiconv-1.9.1-static\n",
-	    IconvLib  = "ICONV_LIB = $(ICONV_DIR)\\lib\\iconv.lib\n",
-	    ZlibDir   = "ZLIB_DIR = c:\\progra~1\\zlib-1.2.3\n",
+	    IconvDir  = "ICONV_DIR = c:\\sdk\\GnuWin32\n",
+	    IconvLib  = "ICONV_LIB = $(ICONV_DIR)\\lib\\libiconv.lib\n",
+	    ZlibDir   = "ZLIB_DIR = c:\\sdk\\GnuWin32\n",
 	    ZlibLib   = "ZLIB_LIB = $(ZLIB_DIR)\\lib\\zlib.lib\n";
 	false ->
 	    ExpatLib  = "EXPAT_LIB = $(EXPAT_DIR)\\Libs\\libexpat.lib\n",
 	    ExpatFlag = "",
-	    IconvDir  = "ICONV_DIR = c:\\progra~1\\libiconv-1.9.1\n",
-	    IconvLib  = "ICONV_LIB = $(ICONV_DIR)\\lib\\iconv.lib\n",
-	    ZlibDir   = "ZLIB_DIR = c:\\progra~1\\zlib-1.2.3\n",
-	    ZlibLib   = "ZLIB_LIB = $(ZLIB_DIR)\\lib\\zlib1.lib\n"
+	    IconvDir  = "ICONV_DIR = c:\\sdk\\GnuWin32\n",
+	    IconvLib  = "ICONV_LIB = $(ICONV_DIR)\\lib\\libiconv.lib\n",
+	    ZlibDir   = "ZLIB_DIR = c:\\sdk\\GnuWin32\n",
+	    ZlibLib   = "ZLIB_LIB = $(ZLIB_DIR)\\lib\\zlib.lib\n"
     end,
 
     EVersion = "ERLANG_VERSION = " ++ erlang:system_info(version) ++ "\n",
     EIDirS   = "EI_DIR = " ++ code:lib_dir("erl_interface") ++ "\n",
     RootDirS = "ERLANG_DIR = " ++ code:root_dir() ++ "\n",
     Version  = "EJABBERD_VERSION = " ++ ?VERSION ++ "\n",
-    ExpatDir = "EXPAT_DIR = c:\\progra~1\\expat-1.95.7\n",
-    OpenSSLDir = "OPENSSL_DIR = c:\\progra~1\\OpenSSL\n",
+    ExpatDir = "EXPAT_DIR = c:\\sdk\\Expat-2.0.0\n",
+    OpenSSLDir = "OPENSSL_DIR = c:\\sdk\\OpenSSL\n",
     DBType = "DBTYPE = generic\n",    %% 'generic' or 'mssql'
 
     SSLDir    = "SSLDIR = " ++ code:lib_dir("ssl") ++ "\n",

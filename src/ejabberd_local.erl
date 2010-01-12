@@ -1,14 +1,31 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_local.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : Route local packets
-%%% Created : 30 Nov 2002 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: ejabberd_local.erl 495 2006-01-29 04:38:31Z alexey $
+%%% Created : 30 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_local).
--author('alexey@sevcom.net').
--vsn('$Revision: 495 $ ').
+-author('alexey@process-one.net').
 
 -behaviour(gen_server).
 
@@ -18,6 +35,7 @@
 -export([route/3,
 	 register_iq_handler/4,
 	 register_iq_handler/5,
+	 register_iq_response_handler/4,
 	 unregister_iq_handler/2,
 	 refresh_iq_handlers/0,
 	 bounce_resource_packet/3
@@ -31,6 +49,8 @@
 -include("jlib.hrl").
 
 -record(state, {}).
+
+-record(iq_response, {id, module, function}).
 
 -define(IQTABLE, local_iqtable).
 
@@ -68,11 +88,36 @@ process_iq(From, To, Packet) ->
 		    ejabberd_router:route(To, From, Err)
 	    end;
 	reply ->
-	    ok;
+	    process_iq_reply(From, To, Packet);
 	_ ->
 	    Err = jlib:make_error_reply(Packet, ?ERR_BAD_REQUEST),
 	    ejabberd_router:route(To, From, Err),
 	    ok
+    end.
+
+process_iq_reply(From, To, Packet) ->
+    IQ = jlib:iq_query_or_response_info(Packet),
+    #iq{id = ID} = IQ,
+    case catch mnesia:dirty_read(iq_response, ID) of
+	[] ->
+	    ok;
+	_ ->
+	    F = fun() ->
+			case mnesia:read({iq_response, ID}) of
+			    [] ->
+				nothing;
+			    [#iq_response{module = Module,
+					  function = Function}] ->
+				mnesia:delete({iq_response, ID}),
+				{Module, Function}
+			end
+		end,
+	    case mnesia:transaction(F) of
+		{atomic, {Module, Function}} ->
+		    Module:Function(From, To, IQ);
+		_ ->
+		    ok
+	    end
     end.
 
 route(From, To, Packet) ->
@@ -83,6 +128,9 @@ route(From, To, Packet) ->
 	_ ->
 	    ok
     end.
+
+register_iq_response_handler(Host, ID, Module, Fun) ->
+    ejabberd_local ! {register_iq_response_handler, Host, ID, Module, Fun}.
 
 register_iq_handler(Host, XMLNS, Module, Fun) ->
     ejabberd_local ! {register_iq_handler, Host, XMLNS, Module, Fun}.
@@ -120,6 +168,9 @@ init([]) ->
 				 ?MODULE, bounce_resource_packet, 100)
       end, ?MYHOSTS),
     catch ets:new(?IQTABLE, [named_table, public]),
+    mnesia:create_table(iq_response,
+			[{ram_copies, [node()]},
+			 {attributes, record_info(fields, iq_response)}]),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -158,6 +209,9 @@ handle_info({route, From, To, Packet}, State) ->
 	_ ->
 	    ok
     end,
+    {noreply, State};
+handle_info({register_iq_response_handler, _Host, ID, Module, Function}, State) ->
+    mnesia:dirty_write(#iq_response{id = ID, module = Module, function = Function}),
     {noreply, State};
 handle_info({register_iq_handler, Host, XMLNS, Module, Function}, State) ->
     ets:insert(?IQTABLE, {{XMLNS, Host}, Module, Function}),

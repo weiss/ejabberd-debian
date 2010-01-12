@@ -1,21 +1,40 @@
 %%%----------------------------------------------------------------------
 %%% File    : gen_mod.erl
-%%% Author  : Alexey Shchepin <alexey@sevcom.net>
+%%% Author  : Alexey Shchepin <alexey@process-one.net>
 %%% Purpose : 
-%%% Created : 24 Jan 2003 by Alexey Shchepin <alexey@sevcom.net>
-%%% Id      : $Id: gen_mod.erl 486 2006-01-19 02:17:31Z alexey $
+%%% Created : 24 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
+%%%
+%%%
+%%% ejabberd, Copyright (C) 2002-2008   Process-one
+%%%
+%%% This program is free software; you can redistribute it and/or
+%%% modify it under the terms of the GNU General Public License as
+%%% published by the Free Software Foundation; either version 2 of the
+%%% License, or (at your option) any later version.
+%%%
+%%% This program is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%%% General Public License for more details.
+%%%                         
+%%% You should have received a copy of the GNU General Public License
+%%% along with this program; if not, write to the Free Software
+%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+%%% 02111-1307 USA
+%%%
 %%%----------------------------------------------------------------------
 
 -module(gen_mod).
--author('alexey@sevcom.net').
--vsn('$Revision: 486 $ ').
+-author('alexey@process-one.net').
 
 -export([start/0,
 	 start_module/3,
 	 stop_module/2,
 	 get_opt/2,
 	 get_opt/3,
+	 get_opt_host/3,
 	 get_module_opt/4,
+	 get_module_opt_host/3,
 	 loaded_modules/1,
 	 loaded_modules_with_opts/1,
 	 get_hosts/2,
@@ -46,6 +65,7 @@ start_module(Host, Module, Opts) ->
 	{'EXIT', Reason} ->
 	    ?ERROR_MSG("~p", [Reason]);
 	_ ->
+	    set_module_opts_mnesia(Host, Module, Opts),
 	    ets:insert(ejabberd_modules,
 		       #ejabberd_module{module_host = {Module, Host},
 					opts = Opts}),
@@ -58,13 +78,16 @@ stop_module(Host, Module) ->
 	    ?ERROR_MSG("~p", [Reason]);
 	{wait, ProcList} when is_list(ProcList) ->
 	    lists:foreach(fun wait_for_process/1, ProcList),
+	    del_module_mnesia(Host, Module),
 	    ets:delete(ejabberd_modules, {Module, Host}),
 	    ok;
 	{wait, Process} ->
 	    wait_for_process(Process),
+	    del_module_mnesia(Host, Module),
 	    ets:delete(ejabberd_modules, {Module, Host}),
 	    ok;
 	_ ->
+	    del_module_mnesia(Host, Module),
 	    ets:delete(ejabberd_modules, {Module, Host}),
 	    ok
     end.
@@ -93,8 +116,8 @@ wait_for_stop1(MonitorReference) ->
 get_opt(Opt, Opts) ->
     case lists:keysearch(Opt, 1, Opts) of
 	false ->
- 	    % TODO: replace with more appropriate function
- 	    [] = {undefined_option, Opt};
+	    % TODO: replace with more appropriate function
+	    throw({undefined_option, Opt});
 	{value, {_, Val}} ->
 	    Val
     end.
@@ -107,6 +130,23 @@ get_opt(Opt, Opts, Default) ->
 	    Val
     end.
 
+get_module_opt(global, Module, Opt, Default) ->
+	Hosts = ?MYHOSTS,
+	[Value | Values] = lists:map(
+		fun(Host) ->
+			get_module_opt(Host, Module, Opt, Default)
+		end,
+		Hosts),
+	Same_all = lists:all(
+		fun(Other_value) ->
+			Other_value == Value
+		end,
+		Values),
+	case Same_all of
+		true -> Value;
+		false -> Default
+	end;
+
 get_module_opt(Host, Module, Opt, Default) ->
     OptsList = ets:lookup(ejabberd_modules, {Module, Host}),
     case OptsList of
@@ -115,6 +155,14 @@ get_module_opt(Host, Module, Opt, Default) ->
 	[#ejabberd_module{opts = Opts} | _] ->
 	    get_opt(Opt, Opts, Default)
     end.
+
+get_module_opt_host(Host, Module, Default) ->
+    Val = get_module_opt(Host, Module, host, Default),
+    element(2, regexp:gsub(Val, "@HOST@", Host)).
+
+get_opt_host(Host, Opts, Default) ->
+    Val = get_opt(host, Opts, Default),
+    element(2, regexp:gsub(Val, "@HOST@", Host)).
 
 loaded_modules(Host) ->
     ets:select(ejabberd_modules,
@@ -128,6 +176,27 @@ loaded_modules_with_opts(Host) ->
 				  opts = '$2'},
 		 [],
 		 [{{'$1', '$2'}}]}]).
+
+set_module_opts_mnesia(Host, Module, Opts) ->
+    Modules = case ejabberd_config:get_local_option({modules, Host}) of
+		  undefined ->
+		      [];
+		  Ls ->
+		      Ls
+	      end,
+    Modules1 = lists:keydelete(Module, 1, Modules),
+    Modules2 = [{Module, Opts} | Modules1],
+    ejabberd_config:add_local_option({modules, Host}, Modules2).
+
+del_module_mnesia(Host, Module) ->
+    Modules = case ejabberd_config:get_local_option({modules, Host}) of
+		  undefined ->
+		      [];
+		  Ls ->
+		      Ls
+	      end,
+    Modules1 = lists:keydelete(Module, 1, Modules),
+    ejabberd_config:add_local_option({modules, Host}, Modules1).
 
 get_hosts(Opts, Prefix) ->
     case catch gen_mod:get_opt(hosts, Opts) of
