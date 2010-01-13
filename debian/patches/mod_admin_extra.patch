@@ -4,12 +4,12 @@ by adding several new commands.
 
 The code is taken from the ProcessOne repository:
 https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
-(trunk, revision 976).
+(trunk, revision 1049).
 
-diff --git a/src/ejabberd.app b/src/ejabberd.app
-index e0e943e..f017015 100644
---- a/src/ejabberd.app
-+++ b/src/ejabberd.app
+Index: pkg-ejabberd/src/ejabberd.app
+===================================================================
+--- pkg-ejabberd.orig/src/ejabberd.app	2010-01-13 04:49:33.000000000 +0300
++++ pkg-ejabberd/src/ejabberd.app	2010-01-13 04:57:23.000000000 +0300
 @@ -104,6 +104,7 @@
  	     mod_vcard_ldap,
  	     mod_vcard_odbc,
@@ -18,12 +18,11 @@ index e0e943e..f017015 100644
  	     node_buddy,
  	     node_club,
  	     node_default,
-diff --git a/src/mod_admin_extra.erl b/src/mod_admin_extra.erl
-new file mode 100644
-index 0000000..9f3ca14
---- /dev/null
-+++ b/src/mod_admin_extra.erl
-@@ -0,0 +1,1279 @@
+Index: pkg-ejabberd/src/mod_admin_extra.erl
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg-ejabberd/src/mod_admin_extra.erl	2010-01-13 04:58:00.000000000 +0300
+@@ -0,0 +1,1329 @@
 +%%%-------------------------------------------------------------------
 +%%% File    : mod_admin_extra.erl
 +%%% Author  : Badlop <badlop@process-one.net>
@@ -75,6 +74,7 @@ index 0000000..9f3ca14
 +	 kick_session/4,
 +	 status_num/2, status_num/1,
 +	 status_list/2, status_list/1,
++	 connected_users_info/0,
 +	 %% Vcard
 +	 set_nickname/3,
 +	 get_vcard/3,
@@ -270,6 +270,23 @@ index 0000000..9f3ca14
 +								{status, string}
 +							       ]}}
 +					 }}},
++     #ejabberd_commands{name = connected_users_info,
++			tags = [session],
++			desc = "List all established sessions and their information",
++			module = ?MODULE, function = connected_users_info,
++			args = [],
++			result = {connected_users_info,
++				  {list,
++				   {sessions, {tuple,
++					       [{jid, string},
++						{connection, string},
++						{ip, string},
++						{port, integer},
++						{priority, integer},
++						{node, string},
++						{uptime, integer}
++					       ]}}
++				  }}},
 +
 +     #ejabberd_commands{name = set_nickname, tags = [vcard],
 +			desc = "Set nickname in a user's vcard",
@@ -298,7 +315,7 @@ index 0000000..9f3ca14
 +     #ejabberd_commands{name = set_vcard2, tags = [vcard],
 +			desc = "Set content in a vCard subfield",
 +			longdesc = Vcard2FieldsString ++ "\n\n" ++ Vcard1FieldsString ++ "\n" ++ VcardXEP,
-+			module = ?MODULE, function = set_vcard2,
++			module = ?MODULE, function = set_vcard,
 +			args = [{user, string}, {host, string}, {name, string}, {subname, string}, {content, string}],
 +			result = {res, rescode}},
 +
@@ -338,7 +355,7 @@ index 0000000..9f3ca14
 +			"  USERS = JID[:JID]* | any\n"
 +			"  CONTACTS = JID[:JID]* | any\n"
 +			"  JID = characters valid in a JID, and can use the "
-+			"globs: *, ? and [...]\n"
++			"globs: *, ?, ! and [...]\n"
 +			"\n"
 +			"This example will list roster items with subscription "
 +			"'none', 'from' or 'to' that have any ask property, of "
@@ -569,8 +586,6 @@ index 0000000..9f3ca14
 +    end.
 +
 +
-+-record(last_activity, {us, timestamp, status}).
-+
 +delete_old_users(Days) ->
 +    %% Get the list of registered users
 +    Users = ejabberd_auth:dirty_get_registered_users(),
@@ -600,10 +615,10 @@ index 0000000..9f3ca14
 +		    %% If it isnt
 +		    [] ->
 +			%% Look for his last_activity
-+			case mnesia:dirty_read(last_activity, {LUser, LServer}) of
++			case (get_lastactivity_module(LServer)):get_last_info(LUser, LServer) of
 +			    %% If it is
 +			    %% existent:
-+			    [#last_activity{timestamp = TimeStamp}] ->
++			    {ok, TimeStamp, _Status} ->
 +				%% get his age
 +				Sec = TimeStamp_now - TimeStamp,
 +				%% If he is
@@ -619,7 +634,7 @@ index 0000000..9f3ca14
 +					true
 +				end;
 +			    %% nonexistent:
-+			    [] ->
++			    not_found ->
 +				%% remove the user
 +				ejabberd_auth:remove_user(LUser, LServer),
 +				true
@@ -633,6 +648,12 @@ index 0000000..9f3ca14
 +    %% Apply the function to every user in the list
 +    Users_removed = lists:filter(F, Users),
 +    {removed, length(Users_removed), Users_removed}.
++
++get_lastactivity_module(Server) ->
++    case lists:member(mod_last, gen_mod:loaded_modules(Server)) of
++        true -> mod_last;
++        _ -> mod_last_odbc
++    end.
 +
 +
 +%%
@@ -751,6 +772,29 @@ index 0000000..9f3ca14
 +    [{User, Server, Resource, Priority, stringize(Status_text)}
 +     || {{User, Resource, Status, Status_text}, Server, Priority} <- Sessions4,
 +	apply(Fstatus, [Status, Status_required])].
++
++connected_users_info() ->
++    USRIs = dirty_get_sessions_list2(),
++    CurrentSec = calendar:datetime_to_gregorian_seconds({date(), time()}),
++    lists:map(
++      fun([{U, S, R}, {Now, Pid}, Priority, Info]) ->
++	      Conn = proplists:get_value(conn, Info),
++	      {Ip, Port} = proplists:get_value(ip, Info),
++	      IPS = inet_parse:ntoa(Ip),
++	      NodeS = atom_to_list(node(Pid)),
++	      Uptime = CurrentSec - calendar:datetime_to_gregorian_seconds(
++				      calendar:now_to_local_time(Now)),
++	      {[U, $@, S, $/, R], Conn, IPS, Port, Priority, NodeS, Uptime}
++      end,
++      USRIs).
++
++%% Code copied from ejabberd_sm.erl and customized
++dirty_get_sessions_list2() ->
++    mnesia:dirty_select(
++      session,
++      [{#session{usr = '$1', sid = '$2', priority = '$3', info = '$4', _ = '_'},
++	[],
++	[['$1', '$2', '$3', '$4']]}]).
 +
 +%% Make string more print-friendly
 +stringize(String) ->
@@ -1039,7 +1083,10 @@ index 0000000..9f3ca14
 +%%%
 +
 +srg_create(Group, Host, Name, Description, Display) ->
-+    {ok, DisplayList} = regexp:split(Display, "\\\\n"),
++    {ok, DisplayList} = case Display of
++	[] -> {ok, []};
++	_ -> regexp:split(Display, "\\\\n")
++    end,
 +    Opts = [{name, Name},
 +	    {displayed_groups, DisplayList},
 +	    {description, Description}],
@@ -1301,5 +1348,7 @@ index 0000000..9f3ca14
 +	      [RegExp, lists:flatten(regexp:format_error(ErrDesc))]),
 +	    false
 +    end.
++is_glob_match(String, [$! | Glob]) ->
++    not is_regexp_match(String, regexp:sh_to_awk(Glob));
 +is_glob_match(String, Glob) ->
 +    is_regexp_match(String, regexp:sh_to_awk(Glob)).
