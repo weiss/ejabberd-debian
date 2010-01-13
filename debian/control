@@ -12,7 +12,7 @@ Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/ejabberd/trunk/
 Package: ejabberd
 Architecture: any
 Depends: adduser, ${erlang-nox:Depends}, ${erlang-abi:Depends}, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
-Suggests: libunix-syslog-perl, imagemagick
+Suggests: libunix-syslog-perl, imagemagick | graphicsmagick-imagemagick-compat
 Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang.
  Its features contain:

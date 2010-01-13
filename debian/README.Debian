@@ -88,6 +88,9 @@ package. As it depends on a lot of packages related to graphics and
 X Window System, it is listed as suggested. Therefore, if you intend to
 enable captcha support for your multi-user conferences be sure to install
 imagemagick besides enabling captcha in the ejabberd configuration file.
+Also the "graphicsmagick-imagemagick-compat" package can be installed
+instead of "imagemagick" -- it provides the "convert" program compatible
+with that of imagemagick.
 
 
 2. Hostname issues
