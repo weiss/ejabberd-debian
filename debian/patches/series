@@ -6,4 +6,3 @@ piefxis-vhost-export.patch
 vcard-reqs-forwarding.patch
 routing-speedup.patch
 req-starttls-zlib-clash.patch
-multiple-pep-last-items.patch
