@@ -4,11 +4,11 @@ or are online now.
 
 See http://wiki.laptop.org/go/Ejabberd_Configuration
 
-diff --git a/src/mod_shared_roster.erl b/src/mod_shared_roster.erl
-index 4d323b7..6622496 100644
---- a/src/mod_shared_roster.erl
-+++ b/src/mod_shared_roster.erl
-@@ -439,13 +439,63 @@ get_group_opt(Host, Group, Opt, Default) ->
+Index: pkg-ejabberd/src/mod_shared_roster.erl
+===================================================================
+--- pkg-ejabberd.orig/src/mod_shared_roster.erl	2010-01-13 05:19:53.000000000 +0300
++++ pkg-ejabberd/src/mod_shared_roster.erl	2010-01-13 05:20:11.000000000 +0300
+@@ -440,13 +440,63 @@
  	    false
      end.
  
@@ -73,7 +73,7 @@ index 4d323b7..6622496 100644
  
  get_group_users(_User, Host, Group, GroupOpts) ->
      case proplists:get_value(all_users, GroupOpts, false) of
-@@ -453,7 +503,14 @@ get_group_users(_User, Host, Group, GroupOpts) ->
+@@ -454,7 +504,14 @@
  	    ejabberd_auth:get_vh_registered_users(Host);
  	false ->
  	    []
@@ -89,7 +89,7 @@ index 4d323b7..6622496 100644
  
  %% @spec (Host::string(), Group::string()) -> [{User::string(), Server::string()}]
  get_group_explicit_users(Host, Group) ->
-@@ -475,7 +532,8 @@ get_group_name(Host, Group) ->
+@@ -476,7 +533,8 @@
  get_special_users_groups(Host) ->
      lists:filter(
        fun(Group) ->
@@ -99,7 +99,7 @@ index 4d323b7..6622496 100644
        end,
        list_groups(Host)).
  
-@@ -828,6 +886,7 @@ shared_roster_group(Host, Group, Query, Lang) ->
+@@ -829,6 +887,7 @@
      Name = get_opt(GroupOpts, name, ""),
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
@@ -107,7 +107,7 @@ index 4d323b7..6622496 100644
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -837,7 +896,14 @@ shared_roster_group(Host, Group, Query, Lang) ->
+@@ -838,7 +897,14 @@
  		"@all@\n";
  	    true ->
  		[]
@@ -123,7 +123,7 @@ index 4d323b7..6622496 100644
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      DescNL = length(element(2, regexp:split(Description, "\n"))),
      FGroup =
-@@ -921,6 +987,8 @@ shared_roster_group_parse_query(Host, Group, Query) ->
+@@ -922,6 +988,8 @@
  			  case SJID of
  			      "@all@" ->
  				  USs;
@@ -132,7 +132,7 @@ index 4d323b7..6622496 100644
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -935,10 +1003,17 @@ shared_roster_group_parse_query(Host, Group, Query) ->
+@@ -936,10 +1004,17 @@
  		    true -> [{all_users, true}];
  		    false -> []
  		end,
