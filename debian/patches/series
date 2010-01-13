@@ -2,7 +2,6 @@ mod_admin_extra.patch
 shared_roster_recent.patch
 shared_roster_online.patch
 captcha.patch
-piefxis-vhost-export.patch
 vcard-reqs-forwarding.patch
 routing-speedup.patch
 req-starttls-zlib-clash.patch
