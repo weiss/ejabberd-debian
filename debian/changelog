@@ -4,6 +4,7 @@ ejabberd (2.1.1-1) UNRELEASED; urgency=low
   * New upstream release.
   * Update mod_admin_extra to upstream revision 1049.
   * Remove obsolete patches (those backported from 2.1.1).
+  * Suggest imagemagick instead of recommending it (closes: #560889).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Wed, 13 Jan 2010 05:15:11 +0300
 
