@@ -2,4 +2,3 @@ mod_admin_extra.patch
 shared_roster_recent.patch
 shared_roster_online.patch
 captcha.patch
-req-starttls-zlib-clash.patch
