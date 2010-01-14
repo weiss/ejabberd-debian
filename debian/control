@@ -6,14 +6,14 @@ Uploaders: Gerfried Fuchs <rhonda@debian.at>, Konstantin Khomoutov <flatworm@use
 Build-Depends: debhelper (>= 7), quilt, erlang-nox, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev, po-debconf
 Standards-Version: 3.8.3
 Homepage: http://www.process-one.net/en/projects/ejabberd/
-Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/ejabberd/trunk
-Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/ejabberd/trunk/
+Vcs-Git: git://git.debian.org/git/collab-maint/pkg-ejabberd.git
+Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-ejabberd.git;a=summary
 
 Package: ejabberd
 Architecture: any
 Depends: adduser, ${erlang-nox:Depends}, ${erlang-abi:Depends}, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl, imagemagick | graphicsmagick-imagemagick-compat
-Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
+Description: distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang.
  Its features contain:
   - XMPP-compliant

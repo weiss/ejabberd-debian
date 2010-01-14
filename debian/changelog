@@ -1,4 +1,4 @@
-ejabberd (2.1.1-1) UNRELEASED; urgency=low
+ejabberd (2.1.1-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
   * New upstream release.
@@ -7,7 +7,11 @@ ejabberd (2.1.1-1) UNRELEASED; urgency=low
   * Remove obsolete patches (those backported from 2.1.1).
   * Suggest imagemagick instead of recommending it (closes: #560889).
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Wed, 13 Jan 2010 05:15:11 +0300
+  [ Gerfried Fuchs ]
+  * Switch Vcs-* fields to point to new git repository. All the conversion
+    work was actually done by Konstantin.
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Thu, 14 Jan 2010 20:33:21 +0100
 
 ejabberd (2.1.0-2) unstable; urgency=low
 
