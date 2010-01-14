@@ -1,7 +1,7 @@
 # Copyright (C) 2009 Torsten Werner <twerner@debian.org>
 # This file is distributed under the same license as ejabberd package.
 # Hideki Yamane (Debian-JP) <henrich@debian.or.jp>, 2009.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: ejabberd 2.0.5-1.1\n"
@@ -44,19 +44,20 @@ msgid ""
 "Jabber ID (e.g. ${user}@${hostname}) to log into ejabberd web interface; "
 "otherwise it will fail."
 msgstr ""
-"ejabberd サーバを管理するアカウントの名前を入力してください。ejabberd の"
-"インストール後は、どの Jabber クライアントからでも、このアカウントを使って"
-"管理作業を実施することができますし、http://${hostname}:5280/admin/ から"
-"このアカウントでログインして管理画面に入れます。ここでユーザ名の部分 (例: "
-"${user}) を入力するわけですが、ejabberd のウェブインターフェイスでは、"
-"ログインするのに完全な Jabber ID (例: ${user}@${hostname}) を使ってください。"
-"それ以外はログインに失敗します。"
+"ejabberd サーバを管理するアカウントの名前を入力してください。ejabberd のイン"
+"ストール後は、どの Jabber クライアントからでも、このアカウントを使って管理作"
+"業を実施することができますし、http://${hostname}:5280/admin/ からこのアカウン"
+"トでログインして管理画面に入れます。ここでユーザ名の部分 (例: ${user}) を入力"
+"するわけですが、ejabberd のウェブインターフェイスでは、ログインするのに完全"
+"な Jabber ID (例: ${user}@${hostname}) を使ってください。それ以外はログインに"
+"失敗します。"
 
 #. Type: string
 #. Description
 #: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
-msgstr "自動的に管理者アカウントを作りたくない場合は空のままにしておいてください。"
+msgstr ""
+"自動的に管理者アカウントを作りたくない場合は空のままにしておいてください。"
 
 #. Type: password
 #. Description
@@ -94,4 +95,3 @@ msgstr "パスワードが一致しません!"
 #: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr "入力されたパスワードが一致しません。再入力してください。"
-

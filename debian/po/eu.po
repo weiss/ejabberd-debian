@@ -1,7 +1,7 @@
 # translation of eu.po to Euskara
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Aitor Ibañez  <aitiba@gmail.com>, 2008.
 msgid ""
 msgstr ""
@@ -47,18 +47,19 @@ msgid ""
 "otherwise it will fail."
 msgstr ""
 "Kontu-izen bat eman, haren bidez ejabberd zerbitzaria administratzeko. "
-"Ejabberd instalatu ostean, kontu hau erabil dezakezu edozein Jabber bezerotan "
-"edo http://${ostalari-izena}:5280/admin/ helbideko administrazio-interfazean "
-"saioa hasi eta administrazio lanak egiteko. Hemen erabiltzaile-izena soilik "
-"sartu (adib. ${erabiltzailea}), baina Jabber ID osoa erabili (e.g. "
-"${erabiltzailea}@${ostalari-izena}) ejabberd-en web interfazean sartzeko, "
+"Ejabberd instalatu ostean, kontu hau erabil dezakezu edozein Jabber "
+"bezerotan edo http://${ostalari-izena}:5280/admin/ helbideko administrazio-"
+"interfazean saioa hasi eta administrazio lanak egiteko. Hemen erabiltzaile-"
+"izena soilik sartu (adib. ${erabiltzailea}), baina Jabber ID osoa erabili (e."
+"g. ${erabiltzailea}@${ostalari-izena}) ejabberd-en web interfazean sartzeko, "
 "bestela huts egingo du."
 
 #. Type: string
 #. Description
 #: ../templates:2001
 msgid "Leave empty if you don't want to create an admin account automatically."
-msgstr "Bete gabe utzi administrazio kontua automatikoki sortzea nahi ez baduzu."
+msgstr ""
+"Bete gabe utzi administrazio kontua automatikoki sortzea nahi ez baduzu."
 
 #. Type: password
 #. Description
@@ -81,8 +82,10 @@ msgstr "Berriz sartu administrazio kontuko pasahitza, egiaztatzeko:"
 #. Type: password
 #. Description
 #: ../templates:4001
-msgid "Please reenter the password for the administrative user for verification."
-msgstr "Berriz sartu administratzaile erabiltzailearen pasahitza, egiaztatzeko."
+msgid ""
+"Please reenter the password for the administrative user for verification."
+msgstr ""
+"Berriz sartu administratzaile erabiltzailearen pasahitza, egiaztatzeko."
 
 #. Type: error
 #. Description
@@ -95,4 +98,3 @@ msgstr "Pasahitzak ez datoz bat!"
 #: ../templates:5001
 msgid "The passwords you have typed do not match. Please try again."
 msgstr "Sartutako pasahitzak ez datoz bat. Mesedez, berriro saiatu."
-

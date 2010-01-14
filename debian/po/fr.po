@@ -1,8 +1,8 @@
 # Translation of ejabberd debconf templates to French
 # Copyright (C) 2008 Florentin Duneau <fduneau@gmail.com>
 # This file is distributed under the same license as the ejabberd package.
-#
-#
+# 
+# 
 # Florentin Duneau <f.baced@wanadoo.fr>, 2006.
 # Florentin Duneau <fduneau@gmail.com>, 2008.
 msgid ""
