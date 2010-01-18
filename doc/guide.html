@@ -6,7 +6,7 @@
  
  
 
- ejabberd 2.1.1 
+ ejabberd 2.1.2 
  
  Installation and Operation Guide
  
@@ -76,7 +76,7 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 <HR SIZE=2><BR>
 <BR>
 
-<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.1.1 </B></FONT></TD></TR>
+<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.1.2 </B></FONT></TD></TR>
 <TR><TD ALIGN=right NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=right NOWRAP> <FONT SIZE=6>Installation and Operation Guide</FONT></TD></TR>
 </TABLE><BR>
@@ -352,7 +352,7 @@ GNU Make
 </LI><LI CLASS="li-itemize">PAM library. Optional. For Pluggable Authentication Modules (PAM). See section <A HREF="#pam">3.1.4</A>.
 </LI><LI CLASS="li-itemize">GNU Iconv 1.8 or higher, for the IRC Transport (mod_irc). Optional. Not needed on systems with GNU Libc. See section <A HREF="#modirc">3.3.8</A>.
 </LI><LI CLASS="li-itemize">ImageMagick&#X2019;s Convert program. Optional. For CAPTCHA challenges. See section <A HREF="#captcha">3.1.8</A>.
-</LI><LI CLASS="li-itemize">exmpp 0.9.1 or higher. Optional. For import/export user data with <A HREF="http://xmpp.org/extensions/xep-0227.html">XEP-0227</A> XML files.
+</LI><LI CLASS="li-itemize">exmpp 0.9.2 or higher. Optional. For import/export user data with <A HREF="http://xmpp.org/extensions/xep-0227.html">XEP-0227</A> XML files.
 </LI></UL><P> <A NAME="download"></A> </P><!--TOC subsection Download Source Code-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc10">2.4.2</A>&#XA0;&#XA0;<A HREF="#download">Download Source Code</A></H3><!--SEC END --><P> <A NAME="download"></A> 
 </P><P>Released versions of <TT>ejabberd</TT> are available in the ProcessOne <TT>ejabberd</TT> downloads page:
@@ -792,9 +792,10 @@ This was the traditional encryption method in the early Jabber software,
 commonly on port 5223 for client-to-server communications.
 But this method is nowadays deprecated and not recommended.
 The preferable encryption method is STARTTLS on port 5222, as defined 
-<A HREF="http://xmpp.org/specs/rfc3920.html#tls">RFC 3920: XMPP Core</A>,
+<A HREF="http://xmpp.org/rfcs/rfc3920.html#tls">RFC 3920: XMPP Core</A>,
 which can be enabled in <TT>ejabberd</TT> with the option <TT>starttls</TT>.
 If this option is set, you should also set the <TT>certfile</TT> option.
+The option <TT>tls</TT> can also be used in <TT>ejabberd_http</TT> to support HTTPS.
 </DD><DT CLASS="dt-description"><B><TT>web_admin</TT></B></DT><DD CLASS="dd-description"> This option
 enables the Web Admin for <TT>ejabberd</TT> administration which is available
 at <CODE>http://server:port/admin/</CODE>. Login and password are the username and
@@ -838,6 +839,11 @@ If the option is not specified for an <TT>ejabberd_service</TT> listener,
 the globally configured value is used.
 The allowed values are integers and &#X2019;undefined&#X2019;.
 Default value: &#X2019;undefined&#X2019;.
+</DD><DT CLASS="dt-description"><B><TT>{route_subdomains, local|s2s}</TT></B></DT><DD CLASS="dd-description">
+Defines if ejabberd must route stanzas directed to subdomains locally (compliant with 
+<A HREF="http://xmpp.org/rfcs/rfc3920.html#rules.subdomain">RFC 3920: XMPP Core</A>),
+or to foreign server using S2S (compliant with
+<A HREF="http://tools.ietf.org/html/draft-saintandre-rfc3920bis-09#section-11.3">RFC 3920 bis</A>).
 </DD></DL><P> <A NAME="listened-examples"></A> </P><!--TOC subsubsection Examples-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#listened-examples">Examples</A></H4><!--SEC END --><P> <A NAME="listened-examples"></A> </P><P>For example, the following simple configuration defines:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
@@ -1182,7 +1188,10 @@ The syntax is:
 sequentially checks if that JID matches any of the ACLs that are named in the
 second elements of the tuples in the list. If it matches, the first element of
 the first matched tuple is returned, otherwise the value &#X2018;<TT>deny</TT>&#X2019; is
-returned.</P><P>Example:
+returned.</P><P>If you define specific Access rights in a virtual host,
+remember that the globally defined Access rights have precedence over those.
+This means that, in case of conflict, the Access granted or denied in the global server is used
+and the Access of a virtual host doesn&#X2019;t have effect.</P><P>Example:
 </P><PRE CLASS="verbatim">{access, configure, [{allow, admin}]}.
 {access, something, [{deny, badmans},
                      {allow, all}]}.
@@ -1638,8 +1647,7 @@ value is <TT>""</TT>.
 {ldap_port, 389}.
 {ldap_rootdn, "cn=Manager,dc=domain,dc=org"}.
 {ldap_password, "secret"}.
-</PRE><P>Note that current LDAP implementation does not support SSL secured communication
-and SASL authentication.</P><P> <A NAME="ldapauth"></A> </P><!--TOC subsubsection Authentication-->
+</PRE><P>Note that current LDAP implementation does not support SASL authentication.</P><P> <A NAME="ldapauth"></A> </P><!--TOC subsubsection Authentication-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapauth">Authentication</A></H4><!--SEC END --><P> <A NAME="ldapauth"></A> </P><P>You can authenticate users against an LDAP directory. Available options are:</P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{ldap_base, Base}</TT></B></DT><DD CLASS="dd-description">LDAP base directory which stores
 users accounts. This option is required.
@@ -2633,7 +2641,7 @@ sent to an offline user will be stored on the server until that user comes
 online again. Thus it is very similar to how email works. Note that
 <TT>ejabberdctl</TT> has a command to delete expired messages
 (see section&#XA0;<A HREF="#ejabberdctl">4.1</A>).</P><DL CLASS="description"><DT CLASS="dt-description">
-<B><TT>{access_max_user_messages, Number}</TT></B></DT><DD CLASS="dd-description">
+<B><TT>{access_max_user_messages, AccessName}</TT></B></DT><DD CLASS="dd-description">
 This option defines which access rule will be enforced to limit
 the maximum number of offline messages that a user can have (quota).
 When a user has too many offline messages, any new messages that he receive are discarded,
@@ -2708,7 +2716,7 @@ or subscription type (or globally).
 </LI><LI CLASS="li-itemize">Allowing or blocking all communications based on JID, group, or
 subscription type (or globally).
 </LI></UL>
-(from <A HREF="http://xmpp.org/specs/rfc3921.html#privacy"><TT>http://xmpp.org/specs/rfc3921.html#privacy</TT></A>)
+(from <A HREF="http://xmpp.org/rfcs/rfc3921.html#privacy"><TT>http://xmpp.org/rfcs/rfc3921.html#privacy</TT></A>)
 </BLOCKQUOTE><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{iqdisc, Discipline}</TT></B></DT><DD CLASS="dd-description"> This specifies
@@ -2943,7 +2951,7 @@ Also define a registration timeout of one hour:
 </PRE></LI></UL><P> <A NAME="modroster"></A> </P><!--TOC subsection <TT>mod_roster</TT>-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc58">3.3.19</A>&#XA0;&#XA0;<A HREF="#modroster"><TT>mod_roster</TT></A></H3><!--SEC END --><P> <A NAME="modroster"></A> 
 </P><P>This module implements roster management as defined in
-<A HREF="http://xmpp.org/specs/rfc3921.html#roster">RFC 3921: XMPP IM</A>.
+<A HREF="http://xmpp.org/rfcs/rfc3921.html#roster">RFC 3921: XMPP IM</A>.
 It also supports Roster Versioning (<A HREF="http://xmpp.org/extensions/xep-0237.html">XEP-0237</A>).</P><P>Options:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{iqdisc, Discipline}</TT></B></DT><DD CLASS="dd-description"> This specifies
@@ -3508,11 +3516,13 @@ they are automatically renamed to <TT>"*-old.log"</TT>. See section <A HREF="#lo
 Store internal Mnesia database to a binary backup file.
 </DD><DT CLASS="dt-description"><B><TT>restore ejabberd.backup</TT></B></DT><DD CLASS="dd-description">
 Restore immediately from a binary backup file the internal Mnesia database.
-This will consume quite some memory for big servers.
+This will consume a lot of memory if you have a large database,
+so better use <TT>install_fallback</TT>.
 </DD><DT CLASS="dt-description"><B><TT>install_fallback ejabberd.backup</TT></B></DT><DD CLASS="dd-description">
 The binary backup file is installed as fallback:
 it will be used to restore the database at the next ejabberd start.
-Similar to <TT>restore</TT>, but requires less memory.
+This means that, after running this command, you have to restart ejabberd.
+This command requires less memory than <TT>restore</TT>.
 </DD><DT CLASS="dt-description"><B><TT>dump ejabberd.dump</TT></B></DT><DD CLASS="dd-description">
 Dump internal Mnesia database to a text file dump.
 </DD><DT CLASS="dt-description"><B><TT>load ejabberd.dump</TT></B></DT><DD CLASS="dd-description">
@@ -3524,8 +3534,7 @@ These options can be used to migrate accounts
 using <A HREF="http://xmpp.org/extensions/xep-0227.html">XEP-0227</A> formatted XML files
 from/to other Jabber/XMPP servers
 or move users of a vhost to another ejabberd installation.
-See also 
-<A HREF="https://support.process-one.net/doc/display/P1/ejabberd+migration+kit">ejabberd migration kit</A>.
+See also <A HREF="https://support.process-one.net/doc/display/MESSENGER/ejabberd+migration+kit">ejabberd migration kit</A>.
 </DD><DT CLASS="dt-description"><B><TT>import_file, import_dir</TT></B></DT><DD CLASS="dd-description"> 
 These options can be used to migrate accounts
 using jabberd1.4 formatted XML files.
@@ -3551,9 +3560,8 @@ Arguments = [ {ArgumentName, ArgumentValue}, ...]
 ArgumentName = atom()
 ArgumentValue = any()
 </PRE><P>The default value is to not define any restriction: <TT>[]</TT>.
-If at least one restriction is defined, then the frontend expects 
-that authentication information is provided when executing a command.
-The authentication information is Username, Hostname and Password of a local XMPP account
+The authentication information is provided when executing a command,
+and is Username, Hostname and Password of a local XMPP account
 that has permission to execute the corresponding command.
 This means that the account must be registered in the local ejabberd,
 because the information will be verified.
@@ -3695,8 +3703,17 @@ mv /var/lib/ejabberd/*.* /var/lib/ejabberd/oldfiles/
 <PRE CLASS="verbatim">ejabberdctl start
 </PRE></LI><LI CLASS="li-enumerate">Convert the backup to new node name:
 <PRE CLASS="verbatim">ejabberdctl mnesia_change_nodename $OLDNODE $NEWNODE $OLDFILE $NEWFILE
-</PRE></LI><LI CLASS="li-enumerate">Import the new backup:
-<PRE CLASS="verbatim">ejabberdctl restore $NEWFILE
+</PRE></LI><LI CLASS="li-enumerate">Install the backup file as a fallback:
+<PRE CLASS="verbatim">ejabberdctl install_fallback $NEWFILE
+</PRE></LI><LI CLASS="li-enumerate">Stop ejabberd:
+<PRE CLASS="verbatim">ejabberdctl stop
+</PRE>You may see an error message in the log files, it&#X2019;s normal, so don&#X2019;t worry:
+<PRE CLASS="verbatim">Mnesia(ejabberd@newmachine):
+** ERROR ** (ignoring core)
+** FATAL ** A fallback is installed and Mnesia must be restarted.
+  Forcing shutdown after mnesia_down from ejabberd@newmachine...
+</PRE></LI><LI CLASS="li-enumerate">Now you can finally start ejabberd:
+<PRE CLASS="verbatim">ejabberdctl start
 </PRE></LI><LI CLASS="li-enumerate">Check that the information of the old database is available: accounts, rosters...
 After you finish, remember to delete the temporary backup files from public directories.
 </LI></OL><P> <A NAME="secure"></A> </P><!--TOC chapter Securing <TT>ejabberd</TT>-->
@@ -3970,7 +3987,7 @@ Alexey Shchepin (<A HREF="xmpp:aleksey@jabber.ru"><TT>xmpp:aleksey@jabber.ru</TT
 </LI><LI CLASS="li-itemize">Vsevolod Pelipas (<A HREF="xmpp:vsevoload@jabber.ru"><TT>xmpp:vsevoload@jabber.ru</TT></A>)
 </LI></UL><P> <A NAME="copyright"></A> </P><!--TOC chapter Copyright Information-->
 <H1 CLASS="chapter"><!--SEC ANCHOR --><A NAME="htoc100">Appendix&#XA0;D</A>&#XA0;&#XA0;<A HREF="#copyright">Copyright Information</A></H1><!--SEC END --><P> <A NAME="copyright"></A> </P><P>Ejabberd Installation and Operation Guide.<BR>
-Copyright &#XA9; 2003 &#X2014; 2009 ProcessOne</P><P>This document is free software; you can redistribute it and/or
+Copyright &#XA9; 2003 &#X2014; 2010 ProcessOne</P><P>This document is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.</P><P>This document is distributed in the hope that it will be useful,

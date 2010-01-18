@@ -5,7 +5,7 @@
 %%% Created :  9 Apr 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -298,7 +298,7 @@ make_xhtml(Els, Host, Node, Lang, JID) ->
 		 [?XAE("div",
 		       [{"id", "copyright"}],
 		       [?XC("p",
-			     "ejabberd (c) 2002-2009 ProcessOne")
+			     "ejabberd (c) 2002-2010 ProcessOne")
 		       ])])])
       ]}}.
 
@@ -1546,6 +1546,7 @@ list_users_in_diapason(Host, Diap, Lang, URLFunc) ->
 
 list_given_users(Host, Users, Prefix, Lang, URLFunc) ->
     ModLast = get_lastactivity_module(Host),
+    ModOffline = get_offlinemsg_module(Host),
     ?XE("table",
 	[?XE("thead",
 	     [?XE("tr",
@@ -1556,10 +1557,10 @@ list_given_users(Host, Users, Prefix, Lang, URLFunc) ->
 	     lists:map(
 	       fun(_SU = {Server, User}) ->
 		       US = {User, Server},
-		       QueueLen = length(mnesia:dirty_read({offline_msg, US})),
+		       QueueLenStr = get_offlinemsg_length(ModOffline, User, Server),
 		       FQueueLen = [?AC(URLFunc({users_queue, Prefix,
 						 User, Server}),
-					pretty_string_int(QueueLen))],
+					QueueLenStr)],
 		       FLast =
 			   case ejabberd_sm:get_user_resources(User, Server) of
 			       [] ->
@@ -1590,6 +1591,19 @@ list_given_users(Host, Users, Prefix, Lang, URLFunc) ->
 			    ?XC("td", FLast)])
 	       end, Users)
 	    )]).
+
+get_offlinemsg_length(ModOffline, User, Server) ->
+    case ModOffline of
+	none -> "disabled";
+	_ -> pretty_string_int(ModOffline:get_queue_length(User, Server))
+    end.
+
+get_offlinemsg_module(Server) ->
+    case [mod_offline, mod_offline_odbc] -- gen_mod:loaded_modules(Server) of
+        [mod_offline, mod_offline_odbc] -> none;
+        [mod_offline_odbc] -> mod_offline;
+        [mod_offline] -> mod_offline_odbc
+    end.
 
 get_lastactivity_module(Server) ->
     case lists:member(mod_last, gen_mod:loaded_modules(Server)) of
@@ -1670,7 +1684,10 @@ user_info(User, Server, Query, Lang) ->
 						    User, Server, R) of
 						 offline ->
 						     "";
-						 [{node, Node}, {conn, Conn}, {ip, {IP, Port}}] ->
+						 Info when is_list(Info) ->
+						     Node = proplists:get_value(node, Info),
+						     Conn = proplists:get_value(conn, Info),
+						     {IP, Port} = proplists:get_value(ip, Info),
 						     ConnS = case Conn of
 								 c2s -> "plain";
 								 c2s_tls -> "tls";
@@ -1695,6 +1712,27 @@ user_info(User, Server, Query, Lang) ->
 		 ?INPUTT("submit", "chpassword", "Change Password")],
     UserItems = ejabberd_hooks:run_fold(webadmin_user, LServer, [],
 					[User, Server, Lang]),
+    %% Code copied from list_given_users/5:
+    ModLast = get_lastactivity_module(Server),
+    LastActivity = case ejabberd_sm:get_user_resources(User, Server) of
+		       [] ->
+			   case ModLast:get_last_info(User, Server) of
+			       not_found ->
+				   ?T("Never");
+			       {ok, Shift, _Status} ->
+				   TimeStamp = {Shift div 1000000,
+						Shift rem 1000000,
+						0},
+				   {{Year, Month, Day}, {Hour, Minute, Second}} =
+				       calendar:now_to_local_time(TimeStamp),
+				   lists:flatten(
+				     io_lib:format(
+				       "~w-~.2.0w-~.2.0w ~.2.0w:~.2.0w:~.2.0w",
+				       [Year, Month, Day, Hour, Minute, Second]))
+			   end;
+		       _ ->
+			   ?T("Online")
+		   end,
     [?XC("h1", ?T("User ") ++ us_to_list(US))] ++
 	case Res of
 	    ok -> [?XREST("Submitted")];
@@ -1704,6 +1742,7 @@ user_info(User, Server, Query, Lang) ->
 	[?XAE("form", [{"action", ""}, {"method", "post"}],
 	      [?XCT("h3", "Connected Resources:")] ++ FResources ++
 	      [?XCT("h3", "Password:")] ++ FPassword ++
+	      [?XCT("h3", "Last Activity")] ++ [?C(LastActivity)] ++
 	      UserItems ++
 	      [?P, ?INPUTT("submit", "removeuser", "Remove User")])].
 

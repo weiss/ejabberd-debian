@@ -5,7 +5,7 @@
 %%% Created :  5 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -38,6 +38,7 @@
 	 pop_offline_messages/3,
 	 get_sm_features/5,
 	 remove_user/2,
+	 get_queue_length/2,
 	 webadmin_page/3,
 	 webadmin_user/4,
 	 webadmin_user_parse_query/5]).
@@ -375,7 +376,7 @@ user_queue(User, Server, Query, Lang) ->
     Username = ejabberd_odbc:escape(LUser),
     US = {LUser, LServer},
     Res = user_queue_parse_query(Username, LServer, Query),
-    Msgs = case catch ejabberd_odbc:sql_query(
+    MsgsAll = case catch ejabberd_odbc:sql_query(
 			LServer,
 			["select username, xml from spool"
 			 "  where username='", Username, "'"
@@ -393,6 +394,7 @@ user_queue(User, Server, Query, Lang) ->
 	       _ ->
 		   []
 	   end,
+    Msgs = get_messages_subset(User, Server, MsgsAll),
     FMsgs =
 	lists:map(
 	  fun({xmlelement, _Name, _Attrs, _Els} = Msg) ->
@@ -479,11 +481,8 @@ user_queue_parse_query(Username, LServer, Query) ->
 us_to_list({User, Server}) ->
     jlib:jid_to_string({User, Server, ""}).
 
-webadmin_user(Acc, User, Server, Lang) ->
-    LUser = jlib:nodeprep(User),
-    LServer = jlib:nameprep(Server),
-    Username = ejabberd_odbc:escape(LUser),
-    QueueLen = case catch ejabberd_odbc:sql_query(
+get_queue_length(Username, LServer) ->
+    case catch ejabberd_odbc:sql_query(
 			    LServer,
 			    ["select count(*) from spool"
 			     "  where username='", Username, "';"]) of
@@ -491,7 +490,32 @@ webadmin_user(Acc, User, Server, Lang) ->
 		       SCount;
 		   _ ->
 		       0
-	       end,
+	       end.
+
+get_messages_subset(User, Host, MsgsAll) ->
+    Access = gen_mod:get_module_opt(Host, ?MODULE, access_max_user_messages,
+				    max_user_offline_messages),
+    MaxOfflineMsgs = case get_max_user_messages(Access, User, Host) of
+			 Number when is_integer(Number) -> Number;
+			 _ -> 100
+		     end,
+    Length = length(MsgsAll),
+    get_messages_subset2(MaxOfflineMsgs, Length, MsgsAll).
+
+get_messages_subset2(Max, Length, MsgsAll) when Length =< Max*2 ->
+    MsgsAll;
+get_messages_subset2(Max, Length, MsgsAll) ->
+    FirstN = Max,
+    {MsgsFirstN, Msgs2} = lists:split(FirstN, MsgsAll),
+    MsgsLastN = lists:nthtail(Length - FirstN - FirstN, Msgs2),
+    IntermediateMsg = {xmlelement, "...", [], []},
+    MsgsFirstN ++ [IntermediateMsg] ++ MsgsLastN.
+
+webadmin_user(Acc, User, Server, Lang) ->
+    LUser = jlib:nodeprep(User),
+    LServer = jlib:nameprep(Server),
+    Username = ejabberd_odbc:escape(LUser),
+    QueueLen = get_queue_length(Username, LServer),
     FQueueLen = [?AC("queue/", QueueLen)],
     Acc ++ [?XCT("h3", "Offline Messages:")] ++ FQueueLen ++ [?C(" "), ?INPUTT("submit", "removealloffline", "Remove All Offline Messages")].
 

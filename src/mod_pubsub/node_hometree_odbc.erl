@@ -11,12 +11,12 @@
 %%% under the License.
 %%% 
 %%% The Initial Developer of the Original Code is ProcessOne.
-%%% Portions created by ProcessOne are Copyright 2006-2009, ProcessOne
+%%% Portions created by ProcessOne are Copyright 2006-2010, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2009, ProcessOne.
+%%% This software is copyright 2006-2010, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2009 ProcessOne
+%%% @copyright 2006-2010 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -394,6 +394,10 @@ unsubscribe_node(NodeId, Sender, Subscriber, SubId) ->
 		false ->
 		    {error, ?ERR_EXTENDED(?ERR_UNEXPECTED_REQUEST, "not-subscribed")}
 	    end;
+	%% Asking to remove all subscriptions to the given node
+	SubId == all ->
+	    [delete_subscription(SubKey, NodeId, S, Affiliation, Subscriptions) || S <- Subscriptions],
+	    {result, default};
 	%% No subid supplied, but there's only one matching
 	%% subscription, so use that.
 	length(Subscriptions) == 1 ->
