@@ -5,7 +5,7 @@
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -773,6 +773,15 @@ wait_for_bind({xmlstreamelement, El}, StateData) ->
 		    fsm_next_state(wait_for_bind, StateData);
 		_ ->
 		    JID = jlib:make_jid(U, StateData#state.server, R),
+		    %%Server = StateData#state.server,
+		    %%RosterVersioningFeature =
+		    %%	ejabberd_hooks:run_fold(
+		    %%  roster_get_versioning_feature, Server, [], [Server]),
+	            %%StreamFeatures = [{xmlelement, "session",
+		    %%		       [{"xmlns", ?NS_SESSION}], []} |
+		    %%		      RosterVersioningFeature],
+		    %%send_element(StateData, {xmlelement, "stream:features",
+		    %%			     [], StreamFeatures}),
 		    Res = IQ#iq{type = result,
 				sub_el = [{xmlelement, "bind",
 					   [{"xmlns", ?NS_BIND}],
@@ -816,12 +825,6 @@ wait_for_session({xmlstreamelement, El}, StateData) ->
 		    ?INFO_MSG("(~w) Opened session for ~s",
 			      [StateData#state.socket,
 			       jlib:jid_to_string(JID)]),
-		    SID = {now(), self()},
-		    Conn = get_conn_type(StateData),
-		    Info = [{ip, StateData#state.ip}, {conn, Conn},
-			    {auth_module, StateData#state.auth_module}],
-		    ejabberd_sm:open_session(
-		      SID, U, StateData#state.server, R, Info),
 		    Res = jlib:make_result_iq_reply(El),
 		    send_element(StateData, Res),
 		    change_shaper(StateData, JID),
@@ -838,6 +841,12 @@ wait_for_session({xmlstreamelement, El}, StateData) ->
 			  privacy_get_user_list, StateData#state.server,
 			  #userlist{},
 			  [U, StateData#state.server]),
+		    SID = {now(), self()},
+		    Conn = get_conn_type(StateData),
+		    Info = [{ip, StateData#state.ip}, {conn, Conn},
+			    {auth_module, StateData#state.auth_module}],
+		    ejabberd_sm:open_session(
+		      SID, U, StateData#state.server, R, Info),
                     NewStateData =
                         StateData#state{
 				     sid = SID,
@@ -1292,6 +1301,19 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
     end;
 handle_info({'DOWN', Monitor, _Type, _Object, _Info}, _StateName, StateData)
   when Monitor == StateData#state.socket_monitor ->
+    {stop, normal, StateData};
+handle_info(system_shutdown, StateName, StateData) ->
+    case StateName of
+       wait_for_stream ->
+           send_header(StateData, ?MYNAME, "1.0", "en"),
+           send_element(StateData, ?SERR_SYSTEM_SHUTDOWN),
+           send_trailer(StateData),
+           ok;
+       _ ->
+           send_element(StateData, ?SERR_SYSTEM_SHUTDOWN),
+           send_trailer(StateData),
+           ok
+    end,
     {stop, normal, StateData};
 handle_info(Info, StateName, StateData) ->
     ?ERROR_MSG("Unexpected info: ~p", [Info]),

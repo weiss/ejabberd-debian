@@ -5,7 +5,7 @@
 %%% Created :  5 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -39,6 +39,7 @@
 	 remove_expired_messages/0,
 	 remove_old_messages/1,
 	 remove_user/2,
+	 get_queue_length/2,
 	 webadmin_page/3,
 	 webadmin_user/4,
 	 webadmin_user_parse_query/5]).
@@ -529,8 +530,9 @@ webadmin_page(Acc, _, _) -> Acc.
 user_queue(User, Server, Query, Lang) ->
     US = {jlib:nodeprep(User), jlib:nameprep(Server)},
     Res = user_queue_parse_query(US, Query),
-    Msgs = lists:keysort(#offline_msg.timestamp,
-			 mnesia:dirty_read({offline_msg, US})),
+    MsgsAll = lists:keysort(#offline_msg.timestamp,
+			    mnesia:dirty_read({offline_msg, US})),
+    Msgs = get_messages_subset(User, Server, MsgsAll),
     FMsgs =
 	lists:map(
 	  fun(#offline_msg{timestamp = TimeStamp, from = From, to = To,
@@ -612,9 +614,32 @@ user_queue_parse_query(US, Query) ->
 us_to_list({User, Server}) ->
     jlib:jid_to_string({User, Server, ""}).
 
+get_queue_length(User, Server) ->
+    length(mnesia:dirty_read({offline_msg, {User, Server}})).
+
+get_messages_subset(User, Host, MsgsAll) ->
+    Access = gen_mod:get_module_opt(Host, ?MODULE, access_max_user_messages,
+				    max_user_offline_messages),
+    MaxOfflineMsgs = case get_max_user_messages(Access, User, Host) of
+			 Number when is_integer(Number) -> Number;
+			 _ -> 100
+		     end,
+    Length = length(MsgsAll),
+    get_messages_subset2(MaxOfflineMsgs, Length, MsgsAll).
+
+get_messages_subset2(Max, Length, MsgsAll) when Length =< Max*2 ->
+    MsgsAll;
+get_messages_subset2(Max, Length, MsgsAll) ->
+    FirstN = Max,
+    {MsgsFirstN, Msgs2} = lists:split(FirstN, MsgsAll),
+    MsgsLastN = lists:nthtail(Length - FirstN - FirstN, Msgs2),
+    NoJID = jlib:make_jid("...", "...", ""),
+    IntermediateMsg = #offline_msg{timestamp = now(), from = NoJID, to = NoJID,
+				   packet = {xmlelement, "...", [], []}},
+    MsgsFirstN ++ [IntermediateMsg] ++ MsgsLastN.
+
 webadmin_user(Acc, User, Server, Lang) ->
-    US = {jlib:nodeprep(User), jlib:nameprep(Server)},
-    QueueLen = length(mnesia:dirty_read({offline_msg, US})),
+    QueueLen = get_queue_length(jlib:nodeprep(User), jlib:nameprep(Server)),
     FQueueLen = [?AC("queue/",
 		     integer_to_list(QueueLen))],
     Acc ++ [?XCT("h3", "Offline Messages:")] ++ FQueueLen ++ [?C(" "), ?INPUTT("submit", "removealloffline", "Remove All Offline Messages")].

@@ -5,7 +5,7 @@
 %%% Created :  5 Mar 2005 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -427,6 +427,7 @@ is_group_enabled(Host, Group) ->
 	    false
     end.
 
+%% @spec (Host::string(), Group::string(), Opt::atom(), Default) -> OptValue | Default
 get_group_opt(Host, Group, Opt, Default) ->
     case catch mnesia:dirty_read(sr_group, {Group, Host}) of
 	[#sr_group{opts = Opts}] ->
@@ -437,7 +438,7 @@ get_group_opt(Host, Group, Opt, Default) ->
 		    Default
 	    end;
 	_ ->
-	    false
+	    Default
     end.
 
 get_group_users(Host, Group) ->

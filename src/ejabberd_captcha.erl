@@ -5,7 +5,7 @@
 %%% Created : 26 Apr 2008 by Evgeniy Khramtsov <xramtsov@gmail.com>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -328,7 +328,9 @@ get_prog_name() ->
 	FileName when is_list(FileName) ->
 	    FileName;
 	_ ->
-	    ""
+	    ?CRITICAL_MSG("The option captcha_cmd is not configured, but some "
+			  "module wants to use the CAPTCHA feature.", []),
+	    throw({error, option_not_configured_captcha_cmd})
     end.
 
 get_url(Str) ->
@@ -388,9 +390,10 @@ return(Port, TRef, Result) ->
     Result.
 
 is_feature_enabled() ->
-    case get_prog_name() of
-	"" -> false;
+    try get_prog_name() of
 	Prog when is_list(Prog) -> true
+    catch 
+	_:_ -> false
     end.
 
 is_feature_available() ->

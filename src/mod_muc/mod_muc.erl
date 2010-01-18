@@ -5,7 +5,7 @@
 %%% Created : 19 Mar 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -40,6 +40,7 @@
 	 forget_room/2,
 	 create_room/5,
 	 process_iq_disco_items/4,
+	 broadcast_service_message/2,
 	 can_use_nick/3]).
 
 %% gen_server callbacks
@@ -804,7 +805,7 @@ iq_get_vcard(Lang) ->
       [{xmlcdata, ?EJABBERD_URI}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(Lang, "ejabberd MUC module") ++
-	  "\nCopyright (c) 2003-2009 Alexey Shchepin"}]}].
+	  "\nCopyright (c) 2003-2010 Alexey Shchepin"}]}].
 
 
 broadcast_service_message(Host, Msg) ->
@@ -848,7 +849,6 @@ clean_table_from_bad_node(Node, Host) ->
 			      end, Es)
         end,
     mnesia:transaction(F).
-
 
 update_tables(Host) ->
     update_muc_room_table(Host),

@@ -1,4 +1,4 @@
-# $Id: Makefile.in 1977 2009-03-07 09:52:26Z badlop $
+# $Id: Makefile.in 2842 2009-12-29 19:10:52Z badlop $
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -24,7 +24,7 @@ EFLAGS += -pz ..
 
 # make debug=true to compile Erlang module with debug informations.
 ifdef debug
-	EFLAGS+=+debug_info
+	EFLAGS+=+debug_info +export_all
 endif
 
 ERLSHLIBS = ../stringprep_drv.so

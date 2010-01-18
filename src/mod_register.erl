@@ -5,7 +5,7 @@
 %%% Created :  8 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -218,7 +218,7 @@ try_register(User, Server, Password, Source, Lang) ->
 	    Access = gen_mod:get_module_opt(Server, ?MODULE, access, all),
 	    case acl:match_rule(Server, Access, JID) of
 		deny ->
-		    {error, ?ERR_CONFLICT};
+		    {error, ?ERR_FORBIDDEN};
 		allow ->
 		    case check_timeout(Source) of
 			true ->

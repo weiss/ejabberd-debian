@@ -5,7 +5,7 @@
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -31,6 +31,7 @@
 	 init/3,
 	 start_listeners/0,
 	 start_listener/3,
+	 stop_listeners/0,
 	 stop_listener/2,
 	 parse_listener_portip/2,
 	 add_listener/3,
@@ -127,10 +128,12 @@ init_udp(PortIP, Module, Opts, SockOpts, Port, IPS) ->
     end.
 
 init_tcp(PortIP, Module, Opts, SockOpts, Port, IPS) ->
-    SockOpts2 = case erlang:system_info(otp_release) >= "R13B" of
-	true -> [{send_timeout_close, true} | SockOpts];
-	false -> SockOpts
-    end,
+    SockOpts2 = try erlang:system_info(otp_release) >= "R13B" of
+		    true -> [{send_timeout_close, true} | SockOpts];
+		    false -> SockOpts
+		catch
+		    _:_ -> []
+		end,
     Res = gen_tcp:listen(Port, [binary,
 				{packet, 0},
 				{active, false},
@@ -303,6 +306,14 @@ start_listener_sup(Port, Module, Opts) ->
 		 worker,
 		 [?MODULE]},
     supervisor:start_child(ejabberd_listeners, ChildSpec).
+
+stop_listeners() ->
+    Ports = ejabberd_config:get_local_option(listen),
+    lists:foreach(
+      fun({PortIpNetp, Module, _Opts}) ->
+	      delete_listener(PortIpNetp, Module)
+      end,
+      Ports).
 
 %% @spec (PortIP, Module) -> ok
 %% where

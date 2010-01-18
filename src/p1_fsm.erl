@@ -14,7 +14,7 @@
 %% AB. All Rights Reserved.''
 %% 
 %% The code has been modified and improved by ProcessOne.
-%% Copyright 2007-2009, ProcessOne
+%% Copyright 2007-2010, ProcessOne
 %%
 %%  The change adds the following features:
 %%   - You can send exit(priority_shutdown) to the p1_fsm process to
@@ -26,7 +26,7 @@
 %%   message processing does not return in a given period of time, the
 %%   process will be terminated.
 %% 
-%%     $Id: p1_fsm.erl 2644 2009-10-07 13:41:36Z ekhramtsov $
+%%     $Id: p1_fsm.erl 2891 2010-01-12 16:11:32Z badlop $
 %%
 -module(p1_fsm).
 
