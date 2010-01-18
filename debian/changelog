@@ -1,3 +1,10 @@
+ejabberd (2.1.2-1) unstable; urgency=low
+
+  [ Gerfried Fuchs ]
+  * New upstream release.
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Mon, 18 Jan 2010 21:59:43 +0100
+
 ejabberd (2.1.1-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
