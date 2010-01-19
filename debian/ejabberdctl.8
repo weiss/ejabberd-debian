@@ -212,6 +212,13 @@ Report number of established users' sessions.
 .BI connected\-users
 Print full JIDs of all established sessions, one on a line.
 .TP
+.BI connected\-users\-info
+Print detailed information of all established sessions, one session on a line,
+with each session described as a list of whitespace-separated values: full JID,
+connection string (such as "c2s", "c2s_tls" etc), client IP address,
+client port number, resource priority, name of an Erlang node serving the session,
+session duration (in seconds).
+.TP
 .BI registered\-users " server"
 List all the users registered on the ejabberd server
 at the virtual host \fIserver\fP.
