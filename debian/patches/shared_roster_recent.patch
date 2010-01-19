@@ -6,10 +6,10 @@ See http://wiki.laptop.org/go/Ejabberd_Configuration
 
 Index: pkg-ejabberd/src/mod_shared_roster.erl
 ===================================================================
---- pkg-ejabberd.orig/src/mod_shared_roster.erl	2010-01-13 05:19:53.000000000 +0300
-+++ pkg-ejabberd/src/mod_shared_roster.erl	2010-01-13 05:20:11.000000000 +0300
-@@ -440,13 +440,63 @@
- 	    false
+--- pkg-ejabberd.orig/src/mod_shared_roster.erl	2010-01-20 02:10:01.000000000 +0300
++++ pkg-ejabberd/src/mod_shared_roster.erl	2010-01-20 02:11:31.000000000 +0300
+@@ -441,13 +441,63 @@
+ 	    Default
      end.
  
 +-record(last_activity, {us, timestamp, status}).
@@ -73,7 +73,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
  
  get_group_users(_User, Host, Group, GroupOpts) ->
      case proplists:get_value(all_users, GroupOpts, false) of
-@@ -454,7 +504,14 @@
+@@ -455,7 +505,14 @@
  	    ejabberd_auth:get_vh_registered_users(Host);
  	false ->
  	    []
@@ -89,7 +89,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
  
  %% @spec (Host::string(), Group::string()) -> [{User::string(), Server::string()}]
  get_group_explicit_users(Host, Group) ->
-@@ -476,7 +533,8 @@
+@@ -477,7 +534,8 @@
  get_special_users_groups(Host) ->
      lists:filter(
        fun(Group) ->
@@ -99,7 +99,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
        end,
        list_groups(Host)).
  
-@@ -829,6 +887,7 @@
+@@ -830,6 +888,7 @@
      Name = get_opt(GroupOpts, name, ""),
      Description = get_opt(GroupOpts, description, ""),
      AllUsers = get_opt(GroupOpts, all_users, false),
@@ -107,7 +107,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
      %%Disabled = false,
      DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
      Members = mod_shared_roster:get_group_explicit_users(Host, Group),
-@@ -838,7 +897,14 @@
+@@ -839,7 +898,14 @@
  		"@all@\n";
  	    true ->
  		[]
@@ -123,7 +123,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
      FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
      DescNL = length(element(2, regexp:split(Description, "\n"))),
      FGroup =
-@@ -922,6 +988,8 @@
+@@ -923,6 +989,8 @@
  			  case SJID of
  			      "@all@" ->
  				  USs;
@@ -132,7 +132,7 @@ Index: pkg-ejabberd/src/mod_shared_roster.erl
  			      _ ->
  				  case jlib:string_to_jid(SJID) of
  				      JID when is_record(JID, jid) ->
-@@ -936,10 +1004,17 @@
+@@ -937,10 +1005,17 @@
  		    true -> [{all_users, true}];
  		    false -> []
  		end,
