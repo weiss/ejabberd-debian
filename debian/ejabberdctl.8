@@ -53,6 +53,26 @@ authenticate the entity requesting execution of the command.
 and \fIpassword\fP is either a plain text password to authenticate
 that JID or the MD5 hash of that password.
 
+.TP
+.BI \-\-concurrent
+Due to the way \fBejabberdctl\fR is implemented, it is normally not
+possible to run two instances of it in parallel\(enthe second one
+will fail.
+This is OK in a common case when \fBejabberdctl\fR is only
+run manually from time to time by a server administrator; if, conversely,
+there is a chance for several instances of \fBejabberdctl\fR to be active
+at the same time (say, automated registration of new users on an actively
+used site), you can pass the \fI\-\-concurrent\fP option to
+\fBejabberdctl\fR which will ensure no clash will ever occur.
+.IP
+Usage of the \fI\-\-concurrent\fP option creates additional pressure on
+the server resources, and that is why the behaviour it implements
+is not the default.
+This issue is described in more detail in
+/usr/share/doc/ejabberd/README.Debian
+.IP
+Note that the semantics of this option can be changed in a future release.
+
 .SH COMMANDS
 
 .PP
