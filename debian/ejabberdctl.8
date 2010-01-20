@@ -103,6 +103,18 @@ Requests status of the Erlang virtual machine where ejabberd server is running.
 .BI stop
 Stops the ejabberd server and Erlang virtual machine.
 .TP
+.BI stop-kindly " delay announcement"
+Broadcast an announcement \fIannouncement\fP to all connected
+users, wait \fIdelay\fP seconds and then stop the ejabberd server and
+its Erlang virtual machine.
+.IP
+This command is interactive: it dumps the progress of the shutdown
+sequence to stdout (including waiting for the grace period to pass).
+.IP
+The \fIannouncement\fP string is unconditionally interpreted as
+a sequence of UTF-8 characters no matter what locale settings
+the server and ejabberdctl processes see.
+.TP
 .BI restart
 Restarts the ejabberd server inside Erlang virtual machine. Note that if you want
 to change VM options (enable/disable kernel poll or SMP, increase number of ports
