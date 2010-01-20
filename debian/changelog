@@ -5,6 +5,8 @@ ejabberd (2.1.2-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
   * Refresh shared_roster_online.patch and shared_roster_recent.patch
+  * Add ejabberdctl-help-dashes.patch which allows to spell commands
+    passed to `ejabberdctl help` using "-" as a word separator.
   * Document connected-users-info and stop-kindly ejabberdctl commands.
   * Document --concurrent option of ejabberdctl.
   * Shorten Vcs-Browser string in debian/control

@@ -1,0 +1,23 @@
+This patch allows usage of dashes ("-") as word separators
+when passing names of ejabberdctl commands to the "help"
+ejabberdctl command, as in `ejabberdctl help connected-users`.
+
+The change was introduced upstream in revision 2917 of the
+http://svn.process-one.net/ejabberd/trunk
+
+The first release to contain the fix will be 3.0.0.
+
+--- a/src/ejabberd_ctl.erl	(revision 2916)
++++ b/src/ejabberd_ctl.erl	(revision 2917)
+@@ -189,8 +189,9 @@
+ 	["help"] ->
+ 	    print_usage_help(MaxC, ShCode),
+ 	    ?STATUS_SUCCESS;
+-	[CommandString | _] ->
+-	    print_usage_commands(CommandString, MaxC, ShCode),
++	[CmdString | _] ->
++	    {ok, CmdStringU, _} = regexp:gsub(CmdString, "-", "_"),
++	    print_usage_commands(CmdStringU, MaxC, ShCode),
+ 	    ?STATUS_SUCCESS
+     end;
+ 
