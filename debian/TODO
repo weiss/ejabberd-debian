@@ -1,3 +1,32 @@
+* Ponder reimplementing the logic of allowing several
+  instances of ejabberdctl to run in parallel while
+  not overflowing the server's atom table.
+
+  The idea is to modify the solution offered by Martin Langhoff
+  at http://lists.jabber.ru/pipermail/ejabberd/2009-December/005627.html 
+  which is clever (uses the flock program, which is essential
+  in Debian and so can be relied upon) but weak in that
+  any "extra" instance will still fail.
+
+  The current plan is to go this route:
+  - Hardcode some limit on the number of parallel instances
+    into ejabberdctl but allow to override it using a command-line
+    argument (say, via --concurrent N).
+  - Upon startup, lock a well-known file under /var/lock/ejabberd
+    in a "blocking forever" mode, that is, if a file is already
+    locked, wait for unlock.
+  - After acquiring the lock, iterate over a sequence 1..N
+    trying to lock specific ("instance") lock files.
+  - Upon successful locking of any of these files, release the
+    "master" lock and continue working.
+  - At exit, unlock the "instance" file and remove it.
+
+  This way, no instance will ever (soft-) fail: they'll be queued
+  for execution while waiting on the "master lock".
+  And the server's atom table will be safe from overflowing as
+  there will ever see at most N unique node names of connecting
+  Erlang nodes running ejabberdctl instances.
+
 * Fix lintian warnings where possible.
 
 * In debconf code, check if the user name contains
@@ -28,6 +57,14 @@
 
 ejabberdctl.8 tasks
 ===================
+
+* It seems (from the stop-kindly command) that ejabberdctl
+  assumes all strings it is passed are encoded in UTF-8
+  no matter what locale settings it and the server see.
+  This is now documented for stop-kindly, but some testing
+  should be done to support or disprove this hypothesis;
+  if it is true, we should document this behaviour
+  exactly once in the man page.
 
 * get-cookie
   Verify the claim made about its functionality.
