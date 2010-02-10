@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
 Uploaders: Gerfried Fuchs <rhonda@debian.at>, Konstantin Khomoutov <flatworm@users.sourceforge.net>
 Build-Depends: debhelper (>= 7.3), quilt, erlang-nox, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev, po-debconf
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 Homepage: http://www.process-one.net/en/projects/ejabberd/
 Vcs-Git: git://git.debian.org/git/collab-maint/pkg-ejabberd.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-ejabberd.git
