@@ -1,3 +1,10 @@
+ejabberd (2.1.2-3) unstable; urgency=low
+
+  * Tighten dependency on debhelper to >= 7.3
+    (closes: #569152).
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Wed, 10 Feb 2010 15:23:10 +0300
+
 ejabberd (2.1.2-2) unstable; urgency=high
 
   * Integrate upstream patches for EJAB-1173,
