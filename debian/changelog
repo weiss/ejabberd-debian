@@ -1,4 +1,4 @@
-ejabberd (2.0.5-2) unstable; urgency=high
+ejabberd (2.0.5-1.1.squeeze1) testing-security; urgency=high
 
   * Integrate upstream fix for EJAB-1173 and CVE-2010-0305
     ("remote denial of service via too many client2server messages").
