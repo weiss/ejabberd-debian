@@ -12,3 +12,4 @@ web.patch
 pubsub_upgrade_tables.patch
 mod_muc_log_xss_fix.patch
 fsm_queue_limit.patch
+def_max_fsm_queue.patch

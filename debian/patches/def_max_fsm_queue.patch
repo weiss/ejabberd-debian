@@ -1,0 +1,54 @@
+This patch implements support for "default configuration options"
+and sets one of them -- max_fsm_queue to the value of 1000.
+
+Default options are hardcoded and are silently overridden
+by the same-named options read from the ejabberd configuration file
+and/or the configuration database tables.
+That is, if the user does not specify a particular option
+in the configuration file, and a default value is provided for
+this option, that value will be used and pushed to an appropriate
+configuration table in the ejabberd database.
+
+In particular, this device is used to provide proper fix
+for the CVE-2010-0305 issue (Debian bug #568383) which does not
+require patching the configuration file (to simplify upgrading).
+
+Index: pkg-ejabberd/src/ejabberd_config.erl
+===================================================================
+--- pkg-ejabberd.orig/src/ejabberd_config.erl	2010-02-23 00:48:08.000000000 +0000
++++ pkg-ejabberd/src/ejabberd_config.erl	2010-02-23 00:48:36.000000000 +0000
+@@ -60,7 +60,8 @@
+ 
+ load_file(File) ->
+     case file:consult(File) of
+-	{ok, Terms} ->
++	{ok, FileTerms} ->
++	    Terms = apply_defaults(FileTerms, get_defaults()),
+ 	    State = lists:foldl(fun search_hosts/2, #state{}, Terms),
+ 	    Res = lists:foldl(fun process_term/2, State, Terms),
+ 	    set_opts(Res);
+@@ -233,6 +234,24 @@
+     end.
+ 
+ 
++%% Default options for ejabberd configuration file.
++get_defaults() ->
++    [
++       {max_fsm_queue, 1000}
++    ].
++
++
++%% Drop all tuples from Defaults whose keys match
++%% keys of tuples of Terms and return a list which is
++%% a concatenation of the rest of the elements of Defaults
++%% and all the elements of Terms.
++apply_defaults(Terms, Defaults) ->
++    Unset = lists:filter(fun(Def) ->
++	not lists:keymember(Def, 1, Terms)
++    end, Defaults),
++    lists:append(Terms, Unset).
++
++
+ set_opts(State) ->
+     Opts = lists:reverse(State#state.opts),
+     F = fun() ->
