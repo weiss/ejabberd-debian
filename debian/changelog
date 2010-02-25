@@ -1,3 +1,10 @@
+ejabberd (2.0.1-6+lenny1) stable-security; urgency=high
+
+  * Apply upstream security fix for CVE-2009-0934.
+    (Closes: #520852)
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 16 Apr 2009 04:17:58 +0400
+
 ejabberd (2.0.1-6) unstable; urgency=high
 
   * Add backported patch pubsub_upgrade_tables.patch that fixes the broken
