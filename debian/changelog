@@ -5,11 +5,13 @@ ejabberd (2.1.2-3) unstable; urgency=low
     (closes: #569152).
   * Add global option max_fsm_queue set to 1000
     to the configuration file (amendment to the fix for #568383).
+  * Use $remote_fs facility in init-script as ejabberd uses files
+    under /urs (fixes lintian error).
 
   [ Gerfried Fuchs ]
   * Bump Standards-Version to 3.8.4.
 
- -- Gerfried Fuchs <rhonda@debian.at>  Wed, 10 Feb 2010 23:47:44 +0100
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 28 Feb 2010 22:11:26 +0300
 
 ejabberd (2.1.2-2) unstable; urgency=high
 
