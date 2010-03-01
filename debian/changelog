@@ -1,3 +1,11 @@
+ejabberd (2.0.1-6+lenny2) stable-security; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Backport upstream patch for p1_fsm/max_fsm_queue, fixing CVE-2009-0934.
+  * Add support for default value of max_fsm_queue.
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Mon, 01 Mar 2010 23:10:05 +0100
+
 ejabberd (2.0.1-6+lenny1) stable-security; urgency=high
 
   * Apply upstream security fix for CVE-2009-0934.
