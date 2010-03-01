@@ -19,6 +19,9 @@ if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
     export HOME
 fi
 
+ERL_CRASH_DUMP=/var/log/ejabberd/erl_crash.dump
+export ERL_CRASH_DUMP
+
 ERL=/usr/bin/erl
 EBIN_DIR=/usr/lib/ejabberd/ebin
 SUFFIX=''
