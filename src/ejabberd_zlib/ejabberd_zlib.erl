@@ -5,7 +5,7 @@
 %%% Created : 19 Jan 2006 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -35,6 +35,7 @@
 	 recv/2, recv/3, recv_data/2,
 	 setopts/2,
 	 sockname/1, peername/1,
+	 get_sockmod/1,
 	 controlling_process/2,
 	 close/1]).
 
@@ -100,7 +101,7 @@ enable_zlib(SockMod, Socket) ->
     end,
     Port = open_port({spawn, ejabberd_zlib_drv}, [binary]),
     {ok, #zlibsock{sockmod = SockMod, socket = Socket, zlibport = Port}}.
-    
+
 disable_zlib(#zlibsock{sockmod = SockMod, socket = Socket, zlibport = Port}) ->
     port_close(Port),
     {SockMod, Socket}.
@@ -116,7 +117,28 @@ recv(#zlibsock{sockmod = SockMod, socket = Socket} = ZlibSock,
 	    Error
     end.
 
-recv_data(#zlibsock{zlibport = Port} = _ZlibSock, Packet) ->
+recv_data(#zlibsock{sockmod = SockMod, socket = Socket} = ZlibSock, Packet) ->
+    case SockMod of
+	gen_tcp ->
+	    recv_data2(ZlibSock, Packet);
+	_ ->
+	    case SockMod:recv_data(Socket, Packet) of
+		{ok, Packet2} ->
+		    recv_data2(ZlibSock, Packet2);
+		Error ->
+		    Error
+	    end
+    end.
+
+recv_data2(ZlibSock, Packet) ->
+    case catch recv_data1(ZlibSock, Packet) of
+	{'EXIT', Reason} ->
+	    {error, Reason};
+	Res ->
+	    Res
+    end.
+
+recv_data1(#zlibsock{zlibport = Port} = _ZlibSock, Packet) ->
     case port_control(Port, ?INFLATE, Packet) of
 	<<0, In/binary>> ->
 	    {ok, In};
@@ -149,6 +171,9 @@ sockname(#zlibsock{sockmod = SockMod, socket = Socket}) ->
 	_ ->
 	    SockMod:sockname(Socket)
     end.
+
+get_sockmod(#zlibsock{sockmod = SockMod}) ->
+    SockMod.
 
 peername(#zlibsock{sockmod = SockMod, socket = Socket}) ->
     case SockMod of

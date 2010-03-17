@@ -6,7 +6,7 @@
 %%% Created : 23 Aug 2005 by Magnus Henoch <henoch@dtek.chalmers.se>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -27,7 +27,7 @@
 
 -module(cyrsasl_anonymous).
 
--export([start/1, stop/0, mech_new/3, mech_step/2]).
+-export([start/1, stop/0, mech_new/4, mech_step/2]).
 
 -behaviour(cyrsasl).
 
@@ -40,7 +40,7 @@ start(_Opts) ->
 stop() ->
     ok.
 
-mech_new(Host, _GetPassword, _CheckPassword) ->
+mech_new(Host, _GetPassword, _CheckPassword, _CheckPasswordDigest) ->
     {ok, #state{server = Host}}.
 
 mech_step(State, _ClientIn) ->

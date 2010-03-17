@@ -5,7 +5,7 @@
 %%% Created : 11 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -24,6 +24,15 @@
 %%%
 %%%----------------------------------------------------------------------
 
+%%% @doc Roster management (Mnesia storage).
+%%%
+%%% Includes support for XEP-0237: Roster Versioning.
+%%% The roster versioning follows an all-or-nothing strategy:
+%%%  - If the version supplied by the client is the latest, return an empty response.
+%%%  - If not, return the entire new roster (with updated version string).
+%%% Roster version is a hash digest of the entire roster.
+%%% No additional data is stored in DB.
+
 -module(mod_roster).
 -author('alexey@process-one.net').
 
@@ -40,8 +49,12 @@
 	 set_items/3,
 	 remove_user/2,
 	 get_jid_info/4,
+	 item_to_xml/1,
 	 webadmin_page/3,
-	 webadmin_user/4]).
+	 webadmin_user/4,
+	 get_versioning_feature/2,
+	 roster_versioning_enabled/1,
+	 roster_version/2]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -54,8 +67,12 @@ start(Host, Opts) ->
     IQDisc = gen_mod:get_opt(iqdisc, Opts, one_queue),
     mnesia:create_table(roster,[{disc_copies, [node()]},
 				{attributes, record_info(fields, roster)}]),
+    mnesia:create_table(roster_version, [{disc_copies, [node()]},
+    				{attributes, record_info(fields, roster_version)}]),
+
     update_table(),
     mnesia:add_table_index(roster, us),
+    mnesia:add_table_index(roster_version, us),
     ejabberd_hooks:add(roster_get, Host,
 		       ?MODULE, get_user_roster, 50),
     ejabberd_hooks:add(roster_in_subscription, Host,
@@ -72,6 +89,8 @@ start(Host, Opts) ->
 		       ?MODULE, remove_user, 50),
     ejabberd_hooks:add(resend_subscription_requests_hook, Host,
 		       ?MODULE, get_in_pending_subscriptions, 50),
+    ejabberd_hooks:add(roster_get_versioning_feature, Host,
+		       ?MODULE, get_versioning_feature, 50),
     ejabberd_hooks:add(webadmin_page_host, Host,
 		       ?MODULE, webadmin_page, 50),
     ejabberd_hooks:add(webadmin_user, Host,
@@ -96,31 +115,14 @@ stop(Host) ->
 			  ?MODULE, remove_user, 50),
     ejabberd_hooks:delete(resend_subscription_requests_hook, Host,
 			  ?MODULE, get_in_pending_subscriptions, 50),
+    ejabberd_hooks:delete(roster_get_versioning_feature, Host,
+		          ?MODULE, get_versioning_feature, 50),
     ejabberd_hooks:delete(webadmin_page_host, Host,
 			  ?MODULE, webadmin_page, 50),
     ejabberd_hooks:delete(webadmin_user, Host,
 			  ?MODULE, webadmin_user, 50),
     gen_iq_handler:remove_iq_handler(ejabberd_sm, Host, ?NS_ROSTER).
 
-
--define(PSI_ROSTER_WORKAROUND, true).
-
--ifdef(PSI_ROSTER_WORKAROUND).
-
-process_iq(From, To, IQ) ->
-    #iq{sub_el = SubEl} = IQ,
-    #jid{lserver = LServer} = From,
-    case lists:member(LServer, ?MYHOSTS) of
-	true ->
-	    ResIQ = process_local_iq(From, To, IQ),
-	    ejabberd_router:route(From, From,
-				  jlib:iq_to_xml(ResIQ)),
-	    ignore;
-	_ ->
-	    IQ#iq{type = error, sub_el = [SubEl, ?ERR_ITEM_NOT_FOUND]}
-    end.
-
--else.
 
 process_iq(From, To, IQ) ->
     #iq{sub_el = SubEl} = IQ,
@@ -132,8 +134,6 @@ process_iq(From, To, IQ) ->
 	    IQ#iq{type = error, sub_el = [SubEl, ?ERR_ITEM_NOT_FOUND]}
     end.
 
--endif.
-
 process_local_iq(From, To, #iq{type = Type} = IQ) ->
     case Type of
 	set ->
@@ -142,22 +142,96 @@ process_local_iq(From, To, #iq{type = Type} = IQ) ->
 	    process_iq_get(From, To, IQ)
     end.
 
+roster_hash(Items) ->
+	sha:sha(term_to_binary(
+		lists:sort(
+			[R#roster{groups = lists:sort(Grs)} || 
+				R = #roster{groups = Grs} <- Items]))).
+		
+roster_versioning_enabled(Host) ->
+    gen_mod:get_module_opt(Host, ?MODULE, versioning, false).
 
+roster_version_on_db(Host) ->
+    gen_mod:get_module_opt(Host, ?MODULE, store_current_id, false).
 
+%% Returns a list that may contain an xmlelement with the XEP-237 feature if it's enabled.
+get_versioning_feature(Acc, Host) ->
+    case roster_versioning_enabled(Host) of
+	true ->
+	    Feature = {xmlelement,
+		       "ver",
+		       [{"xmlns", ?NS_ROSTER_VER}],
+		       [{xmlelement, "optional", [], []}]},
+	    [Feature | Acc];
+	false -> []
+    end.
+
+roster_version(LServer ,LUser) ->
+	US = {LUser, LServer},
+	case roster_version_on_db(LServer) of
+		true ->
+			case mnesia:dirty_read(roster_version, US) of
+				[#roster_version{version = V}] -> V;
+				[] -> not_found
+			end;
+		false ->
+			roster_hash(ejabberd_hooks:run_fold(roster_get, LServer, [], [US]))
+	end.
+
+%% Load roster from DB only if neccesary. 
+%% It is neccesary if
+%%     - roster versioning is disabled in server OR
+%%     - roster versioning is not used by the client OR
+%%     - roster versioning is used by server and client, BUT the server isn't storing versions on db OR
+%%     - the roster version from client don't match current version.
 process_iq_get(From, To, #iq{sub_el = SubEl} = IQ) ->
     LUser = From#jid.luser,
     LServer = From#jid.lserver,
     US = {LUser, LServer},
-    case catch ejabberd_hooks:run_fold(roster_get, To#jid.lserver, [], [US]) of
-	Items when is_list(Items) ->
-	    XItems = lists:map(fun item_to_xml/1, Items),
-	    IQ#iq{type = result,
-		  sub_el = [{xmlelement, "query",
-			     [{"xmlns", ?NS_ROSTER}],
-			     XItems}]};
-	_ ->
-	    IQ#iq{type = error, sub_el = [SubEl, ?ERR_INTERNAL_SERVER_ERROR]}
+    try
+	    {ItemsToSend, VersionToSend} = 
+		case {xml:get_tag_attr("ver", SubEl), 
+		      roster_versioning_enabled(LServer),
+		      roster_version_on_db(LServer)} of
+		{{value, RequestedVersion}, true, true} ->
+			%% Retrieve version from DB. Only load entire roster
+			%% when neccesary.
+			case mnesia:dirty_read(roster_version, US) of
+				[#roster_version{version = RequestedVersion}] ->
+					{false, false};
+				[#roster_version{version = NewVersion}] ->
+					{lists:map(fun item_to_xml/1, 
+						ejabberd_hooks:run_fold(roster_get, To#jid.lserver, [], [US])), NewVersion};
+				[] ->
+					RosterVersion = sha:sha(term_to_binary(now())),
+					mnesia:dirty_write(#roster_version{us = US, version = RosterVersion}),
+					{lists:map(fun item_to_xml/1,
+						ejabberd_hooks:run_fold(roster_get, To#jid.lserver, [], [US])), RosterVersion}
+			end;
+
+		{{value, RequestedVersion}, true, false} ->
+			RosterItems = ejabberd_hooks:run_fold(roster_get, To#jid.lserver, [] , [US]),
+			case roster_hash(RosterItems) of
+				RequestedVersion ->
+					{false, false};
+				New ->
+					{lists:map(fun item_to_xml/1, RosterItems), New}
+			end;
+			
+		_ ->
+			{lists:map(fun item_to_xml/1, 
+					ejabberd_hooks:run_fold(roster_get, To#jid.lserver, [], [US])), false}
+		end,
+		IQ#iq{type = result, sub_el = case {ItemsToSend, VersionToSend} of
+					 	 {false, false} ->  [];
+						 {Items, false} -> [{xmlelement, "query", [{"xmlns", ?NS_ROSTER}], Items}];
+						 {Items, Version} -> [{xmlelement, "query", [{"xmlns", ?NS_ROSTER}, {"ver", Version}], Items}]
+						end}
+    catch 
+    	_:_ ->  
+		IQ#iq{type =error, sub_el = [SubEl, ?ERR_INTERNAL_SERVER_ERROR]}
     end.
+
 
 get_user_roster(Acc, US) ->
     case catch mnesia:dirty_index_read(roster, US, #roster.us) of
@@ -246,6 +320,10 @@ process_item_set(From, To, {xmlelement, _Name, Attrs, Els}) ->
 			%% subscription information from there:
 			Item3 = ejabberd_hooks:run_fold(roster_process_item,
 							LServer, Item2, [LServer]),
+			case roster_version_on_db(LServer) of
+				true -> mnesia:write(#roster_version{us = {LUser, LServer}, version = sha:sha(term_to_binary(now()))});
+				false -> ok
+			end,
 			{Item, Item3}
 		end,
 	    case mnesia:transaction(F) of
@@ -322,26 +400,16 @@ push_item(User, Server, From, Item) ->
 		       [{item,
 			 Item#roster.jid,
 			 Item#roster.subscription}]}),
-    lists:foreach(fun(Resource) ->
+    case roster_versioning_enabled(Server) of
+	true ->
+		push_item_version(Server, User, From, Item, roster_version(Server, User));
+	false ->
+	    lists:foreach(fun(Resource) ->
 			  push_item(User, Server, Resource, From, Item)
-		  end, ejabberd_sm:get_user_resources(User, Server)).
+		  end, ejabberd_sm:get_user_resources(User, Server))
+    end.
 
 % TODO: don't push to those who didn't load roster
--ifdef(PSI_ROSTER_WORKAROUND).
-
-push_item(User, Server, Resource, _From, Item) ->
-    ResIQ = #iq{type = set, xmlns = ?NS_ROSTER,
-		id = "push",
-		sub_el = [{xmlelement, "query",
-			   [{"xmlns", ?NS_ROSTER}],
-			   [item_to_xml(Item)]}]},
-    ejabberd_router:route(
-      jlib:make_jid(User, Server, Resource),
-      jlib:make_jid(User, Server, Resource),
-      jlib:iq_to_xml(ResIQ)).
-
--else.
-
 push_item(User, Server, Resource, From, Item) ->
     ResIQ = #iq{type = set, xmlns = ?NS_ROSTER,
 		id = "push" ++ randoms:get_string(),
@@ -353,7 +421,24 @@ push_item(User, Server, Resource, From, Item) ->
       jlib:make_jid(User, Server, Resource),
       jlib:iq_to_xml(ResIQ)).
 
--endif.
+%% @doc Roster push, calculate and include the version attribute.
+%% TODO: don't push to those who didn't load roster
+push_item_version(Server, User, From, Item, RosterVersion)  ->
+    lists:foreach(fun(Resource) ->
+			  push_item_version(User, Server, Resource, From, Item, RosterVersion)
+		end, ejabberd_sm:get_user_resources(User, Server)).
+
+push_item_version(User, Server, Resource, From, Item, RosterVersion) ->
+    IQPush = #iq{type = 'set', xmlns = ?NS_ROSTER,
+		 id = "push" ++ randoms:get_string(),
+		 sub_el = [{xmlelement, "query",
+			    [{"xmlns", ?NS_ROSTER},
+			     {"ver", RosterVersion}],
+			    [item_to_xml(Item)]}]},
+    ejabberd_router:route(
+      From,
+      jlib:make_jid(User, Server, Resource),
+      jlib:iq_to_xml(IQPush)).
 
 get_subscription_lists(_, User, Server) ->
     LUser = jlib:nodeprep(User),
@@ -445,6 +530,10 @@ process_subscription(Direction, User, Server, JID1, Type, Reason) ->
 					      ask = Pending,
 					      askmessage = list_to_binary(AskMessage)},
 			mnesia:write(NewItem),
+			case roster_version_on_db(LServer) of
+				true -> mnesia:write(#roster_version{us = {LUser, LServer}, version = sha:sha(term_to_binary(now()))});
+				false -> ok
+			end,
 			{{push, NewItem}, AutoReply}
 		end
 	end,
@@ -714,7 +803,7 @@ get_in_pending_subscriptions(Ls, User, Server) ->
     JID = jlib:make_jid(User, Server, ""),
     US = {JID#jid.luser, JID#jid.lserver},
     case mnesia:dirty_index_read(roster, US, #roster.us) of
-	Result when list(Result) ->
+	Result when is_list(Result) ->
     	    Ls ++ lists:map(
 		    fun(R) ->
 			    Message = R#roster.askmessage,
@@ -871,9 +960,9 @@ user_roster(User, Server, Query, Lang) ->
 						  [?C(Group), ?BR]
 					  end, R#roster.groups),
 				    Pending = ask_to_pending(R#roster.ask),
+				    TDJID = build_contact_jid_td(R#roster.jid),
 				    ?XE("tr",
-					[?XAC("td", [{"class", "valign"}],
-					      jlib:jid_to_string(R#roster.jid)),
+					[TDJID,
 					 ?XAC("td", [{"class", "valign"}],
 					      R#roster.name),
 					 ?XAC("td", [{"class", "valign"}],
@@ -900,8 +989,8 @@ user_roster(User, Server, Query, Lang) ->
 	end,
     [?XC("h1", ?T("Roster of ") ++ us_to_list(US))] ++
 	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
+	    ok -> [?XREST("Submitted")];
+	    error -> [?XREST("Bad format")];
 	    nothing -> []
 	end ++
 	[?XAE("form", [{"action", ""}, {"method", "post"}],
@@ -910,6 +999,24 @@ user_roster(User, Server, Query, Lang) ->
 	       ?INPUT("text", "newjid", ""), ?C(" "),
 	       ?INPUTT("submit", "addjid", "Add Jabber ID")
 	      ])].
+
+build_contact_jid_td(RosterJID) ->
+    %% Convert {U, S, R} into {jid, U, S, R, U, S, R}:
+    ContactJID = jlib:make_jid(RosterJID),
+    JIDURI = case {ContactJID#jid.luser, ContactJID#jid.lserver} of
+		 {"", _} -> "";
+		 {CUser, CServer} ->
+		     case lists:member(CServer, ?MYHOSTS) of
+			 false -> "";
+			 true -> "/admin/server/" ++ CServer ++ "/user/" ++ CUser ++ "/"
+		     end
+	     end,
+    case JIDURI of
+	[] ->
+	    ?XAC("td", [{"class", "valign"}], jlib:jid_to_string(RosterJID));
+	URI when is_list(URI) ->
+	    ?XAE("td", [{"class", "valign"}], [?AC(JIDURI, jlib:jid_to_string(RosterJID))])
+    end.
 
 user_roster_parse_query(User, Server, Items, Query) ->
     case lists:keysearch("addjid", 1, Query) of

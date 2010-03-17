@@ -5,7 +5,7 @@
 %%% Created : 12 Nov 2006 by Evgeniy Khramtsov <xram@jabber.ru>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -29,10 +29,12 @@
 
 %% API
 -export([
-	 start_link/6,
+	 start_link/7,
 	 bind/3,
 	 search/2
 	]).
+
+-include("ejabberd.hrl").
 
 %%====================================================================
 %% API
@@ -43,12 +45,12 @@ bind(PoolName, DN, Passwd) ->
 search(PoolName, Opts) ->
     do_request(PoolName, {search, [Opts]}).
 
-start_link(Name, Hosts, Backups, Port, Rootdn, Passwd) ->
+start_link(Name, Hosts, Backups, Port, Rootdn, Passwd, Encrypt) ->
     PoolName = make_id(Name),
     pg2:create(PoolName),
     lists:foreach(fun(Host) ->
 			  ID = erlang:ref_to_list(make_ref()),
-			  case catch eldap:start_link(ID, [Host|Backups], Port, Rootdn, Passwd) of
+			  case catch eldap:start_link(ID, [Host|Backups], Port, Rootdn, Passwd, Encrypt) of
 			      {ok, Pid} ->
 				  pg2:join(PoolName, Pid);
 			      _ ->
@@ -64,6 +66,8 @@ do_request(Name, {F, Args}) ->
 	Pid when is_pid(Pid) ->
 	    case catch apply(eldap, F, [Pid | Args]) of
 		{'EXIT', Reason} ->
+		    ?ERROR_MSG("LDAP request failed: eldap:~p(~p)~nReason: ~p",
+			       [F, Args, Reason]),
 		    {error, Reason};
 		Reply ->
 		    Reply

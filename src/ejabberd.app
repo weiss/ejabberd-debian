@@ -1,8 +1,8 @@
-%% $Id: ejabberd.app 2003 2009-04-01 15:05:29Z cromain $
+%% $Id: ejabberd.app 2914 2010-01-18 12:11:16Z badlop $
 
 {application, ejabberd,
  [{description, "ejabberd"},
-  {vsn, "2.0.5"},
+  {vsn, "2.1.2"},
   {modules, [acl,
 	     adhoc,
 	     configure,
@@ -115,7 +115,6 @@
 	     nodetree_virtual,
 	     p1_fsm,
 	     p1_mnesia,
-	     ram_file_io_server,
 	     randoms,
 	     sha,
 	     shaper,

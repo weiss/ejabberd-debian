@@ -5,7 +5,7 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -49,14 +49,12 @@
 	 is_user_exists_in_other_modules/3,
 	 remove_user/2,
 	 remove_user/3,
-	 plain_password_required/1,
-	 ctl_process_get_registered/3
+	 plain_password_required/1
 	]).
 
 -export([auth_modules/1]).
 
 -include("ejabberd.hrl").
--include("ejabberd_ctl.hrl").
 
 %%%----------------------------------------------------------------------
 %%% API
@@ -87,11 +85,11 @@ check_password(User, Server, Password) ->
 
 %% @doc Check if the user and password can login in server.
 %% @spec (User::string(), Server::string(), Password::string(),
-%%        StreamID::string(), Digest::string()) ->
+%%        Digest::string(), DigestGen::function()) ->
 %%     true | false
-check_password(User, Server, Password, StreamID, Digest) ->
+check_password(User, Server, Password, Digest, DigestGen) ->
     case check_password_with_authmodule(User, Server, Password,
-					StreamID, Digest) of
+					Digest, DigestGen) of
 	{true, _AuthModule} -> true;
 	false -> false
     end.
@@ -109,9 +107,9 @@ check_password(User, Server, Password, StreamID, Digest) ->
 check_password_with_authmodule(User, Server, Password) ->
     check_password_loop(auth_modules(Server), [User, Server, Password]).
 
-check_password_with_authmodule(User, Server, Password, StreamID, Digest) ->
+check_password_with_authmodule(User, Server, Password, Digest, DigestGen) ->
     check_password_loop(auth_modules(Server), [User, Server, Password,
-					       StreamID, Digest]).
+					       Digest, DigestGen]).
 
 check_password_loop([], _Args) ->
     false;
@@ -311,15 +309,6 @@ remove_user(User, Server, Password) ->
     end,
     R.
 
-ctl_process_get_registered(_Val, Host, ["registered-users"]) ->
-    Users = ejabberd_auth:get_vh_registered_users(Host),
-    NewLine = io_lib:format("~n", []),
-    SUsers = lists:sort(Users),
-    FUsers = lists:map(fun({U, _S}) -> [U, NewLine] end, SUsers),
-    ?PRINT("~s", [FUsers]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process_get_registered(Val, _Host, _Args) ->
-    Val.
 
 %%%----------------------------------------------------------------------
 %%% Internal functions

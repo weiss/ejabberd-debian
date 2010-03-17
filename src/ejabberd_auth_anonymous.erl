@@ -5,7 +5,7 @@
 %%% Created : 17 Feb 2006 by Mickael Remond <mremond@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -79,7 +79,7 @@ allow_anonymous(Host) ->
 %% anonymous protocol can be: sasl_anon|login_anon|both
 is_sasl_anonymous_enabled(Host) ->
     case allow_anonymous(Host) of
-	false -> false;	    
+	false -> false;
 	true ->
 	    case anonymous_protocol(Host) of
 		sasl_anon -> true;
@@ -97,7 +97,7 @@ is_login_anonymous_enabled(Host) ->
 	true  ->
 	    case anonymous_protocol(Host) of
 		login_anon -> true;
-		both       -> true;		
+		both       -> true;
 		_Other     -> false
 	    end
     end.
@@ -115,10 +115,8 @@ anonymous_protocol(Host) ->
 %% Return true if multiple connections have been allowed in the config file
 %% defaults to false
 allow_multiple_connections(Host) ->
-    case ejabberd_config:get_local_option({allow_multiple_connections, Host}) of
-	true -> true;
-	_Other -> false
-    end.
+    ejabberd_config:get_local_option(
+      {allow_multiple_connections, Host}) =:= true.
 
 %% Check if user exist in the anonymus database
 anonymous_user_exist(User, Server) ->
@@ -173,10 +171,10 @@ purge_hook(true, LUser, LServer) ->
 %% before allowing access
 check_password(User, Server, Password) ->
     check_password(User, Server, Password, undefined, undefined).
-check_password(User, Server, _Password, _StreamID, _Digest) ->
+check_password(User, Server, _Password, _Digest, _DigestGen) ->
     %% We refuse login for registered accounts (They cannot logged but
     %% they however are "reserved")
-    case ejabberd_auth:is_user_exists_in_other_modules(?MODULE, 
+    case ejabberd_auth:is_user_exists_in_other_modules(?MODULE,
 						       User, Server) of
 	%% If user exists in other module, reject anonnymous authentication
 	true  -> false;
@@ -226,7 +224,7 @@ get_password(User, Server) ->
     get_password(User, Server, "").
 
 get_password(User, Server, DefaultValue) ->
-    case anonymous_user_exist(User, Server) of
+    case anonymous_user_exist(User, Server) or login(User, Server) of
 	%% We return the default value if the user is anonymous
 	true ->
 	    DefaultValue;
@@ -248,4 +246,3 @@ remove_user(_User, _Server, _Password) ->
 
 plain_password_required() ->
     false.
-

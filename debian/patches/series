@@ -1,9 +1,6 @@
-ssl.patch
-proxy.patch
-convert.patch
-s2s.patch
-caps.patch
-mod_ctlextra.patch
+mod_admin_extra.patch
 shared_roster_recent.patch
 shared_roster_online.patch
-#ldaps.patch
+captcha.patch
+ejabberdctl-help-dashes.patch
+c2s-p1-fsm.patch

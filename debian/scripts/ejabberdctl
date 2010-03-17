@@ -6,18 +6,31 @@ if [ -f /etc/default/ejabberd ] ; then
     . /etc/default/ejabberd
 fi
 
+if [ "$FIREWALL_WINDOW" = "" ] ; then
+    KERNEL_OPTS=""
+else
+    KERNEL_OPTS="-kernel \
+	inet_dist_listen_min ${FIREWALL_WINDOW%-*} \
+	inet_dist_listen_max ${FIREWALL_WINDOW#*-}"
+fi
+
 if [ -r /var/lib/ejabberd/.erlang.cookie ] ; then
     HOME=/var/lib/ejabberd
     export HOME
 fi
 
+ERL_CRASH_DUMP=/var/log/ejabberd/erl_crash.dump
+export ERL_CRASH_DUMP
+
 ERL=/usr/bin/erl
 EBIN_DIR=/usr/lib/ejabberd/ebin
+SUFFIX=''
 
 if [ $# -ne 0 ] ; then
     case $1 in
 	--) shift; break ;;
 	--node) shift ; ERLANG_NODE=$1 ; shift ;;
+	--concurrent) shift; SUFFIX=$$ ;;
     esac
 fi
 
@@ -26,8 +39,6 @@ if [ "$ERLANG_NODE" = "${ERLANG_NODE%.*}" ] ; then
 else
     SNAME=-name
 fi
-
-SUFFIX=$(date +%s%N)
 
 case $1 in
     debug)
@@ -42,6 +53,7 @@ case $1 in
 	echo ""
 	exec $ERL $SNAME ejabberddebug$SUFFIX \
 	    -remsh $ERLANG_NODE \
+	    $KERNEL_OPTS \
 	    "$@"
     ;;
     *)
@@ -49,6 +61,7 @@ case $1 in
 	    -pa $EBIN_DIR \
 	    -s ejabberd_ctl \
 	    -noinput \
+	    $KERNEL_OPTS \
 	    -extra $ERLANG_NODE "$@"
     ;;
 esac

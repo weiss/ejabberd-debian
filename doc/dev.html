@@ -2,11 +2,11 @@
             "http://www.w3.org/TR/REC-html40/loose.dtd">
 <HTML>
 <HEAD>
-<TITLE>Ejabberd 2.0.5 Developers Guide
+<TITLE>Ejabberd 2.1.2 Developers Guide
 </TITLE>
 
-<META http-equiv="Content-Type" content="text/html; charset=ANSI_X3.4-1968">
-<META name="GENERATOR" content="hevea 1.09">
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<META name="GENERATOR" content="hevea 1.10">
 <STYLE type="text/css">
 .li-itemize{margin:1ex 0ex;}
 .li-enumerate{margin:1ex 0ex;}
@@ -18,7 +18,7 @@
 .dd-thefootnotes{margin:0em 0em 0em 2em;}
 .footnoterule{margin:1em auto 1em 0px;width:50%;}
 .caption{padding-left:2ex; padding-right:2ex; margin-left:auto; margin-right:auto}
-.title{margin:auto;text-align:center}
+.title{margin:2ex auto;text-align:center}
 .center{text-align:center;margin-left:auto;margin-right:auto;}
 .flushleft{text-align:left;margin-left:0ex;margin-right:auto;}
 .flushright{text-align:right;margin-left:auto;margin-right:0ex;}
@@ -42,14 +42,14 @@ TD P{margin:0px;}
 .marginparleft{float:left; margin-left:0ex; margin-right:1ex;}
 .marginparright{float:right; margin-left:1ex; margin-right:0ex;}
 .theorem{text-align:left;margin:1ex auto 1ex 0ex;}
-.part{margin:auto;text-align:center}
+.part{margin:2ex auto;text-align:center}
 </STYLE>
 </HEAD>
 <BODY >
 <!--HEVEA command line is: /usr/bin/hevea -fix -pedantic dev.tex -->
 <!--CUT DEF section 1 --><P><A NAME="titlepage"></A>
 
-</P><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Ejabberd 2.0.5 Developers Guide</H1><H3 CLASS="titlerest">Alexey Shchepin<BR>
+</P><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Ejabberd 2.1.2 Developers Guide</H1><H3 CLASS="titlerest">Alexey Shchepin<BR>
  <A HREF="mailto:alexey@sevcom.net"><TT>mailto:alexey@sevcom.net</TT></A><BR>
  <A HREF="xmpp:aleksey@jabber.ru"><TT>xmpp:aleksey@jabber.ru</TT></A></H3></TD></TR>
 </TABLE><DIV CLASS="center">
@@ -84,12 +84,12 @@ Kevin Smith, Current maintainer of the Psi project</I></BLOCKQUOTE><!--TOC secti
 </LI><LI CLASS="li-toc"><A HREF="#htoc15">8.2&#XA0;&#XA0;Services</A>
 </LI></UL>
 </LI></UL><P>Introduction
-<A NAME="intro"></A></P><P><TT>ejabberd</TT> is a free and open source instant messaging server written in <A HREF="http://www.erlang.org/">Erlang</A>.</P><P><TT>ejabberd</TT> is cross-platform, distributed, fault-tolerant, and based on open standards to achieve real-time communication.</P><P><TT>ejabberd</TT> is designed to be a rock-solid and feature rich XMPP server.</P><P><TT>ejabberd</TT> is suitable for small deployments, whether they need to be scalable or not, as well as extremely big deployments.</P><!--TOC section Key Features-->
+<A NAME="intro"></A></P><P><TT>ejabberd</TT> is a free and open source instant messaging server written in <A HREF="http://www.erlang.org/">Erlang/OTP</A>.</P><P><TT>ejabberd</TT> is cross-platform, distributed, fault-tolerant, and based on open standards to achieve real-time communication.</P><P><TT>ejabberd</TT> is designed to be a rock-solid and feature rich XMPP server.</P><P><TT>ejabberd</TT> is suitable for small deployments, whether they need to be scalable or not, as well as extremely big deployments.</P><!--TOC section Key Features-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc1">1</A>&#XA0;&#XA0;Key Features</H2><!--SEC END --><P>
 <A NAME="keyfeatures"></A>
 </P><P><TT>ejabberd</TT> is:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
-Cross-platform: <TT>ejabberd</TT> runs under Microsoft Windows and Unix derived systems such as Linux, FreeBSD and NetBSD.</LI><LI CLASS="li-itemize">Distributed: You can run <TT>ejabberd</TT> on a cluster of machines and all of them will serve the same Jabber domain(s). When you need more capacity you can simply add a new cheap node to your cluster. Accordingly, you do not need to buy an expensive high-end machine to support tens of thousands concurrent users.</LI><LI CLASS="li-itemize">Fault-tolerant: You can deploy an <TT>ejabberd</TT> cluster so that all the information required for a properly working service will be replicated permanently on all nodes. This means that if one of the nodes crashes, the others will continue working without disruption. In addition, nodes also can be added or replaced `on the fly'.</LI><LI CLASS="li-itemize">Administrator Friendly: <TT>ejabberd</TT> is built on top of the Open Source Erlang. As a result you do not need to install an external database, an external web server, amongst others because everything is already included, and ready to run out of the box. Other administrator benefits include:
+Cross-platform: <TT>ejabberd</TT> runs under Microsoft Windows and Unix derived systems such as Linux, FreeBSD and NetBSD.</LI><LI CLASS="li-itemize">Distributed: You can run <TT>ejabberd</TT> on a cluster of machines and all of them will serve the same Jabber domain(s). When you need more capacity you can simply add a new cheap node to your cluster. Accordingly, you do not need to buy an expensive high-end machine to support tens of thousands concurrent users.</LI><LI CLASS="li-itemize">Fault-tolerant: You can deploy an <TT>ejabberd</TT> cluster so that all the information required for a properly working service will be replicated permanently on all nodes. This means that if one of the nodes crashes, the others will continue working without disruption. In addition, nodes also can be added or replaced &#X2018;on the fly&#X2019;.</LI><LI CLASS="li-itemize">Administrator Friendly: <TT>ejabberd</TT> is built on top of the Open Source Erlang. As a result you do not need to install an external database, an external web server, amongst others because everything is already included, and ready to run out of the box. Other administrator benefits include:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 Comprehensive documentation.
 </LI><LI CLASS="li-itemize">Straightforward installers for Linux, Mac OS X, and Windows. </LI><LI CLASS="li-itemize">Web Administration.
@@ -98,7 +98,7 @@ Comprehensive documentation.
 </LI><LI CLASS="li-itemize">Capability to send announce messages.
 </LI></UL></LI><LI CLASS="li-itemize">Internationalized: <TT>ejabberd</TT> leads in internationalization. Hence it is very well suited in a globalized world. Related features are:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
-Translated to 24 languages. </LI><LI CLASS="li-itemize">Support for <A HREF="http://www.ietf.org/rfc/rfc3490.txt">IDNA</A>.
+Translated to 25 languages. </LI><LI CLASS="li-itemize">Support for <A HREF="http://www.ietf.org/rfc/rfc3490.txt">IDNA</A>.
 </LI></UL></LI><LI CLASS="li-itemize">Open Standards: <TT>ejabberd</TT> is the first Open Source Jabber server claiming to fully comply to the XMPP standard.
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 Fully XMPP compliant.
@@ -146,7 +146,7 @@ Support for virtual hosting.
 </LI></UL>
 </LI></UL><!--TOC section How it Works-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc3">3</A>&#XA0;&#XA0;How it Works</H2><!--SEC END --><P>
-<A NAME="howitworks"></A></P><P>A Jabber domain is served by one or more <TT>ejabberd</TT> nodes. These nodes can
+<A NAME="howitworks"></A></P><P>A XMPP domain is served by one or more <TT>ejabberd</TT> nodes. These nodes can
 be run on different machines that are connected via a network. They all must
 have the ability to connect to port 4369 of all another nodes, and must have
 the same magic cookie (see Erlang/OTP documentation, in other words the file
@@ -159,7 +159,7 @@ router;
 </LI><LI CLASS="li-itemize">session manager;
 </LI><LI CLASS="li-itemize">S2S manager;
 </LI></UL><!--TOC subsection Router-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc4">3.1</A>&#XA0;&#XA0;Router</H3><!--SEC END --><P>This module is the main router of Jabber packets on each node. It routes
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc4">3.1</A>&#XA0;&#XA0;Router</H3><!--SEC END --><P>This module is the main router of XMPP packets on each node. It routes
 them based on their destinations domains. It has two tables: local and global
 routes. First, domain of packet destination searched in local table, and if it
 found, then the packet is routed to appropriate process. If no, then it
@@ -168,12 +168,12 @@ process. If it does not exists in either tables, then it sent to the S2S
 manager.</P><!--TOC subsection Local Router-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc5">3.2</A>&#XA0;&#XA0;Local Router</H3><!--SEC END --><P>This module routes packets which have a destination domain equal to this server
 name. If destination JID has a non-empty user part, then it routed to the
-session manager, else it is processed depending on it's content.</P><!--TOC subsection Session Manager-->
+session manager, else it is processed depending on it&#X2019;s content.</P><!--TOC subsection Session Manager-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc6">3.3</A>&#XA0;&#XA0;Session Manager</H3><!--SEC END --><P>This module routes packets to local users. It searches for what user resource
 packet must be sended via presence table. If this resource is connected to
 this node, it is routed to C2S process, if it connected via another node, then
 the packet is sent to session manager on that node.</P><!--TOC subsection S2S Manager-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc7">3.4</A>&#XA0;&#XA0;S2S Manager</H3><!--SEC END --><P>This module routes packets to other Jabber servers. First, it checks if an
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc7">3.4</A>&#XA0;&#XA0;S2S Manager</H3><!--SEC END --><P>This module routes packets to other XMPP servers. First, it checks if an
 open S2S connection from the domain of the packet source to the domain of
 packet destination already exists. If it is open on another node, then it
 routes the packet to S2S manager on that node, if it is open on this node, then
@@ -192,8 +192,8 @@ A: 2 bytes of length data (a short in network byte order)
 operation are as follows:
 <UL CLASS="itemize"><LI CLASS="li-itemize">
 auth:User:Server:Password (check if a username/password pair is correct)
-</LI><LI CLASS="li-itemize">isuser:User:Server (check if it's a valid user)
-</LI><LI CLASS="li-itemize">setpass:User:Server:Password (set user's password)
+</LI><LI CLASS="li-itemize">isuser:User:Server (check if it&#X2019;s a valid user)
+</LI><LI CLASS="li-itemize">setpass:User:Server:Password (set user&#X2019;s password)
 </LI></UL>
 </LI></UL>
 </LI><LI CLASS="li-itemize">write to stdout: AABB

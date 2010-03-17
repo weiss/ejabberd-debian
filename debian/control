@@ -2,20 +2,20 @@ Source: ejabberd
 Section: net
 Priority: optional
 Maintainer: Torsten Werner <twerner@debian.org>
-Uploaders: Gerfried Fuchs <rhonda@debian.at>
-Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 5), quilt, patchutils (>= 0.2.25), cdbs (>= 0.4.27), erlang-nox, erlang-dev (>= 1:11.b.2), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev
-Standards-Version: 3.8.0
+Uploaders: Gerfried Fuchs <rhonda@debian.at>, Konstantin Khomoutov <flatworm@users.sourceforge.net>
+Build-Depends: debhelper (>= 7.3~), quilt, erlang-nox, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev, po-debconf
+Standards-Version: 3.8.4
 Homepage: http://www.process-one.net/en/projects/ejabberd/
-Vcs-Svn: svn+ssh://svn.debian.org/svn/collab-maint/deb-maint/ejabberd/trunk
-Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/ejabberd/trunk/
+Vcs-Git: git://git.debian.org/git/collab-maint/pkg-ejabberd.git
+Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-ejabberd.git
 
 Package: ejabberd
 Architecture: any
 Depends: adduser, ${erlang-nox:Depends}, ${erlang-abi:Depends}, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
-Suggests: libunix-syslog-perl
-Description: Distributed, fault-tolerant Jabber/XMPP server written in Erlang
- ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang
- Features:
+Suggests: libunix-syslog-perl, imagemagick | graphicsmagick-imagemagick-compat
+Description: distributed, fault-tolerant Jabber/XMPP server written in Erlang
+ ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang.
+ Its features contain:
   - XMPP-compliant
   - Web based administration
   - Load balancing: can run in a cluster of machines
