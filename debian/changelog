@@ -1,3 +1,11 @@
+ejabberd (2.1.2-3~bpo50+1) lenny-backports; urgency=low
+
+  * Rebuild for lenny-backports.
+  * Reduced erlang-dev versioned depends to 1:12.b, lenny version is
+    sufficient.
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Wed, 17 Mar 2010 01:10:08 +0100
+
 ejabberd (2.1.2-3) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
