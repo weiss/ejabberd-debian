@@ -1,3 +1,10 @@
+ejabberd (2.0.5-1~bpo50+1) lenny-backports; urgency=medium
+
+  * Security related rebuild for lenny-backports, fixing Cross-site scripting
+    (XSS) vulnerability in ejabberd (CVE-2009-0934, #520852)
+
+ -- Gerfried Fuchs <rhonda@debian.at>  Wed, 15 Apr 2009 10:43:54 +0200
+
 ejabberd (2.0.5-1) unstable; urgency=high
 
   * new upstream release
