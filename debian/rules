@@ -56,6 +56,9 @@ install: build
 	rm $(DESTDIR)/etc/ejabberd/ejabberd.cfg
 	rm $(DESTDIR)/etc/ejabberd/ejabberdctl.cfg
 
+	# Remove unused upstream directories:
+	rm -rf $(DESTDIR)/var/lock
+
 
 # Build architecture-independent files here.
 binary-indep: install
