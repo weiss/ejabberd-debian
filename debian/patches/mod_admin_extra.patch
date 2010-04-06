@@ -8,8 +8,8 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 
 Index: pkg-ejabberd/src/ejabberd.app
 ===================================================================
---- pkg-ejabberd.orig/src/ejabberd.app	2010-01-13 04:49:33.000000000 +0300
-+++ pkg-ejabberd/src/ejabberd.app	2010-01-13 04:57:23.000000000 +0300
+--- pkg-ejabberd.orig/src/ejabberd.app	2010-04-06 12:43:26.000000000 +0400
++++ pkg-ejabberd/src/ejabberd.app	2010-04-06 12:50:28.000000000 +0400
 @@ -104,6 +104,7 @@
  	     mod_vcard_ldap,
  	     mod_vcard_odbc,
@@ -21,8 +21,8 @@ Index: pkg-ejabberd/src/ejabberd.app
 Index: pkg-ejabberd/src/mod_admin_extra.erl
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ pkg-ejabberd/src/mod_admin_extra.erl	2010-01-13 04:58:00.000000000 +0300
-@@ -0,0 +1,1329 @@
++++ pkg-ejabberd/src/mod_admin_extra.erl	2010-04-06 12:50:58.000000000 +0400
+@@ -0,0 +1,1366 @@
 +%%%-------------------------------------------------------------------
 +%%% File    : mod_admin_extra.erl
 +%%% Author  : Badlop <badlop@process-one.net>
@@ -75,6 +75,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	 status_num/2, status_num/1,
 +	 status_list/2, status_list/1,
 +	 connected_users_info/0,
++	 set_presence/7,
 +	 %% Vcard
 +	 set_nickname/3,
 +	 get_vcard/3,
@@ -100,6 +101,8 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	 %% Stanza
 +	 send_message_headline/4,
 +	 send_message_chat/3,
++	 send_stanza_c2s/4,
++	 privacy_set/3,
 +	 %% Stats
 +	 stats/1, stats/2
 +	]).
@@ -288,6 +291,16 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +					       ]}}
 +				  }}},
 +
++     #ejabberd_commands{name = set_presence,
++			tags = [session],
++			desc = "Set presence of a session",
++			module = ?MODULE, function = set_presence,
++			args = [{user, string}, {host, string},
++				{resource, string}, {type, string},
++				{show, string}, {status, string},
++				{priority, string}],
++			result = {res, rescode}},
++
 +     #ejabberd_commands{name = set_nickname, tags = [vcard],
 +			desc = "Set nickname in a user's vcard",
 +			module = ?MODULE, function = set_nickname,
@@ -448,6 +461,16 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			module = ?MODULE, function = send_message_headline,
 +			args = [{from, string}, {to, string},
 +				{subject, string}, {body, string}],
++			result = {res, rescode}},
++     #ejabberd_commands{name = send_stanza_c2s, tags = [stanza],
++			desc = "Send a stanza as if sent from a c2s session",
++			module = ?MODULE, function = send_stanza_c2s,
++			args = [{user, string}, {host, string}, {resource, string}, {stanza, string}],
++			result = {res, rescode}},
++     #ejabberd_commands{name = privacy_set, tags = [stanza],
++			desc = "Send a IQ set privacy stanza for a local account",
++			module = ?MODULE, function = privacy_set,
++			args = [{user, string}, {host, string}, {stanza, string}],
 +			result = {res, rescode}},
 +
 +     #ejabberd_commands{name = stats, tags = [stats],
@@ -801,6 +824,17 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    %% Replace newline characters with other code
 +    element(2, regexp:gsub(String, "\n", "\\n")).
 +
++set_presence(User, Host, Resource, Type, Show, Status, Priority) ->
++    Pid = ejabberd_sm:get_session_pid(User, Host, Resource),
++    USR = User ++ "@" ++ Host ++ "/" ++ Resource,
++    US = User ++ "@" ++ Host,
++    Message = {route_xmlstreamelement,
++	       {xmlelement, "presence",
++		[{"from", USR}, {"to", US}, {"type", Type}],
++		[{xmlelement, "show", [], [{xmlcdata, Show}]},
++		 {xmlelement, "status", [], [{xmlcdata, Status}]},
++		 {xmlelement, "priority", [], [{xmlcdata, Priority}]}]}},
++    Pid ! Message.
 +
 +%%%
 +%%% Vcard
@@ -960,23 +994,8 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +%% -----------------------------
 +
 +get_roster(User, Server) ->
-+    {ok, Roster} = get_roster2(User, Server),
-+    make_roster_xmlrpc(Roster).
-+
-+get_roster2(User, Server) ->
-+    Modules = gen_mod:loaded_modules(Server),
-+    Roster = case lists:member(mod_roster, Modules) of
-+		 true ->
-+		     mod_roster:get_user_roster([], {User, Server});
-+		 false ->
-+		     case lists:member(mod_roster_odbc, Modules) of
-+			 true ->
-+			     mod_roster_odbc:get_user_roster([], {User, Server});
-+			 false ->
-+			     {error, "Neither mod_roster or mod_roster_odbc are enabled"}
-+		     end
-+	     end,
-+    {ok, Roster}.
++    Items = ejabberd_hooks:run_fold(roster_get, Server, [], [{User, Server}]),
++    make_roster_xmlrpc(Items).
 +
 +%% Note: if a contact is in several groups, the contact is returned
 +%% several times, each one in a different group.
@@ -1185,6 +1204,24 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +      {xmlelement, "body", [], [{xmlcdata, Body}]}
 +     ]
 +    }.
++
++send_stanza_c2s(Username, Host, Resource, Stanza) ->
++    C2sPid = ejabberd_sm:get_session_pid(Username, Host, Resource),
++    XmlEl = xml_stream:parse_element(Stanza),
++    p1_fsm:send_event(C2sPid, {xmlstreamelement, XmlEl}).
++
++privacy_set(Username, Host, Stanza) ->
++    From = jlib:string_to_jid(Username ++ "@" ++ Host),
++    To = jlib:string_to_jid(Host),
++    StanzaEl = xml_stream:parse_element(Stanza),
++    IQ = jlib:iq_query_info(StanzaEl),
++    {result, []} = ejabberd_hooks:run_fold(
++		     privacy_iq_set,
++		     "localhost",
++		     {error, ?ERR_FEATURE_NOT_IMPLEMENTED},
++		     [From, To, IQ]
++		    ),
++    ok.
 +
 +%%%
 +%%% Stats
