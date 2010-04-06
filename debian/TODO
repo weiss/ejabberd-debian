@@ -1,3 +1,8 @@
+* Document new commands from mod_admin_extra.
+
+* Document quirks of IPv6 configuration as suggested
+  in http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=573801#27
+
 * Ponder reimplementing the logic of allowing several
   instances of ejabberdctl to run in parallel while
   not overflowing the server's atom table.
