@@ -1,4 +1,4 @@
-# $Id: Makefile.in 2842 2009-12-29 19:10:52Z badlop $
+# $Id$
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -109,6 +109,9 @@ MSGSDIR = $(PRIVDIR)/msgs
 
 # /var/lib/ejabberd/
 SPOOLDIR = $(DESTDIR)@localstatedir@/lib/ejabberd
+
+# /var/lock/ejabberdctl
+CTLLOCKDIR = $(DESTDIR)@localstatedir@/lock/ejabberdctl
 
 # /var/lib/ejabberd/.erlang.cookie
 COOKIEFILE = $(SPOOLDIR)/.erlang.cookie
@@ -232,6 +235,11 @@ install: all
 	chmod -R 750 $(SPOOLDIR)
 	[ ! -f $(COOKIEFILE) ] || { $(CHOWN_COMMAND) @INSTALLUSER@ $(COOKIEFILE) >$(CHOWN_OUTPUT) ; chmod 400 $(COOKIEFILE) ; }
 	#
+	# ejabberdctl lock directory
+	install -d -m 750 $(O_USER) $(CTLLOCKDIR)
+	$(CHOWN_COMMAND) -R @INSTALLUSER@ $(CTLLOCKDIR) >$(CHOWN_OUTPUT)
+	chmod -R 750 $(CTLLOCKDIR)
+	#
 	# Log directory
 	install -d -m 750 $(O_USER) $(LOGDIR)
 	$(CHOWN_COMMAND) -R @INSTALLUSER@ $(LOGDIR) >$(CHOWN_OUTPUT)
@@ -239,9 +247,9 @@ install: all
 	#
 	# Documentation
 	install -d $(DOCDIR)
-	install ../doc/guide.html $(DOCDIR)
-	install ../doc/*.png $(DOCDIR)
-	install ../doc/*.txt $(DOCDIR)
+	install -m 644 ../doc/guide.html $(DOCDIR)
+	install -m 644 ../doc/*.png $(DOCDIR)
+	install -m 644 ../doc/*.txt $(DOCDIR)
 
 uninstall: uninstall-binary
 
@@ -265,6 +273,7 @@ uninstall-all: uninstall-binary
 	rm -rf $(ETCDIR)
 	rm -rf $(EJABBERDDIR)
 	rm -rf $(SPOOLDIR)
+	rm -rf $(CTLLOCKDIR)
 	rm -rf $(LOGDIR)
 
 clean: clean-recursive clean-local
@@ -286,12 +295,3 @@ Makefile: Makefile.in
 
 dialyzer: $(BEAMS)
 	@dialyzer -c .
-
-LASTSVNREVCHANGELOG = 2075
-changelog:
-	svn up -r $(LASTSVNREVCHANGELOG) ../ChangeLog
-	mv ../ChangeLog ../ChangeLog.old
-	svn2cl -r BASE:$(LASTSVNREVCHANGELOG) -o ../ChangeLog --group-by-day \
-	    --separate-daylogs --break-before-msg --reparagraph ..
-	cat ../ChangeLog.old >> ../ChangeLog
-	rm ../ChangeLog.old
