@@ -351,8 +351,7 @@ process_item_set(From, To, {xmlelement, _Name, Attrs, Els}) ->
 			Item2 = process_item_els(Item1, Els),
 			case Item2#roster.subscription of
 			    remove ->
-				io:format("del_roster: ~p ~p ~p \n", [LServer, Username, SJID]),
-                                odbc_queries:del_roster(LServer, Username, SJID);
+                   odbc_queries:del_roster(LServer, Username, SJID);
 			    _ ->
 				ItemVals = record_to_string(Item2),
 				ItemGroups = groups_to_string(Item2),
@@ -666,7 +665,7 @@ in_state_change(to,   in,   subscribed)   -> none;
 in_state_change(to,   in,   unsubscribe)  -> {to, none};
 in_state_change(to,   in,   unsubscribed) -> {none, in};
 in_state_change(from, none, subscribe)    -> none;
-in_state_change(from, none, subscribed)   -> none;
+in_state_change(from, none, subscribed)   -> {both, none};
 in_state_change(from, none, unsubscribe)  -> {none, none};
 in_state_change(from, none, unsubscribed) -> none;
 in_state_change(from, out,  subscribe)    -> none;
@@ -695,7 +694,7 @@ out_state_change(none, both, subscribed)   -> {from, out};
 out_state_change(none, both, unsubscribe)  -> {none, in};
 out_state_change(none, both, unsubscribed) -> {none, out};
 out_state_change(to,   none, subscribe)    -> none;
-out_state_change(to,   none, subscribed)   -> none;
+out_state_change(to,   none, subscribed)   -> {both, none};
 out_state_change(to,   none, unsubscribe)  -> {none, none};
 out_state_change(to,   none, unsubscribed) -> none;
 out_state_change(to,   in,   subscribe)    -> none;

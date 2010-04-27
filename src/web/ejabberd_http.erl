@@ -317,7 +317,8 @@ process([], _) ->
 process(Handlers, Request) ->
     [{HandlerPathPrefix, HandlerModule} | HandlersLeft] = Handlers,
 
-    case lists:prefix(HandlerPathPrefix, Request#request.path) of
+    case (lists:prefix(HandlerPathPrefix, Request#request.path) or
+         (HandlerPathPrefix==Request#request.path)) of
 	true ->
             ?DEBUG("~p matches ~p", [Request#request.path, HandlerPathPrefix]),
             %% LocalPath is the path "local to the handler", i.e. if
@@ -325,7 +326,9 @@ process(Handlers, Request) ->
             %% requested path is "/test/foo/bar", the local path is
             %% ["foo", "bar"]
             LocalPath = lists:nthtail(length(HandlerPathPrefix), Request#request.path),
-	    HandlerModule:process(LocalPath, Request);
+  	        R = HandlerModule:process(LocalPath, Request),
+            ejabberd_hooks:run(http_request_debug, [{LocalPath, Request}]),
+            R;
 	false ->
 	    process(HandlersLeft, Request)
     end.
@@ -341,7 +344,7 @@ process_request(#state{request_method = Method,
 		       request_headers = RequestHeaders,
 		       sockmod = SockMod,
 		       socket = Socket} = State)
-  when Method=:='GET' orelse Method=:='HEAD' orelse Method=:='DELETE' ->
+  when Method=:='GET' orelse Method=:='HEAD' orelse Method=:='DELETE' orelse Method=:='OPTIONS' ->
     case (catch url_decode_q_split(Path)) of
 	{'EXIT', _} ->
 	    process_request(false);

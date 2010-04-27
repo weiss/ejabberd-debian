@@ -26,7 +26,7 @@
 %%   message processing does not return in a given period of time, the
 %%   process will be terminated.
 %% 
-%%     $Id: p1_fsm.erl 2891 2010-01-12 16:11:32Z badlop $
+%%     $Id$
 %%
 -module(p1_fsm).
 
