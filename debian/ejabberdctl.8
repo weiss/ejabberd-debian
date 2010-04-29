@@ -251,6 +251,10 @@ connection string (such as "c2s", "c2s_tls" etc), client IP address,
 client port number, resource priority, name of an Erlang node serving the session,
 session duration (in seconds).
 .TP
+.BI connected\-users\-vhost " server"
+Print full JIDs of all users registered at the virtual host \fIserver\fP
+which are currently connected to the ejabberd server, one on a line.
+.TP
 .BI registered\-users " server"
 List all the users registered on the ejabberd server
 at the virtual host \fIserver\fP.
@@ -524,6 +528,19 @@ the body \fIbody\fP and subject \fIsubject\fP.
 Both bare and full JIDs are supported.
 
 .TP
+.BI send\-stanza\-c2s " user server resource stanza"
+Send XML string \fIstanza\fP to the stream to which the
+session \fIuser@server/resource\fP is bound.
+The stanza must be well-formed (according to RFC 3920)
+and the session must be active.
+.IP
+For example:
+.nf
+ejabberdctl send-stanza-c2s john_doe example.com Bahamas \\
+  '<message id="1" type="chat"><body>How goes?</body></message>'
+.fi
+
+.TP
 .BI srg\-create " group host name description display"
 Create a new shared roster group \fIgroup\fP
 on the virtual host \fIhost\fP
@@ -558,6 +575,29 @@ on the virtual host \fIhost\fP.
 .BI srg\-get\-members " group host"
 Print members of the shared roster group \fIgroup\fP
 on the virtual host \fIhost\fP.
+
+.TP
+.BI private\-get " user server element namespace"
+Prints an XML stanza which would be sent by the server
+it it received an IQ-request of type "get" with the
+.nf
+<\fIelement\fP xmlns="\fInamespace\fP"/>
+.fi
+payload from \fIuser@server\fP.
+.IP
+For example:
+.nf
+ejabberdctl private-get john_doe example.com \\
+  storage storage:bookmarks
+.fi
+would return user's bookmarks, managed according to XEP-0048.
+
+.TP
+.BI private\-set " user server element"
+Allows to simulate \fIuser@server\fP sending an IQ-request
+of type "set" containing \fIelement\fP as its payload.
+The string \fIelement\fP must be a well-formed XML obeying the
+rules defined for IQ-request payloads in RFC 3920.
 
 .TP 
 .BI stats " topic"
@@ -631,6 +671,15 @@ and have the presence status \fIstatus\fP.
 .IP
 The available values for the \fIstatus\fP parameter
 are the same as of the \fBstatus\-list\fR subcommand.
+
+.TP user\-sessions\-info " user server"
+Print detailed information on all sessions currently established
+by user \fIuser@server\fP.
+For each session, one line of output is generated, containing the
+following fields separated by tab characters: connection string
+(such as "c2s", "c2s_tls" etc), remote IP address, remote port number,
+priority of the resource bound to this session, name of an Erlang node
+serving the session, session uptime (in seconds), resource string.
 
 \" .TP
 \" .BI muc\-purge " days"
