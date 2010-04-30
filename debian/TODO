@@ -1,7 +1,4 @@
-* Document new commands from mod_admin_extra.
-
-* Document quirks of IPv6 configuration as suggested
-  in http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=573801#27
+* Document privacy-set command from mod_admin_extra.
 
 * Ponder reimplementing the logic of allowing several
   instances of ejabberdctl to run in parallel while
