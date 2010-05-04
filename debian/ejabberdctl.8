@@ -595,7 +595,10 @@ would return user's bookmarks, managed according to XEP-0048.
 .TP
 .BI private\-set " user server element"
 Allows to simulate \fIuser@server\fP sending an IQ-request
-of type "set" containing \fIelement\fP as its payload.
+of type "set" containing \fIelement\fP as its payload;
+the payload is processed by the code managing users' private storage
+(XEP-0049 "Private XML Storage").
+.IP
 The string \fIelement\fP must be a well-formed XML obeying the
 rules defined for IQ-request payloads in RFC 3920.
 
