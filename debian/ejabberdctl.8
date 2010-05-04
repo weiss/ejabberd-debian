@@ -599,6 +599,16 @@ of type "set" containing \fIelement\fP as its payload.
 The string \fIelement\fP must be a well-formed XML obeying the
 rules defined for IQ-request payloads in RFC 3920.
 
+.TP
+.BI privacy\-set " user server element"
+Allows to simulate \fIuser@server\fP sending an IQ-request
+of type "set" containing \fIelement\fP as its payload;
+this payload is processed by the code managing privacy lists
+(XEP-0016 "Privacy lists").
+.IP
+The string \fIelement\fP must be a well-formed XML obeying the
+rules defined for IQ-request payloads in RFC 3920.
+
 .TP 
 .BI stats " topic"
 Print statistics on the topic \fItopic\fP.
