@@ -4,12 +4,12 @@ by adding several new commands.
 
 The code is taken from the ProcessOne repository:
 https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
-(trunk, revision 1075).
+(trunk, revision 1078).
 
 Index: pkg-ejabberd/src/ejabberd.app
 ===================================================================
---- pkg-ejabberd.orig/src/ejabberd.app	2010-04-27 14:02:36.000000000 +0400
-+++ pkg-ejabberd/src/ejabberd.app	2010-04-28 04:15:03.000000000 +0400
+--- pkg-ejabberd.orig/src/ejabberd.app	2010-05-04 03:18:51.000000000 +0400
++++ pkg-ejabberd/src/ejabberd.app	2010-05-04 04:01:32.000000000 +0400
 @@ -104,6 +104,7 @@
  	     mod_vcard_ldap,
  	     mod_vcard_odbc,
@@ -21,8 +21,8 @@ Index: pkg-ejabberd/src/ejabberd.app
 Index: pkg-ejabberd/src/mod_admin_extra.erl
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ pkg-ejabberd/src/mod_admin_extra.erl	2010-04-28 04:15:28.000000000 +0400
-@@ -0,0 +1,1477 @@
++++ pkg-ejabberd/src/mod_admin_extra.erl	2010-05-04 04:01:41.000000000 +0400
+@@ -0,0 +1,1490 @@
 +%%%-------------------------------------------------------------------
 +%%% File    : mod_admin_extra.erl
 +%%% Author  : Badlop <badlop@process-one.net>
@@ -297,7 +297,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +				  }}},
 +     #ejabberd_commands{name = connected_users_vhost,
 +                       tags = [session],
-+                       desc = "Get the number of established sessions in a vhost",
++                       desc = "Get the list of established sessions in a vhost",
 +                       module = ?MODULE, function = connected_users_vhost,
 +                       args = [{host, string}],
 +                       result = {connected_users_vhost, {list, {sessions, string}}}},
@@ -509,7 +509,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +     #ejabberd_commands{name = privacy_set, tags = [stanza],
 +			desc = "Send a IQ set privacy stanza for a local account",
 +			module = ?MODULE, function = privacy_set,
-+			args = [{user, string}, {host, string}, {stanza, string}],
++			args = [{user, string}, {host, string}, {xmlquery, string}],
 +			result = {res, rescode}},
 +
 +     #ejabberd_commands{name = stats, tags = [stats],
@@ -1136,9 +1136,11 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +		  end, ejabberd_sm:get_user_resources(LU, LS)).
 +
 +push_roster_item(LU, LS, R, U, S, Action) ->
++    LJID = jlib:make_jid(LU, LS, R),
++    BroadcastEl = build_broadcast(U, S, Action),
++    ejabberd_router:route(LJID, LJID, BroadcastEl),
 +    Item = build_roster_item(U, S, Action),
 +    ResIQ = build_iq_roster_push(Item),
-+    LJID = jlib:make_jid(LU, LS, R),
 +    ejabberd_router:route(LJID, LJID, ResIQ).
 +
 +build_roster_item(U, S, {add, Nick, Subs, Group}) ->
@@ -1165,6 +1167,16 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +     ]
 +    }.
 +
++build_broadcast(U, S, {add, _Nick, Subs, _Group}) ->
++    build_broadcast(U, S, list_to_atom(Subs));
++build_broadcast(U, S, remove) ->
++    build_broadcast(U, S, none);
++%% @spec (U::string(), S::string(), Subs::atom()) -> any()
++%% Subs = both | from | to | none
++build_broadcast(U, S, SubsAtom) when is_atom(SubsAtom) ->
++    {xmlelement, "broadcast", [],
++     [{item, {U, S, ""}, SubsAtom}]
++    }.
 +
 +%%%
 +%%% Private Storage
@@ -1321,10 +1333,11 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    XmlEl = xml_stream:parse_element(Stanza),
 +    p1_fsm:send_event(C2sPid, {xmlstreamelement, XmlEl}).
 +
-+privacy_set(Username, Host, Stanza) ->
++privacy_set(Username, Host, QueryS) ->
 +    From = jlib:string_to_jid(Username ++ "@" ++ Host),
 +    To = jlib:string_to_jid(Host),
-+    StanzaEl = xml_stream:parse_element(Stanza),
++    QueryEl = xml_stream:parse_element(QueryS),
++    StanzaEl = {xmlelement, "iq", [{"type", "set"}], [QueryEl]},
 +    IQ = jlib:iq_query_info(StanzaEl),
 +    {result, []} = ejabberd_hooks:run_fold(
 +		     privacy_iq_set,
