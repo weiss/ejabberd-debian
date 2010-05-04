@@ -1,5 +1,3 @@
-* Document privacy-set command from mod_admin_extra.
-
 * Ponder reimplementing the logic of allowing several
   instances of ejabberdctl to run in parallel while
   not overflowing the server's atom table.
