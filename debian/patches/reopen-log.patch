@@ -1,14 +1,26 @@
-In the implementation of the "reopen-log" ejabberdctl command,
-do not attempt to rename log files, appending the suffix "-old"
-to their base names, before opening them again.
-(This behaviour breaks the "create" option of logrotate
-which instructs logrotate to re-create the rotated log files.)
+This patch fixes several problems pinpointed when dealing
+with Debian bug #580951:
+ * erlang.log (SASL log file) for some reason only gets reopened
+   each second call to `ejabberdcl reopen-log`;
+ * After reopening the same files (that is, when the files were
+   not renamed (by logrotate, for instance) before reopening),
+   erlang.log gets truncated, and ejabberd.log gets renamed
+   to "ejabberd-old.log"; both behaviours break the contract
+   of the "reopening of log files" contract;
 
-Also this patch replaces module for handling SASL error reporting
-by a custom one which opens its log file in append mode rather
-than in rewrite mode as the default (ERTS) module does
-which makes a call to `ejabberdctl reopen-log` truncate
-the erlang.log file.
+The patch fixes this problems in the following way:
+ * The SASL application is started with its built-in file logger
+   disabled. After this a custom module is inserted to handle
+   SASL messages; this module does not truncate its log file
+   when reopening it.
+ * Built-in ejabberd's "log rotation" (renaming original log
+   files by appending the "-old" suffix to their base names)
+   is disabled.
+ * Both ejabberd's logging module and the custom SASL logging
+   module now respond to a custom event which instructs them
+   to reload their respective log files; this event is
+   synchronously sent to these modules when `ejabberdctl reopen-log`
+   is being run.
 
 Index: pkg-ejabberd/src/ejabberd_logger_h.erl
 ===================================================================
