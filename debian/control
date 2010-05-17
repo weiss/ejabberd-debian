@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-ejabberd.git
 
 Package: ejabberd
 Architecture: any
-Depends: adduser, ${erlang-nox:Depends}, ${erlang-abi:Depends}, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
+Depends: adduser, ${erlang:Depends}, ${erlang-abi:Depends}, openssl, ucf, ${misc:Depends}, ${shlibs:Depends}
 Suggests: libunix-syslog-perl, imagemagick | graphicsmagick-imagemagick-compat
 Description: distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang.
