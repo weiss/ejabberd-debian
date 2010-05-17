@@ -74,7 +74,8 @@ exec $ERL $SNAME $ERLANG_NODE \
     -s ejabberd \
     -kernel inetrc \"$INETRC\" \
     -ejabberd config \"$CONFIG\" log_path \"$LOG\" \
-    -sasl sasl_error_logger \{file,\"$ERLANG_LOG\"\} \
+	erlang_log_path \"$ERLANG_LOG\" \
+    -sasl sasl_error_logger false \
     -mnesia dir \"$SPOOL\" \
     $ERLANG_OPTS $ERL_OPTIONS $ARGS "$@"
 
