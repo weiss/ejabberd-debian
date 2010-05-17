@@ -59,6 +59,9 @@ install: build
 	# Remove unused upstream directories:
 	rm -rf $(DESTDIR)/var/lock
 
+	# Remove unused modules:
+	rm -f $(DESTDIR)/usr/lib/ejabberd/ebin/ejabberd_debug.beam
+
 
 # Build architecture-independent files here.
 binary-indep: install
