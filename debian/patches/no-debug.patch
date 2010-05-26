@@ -3,10 +3,15 @@ which can be used to gather profiling information
 about the running instance of ejabberd.
 
 In upstream source, this module is semi-disabled:
-a call to start the server this module implements
-is commented out while the call to stop that server is not.
+a call to start the process which behaviour this
+module implements is commented out while the call
+to stop that process is done as a part of ejabberd's
+shutdown process.
 Since we do not package this module, we disable
-shutting down the module's server.
+shutting the module's process down.
+
+This issue is tracked upstream as
+https://support.process-one.net/browse/EJAB-1242
 
 Index: pkg-ejabberd/src/ejabberd_app.erl
 ===================================================================
