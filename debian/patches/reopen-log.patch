@@ -1,7 +1,7 @@
 This patch fixes several problems pinpointed when dealing
 with Debian bug #580951:
  * erlang.log (SASL log file) for some reason only gets reopened
-   each second call to `ejabberdcl reopen-log`;
+   each second call to `ejabberdctl reopen-log`;
  * After reopening the same files (that is, when the files were
    not renamed (by logrotate, for instance) before reopening),
    erlang.log gets truncated, and ejabberd.log gets renamed
@@ -21,6 +21,9 @@ The patch fixes these problems in the following way:
    to reload their respective log files; this event is
    synchronously sent to these modules when `ejabberdctl reopen-log`
    is being run.
+
+This problem is being tracked upstream as
+https://support.process-one.net/browse/EJAB-1243
 
 Index: pkg-ejabberd/src/ejabberd_logger_h.erl
 ===================================================================
