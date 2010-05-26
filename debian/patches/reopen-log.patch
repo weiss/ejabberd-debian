@@ -5,10 +5,10 @@ with Debian bug #580951:
  * After reopening the same files (that is, when the files were
    not renamed (by logrotate, for instance) before reopening),
    erlang.log gets truncated, and ejabberd.log gets renamed
-   to "ejabberd-old.log"; both behaviours break the contract
-   of the "reopening of log files" contract;
+   to "ejabberd-old.log"; both behaviours break the
+   "reopening of log files" contract common in Unix.
 
-The patch fixes this problems in the following way:
+The patch fixes these problems in the following way:
  * The SASL application is started with its built-in file logger
    disabled. After this a custom module is inserted to handle
    SASL messages; this module does not truncate its log file
