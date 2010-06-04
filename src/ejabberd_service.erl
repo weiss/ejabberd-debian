@@ -47,7 +47,8 @@
 	 handle_sync_event/4,
 	 code_change/4,
 	 handle_info/3,
-	 terminate/3]).
+	 terminate/3,
+     print_state/1]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -350,7 +351,7 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 	    send_text(StateData, Text);
 	deny ->
 	    Err = jlib:make_error_reply(Packet, ?ERR_NOT_ALLOWED),
-	    ejabberd_router:route(To, From, Err)
+	    ejabberd_router:route_error(To, From, Err, Packet)
     end,
     {next_state, StateName, StateData}.
 
@@ -373,6 +374,14 @@ terminate(Reason, StateName, StateData) ->
     end,
     (StateData#state.sockmod):close(StateData#state.socket),
     ok.
+
+%%----------------------------------------------------------------------
+%% Func: print_state/1
+%% Purpose: Prepare the state to be printed on error log
+%% Returns: State to print
+%%----------------------------------------------------------------------
+print_state(State) ->
+    State.
 
 %%%----------------------------------------------------------------------
 %%% Internal functions
