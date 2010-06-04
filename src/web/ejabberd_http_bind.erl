@@ -32,6 +32,12 @@
 	 change_shaper/2,
 	 monitor/1,
 	 close/1,
+	 start/4,
+	 handle_session_start/8,
+	 handle_http_put/7,
+	 http_put/7,
+	 http_get/2,
+	 prepare_response/4,
 	 process_request/2]).
 
 -include("ejabberd.hrl").
@@ -481,7 +487,7 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
 %% We reached the max_inactivity timeout:
 handle_info({timeout, Timer, _}, _StateName,
 	    #state{id=SID, timer = Timer} = StateData) ->
-    ?WARNING_MSG("Session timeout. Closing the HTTP bind session: ~p", [SID]),
+    ?INFO_MSG("Session timeout. Closing the HTTP bind session: ~p", [SID]),
     {stop, normal, StateData};
 
 handle_info({timeout, WaitTimer, _}, StateName,
@@ -523,10 +529,7 @@ handle_info(_, StateName, StateData) ->
 %%----------------------------------------------------------------------
 terminate(_Reason, _StateName, StateData) ->
     ?DEBUG("terminate: Deleting session ~s", [StateData#state.id]),
-    mnesia:transaction(
-      fun() ->
-	      mnesia:delete({http_bind, StateData#state.id})
-      end),
+    mnesia:dirty_delete({http_bind, StateData#state.id}),
     send_receiver_reply(StateData#state.http_receiver, {ok, terminate}),
     case StateData#state.waiting_input of
 	false ->
@@ -778,7 +781,7 @@ handle_http_put(Sid, Rid, Attrs, Payload, PayloadSize, StreamStart, IP) ->
         {buffered, _Sess} ->
             {200, ?HEADER, "<body xmlns='"++?NS_HTTP_BIND++"'/>"};
         {ok, Sess} ->
-            prepare_response(Sess, Rid, Attrs, StreamStart)
+            prepare_response(Sess, Rid, [], StreamStart)
     end.
 
 http_put(Sid, Rid, Attrs, Payload, PayloadSize, StreamStart, IP) ->
@@ -880,9 +883,7 @@ update_shaper(ShaperState, PayloadSize) ->
 	    {NewShaperState, undefined}
     end.
 
-prepare_response(#http_bind{id=Sid, wait=Wait, hold=Hold, to=To}=Sess,
-                 Rid, _, StreamStart) ->
-    receive after 100 -> ok end, %% TODO: Why is this needed. Argh. Bad programming practice.
+prepare_response(Sess, Rid, OutputEls, StreamStart) ->
     case catch http_get(Sess, Rid) of
 	{ok, cancel} ->
 	    %% actually it would be better if we could completely
@@ -895,88 +896,103 @@ prepare_response(#http_bind{id=Sid, wait=Wait, hold=Hold, to=To}=Sess,
             {200, ?HEADER, "<body type='terminate' xmlns='"++?NS_HTTP_BIND++"'/>"};
 	{ok, ROutPacket} ->
 	    OutPacket = lists:reverse(ROutPacket),
-            ?DEBUG("OutPacket: ~p", [OutPacket]),
-	    case StreamStart of
-                false ->
-		    case catch send_outpacket(Sess, OutPacket) of
-			{'EXIT', _Reason} ->
-			    {200, ?HEADER,
-			     "<body type='terminate' xmlns='"++
-			     ?NS_HTTP_BIND++"'/>"};
-			SendRes ->
-			    SendRes
-		    end;
-		true ->
-		    case OutPacket of
-			[{xmlstreamstart, _, OutAttrs} | Els] ->
-			    AuthID = xml:get_attr_s("id", OutAttrs),
-			    From = xml:get_attr_s("from", OutAttrs),
-			    Version = xml:get_attr_s("version", OutAttrs),
-			    OutEls =
-				case Els of
-				    [] ->
-					[];
-				    [{xmlstreamelement,
-				      {xmlelement, "stream:features",
-				       StreamAttribs, StreamEls}}
-				     | StreamTail] ->
-					TypedTail =
-					    [check_default_xmlns(OEl) ||
-						{xmlstreamelement, OEl} <-
-						    StreamTail],
-					[{xmlelement, "stream:features",
-					  [{"xmlns:stream",
-					    ?NS_STREAM}] ++
-					  StreamAttribs, StreamEls}] ++
-					    TypedTail;
-				    StreamTail ->
-					[check_default_xmlns(OEl) ||
-					    {xmlstreamelement, OEl} <-
-						StreamTail]
-				end,
-			    BOSH_attribs =
-				[{"authid", AuthID},
-				 {"xmlns:xmpp", ?NS_BOSH},
-				 {"xmlns:stream", ?NS_STREAM}] ++
-				case OutEls of
-				    [] ->
-					[];
-				    _ ->
-					[{"xmpp:version", Version}]
-				end,
-			    MaxInactivity = get_max_inactivity(To, ?MAX_INACTIVITY),
-			    MaxPause = get_max_pause(To),
-			    {200, ?HEADER,
-			     xml:element_to_string(
-			       {xmlelement,"body",
-				[{"xmlns",
-				  ?NS_HTTP_BIND},
-				 {"sid", Sid},
-				 {"wait", integer_to_list(Wait)},
-				 {"requests", integer_to_list(Hold+1)},
-				 {"inactivity",
-				  integer_to_list(
-				    trunc(MaxInactivity/1000))},
-				 {"maxpause",
-				  integer_to_list(MaxPause)},
-				 {"polling",
-				  integer_to_list(
-				    trunc(?MIN_POLLING/1000000))},
-				 {"ver", ?BOSH_VERSION},
-				 {"from", From},
-				 {"secure", "true"} %% we're always being secure
-				] ++ BOSH_attribs,OutEls})};
-			{error, _} ->
-			    {200, ?HEADER, "<body type='terminate' "
-			     "condition='host-unknown' "
-			     "xmlns='"++?NS_HTTP_BIND++"'/>"}
-		    end
-	    end;
+            ?DEBUG("OutPacket: ~p", [OutputEls++OutPacket]),
+	    prepare_outpacket_response(Sess, Rid, OutputEls++OutPacket, StreamStart);
 	{'EXIT', {shutdown, _}} ->
             {200, ?HEADER, "<body type='terminate' condition='system-shutdown' xmlns='"++?NS_HTTP_BIND++"'/>"};
 	{'EXIT', _Reason} ->
             {200, ?HEADER, "<body type='terminate' xmlns='"++?NS_HTTP_BIND++"'/>"}
     end.
+
+%% Send output payloads on establised sessions
+prepare_outpacket_response(Sess, _Rid, OutPacket, false) ->
+    case catch send_outpacket(Sess, OutPacket) of
+	{'EXIT', _Reason} ->
+	    {200, ?HEADER,
+	     "<body type='terminate' xmlns='"++
+	     ?NS_HTTP_BIND++"'/>"};
+	SendRes ->
+	    SendRes
+    end;
+%% Handle a new session along with its output payload
+prepare_outpacket_response(#http_bind{id=Sid, wait=Wait, 
+				      hold=Hold, to=To}=Sess,
+			   Rid, OutPacket, true) ->    
+    case OutPacket of
+	[{xmlstreamstart, _, OutAttrs} | Els] ->
+	    AuthID = xml:get_attr_s("id", OutAttrs),
+	    From = xml:get_attr_s("from", OutAttrs),
+	    Version = xml:get_attr_s("version", OutAttrs),
+	    OutEls =
+		case Els of
+		    [] ->
+			[];
+		    [{xmlstreamelement,
+		      {xmlelement, "stream:features",
+		       StreamAttribs, StreamEls}}
+		     | StreamTail] ->
+			TypedTail =
+			    [check_default_xmlns(OEl) ||
+				{xmlstreamelement, OEl} <-
+				    StreamTail],
+			[{xmlelement, "stream:features",
+			  [{"xmlns:stream",
+			    ?NS_STREAM}] ++
+			  StreamAttribs, StreamEls}] ++
+			    TypedTail;
+		    StreamTail ->
+			[check_default_xmlns(OEl) ||
+			    {xmlstreamelement, OEl} <-
+				StreamTail]
+		end,
+	    case OutEls of 
+		[] ->
+		    prepare_response(Sess, Rid, OutPacket, true);
+		[{xmlelement,
+		  "stream:error",_,_}] ->
+		    {200, ?HEADER, "<body type='terminate' "
+		     "condition='host-unknown' "
+		     "xmlns='"++?NS_HTTP_BIND++"'/>"};                  
+		_ ->
+		    BOSH_attribs =
+			[{"authid", AuthID},
+			 {"xmlns:xmpp", ?NS_BOSH},
+			 {"xmlns:stream", ?NS_STREAM}] ++
+			case OutEls of
+			    [] ->
+				[];
+			    _ ->
+				[{"xmpp:version", Version}]
+			end,
+		    MaxInactivity = get_max_inactivity(To, ?MAX_INACTIVITY),
+		    MaxPause = get_max_pause(To),
+		    {200, ?HEADER,
+		     xml:element_to_string(
+		       {xmlelement,"body",
+			[{"xmlns",
+			  ?NS_HTTP_BIND},
+			 {"sid", Sid},
+			 {"wait", integer_to_list(Wait)},
+			 {"requests", integer_to_list(Hold+1)},
+			 {"inactivity",
+			  integer_to_list(
+			    trunc(MaxInactivity/1000))},
+			 {"maxpause",
+			  integer_to_list(MaxPause)},
+			 {"polling",
+			  integer_to_list(
+			    trunc(?MIN_POLLING/1000000))},
+			 {"ver", ?BOSH_VERSION},
+			 {"from", From},
+			 {"secure", "true"} %% we're always being secure
+			] ++ BOSH_attribs,OutEls})}
+	    end;
+	_ ->         
+	    {200, ?HEADER, "<body type='terminate' "
+	     "condition='internal-server-error' "
+	     "xmlns='"++?NS_HTTP_BIND++"'/>"}    
+    end.
+
 
 http_get(#http_bind{pid = FsmRef, wait = Wait, hold = Hold}, Rid) ->
     gen_fsm:sync_send_all_state_event(

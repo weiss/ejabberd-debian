@@ -55,7 +55,9 @@
 	 handle_sync_event/4,
 	 code_change/4,
 	 handle_info/3,
-	 terminate/3]).
+	 terminate/3,
+     print_state/1
+     ]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -315,10 +317,10 @@ wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
 						  [{xmlelement, "mechanisms",
 						    [{"xmlns", ?NS_SASL}],
 						    Mechs}] ++
-						   ejabberd_hooks:run_fold(
-						     c2s_stream_features,
-						     Server,
-						     [], [])}),
+						  ejabberd_hooks:run_fold(
+						    c2s_stream_features,
+						    Server,
+						    [], [Server])}),
 				    fsm_next_state(wait_for_feature_request,
 					       StateData#state{
 						 server = Server,
@@ -327,11 +329,20 @@ wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
 				_ ->
 				    case StateData#state.resource of
 					"" ->
-					    RosterVersioningFeature = ejabberd_hooks:run_fold(roster_get_versioning_feature, Server, [], [Server]),
-				            StreamFeatures = [{xmlelement, "bind",
-						 [{"xmlns", ?NS_BIND}], []},
-						{xmlelement, "session",
-						 [{"xmlns", ?NS_SESSION}], []} | RosterVersioningFeature],
+					    RosterVersioningFeature =
+						ejabberd_hooks:run_fold(
+						  roster_get_versioning_feature,
+						  Server, [], [Server]),
+				            StreamFeatures =
+						[{xmlelement, "bind",
+						  [{"xmlns", ?NS_BIND}], []},
+						 {xmlelement, "session",
+						  [{"xmlns", ?NS_SESSION}], []}]
+						++ RosterVersioningFeature
+						++ ejabberd_hooks:run_fold(
+						     c2s_stream_features,
+						     Server,
+						     [], [Server]),
 					    send_element(
 					      StateData,
 					      {xmlelement, "stream:features", [],
@@ -1276,7 +1287,7 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 			case ejabberd_hooks:run_fold(
 			       feature_check_packet, StateData#state.server,
 			       allow,
-			       [StateData#state.user,
+			       [StateData#state.jid,
 				StateData#state.server,
 				StateData#state.pres_last,
 				{From, To, Packet},
@@ -1330,10 +1341,42 @@ handle_info(system_shutdown, StateName, StateData) ->
            ok
     end,
     {stop, normal, StateData};
+handle_info({force_update_presence, LUser}, StateName,
+            #state{user = LUser, server = LServer} = StateData) ->
+    NewStateData =
+	case StateData#state.pres_last of
+	    {xmlelement, "presence", _Attrs, _Els} ->
+		PresenceEl = ejabberd_hooks:run_fold(
+			       c2s_update_presence,
+			       LServer,
+			       StateData#state.pres_last,
+			       [LUser, LServer]),
+		StateData2 = StateData#state{pres_last = PresenceEl},
+		presence_update(StateData2#state.jid,
+				PresenceEl,
+				StateData2),
+		StateData2;
+	    _ ->
+		StateData
+	end,
+    {next_state, StateName, NewStateData};
 handle_info(Info, StateName, StateData) ->
     ?ERROR_MSG("Unexpected info: ~p", [Info]),
     fsm_next_state(StateName, StateData).
 
+
+%%----------------------------------------------------------------------
+%% Func: print_state/1
+%% Purpose: Prepare the state to be printed on error log
+%% Returns: State to print
+%%----------------------------------------------------------------------
+print_state(State = #state{pres_t = T, pres_f = F, pres_a = A, pres_i = I}) ->
+   State#state{pres_t = {pres_t, ?SETS:size(T)},
+               pres_f = {pres_f, ?SETS:size(F)},
+               pres_a = {pres_a, ?SETS:size(A)},
+               pres_i = {pres_i, ?SETS:size(I)}
+               }.
+    
 %%----------------------------------------------------------------------
 %% Func: terminate/3
 %% Purpose: Shutdown the fsm
@@ -1392,7 +1435,8 @@ terminate(_Reason, StateName, StateData) ->
 			    presence_broadcast(
 			      StateData, From, StateData#state.pres_i, Packet)
 		    end
-	    end;
+	    end,
+	    bounce_messages();
 	_ ->
 	    ok
     end,
@@ -2183,6 +2227,15 @@ fsm_limit_opts(Opts) ->
 		_ ->
 		    []
 	    end
+    end.
+
+bounce_messages() ->
+    receive
+	{route, From, To, El} ->
+	    ejabberd_router:route(From, To, El),
+	    bounce_messages()
+    after 0 ->
+	    ok
     end.
 
 %%%----------------------------------------------------------------------
