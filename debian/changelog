@@ -3,6 +3,9 @@ ejabberd (2.1.4-1) unstable; urgency=low
   [ Konstantin Khomoutov ]
   * Do not prevent ejabberd_debug from being installed and used
     as this was implemented upstream as the default behavior.
+  * Add build dependency on erlang-parsetools.
+  * Add 'sharedscripts' option to logrotate config.
+  * Update VCS references in control file to point to git.deb.at.
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 04 Jun 2010 22:32:52 +0400
 
