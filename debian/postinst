@@ -31,7 +31,7 @@ setup_ejabberd()
     install -d /var/log/ejabberd
     if ! dpkg-statoverride --list /var/log/ejabberd >/dev/null; then
 	chown ejabberd:adm /var/log/ejabberd
-	chmod 750 /var/log/ejabberd
+	chmod 2750 /var/log/ejabberd
     fi
 
     # Moving certificate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
