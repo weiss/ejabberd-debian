@@ -1,0 +1,165 @@
+commit a1c0631144c44ebcd94aed3feb11ce3985e34d4f
+Author: Badlop <badlop@process-one.net>
+Date:   Fri Jul 9 20:02:29 2010 +0200
+
+    When using OTP R14, use public_key library instead of old ssl (EJAB-953)
+
+diff --git a/src/Makefile.in b/src/Makefile.in
+index 174084f..3640637 100644
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -30,7 +30,7 @@ else
+   INIT_USER=$(INSTALLUSER)
+ endif
+ 
+-EFLAGS += @ERLANG_SSL39@ -pa .
++EFLAGS += @ERLANG_SSLVER@ -pa .
+ 
+ # make debug=true to compile Erlang module with debug informations.
+ ifdef debug
+diff --git a/src/aclocal.m4 b/src/aclocal.m4
+index 79b0e3e..09b166b 100644
+--- a/src/aclocal.m4
++++ b/src/aclocal.m4
+@@ -121,7 +121,6 @@ AC_DEFUN(AM_WITH_ERLANG,
+ -author('alexey@sevcom.net').
+ 
+ -export([[start/0]]).
+--include_lib("ssl/include/ssl_pkix.hrl").
+ 
+ start() ->
+     EIDirS = code:lib_dir("erl_interface") ++ "\n",
+@@ -130,11 +129,13 @@ start() ->
+     file:write_file("conftest.out", list_to_binary(EIDirS ++ EILibS ++ ssldef() ++ RootDirS)),
+     halt().
+ 
+--[ifdef]('id-pkix').
+-ssldef() -> "-DSSL39\n".
+--else.
+-ssldef() -> "\n".
+--endif.
++ssldef() -> 
++   OTP = (catch erlang:system_info(otp_release)),
++   if
++	OTP >= "R14" -> "-DSSL40\n";
++	OTP >= "R12" -> "-DSSL39\n";
++        true -> ""
++   end.
+ 
+ %% return physical architecture based on OS/Processor
+ archname() ->
+@@ -184,7 +185,7 @@ _EOF
+    # Second line
+    ERLANG_EI_LIB=`cat conftest.out | head -n 2 | tail -n 1`
+    # Third line
+-   ERLANG_SSL39=`cat conftest.out | head -n 3 | tail -n 1`
++   ERLANG_SSLVER=`cat conftest.out | head -n 3 | tail -n 1`
+    # End line
+    ERLANG_DIR=`cat conftest.out | tail -n 1`
+ 
+@@ -193,7 +194,7 @@ _EOF
+ 
+    AC_SUBST(ERLANG_CFLAGS)
+    AC_SUBST(ERLANG_LIBS)
+-   AC_SUBST(ERLANG_SSL39)
++   AC_SUBST(ERLANG_SSLVER)
+    AC_SUBST(ERLC)
+    AC_SUBST(ERL)
+ ])
+diff --git a/src/ejabberd_s2s_in.erl b/src/ejabberd_s2s_in.erl
+index 179dc08..56086c9 100644
+--- a/src/ejabberd_s2s_in.erl
++++ b/src/ejabberd_s2s_in.erl
+@@ -48,6 +48,11 @@
+ 
+ -include("ejabberd.hrl").
+ -include("jlib.hrl").
++-ifdef(SSL40).
++-include_lib("public_key/include/public_key.hrl"). 
++-define(PKIXEXPLICIT, 'OTP-PUB-KEY').
++-define(PKIXIMPLICIT, 'OTP-PUB-KEY').
++-else.
+ -ifdef(SSL39).
+ -include_lib("ssl/include/ssl_pkix.hrl").
+ -define(PKIXEXPLICIT, 'OTP-PKIX').
+@@ -58,6 +63,7 @@
+ -define(PKIXEXPLICIT, 'PKIX1Explicit88').
+ -define(PKIXIMPLICIT, 'PKIX1Implicit88').
+ -endif.
++-endif.
+ -include("XmppAddr.hrl").
+ 
+ -define(DICT, dict).
+diff --git a/src/tls/Makefile.in b/src/tls/Makefile.in
+index b29e1ae..4458796 100644
+--- a/src/tls/Makefile.in
++++ b/src/tls/Makefile.in
+@@ -21,6 +21,7 @@ ifeq ($(shell uname),SunOs)
+     DYNAMIC_LIB_CFLAGS = -KPIC -G -z text
+ endif
+ 
++EFLAGS += @ERLANG_SSLVER@
+ EFLAGS += -I ..
+ EFLAGS += -pz ..
+ 
+diff --git a/src/tls/tls.erl b/src/tls/tls.erl
+index 9aee54c..9c921b3 100644
+--- a/src/tls/tls.erl
++++ b/src/tls/tls.erl
+@@ -61,6 +61,13 @@
+ -define(GET_VERIFY_RESULT,    8).
+ -define(VERIFY_NONE, 16#10000).
+ 
++-ifdef(SSL40).
++-define(CERT_DECODE, {public_key, pkix_decode_cert, plain}).
++-else.
++-define(CERT_DECODE, {ssl_pkix, decode_cert, [pkix]}).
++-endif.
++
++
+ -record(tlssock, {tcpsock, tlsport}).
+ 
+ start() ->
+@@ -232,7 +239,8 @@ close(#tlssock{tcpsock = TCPSocket, tlsport = Port}) ->
+ get_peer_certificate(#tlssock{tlsport = Port}) ->
+     case port_control(Port, ?GET_PEER_CERTIFICATE, []) of
+ 	<<0, BCert/binary>> ->
+-	    case catch ssl_pkix:decode_cert(BCert, [pkix]) of
++	    {CertMod, CertFun, CertSecondArg} = ?CERT_DECODE,
++	    case catch apply(CertMod, CertFun, [BCert, CertSecondArg]) of
+ 		{ok, Cert} ->
+ 		    {ok, Cert};
+ 		_ ->
+diff --git a/src/web/Makefile.in b/src/web/Makefile.in
+index 519314e..77f8014 100644
+--- a/src/web/Makefile.in
++++ b/src/web/Makefile.in
+@@ -9,7 +9,7 @@ LIBS = @LIBS@
+ ERLANG_CFLAGS = @ERLANG_CFLAGS@
+ ERLANG_LIBS = @ERLANG_LIBS@
+ 
+-EFLAGS += @ERLANG_SSL39@
++EFLAGS += @ERLANG_SSLVER@
+ EFLAGS += -I ..
+ EFLAGS += -pz ..
+ 
+diff --git a/src/web/mod_http_fileserver.erl b/src/web/mod_http_fileserver.erl
+index 4f683ea..ab4e1a5 100644
+--- a/src/web/mod_http_fileserver.erl
++++ b/src/web/mod_http_fileserver.erl
+@@ -66,11 +66,15 @@
+ 		  headers
+ 		 }).
+ 
++-ifdef(SSL40).
++-define(STRING2LOWER, string).
++-else.
+ -ifdef(SSL39).
+ -define(STRING2LOWER, string).
+ -else.
+ -define(STRING2LOWER, httpd_util).
+ -endif.
++-endif.
+ 
+ -record(state, {host, docroot, accesslog, accesslogfd, directory_indices,
+                 custom_headers, default_content_type, content_types = []}).

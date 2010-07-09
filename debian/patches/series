@@ -4,3 +4,4 @@ shared_roster_online.patch
 captcha.patch
 fix_examples.patch
 reopen-log.patch
+erlang-otp-r14-ssl.patch
