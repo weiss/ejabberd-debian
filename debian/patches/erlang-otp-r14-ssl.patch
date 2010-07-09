@@ -1,8 +1,13 @@
-commit a1c0631144c44ebcd94aed3feb11ce3985e34d4f
-Author: Badlop <badlop@process-one.net>
-Date:   Fri Jul 9 20:02:29 2010 +0200
-
-    When using OTP R14, use public_key library instead of old ssl (EJAB-953)
+Description: When building for Erlang/OTP R14, use public_key library
+ This fixes configuration/compilation problems due ejabberd using
+ private functions from Erlang/OTP ssl library which became
+ deprecated in Erlang/OTP R14A.
+ .
+ The patch was slightly modified to incorporate certain changes
+ directly to the configure script instead of aclocal.m4.
+From: Badlop <badlop@process-one.net>
+Origin: upstream, https://support.process-one.net/secure/attachment/16887/953-21-r14.diff
+Bug: https://support.process-one.net/browse/EJAB-953
 
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
