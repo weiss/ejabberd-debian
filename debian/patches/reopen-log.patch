@@ -25,10 +25,8 @@ The patch fixes these problems in the following way:
 This problem is being tracked upstream as
 https://support.process-one.net/browse/EJAB-1243
 
-Index: pkg-ejabberd/src/ejabberd_logger_h.erl
-===================================================================
---- pkg-ejabberd.orig/src/ejabberd_logger_h.erl	2010-05-14 04:19:16.000000000 +0400
-+++ pkg-ejabberd/src/ejabberd_logger_h.erl	2010-05-14 04:22:46.000000000 +0400
+--- a/src/ejabberd_logger_h.erl
++++ b/src/ejabberd_logger_h.erl
 @@ -58,6 +58,20 @@
  %%          {swap_handler, Args1, State1, Mod2, Args2} |
  %%          remove_handler                              
@@ -58,11 +56,9 @@ Index: pkg-ejabberd/src/ejabberd_logger_h.erl
      case file:open(State#state.file, [append, raw]) of
  	{ok, Fd} ->
  	    {ok, State#state{fd = Fd}};
-Index: pkg-ejabberd/src/ejabberd_admin.erl
-===================================================================
---- pkg-ejabberd.orig/src/ejabberd_admin.erl	2010-05-14 04:19:16.000000000 +0400
-+++ pkg-ejabberd/src/ejabberd_admin.erl	2010-05-14 04:23:19.000000000 +0400
-@@ -206,28 +206,9 @@
+--- a/src/ejabberd_admin.erl
++++ b/src/ejabberd_admin.erl
+@@ -219,28 +219,9 @@
  
  reopen_log() ->
      ejabberd_hooks:run(reopen_log_hook, []),
@@ -92,10 +88,8 @@ Index: pkg-ejabberd/src/ejabberd_admin.erl
  %%%
  %%% Stop Kindly
  %%%
-Index: pkg-ejabberd/src/sasl_report_append_file_h.erl
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ pkg-ejabberd/src/sasl_report_append_file_h.erl	2010-05-14 04:22:46.000000000 +0400
+--- /dev/null
++++ b/src/sasl_report_append_file_h.erl
 @@ -0,0 +1,59 @@
 +%%
 +%% SASL report logging to a file in append mode.
@@ -156,10 +150,8 @@ Index: pkg-ejabberd/src/sasl_report_append_file_h.erl
 +tag_event(Event) ->
 +    {calendar:local_time(), Event}.
 +
-Index: pkg-ejabberd/src/ejabberd_app.erl
-===================================================================
---- pkg-ejabberd.orig/src/ejabberd_app.erl	2010-05-14 04:19:16.000000000 +0400
-+++ pkg-ejabberd/src/ejabberd_app.erl	2010-05-14 04:30:25.000000000 +0400
+--- a/src/ejabberd_app.erl
++++ b/src/ejabberd_app.erl
 @@ -100,6 +100,13 @@
      register(ejabberd, self()),
      %erlang:system_flag(fullsweep_after, 0),
