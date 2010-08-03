@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Konstantin Khomoutov <flatworm@users.sourceforge.net>
 Uploaders: Gerfried Fuchs <rhonda@debian.at>
 Build-Depends: debhelper (>= 7.3~), quilt, erlang-base, erlang-asn1, erlang-parsetools, erlang-dev (>= 1:13.b), libexpat1-dev, libssl-dev, zlib1g-dev, libpam0g-dev, po-debconf
-Standards-Version: 3.8.4
+Standards-Version: 3.9.0
 Homepage: http://www.process-one.net/en/projects/ejabberd/
 Vcs-Git: git://git.deb.at/pkg/ejabberd.git
 Vcs-Browser: http://git.deb.at/w/pkg/ejabberd.git
