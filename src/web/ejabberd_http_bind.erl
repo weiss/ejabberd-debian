@@ -45,7 +45,7 @@
 -include("ejabberd_http.hrl").
 -include("http_bind.hrl").
 
--record(http_bind, {id, pid, to, hold, wait, version}).
+-record(http_bind, {id, pid, to, hold, wait, process_delay, version}).
 
 -define(NULL_PEER, {{0, 0, 0, 0}, 0}).
 
@@ -106,6 +106,11 @@
                                 % idle sessions
 -define(MAX_PAUSE, 120). % may num of sec a client is allowed to pause
                          % the session
+
+%% Wait 100ms before continue processing, to allow the client provide more related stanzas.
+-define(PROCESS_DELAY_DEFAULT, 100).
+-define(PROCESS_DELAY_MIN, 0).
+-define(PROCESS_DELAY_MAX, 1000).
 
 
 %%%----------------------------------------------------------------------
@@ -257,6 +262,18 @@ handle_session_start(Pid, XmppDomain, Sid, Rid, Attrs,
 			   CHold
 		   end
 	   end,
+    Pdelay = case string:to_integer(xml:get_attr_s("process-delay",Attrs)) of
+		 {error, _} ->
+		     ?PROCESS_DELAY_DEFAULT;
+		 {CPdelay, _} when
+		       (?PROCESS_DELAY_MIN =< CPdelay) and
+		       (CPdelay =< ?PROCESS_DELAY_MAX) ->
+		     CPdelay;
+		 {CPdelay, _} ->
+		     erlang:max(
+		       erlang:min(CPdelay,?PROCESS_DELAY_MAX),
+		       ?PROCESS_DELAY_MIN)
+	     end,
     Version =
 	case catch list_to_float(
 		     xml:get_attr_s("ver", Attrs)) of
@@ -274,6 +291,7 @@ handle_session_start(Pid, XmppDomain, Sid, Rid, Attrs,
 				 XmppVersion},
 			   hold = Hold,
 			   wait = Wait,
+			   process_delay = Pdelay,
 			   version = Version
 			  })
       end),
@@ -772,7 +790,7 @@ handle_http_put(Sid, Rid, Attrs, Payload, PayloadSize, StreamStart, IP) ->
 	    ?DEBUG("Trafic Shaper: Delaying request ~p", [Rid]),
 	    timer:sleep(Pause),
             %{200, ?HEADER,
-            % xml:element_to_string(
+            % xml:element_to_binary(
             %   {xmlelement, "body",
             %    [{"xmlns", ?NS_HTTP_BIND},
             %     {"type", "error"}], []})};
@@ -809,21 +827,21 @@ handle_http_put_error(Reason, #http_bind{pid=FsmRef, version=Version})
     case Reason of
         not_exists ->
             {200, ?HEADER,
-             xml:element_to_string(
+             xml:element_to_binary(
                {xmlelement, "body",
                 [{"xmlns", ?NS_HTTP_BIND},
                  {"type", "terminate"},
                  {"condition", "item-not-found"}], []})};
         bad_key ->
             {200, ?HEADER,
-             xml:element_to_string(
+             xml:element_to_binary(
                {xmlelement, "body",
                 [{"xmlns", ?NS_HTTP_BIND},
                  {"type", "terminate"},
                  {"condition", "item-not-found"}], []})};
         polling_too_frequently ->
             {200, ?HEADER,
-             xml:element_to_string(
+             xml:element_to_binary(
                {xmlelement, "body",
                 [{"xmlns", ?NS_HTTP_BIND},
                  {"type", "terminate"},
@@ -884,6 +902,7 @@ update_shaper(ShaperState, PayloadSize) ->
     end.
 
 prepare_response(Sess, Rid, OutputEls, StreamStart) ->
+    receive after Sess#http_bind.process_delay -> ok end,
     case catch http_get(Sess, Rid) of
 	{ok, cancel} ->
 	    %% actually it would be better if we could completely
@@ -967,7 +986,7 @@ prepare_outpacket_response(#http_bind{id=Sid, wait=Wait,
 		    MaxInactivity = get_max_inactivity(To, ?MAX_INACTIVITY),
 		    MaxPause = get_max_pause(To),
 		    {200, ?HEADER,
-		     xml:element_to_string(
+		     xml:element_to_binary(
 		       {xmlelement,"body",
 			[{"xmlns",
 			  ?NS_HTTP_BIND},
@@ -1022,7 +1041,7 @@ send_outpacket(#http_bind{pid = FsmRef}, OutPacket) ->
 		true ->
 		    TypedEls = [check_default_xmlns(OEl) ||
 				   {xmlstreamelement, OEl} <- OutPacket],
-		    Body = xml:element_to_string(
+		    Body = xml:element_to_binary(
 			     {xmlelement,"body",
 			      [{"xmlns",
 				?NS_HTTP_BIND}],
@@ -1056,7 +1075,7 @@ send_outpacket(#http_bind{pid = FsmRef}, OutPacket) ->
 						StreamTail]
 				end,
                             {200, ?HEADER,
-                             xml:element_to_string(
+                             xml:element_to_binary(
                                {xmlelement,"body",
                                 [{"xmlns",
                                   ?NS_HTTP_BIND}],
@@ -1172,7 +1191,7 @@ set_inactivity_timer(_Pause, MaxInactivity) ->
 elements_to_string([]) ->
     [];
 elements_to_string([El | Els]) ->
-    xml:element_to_string(El) ++ elements_to_string(Els).
+    [xml:element_to_binary(El)|elements_to_string(Els)].
 
 %% @spec (To, Default::integer()) -> integer()
 %% where To = [] | {Host::string(), Version::string()}

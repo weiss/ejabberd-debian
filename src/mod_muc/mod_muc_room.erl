@@ -162,7 +162,7 @@ normal_state({route, From, "",
 			trunc(gen_mod:get_module_opt(
 				StateData#state.server_host,
 				mod_muc, min_message_interval, 0) * 1000000),
-		    Size = lists:flatlength(xml:element_to_string(Packet)),
+		    Size = element_size(Packet),
 		    {MessageShaper, MessageShaperInterval} =
 			shaper:update(Activity#activity.message_shaper, Size),
 		    if
@@ -593,21 +593,9 @@ handle_event(_Event, StateName, StateData) ->
 %%          {stop, Reason, Reply, NewStateData}
 %%----------------------------------------------------------------------
 handle_sync_event({get_disco_item, JID, Lang}, _From, StateName, StateData) ->
-    case (StateData#state.config)#config.public_list of
-	true ->
-	    Reply = get_roomdesc_reply(StateData,
-				       get_roomdesc_tail(StateData, Lang)),
-	    {reply, Reply, StateName, StateData};
-	_ ->
-	    case is_occupant_or_admin(JID, StateData) of
-		true ->
-		    Reply = get_roomdesc_reply(StateData, get_roomdesc_tail(
-							    StateData, Lang)),
-		    {reply, Reply, StateName, StateData};
-		_ ->
-		    {reply, false, StateName, StateData}
-	    end
-    end;
+    Reply = get_roomdesc_reply(JID, StateData,
+			       get_roomdesc_tail(StateData, Lang)),
+    {reply, Reply, StateName, StateData};
 handle_sync_event(get_config, _From, StateName, StateData) ->
     {reply, {ok, StateData#state.config}, StateName, StateData};
 handle_sync_event(get_state, _From, StateName, StateData) ->
@@ -1406,7 +1394,7 @@ prepare_room_queue(StateData) ->
 	{{value, {message, From}}, _RoomQueue} ->
 	    Activity = get_user_activity(From, StateData),
 	    Packet = Activity#activity.message,
-	    Size = lists:flatlength(xml:element_to_string(Packet)),
+	    Size = element_size(Packet),
 	    {RoomShaper, RoomShaperInterval} =
 		shaper:update(StateData#state.room_shaper, Size),
 	    erlang:send_after(
@@ -1417,7 +1405,7 @@ prepare_room_queue(StateData) ->
 	{{value, {presence, From}}, _RoomQueue} ->
 	    Activity = get_user_activity(From, StateData),
 	    {_Nick, Packet} = Activity#activity.presence,
-	    Size = lists:flatlength(xml:element_to_string(Packet)),
+	    Size = element_size(Packet),
 	    {RoomShaper, RoomShaperInterval} =
 		shaper:update(StateData#state.room_shaper, Size),
 	    erlang:send_after(
@@ -2080,7 +2068,7 @@ add_message_to_history(FromNick, FromJID, Packet, StateData) ->
 		jlib:jid_replace_resource(StateData#state.jid, FromNick),
 		StateData#state.jid,
 		TSPacket),
-    Size = lists:flatlength(xml:element_to_string(SPacket)),
+    Size = element_size(SPacket),
     Q1 = lqueue_in({FromNick, TSPacket, HaveSubject, TimeStamp, Size},
 		   StateData#state.history),
     add_to_log(text, {FromNick, Packet}, StateData),
@@ -3357,11 +3345,15 @@ get_title(StateData) ->
 	    Name
     end.
 
-get_roomdesc_reply(StateData, Tail) ->
-    case ((StateData#state.config)#config.public == true) of
-	true ->
-	    {item, get_title(StateData) ++ Tail};
-	_ ->
+get_roomdesc_reply(JID, StateData, Tail) ->
+    IsOccupantOrAdmin = is_occupant_or_admin(JID, StateData),
+    if (StateData#state.config)#config.public or IsOccupantOrAdmin ->
+	    if (StateData#state.config)#config.public_list or IsOccupantOrAdmin ->
+		    {item, get_title(StateData) ++ Tail};
+	       true ->
+		    {item, get_title(StateData)}
+	    end;
+       true ->
 	    false
     end.
 
@@ -3590,3 +3582,6 @@ tab_count_user(JID) ->
 	_ ->
 	    0
     end.
+
+element_size(El) ->
+    size(xml:element_to_binary(El)).

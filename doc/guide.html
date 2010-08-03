@@ -6,7 +6,7 @@
  
  
 
- ejabberd 2.1.4 
+ ejabberd 2.1.5 
  
  Installation and Operation Guide
  
@@ -76,7 +76,7 @@ BLOCKQUOTE.figure DIV.center DIV.center HR{display:none;}
 <HR SIZE=2><BR>
 <BR>
 
-<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.1.4 </B></FONT></TD></TR>
+<TABLE CELLSPACING=6 CELLPADDING=0><TR><TD ALIGN=right NOWRAP> <FONT SIZE=6><B>ejabberd 2.1.5 </B></FONT></TD></TR>
 <TR><TD ALIGN=right NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=right NOWRAP> <FONT SIZE=6>Installation and Operation Guide</FONT></TD></TR>
 </TABLE><BR>
@@ -346,7 +346,7 @@ GNU Make
 </LI><LI CLASS="li-itemize">GCC
 </LI><LI CLASS="li-itemize">Libexpat 1.95 or higher
 </LI><LI CLASS="li-itemize">Erlang/OTP R10B-9 or higher. The recommended versions are R12B-5 and R13B04.
-</LI><LI CLASS="li-itemize">OpenSSL 0.9.6 or higher, for STARTTLS, SASL and SSL encryption. Optional, highly recommended.
+</LI><LI CLASS="li-itemize">OpenSSL 0.9.8 or higher, for STARTTLS, SASL and SSL encryption.
 </LI><LI CLASS="li-itemize">Zlib 1.2.3 or higher, for Stream Compression support (<A HREF="http://xmpp.org/extensions/xep-0138.html">XEP-0138</A>). Optional.
 </LI><LI CLASS="li-itemize">Erlang mysql library. Optional. For MySQL authentication or storage. See section <A HREF="#compilemysql">3.2.1</A>.
 </LI><LI CLASS="li-itemize">Erlang pgsql library. Optional. For PostgreSQL authentication or storage. See section <A HREF="#compilepgsql">3.2.3</A>.
@@ -390,7 +390,9 @@ To get the full list run the command:
 	Enable the use of XML based optimisations.
 	It will for example use CDATA to escape characters in the XMPP stream.
 	Use this option only if you are sure your XMPP clients include a fully compliant XML parser.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--disable-transient-supervisors</TT></B></DT><DD CLASS="dd-description">
-	Disable the use of Erlang/OTP supervision for transient processes.
+	Disable the use of Erlang/OTP supervision for transient processes.<P>	</P></DD><DT CLASS="dt-description"><B><TT>--enable-nif</TT></B></DT><DD CLASS="dd-description">
+Replaces some critical Erlang functions with equivalents written in C to improve performance.
+This feature requires Erlang/OTP R13B04 or higher.
 </DD></DL><P> <A NAME="install"></A> </P><!--TOC subsection Install-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc12">2.4.4</A>&#XA0;&#XA0;<A HREF="#install">Install</A></H3><!--SEC END --><P> <A NAME="install"></A> 
 </P><P>To install <TT>ejabberd</TT> in the destination directories, run the command:
@@ -1058,7 +1060,9 @@ There are also <A HREF="http://www.ejabberd.im/extauth">several example authenti
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{extauth_program, PathToScript}</TT></B></DT><DD CLASS="dd-description"> 
 Indicate in this option the full path to the external authentication script.
-The script must be executable by ejabberd.</DD><DT CLASS="dt-description"><B><TT>{extauth_cache, false|CacheTimeInteger}</TT></B></DT><DD CLASS="dd-description"> 
+The script must be executable by ejabberd.</DD><DT CLASS="dt-description"><B><TT>{extauth_instances, Integer}</TT></B></DT><DD CLASS="dd-description"> 
+Indicate how many instances of the script to run simultaneously to serve authentication in the virtual host.
+The default value is the minimum number: 1.</DD><DT CLASS="dt-description"><B><TT>{extauth_cache, false|CacheTimeInteger}</TT></B></DT><DD CLASS="dd-description"> 
 The value <TT>false</TT> disables the caching feature, this is the default.
 The integer <TT>0</TT> (zero) enables caching for statistics, but doesn&#X2019;t use that cached information to authenticate users.
 If another integer value is set, caching is enabled both for statistics and for authentication:
@@ -1067,10 +1071,12 @@ the authentication information since the user last disconnected,
 to verify again the user authentication without querying again the extauth script.
 Note: caching should not be enabled in a host if internal auth is also enabled.
 If caching is enabled, <TT>mod_last</TT> or <TT>mod_last_odbc</TT> must be enabled also in that vhost.
-</DD></DL><P>This example sets external authentication, the extauth script, and enables caching for 10 minutes:
+</DD></DL><P>This example sets external authentication, the extauth script, enables caching for 10 minutes,
+and starts three instances of the script for each virtual host defined in ejabberd:
 </P><PRE CLASS="verbatim">{auth_method, [external]}.
 {extauth_program, "/etc/ejabberd/JabberAuth.class.php"}.
 {extauth_cache, 600}.
+{extauth_instances, 3}. 
 </PRE><P> <A NAME="saslanonymous"></A> </P><!--TOC subsubsection SASL Anonymous and Anonymous Login-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#saslanonymous">SASL Anonymous and Anonymous Login</A></H4><!--SEC END --><P> <A NAME="saslanonymous"></A> 
 </P><P>The value <TT>anonymous</TT> will enable the internal authentication method.</P><P>The anonymous authentication method can be configured with the following
@@ -1662,7 +1668,8 @@ create accounts or edit vCard that is stored in LDAP.
 However, it is possible to change passwords if <TT>mod_register</TT> module is enabled
 and LDAP server supports
 <A HREF="http://tools.ietf.org/html/rfc3062">RFC 3062</A>.</P><P> <A NAME="ldapconnection"></A> </P><!--TOC subsubsection Connection-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapconnection">Connection</A></H4><!--SEC END --><P> <A NAME="ldapconnection"></A> </P><P>Parameters:
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapconnection">Connection</A></H4><!--SEC END --><P> <A NAME="ldapconnection"></A> </P><P>Two connections are established to the LDAP server per vhost,
+one for authentication and other for regular calls.</P><P>Parameters:
 </P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{ldap_servers, [Servers, ...]}</TT></B></DT><DD CLASS="dd-description"> List of IP addresses or DNS names of your
 LDAP servers. This option is required.
@@ -1691,8 +1698,9 @@ value is <TT>""</TT>.
 {ldap_port, 389}.
 {ldap_rootdn, "cn=Manager,dc=domain,dc=org"}.
 {ldap_password, "secret"}.
-</PRE><P>Note that current LDAP implementation does not support SASL authentication.</P><P> <A NAME="ldapauth"></A> </P><!--TOC subsubsection Authentication-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapauth">Authentication</A></H4><!--SEC END --><P> <A NAME="ldapauth"></A> </P><P>You can authenticate users against an LDAP directory. Available options are:</P><DL CLASS="description"><DT CLASS="dt-description">
+</PRE><P> <A NAME="ldapauth"></A> </P><!--TOC subsubsection Authentication-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR --><A HREF="#ldapauth">Authentication</A></H4><!--SEC END --><P> <A NAME="ldapauth"></A> </P><P>You can authenticate users against an LDAP directory. 
+Note that current LDAP implementation does not support SASL authentication.</P><P>Available options are:</P><DL CLASS="description"><DT CLASS="dt-description">
 <B><TT>{ldap_base, Base}</TT></B></DT><DD CLASS="dd-description">LDAP base directory which stores
 users accounts. This option is required.
 </DD><DT CLASS="dt-description"><B><TT>{ldap_uids, [ {ldap_uidattr} | {ldap_uidattr, ldap_uidattr_format}, ...]}</TT></B></DT><DD CLASS="dd-description">
@@ -1894,6 +1902,8 @@ all entries end with a comma:
 <TR><TD ALIGN=left NOWRAP><TT>mod_configure</TT></TD><TD ALIGN=left NOWRAP>Server configuration using Ad-Hoc</TD><TD ALIGN=left NOWRAP><TT>mod_adhoc</TT></TD></TR>
 <TR><TD ALIGN=left NOWRAP><A HREF="#moddisco"><TT>mod_disco</TT></A></TD><TD ALIGN=left NOWRAP>Service Discovery (<A HREF="http://xmpp.org/extensions/xep-0030.html">XEP-0030</A>)</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=left NOWRAP><A HREF="#modecho"><TT>mod_echo</TT></A></TD><TD ALIGN=left NOWRAP>Echoes XMPP stanzas</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
+<TR><TD ALIGN=left NOWRAP><A HREF="#modhttpbind"><TT>mod_http_bind</TT></A></TD><TD ALIGN=left NOWRAP>XMPP over Bosh service (HTTP Binding)</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
+<TR><TD ALIGN=left NOWRAP><A HREF="#modhttpfileserver"><TT>mod_http_fileserver</TT></A></TD><TD ALIGN=left NOWRAP>Small HTTP file server</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=left NOWRAP><A HREF="#modirc"><TT>mod_irc</TT></A></TD><TD ALIGN=left NOWRAP>IRC transport</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=left NOWRAP><A HREF="#modlast"><TT>mod_last</TT></A></TD><TD ALIGN=left NOWRAP>Last Activity (<A HREF="http://xmpp.org/extensions/xep-0012.html">XEP-0012</A>)</TD><TD ALIGN=left NOWRAP>&nbsp;</TD></TR>
 <TR><TD ALIGN=left NOWRAP><A HREF="#modlast"><TT>mod_last_odbc</TT></A></TD><TD ALIGN=left NOWRAP>Last Activity (<A HREF="http://xmpp.org/extensions/xep-0012.html">XEP-0012</A>)</TD><TD ALIGN=left NOWRAP>supported DB (*)</TD></TR>
@@ -2473,6 +2483,10 @@ the room occupants.
 </DD><DT CLASS="dt-description"><B><TT>{anonymous, true|false}</TT></B></DT><DD CLASS="dd-description"> The room is anonymous:
 occupants don&#X2019;t see the real JIDs of other occupants.
 Note that the room moderators can always see the real JIDs of the occupants.
+</DD><DT CLASS="dt-description"><B><TT>{captcha_protected, false}</TT></B></DT><DD CLASS="dd-description"> 
+When a user tries to join a room where he has no affiliation (not owner, admin or member),
+the room requires him to fill a CAPTCHA challenge (see section <A HREF="#captcha">3.1.8</A>)
+in order to accept her join in the room.
 </DD><DT CLASS="dt-description"><B><TT>{logging, false|true}</TT></B></DT><DD CLASS="dd-description"> The public messages are logged using <TT>mod_muc_log</TT>.
 </DD><DT CLASS="dt-description"><B><TT>{max_users, 200}</TT></B></DT><DD CLASS="dd-description"> Maximum number of occupants in the room.
 </DD><DT CLASS="dt-description"><B><TT>{members_by_default, true|false}</TT></B></DT><DD CLASS="dd-description"> The occupants that enter the room are participants by default, so they have &#X2019;voice&#X2019;.
@@ -2965,9 +2979,11 @@ the processing discipline for In-Band Registration (<TT>jabber:iq:register</TT>)
 </DD></DL><P>This module reads also another option defined globally for the server:
 <TT>{registration_timeout, Timeout}</TT>. 
 This option limits the frequency of registration from a given IP or username.
-So, a user can&#X2019;t register a new account from the same IP address or JID during
-this number of seconds after previous registration.
-Timeout is expressed in seconds, and must be an integer.
+So, a user that tries to register a new account from the same IP address or JID during
+this number of seconds after his previous registration
+will receive an error <TT>resource-constraint</TT> with the explanation:
+&#X201C;Users are not allowed to register accounts so quickly&#X201D;.
+The timeout is expressed in seconds, and it must be an integer.
 To disable this limitation,
 instead of an integer put a word like: <TT>infinity</TT>.
 Default value: 600 seconds.</P><P>Examples:
