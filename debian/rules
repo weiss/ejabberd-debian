@@ -59,6 +59,9 @@ install: build
 	# Remove unused upstream directories:
 	rm -rf $(DESTDIR)/var/lock
 
+	# Remove upstream license file:
+	rm $(DESTDIR)/usr/share/doc/ejabberd/COPYING
+
 
 # Build architecture-independent files here.
 binary-indep: install
