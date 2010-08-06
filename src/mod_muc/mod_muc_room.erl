@@ -571,7 +571,7 @@ handle_event({destroy, Reason}, _StateName, StateData) ->
     ?INFO_MSG("Destroyed MUC room ~s with reason: ~p", 
 	      [jlib:jid_to_string(StateData#state.jid), Reason]),
     add_to_log(room_existence, destroyed, StateData),
-    {stop, Reason, StateData};
+    {stop, shutdown, StateData};
 handle_event(destroy, StateName, StateData) ->
     ?INFO_MSG("Destroyed MUC room ~s", 
 	      [jlib:jid_to_string(StateData#state.jid)]),
@@ -734,7 +734,7 @@ terminate(Reason, _StateName, StateData) ->
     ReasonT = case Reason of
 		  shutdown -> "You are being removed from the room because"
 				  " of a system shutdown";
-		  _ -> atom_to_list(Reason)
+		  _ -> "Room terminates"
 	      end,
     ItemAttrs = [{"affiliation", "none"}, {"role", "none"}],
     ReasonEl = {xmlelement, "reason", [], [{xmlcdata, ReasonT}]},

@@ -3,7 +3,7 @@
 %%% Author  : Sergei Golovan <sgolovan@nes.ru>
 %%% Purpose : Auxiliary tool for interface/messages translators
 %%% Created : 23 Apr 2005 by Sergei Golovan <sgolovan@nes.ru>
-%%% Id      : $Id: extract_translations.erl 2044 2009-04-27 20:55:35Z badlop $
+%%% Id      : $Id$
 %%%----------------------------------------------------------------------
 
 -module(extract_translations).

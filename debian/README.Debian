@@ -71,13 +71,37 @@ to fall back to IPv4 if IPv6 is unavailable, and hence enabling IPv6
 by default would immediately break things for users with IPv6 disabled
 (see http://bugs.debian.org/503313 for more details).
 
-You have two methods of enabling IPv6:
+The actions to be carried out to enable IPv6 depend on whether
+IPv6-only or mixed setup is needed.
+
+To make ejabberd use IPv6 only, proceed with one of these methods:
 * Add the "inet6" atom to the configuration clauses describing
   c2s and s2s listeners.
 * Specify and IPv6 address for the "ip" option in the configuration
   of a listener, like {ip, "::"} -- ejabberd is able to deduce the
   protocol family from an IP address it parses and enable the appropriate
   mode on the socket such an IP address is configured for.
+* Specify the address to bind to along with the listener port;
+  the notes above about the IP address formatting also apply here.
+
+To support both IPv6 and IPv4, you have to duplicate the sections for
+appropriate listeners hinting ejabberd about the protocol to use
+for each one. One way to do this looks like this (for the c2s listener):
+
+{listen,
+  {{5222, "0.0.0.0"}, ejabberd_c2s, [...]},
+  {{5222, "::"}, ejabberd_c2s, [...]},
+  ...
+}
+
+This way, two (supposedly identical, though not required) c2s listeners
+are configured: the first one for IPv4 and the second one for IPv6;
+ejabberd figures the necessary protocol family out by looking at how
+the IP address to bind to is specified.
+
+Refer to the "Listening Ports" section of the Installation and
+Operation Guide for more info, specifically, to its "Port Number,
+IP Address and Transport Protocol" and "Examples" parts.
 
 
 1.5. Using captcha

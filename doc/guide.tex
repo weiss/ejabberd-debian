@@ -92,6 +92,7 @@
 \newcommand{\modrosterodbc}{\module{mod\_roster\_odbc}}
 \newcommand{\modservicelog}{\module{mod\_service\_log}}
 \newcommand{\modsharedroster}{\module{mod\_shared\_roster}}
+\newcommand{\modsic}{\module{mod\_sic}}
 \newcommand{\modstats}{\module{mod\_stats}}
 \newcommand{\modtime}{\module{mod\_time}}
 \newcommand{\modvcard}{\module{mod\_vcard}}
@@ -325,10 +326,12 @@ To compile \ejabberd{} on a `Unix-like' operating system, you need:
 Released versions of \ejabberd{} are available in the ProcessOne \ejabberd{} downloads page:
 \ahrefurl{http://www.process-one.net/en/ejabberd/downloads}
 
-\ind{Subversion repository}
-Alternatively, the latest development version can be retrieved from the Subversion repository using this command:
+\ind{Git repository}
+Alternatively, the latest development source code can be retrieved from the Git repository using the commands:
 \begin{verbatim}
-svn co http://svn.process-one.net/ejabberd/trunk ejabberd
+git clone git://git.process-one.net/ejabberd/mainline.git ejabberd
+cd ejabberd
+git checkout -b 2.1.x origin/2.1.x
 \end{verbatim}
 
 
@@ -379,21 +382,6 @@ Some options that you may be interested in modifying:
 	\titem{--disable-transient-supervisors}
 	Disable the use of Erlang/OTP supervision for transient processes.
 \end{description}
-
-\makesubsection{snowleopard}{Compiling ejabberd under Snow Leopard with Erlang R13B}
-\ind{install!snowleopard}
-
-Erl Interface, the library to link Erlang with C code, is compiled as
-32-bits code in Erlang R13B-2. Mac OS X Snow Leopard is a 64-bits
-system and will try compiling ejabberd C code in 64-bits as a default.
-
-To compile ejabberd on Mac OS X Snow Leopard with Erlang R13B-2, you
-need to force C code to be compiled with 32-bits. This is done with
-the following configure command:
-
-\begin{verbatim}
-CC='gcc -m32' CFLAGS=-m32 LDFLAGS=-m32 ./configure
-\end{verbatim}
 
 \makesubsection{install}{Install}
 \ind{install!install}
@@ -809,7 +797,7 @@ The available modules, their purpose and the options allowed by each one are:
 \begin{description}
   \titem{\texttt{ejabberd\_c2s}}
     Handles c2s connections.\\
-    Options: \texttt{access}, \texttt{certfile},
+    Options: \texttt{access}, \texttt{certfile}, \texttt{max\_fsm\_queue},
     \texttt{max\_stanza\_size}, \texttt{shaper},
     \texttt{starttls}, \texttt{starttls\_required}, \texttt{tls},
     \texttt{zlib}
@@ -894,10 +882,20 @@ This is a detailed description of each option allowed by the listening modules:
     The option can be defined in \term{ejabberd.cfg}, expressing the time
     in seconds: \verb|{http_poll_timeout, 300}.|
   \titem{\{max\_fsm\_queue, Size\}}
-    This option specifies the maximum number of elements in the queue of the FSM.
-    This option can be specified for an \term{ejabberd\_service} listener,
+    This option specifies the maximum number of elements in the queue of the FSM
+    (Finite State Machine).
+    Roughly speaking, each message in such queues represents one XML
+    stanza queued to be sent into its relevant outgoing stream. If queue size
+    reaches the limit (because, for example, the receiver of stanzas is too slow),
+    the FSM and the corresponding connection (if any) will be terminated
+    and error message will be logged.
+    The reasonable value for this option depends on your hardware configuration.
+    However, there is no much sense to set the size above 1000 elements.
+    This option can be specified for \term{ejabberd\_service} and
+    \term{ejabberd\_c2s} listeners,
     or also globally for \term{ejabberd\_s2s\_out}.
-    If the option is not specified for an \term{ejabberd\_service} listener,
+    If the option is not specified for \term{ejabberd\_service} or
+    \term{ejabberd\_c2s} listeners,
     the globally configured value is used.
     The allowed values are integers and 'undefined'.
     Default value: 'undefined'.
@@ -980,10 +978,20 @@ There are some additional global options that can be specified in the ejabberd c
   The maximum allowed delay for retry to connect after a failed connection attempt.
   Specified in seconds. The default value is 300 seconds (5 minutes).
   \titem{\{max\_fsm\_queue, Size\}}
-    This option specifies the maximum number of elements in the queue of the FSM.
-    This option can be specified for an \term{ejabberd\_service} listener,
+    This option specifies the maximum number of elements in the queue of the FSM
+    (Finite State Machine).
+    Roughly speaking, each message in such queues represents one XML
+    stanza queued to be sent into its relevant outgoing stream. If queue size
+    reaches the limit (because, for example, the receiver of stanzas is too slow),
+    the FSM and the corresponding connection (if any) will be terminated
+    and error message will be logged.
+    The reasonable value for this option depends on your hardware configuration.
+    However, there is no much sense to set the size above 1000 elements.
+    This option can be specified for \term{ejabberd\_service} and
+    \term{ejabberd\_c2s} listeners,
     or also globally for \term{ejabberd\_s2s\_out}.
-    If the option is not specified for an \term{ejabberd\_service} listener,
+    If the option is not specified for \term{ejabberd\_service} or
+    \term{ejabberd\_c2s} listeners,
     the globally configured value is used.
     The allowed values are integers and 'undefined'.
     Default value: 'undefined'.
@@ -1485,7 +1493,7 @@ This example limits the number of sessions per user to 5 for all users, and to 1
 \ind{options!max\_s2s\_connections}
 
 The special access \term{max\_s2s\_connections} specifies how many
-simultaneus S2S connections can be established to a specific remote XMPP server.
+simultaneous S2S connections can be established to a specific remote XMPP server.
 The default value is \term{1}.
 There's also available the access \term{max\_s2s\_connections\_per\_node}.
 
@@ -2231,7 +2239,22 @@ You can authenticate users against an LDAP directory. Available options are:
   not forget to close brackets and do not use superfluous whitespaces. Also you
   \emph{must not} use \option{ldap\_uidattr} attribute in filter because this
   attribute will be substituted in LDAP filter automatically.
-
+  \titem{\{ldap\_dn\_filter, \{ Filter, FilterAttrs \}\}}\ind{options!ldap\_dn\_filter}
+  This filter is applied on the results returned by the main filter. This filter
+  performs additional LDAP lookup to make the complete result. This is useful
+  when you are unable to define all filter rules in \term{ldap\_filter}. You
+  can define \term{"\%u"}, \term{"\%d"}, \term{"\%s"} and \term{"\%D"} pattern
+  variables in Filter: \term{"\%u"} is replaced by a user's part of a JID,
+  \term{"\%d"} is replaced by the corresponding domain (virtual host),
+  all \term{"\%s"} variables are consecutively replaced by values of FilterAttrs
+  attributes and \term{"\%D"} is replaced by Distinguished Name. By default
+  \term{ldap\_dn\_filter} is undefined.
+  Example:
+\begin{verbatim}
+{ldap_dn_filter, {"(&(name=%s)(owner=%D)(user=%u@%d))", ["sn"]}}.
+\end{verbatim}
+  Since this filter makes additional LDAP lookups, use it only in the
+  last resort: try to define all filter rules in \term{ldap\_filter} if possible.
   \titem{\{ldap\_local\_filter, Filter\}}\ind{options!ldap\_local\_filter}
   If you can't use \term{ldap\_filter} due to performance reasons
   (the LDAP server has many users registered),
@@ -2458,6 +2481,7 @@ The following table lists all modules included in \ejabberd{}.
     \hline \ahrefloc{modservicelog}{\modservicelog{}} & Copy user messages to logger service &  \\
     \hline \ahrefloc{modsharedroster}{\modsharedroster{}} & Shared roster management & \modroster{} or \\
     & & \modrosterodbc\\
+    \hline \ahrefloc{modsic}{\modsic{}} & Server IP Check (\xepref{0279}) &  \\
     \hline \ahrefloc{modstats}{\modstats{}} & Statistics Gathering (\xepref{0039}) &  \\
     \hline \ahrefloc{modtime}{\modtime{}} & Entity Time (\xepref{0202}) &  \\
     \hline \ahrefloc{modvcard}{\modvcard{}} & vcard-temp (\xepref{0054}) &  \\
@@ -3524,6 +3548,12 @@ to listen for. Default is an IP address of the service's DNS name, or,
 if fails, \verb|{127,0,0,1}|.
 \titem{\{port, Number\}}\ind{options!port}This option defines port to listen for
 incoming connections. Default is~7777.
+\titem{\{hostname, HostName\}}\ind{options!hostname}Defines a hostname advertised
+by the service when establishing a session with clients. This is useful when
+you run the service behind a NAT. The default is the value of \term{ip} option.
+Examples: \term{"proxy.mydomain.org"}, \term{"200.150.100.50"}. Note that 
+not all clients understand domain names in stream negotiation,
+so you should think twice before setting domain name in this option.
 \titem{\{auth\_type, anonymous|plain\}}\ind{options!auth\_type}SOCKS5 authentication type.
 Possible values are \term{anonymous} and \term{plain}. Default is
 \term{anonymous}.
@@ -3681,6 +3711,10 @@ Options:
   rules to restrict registration. If a rule returns `deny' on the requested
   user name, registration for that user name is denied. (there are no
   restrictions by default).
+\titem{\{access\_from, AccessName\}} \ind{options!access\_from}By default, \ejabberd{}
+doesn't allow to register new accounts from s2s or existing c2s sessions. You can
+change it by defining access rule in this option. Use with care: allowing registration
+from s2s leads to uncontrolled massive accounts creation by rogue users.
 \titem{\{welcome\_message, Message\}} \ind{options!welcomem}Set a welcome message that
   is sent to each newly registered account. The first string is the subject, and
   the second string is the message body.
@@ -3941,6 +3975,17 @@ Examples:
   \end{tabular}
 \end{table}
 \end{itemize}
+
+\makesubsection{modsic}{\modsic{}}
+\ind{modules!\modstats{}}\ind{protocols!XEP-0279: Server IP Check}
+
+This module adds support for Server IP Check (\xepref{0279}). This protocol
+enables a client to discover its external IP address.
+
+Options:
+\begin{description}
+\iqdiscitem{\ns{urn:xmpp:sic:0}}
+\end{description}
 
 \makesubsection{modstats}{\modstats{}}
 \ind{modules!\modstats{}}\ind{protocols!XEP-0039: Statistics Gathering}\ind{statistics}
@@ -4404,7 +4449,7 @@ The command line parameters:
   \titem{-name ejabberd}
 	The Erlang node will be fully identified.
     This is only useful if you plan to setup an \ejabberd{} cluster with nodes in different networks.
-  \titem{-kernel inetrc "/etc/ejabberd/inetrc"}
+  \titem{-kernel inetrc '"/etc/ejabberd/inetrc"'}
 	Indicates which IP name resolution to use.
 	If using \term{-sname}, specify either this option or \term{ERL\_INETRC}.
   \titem{-kernel inet\_dist\_listen\_min 4200 inet\_dist\_listen\_min 4210}
@@ -4419,7 +4464,7 @@ The command line parameters:
 	Specify the directory where Erlang binary files (*.beam) are located.
   \titem{-s ejabberd}
 	Tell Erlang runtime system to start the \ejabberd{} application.
-  \titem{-mnesia dir "/var/lib/ejabberd/"}
+  \titem{-mnesia dir '"/var/lib/ejabberd/"'}
 	Specify the Mnesia database directory.
   \titem{-sasl sasl\_error\_logger \{file, "/var/log/ejabberd/erlang.log"\}}
 	Path to the Erlang/OTP system log file.
@@ -4954,7 +4999,7 @@ following steps:
 
 \begin{verbatim}
 erl -sname ejabberd \
-    -mnesia dir "/var/lib/ejabberd/" \
+    -mnesia dir '"/var/lib/ejabberd/"' \
     -mnesia extra_db_nodes "['ejabberd@first']" \
     -s mnesia
 \end{verbatim}

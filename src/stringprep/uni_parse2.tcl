@@ -11,7 +11,7 @@
 #
 # Modified for ejabberd by Alexey Shchepin
 # 
-# RCS: @(#) $Id: uni_parse2.tcl 350 2005-05-18 23:47:33Z alexey $
+# RCS: @(#) $Id$
 
 
 namespace eval uni {
