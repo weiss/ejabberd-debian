@@ -7,6 +7,7 @@ ejabberd (2.1.5-2) unstable; urgency=low
   [ Konstantin Khomoutov ]
   * Remove /var/run/ejabberd on package purge (LP: #615473).
   * Add mod-vcard-ldap-photo.patch fixing EJAB-1258 (LP: #613854).
+  * Bump standards version to 3.9.1.
 
  -- Gerfried Fuchs <rhonda@debian.at>  Fri, 13 Aug 2010 23:45:09 +0200
 
