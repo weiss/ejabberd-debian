@@ -5,3 +5,4 @@ captcha.patch
 fix_examples.patch
 reopen-log.patch
 eldap-asn-driver-race-fix.patch
+mod-vcard-ldap-photo.patch
