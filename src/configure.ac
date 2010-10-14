@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(ejabberd.erl, version, [ejabberd@process-one.net], [ejabberd])
+AC_INIT(ejabberd, m4_esyscmd([grep -o -E "\{vsn,.\".*\"\}" ejabberd.app | cut -d \" -f 2 | tr -d '\n']), [ejabberd@process-one.net], [ejabberd])
 
 # Checks for programs.
 AC_PROG_CC
@@ -81,7 +81,7 @@ AC_ARG_ENABLE(transient_supervisors,
 [case "${enableval}" in
   yes) transient_supervisors=true ;;
   no)  transient_supervisors=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-full-xml) ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-transient_supervisors) ;;
 esac],[transient_supervisors=true])
 AC_SUBST(transient_supervisors)
 
@@ -93,6 +93,15 @@ AC_ARG_ENABLE(full_xml,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-full-xml) ;;
 esac],[full_xml=false])
 AC_SUBST(full_xml)
+
+AC_ARG_ENABLE(nif,
+[AC_HELP_STRING([--enable-nif], [replace some functions with C equivalents. Requires Erlang R13B04 or higher (default: no)])],
+[case "${enableval}" in
+  yes) nif=true ;;
+  no)  nif=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-nif) ;;
+esac],[nif=false])
+AC_SUBST(nif)
 
 AC_CONFIG_FILES([Makefile
                  $make_mod_irc

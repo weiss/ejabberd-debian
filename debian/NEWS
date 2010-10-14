@@ -1,3 +1,22 @@
+ejabberd (2.1.4-1) unstable; urgency=low
+
+  umask is now forcibly set to 027 before ejabberd's main process
+  is started. This means all the files created by ejabberd now have
+  permissions set to 0640 (0750 for directories). This does not have
+  any impact on the routine operation of ejabberd but this affects
+  all the commands which export data, such as `ejabberdctl export2odbc` --
+  the files they generate now cannot be read by users other than
+  root, ejabberd and those included in the "ejabberd" group.
+
+  The directory containing ejabberd logs (/var/log/ejabberd) is now
+  owned by the "adm" group and have the group sticky bit set on it
+  so that the log files are also owned by this group. In addition, due
+  to the change described above they are now not world-readable.
+  This is a change in behaviour; if you don't like it, use dpkg-statoverride
+  on the /var/log/ejabberd directory to force other owner/permissions.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Mon, 12 Jul 2010 03:28:32 +0400
+
 ejabberd (2.1.2-2) unstable; urgency=high
 
   This release fixes CVE-2010-0305 by allowing a server administrator

@@ -31,7 +31,14 @@ setup_ejabberd()
     install -d /var/log/ejabberd
     if ! dpkg-statoverride --list /var/log/ejabberd >/dev/null; then
 	chown ejabberd:adm /var/log/ejabberd
-	chmod 750 /var/log/ejabberd
+	chmod 2750 /var/log/ejabberd
+	if dpkg --compare-versions "$2" lt '2.1.4'; then
+	    find /var/log/ejabberd -type f -name '*.log*' \
+		| while read f; do
+		    chown ejabberd:adm "$f"
+		    chmod 0640 "$f"
+	    done
+	fi
     fi
 
     # Moving certificate from /etc/ssl/certs to /etc/ejabberd (see bug #368414).
@@ -129,7 +136,7 @@ register_admin()
 case "$1" in
     configure|reconfigure)
 	adduser --quiet --system --shell /bin/sh --group --home /var/lib/ejabberd ejabberd
-	setup_ejabberd
+	setup_ejabberd "$@"
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

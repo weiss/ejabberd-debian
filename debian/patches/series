@@ -4,4 +4,5 @@ shared_roster_online.patch
 captcha.patch
 fix_examples.patch
 reopen-log.patch
-no-debug.patch
+eldap-asn-driver-race-fix.patch
+mod-vcard-ldap-photo.patch

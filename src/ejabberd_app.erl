@@ -46,6 +46,7 @@ start(normal, _Args) ->
     db_init(),
     sha:start(),
     stringprep_sup:start_link(),
+    xml:start(),
     start(),
     translate:start(),
     acl:start(),
@@ -85,7 +86,7 @@ prep_stop(State) ->
 stop(_State) ->
     ?INFO_MSG("ejabberd ~s is stopped in the node ~p", [?VERSION, node()]),
     delete_pid_file(),
-    ejabberd_debug:stop(),
+    %%ejabberd_debug:stop(),
     ok.
 
 
