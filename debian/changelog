@@ -1,3 +1,10 @@
+ejabberd (2.1.5-3) unstable; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Add patch http-poll-binary-parse.patch fixing EJAB-1325 (closes: #601094).
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sat, 23 Oct 2010 17:05:48 +0400
+
 ejabberd (2.1.5-2) unstable; urgency=low
 
   [ Gerfried Fuchs ]
