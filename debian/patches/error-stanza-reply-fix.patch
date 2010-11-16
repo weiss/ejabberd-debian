@@ -1,0 +1,56 @@
+From: Badlop <badlop@process-one.net>
+Subject: Don't send error stanza as reply to error stanza (EJAB-930)
+Origin: upstream, https://git.process-one.net/ejabberd/mainline/commit/2ff291899dfa2d4366d73c6b5705a692827a4108
+Bug: https://support.process-one.net/browse/EJAB-930
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/ejabberd/+bug/596676
+
+--- a/src/ejabberd_router.erl
++++ b/src/ejabberd_router.erl
+@@ -31,6 +31,7 @@
+ 
+ %% API
+ -export([route/3,
++	 route_error/4,
+ 	 register_route/1,
+ 	 register_route/2,
+ 	 register_routes/1,
+@@ -72,6 +73,17 @@
+ 	    ok
+     end.
+ 
++%% Route the error packet only if the originating packet is not an error itself.
++%% RFC3920 9.3.1
++route_error(From, To, ErrPacket, OrigPacket) ->
++    {xmlelement, _Name, Attrs, _Els} = OrigPacket,
++    case "error" == xml:get_attr_s("type", Attrs) of
++	false ->
++	    route(From, To, ErrPacket);
++	true ->
++	    ok
++    end.
++
+ register_route(Domain) ->
+     register_route(Domain, undefined).
+ 
+--- a/src/ejabberd_service.erl
++++ b/src/ejabberd_service.erl
+@@ -350,7 +350,7 @@
+ 	    send_text(StateData, Text);
+ 	deny ->
+ 	    Err = jlib:make_error_reply(Packet, ?ERR_NOT_ALLOWED),
+-	    ejabberd_router:route(To, From, Err)
++	    ejabberd_router:route_error(To, From, Err, Packet)
+     end,
+     {next_state, StateName, StateData}.
+ 
+--- a/src/mod_muc/mod_muc.erl
++++ b/src/mod_muc/mod_muc.erl
+@@ -336,7 +336,7 @@
+ 	    ErrText = "Access denied by service policy",
+ 	    Err = jlib:make_error_reply(Packet,
+ 					?ERRT_FORBIDDEN(Lang, ErrText)),
+-	    ejabberd_router:route(To, From, Err)
++	    ejabberd_router:route_error(To, From, Err, Packet)
+     end.
+ 
+ 
