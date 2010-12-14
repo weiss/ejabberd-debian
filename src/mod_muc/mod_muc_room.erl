@@ -870,10 +870,17 @@ process_presence(From, Nick, {xmlelement, "presence", Attrs, _Els} = Packet,
 	    "unavailable" ->
 		case is_user_online(From, StateData) of
 		    true ->
+			NewPacket = case {(StateData#state.config)#config.allow_visitor_status,
+					  is_visitor(From, StateData)} of
+					{false, true} ->
+					    strip_status(Packet);
+					_ ->
+					    Packet
+				    end,
 			NewState =
-			    add_user_presence_un(From, Packet, StateData),
+			    add_user_presence_un(From, NewPacket, StateData),
 			send_new_presence(From, NewState),
-			Reason = case xml:get_subtag(Packet, "status") of
+			Reason = case xml:get_subtag(NewPacket, "status") of
 				false -> "";
 				Status_el -> xml:get_tag_cdata(Status_el)
 			end,
@@ -1887,10 +1894,18 @@ send_new_presence(NJID, Reason, StateData) ->
 			   false ->
 			       []
 		       end,
+	      Status2 = case ((StateData#state.config)#config.anonymous==false)
+			    andalso (NJID == Info#user.jid) of
+			    true ->
+				[{xmlelement, "status", [{"code", "100"}], []}
+				 | Status];
+			    false ->
+				Status
+			end,
 	      Packet = xml:append_subtags(
 			 Presence,
 			 [{xmlelement, "x", [{"xmlns", ?NS_MUC_USER}],
-			   [{xmlelement, "item", ItemAttrs, ItemEls} | Status]}]),
+			   [{xmlelement, "item", ItemAttrs, ItemEls} | Status2]}]),
 	      ejabberd_router:route(
 		jlib:jid_replace_resource(StateData#state.jid, Nick),
 		Info#user.jid,
@@ -2250,7 +2265,7 @@ process_admin_items_set(UJID, Items, Lang, StateData) ->
 					 case (SD#state.config)#config.members_only of
 					     true ->
 						 catch send_kickban_presence(
-							 JID, Reason, "321", SD),
+							 JID, Reason, "321", none, SD),
 						 SD1 = set_affiliation(JID, none, SD),
 						 set_role(JID, none, SD1);
 					     _ ->
@@ -2260,7 +2275,7 @@ process_admin_items_set(UJID, Items, Lang, StateData) ->
 					 end;
 				     {JID, affiliation, outcast, Reason} ->
 					 catch send_kickban_presence(
-						 JID, Reason, "301", SD),
+						 JID, Reason, "301", outcast, SD),
 					 set_affiliation_and_reason(
 					   JID, outcast, Reason,
 					   set_role(JID, none, SD));
@@ -2622,6 +2637,10 @@ can_change_ra(_FAffiliation, _FRole,
 
 
 send_kickban_presence(JID, Reason, Code, StateData) ->
+    NewAffiliation = get_affiliation(JID, StateData),
+    send_kickban_presence(JID, Reason, Code, NewAffiliation, StateData).
+
+send_kickban_presence(JID, Reason, Code, NewAffiliation, StateData) ->
     LJID = jlib:jid_tolower(JID),
     LJIDs = case LJID of
 		{U, S, ""} ->
@@ -2647,14 +2666,13 @@ send_kickban_presence(JID, Reason, Code, StateData) ->
 			      ?DICT:find(J, StateData#state.users),
 			  add_to_log(kickban, {Nick, Reason, Code}, StateData),
 			  tab_remove_online_user(J, StateData),
-			  send_kickban_presence1(J, Reason, Code, StateData)
+			  send_kickban_presence1(J, Reason, Code, NewAffiliation, StateData)
 		  end, LJIDs).
 
-send_kickban_presence1(UJID, Reason, Code, StateData) ->
+send_kickban_presence1(UJID, Reason, Code, Affiliation, StateData) ->
     {ok, #user{jid = _RealJID,
 	       nick = Nick}} =
 	?DICT:find(jlib:jid_tolower(UJID), StateData#state.users),
-    Affiliation = get_affiliation(UJID, StateData),
     SAffiliation = affiliation_to_list(Affiliation),
     lists:foreach(
       fun({_LJID, Info}) ->
