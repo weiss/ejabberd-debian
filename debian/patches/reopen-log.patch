@@ -152,7 +152,7 @@ https://support.process-one.net/browse/EJAB-1243
 +
 --- a/src/ejabberd_app.erl
 +++ b/src/ejabberd_app.erl
-@@ -101,6 +101,13 @@
+@@ -103,6 +103,13 @@
      register(ejabberd, self()),
      %erlang:system_flag(fullsweep_after, 0),
      %error_logger:logfile({open, ?LOG_PATH}),
@@ -166,7 +166,7 @@ https://support.process-one.net/browse/EJAB-1243
      LogPath = get_log_path(),
      error_logger:add_report_handler(ejabberd_logger_h, LogPath),
      erl_ddll:load_driver(ejabberd:get_so_path(), tls_drv),
-@@ -111,6 +118,23 @@
+@@ -113,6 +120,23 @@
      Port = open_port({spawn, expat_erl}, [binary]),
      loop(Port).
  
