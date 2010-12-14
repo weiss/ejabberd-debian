@@ -6,10 +6,8 @@ The code is taken from the ProcessOne repository:
 https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 (trunk, revision 1078).
 
-Index: pkg-ejabberd/src/ejabberd.app
-===================================================================
---- pkg-ejabberd.orig/src/ejabberd.app	2010-05-04 03:18:51.000000000 +0400
-+++ pkg-ejabberd/src/ejabberd.app	2010-05-04 04:01:32.000000000 +0400
+--- a/src/ejabberd.app
++++ b/src/ejabberd.app
 @@ -104,6 +104,7 @@
  	     mod_vcard_ldap,
  	     mod_vcard_odbc,
@@ -18,11 +16,9 @@ Index: pkg-ejabberd/src/ejabberd.app
  	     node_buddy,
  	     node_club,
  	     node_default,
-Index: pkg-ejabberd/src/mod_admin_extra.erl
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ pkg-ejabberd/src/mod_admin_extra.erl	2010-05-04 04:01:41.000000000 +0400
-@@ -0,0 +1,1490 @@
+--- /dev/null
++++ b/src/mod_admin_extra.erl
+@@ -0,0 +1,1560 @@
 +%%%-------------------------------------------------------------------
 +%%% File    : mod_admin_extra.erl
 +%%% Author  : Badlop <badlop@process-one.net>
@@ -82,6 +78,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	 set_nickname/3,
 +	 get_vcard/3,
 +	 get_vcard/4,
++	 get_vcard_multi/4,
 +	 set_vcard/4,
 +	 set_vcard/5,
 +	 %% Roster
@@ -92,6 +89,8 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	 push_roster/3,
 +	 push_roster_all/1,
 +	 push_alltoall/2,
++	 %% mod_last
++	 set_last/4,
 +	 %% mod_private
 +	 private_get/4,
 +	 private_set/3,
@@ -190,18 +189,18 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			args = [{host, string}, {days, integer}],
 +			result = {users, integer}},
 +     #ejabberd_commands{name = delete_old_users, tags = [accounts, purge],
-+			desc = "Delete users that didn't log in last days",
++			desc = "Delete users that didn't log in last days, or that never logged",
 +			module = ?MODULE, function = delete_old_users,
 +			args = [{days, integer}],
 +			result = {res, restuple}},
 +     #ejabberd_commands{name = delete_old_users_vhost, tags = [accounts, purge],
-+			desc = "Delete users that didn't log in last days in vhost",
++			desc = "Delete users that didn't log in last days in vhost, or that never logged",
 +			module = ?MODULE, function = delete_old_users_vhost,
 +			args = [{host, string}, {days, integer}],
 +			result = {res, restuple}},
 +
 +     #ejabberd_commands{name = check_account, tags = [accounts],
-+			desc = "Check if an acount exists or not",
++			desc = "Check if an account exists or not",
 +			module = ejabberd_auth, function = is_user_exists,
 +			args = [{user, string}, {host, string}],
 +			result = {res, rescode}},
@@ -315,7 +314,9 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +					       {priority, integer},
 +					       {node, string},
 +					       {uptime, integer},
-+					       {resource, string}
++					       {status, string},
++					       {resource, string},
++					       {statustext, string}
 +					      ]}}
 +				  }}},
 +
@@ -330,7 +331,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			result = {res, rescode}},
 +
 +     #ejabberd_commands{name = set_nickname, tags = [vcard],
-+			desc = "Set nickname in a user's vcard",
++			desc = "Set nickname in a user's vCard",
 +			module = ?MODULE, function = set_nickname,
 +			args = [{user, string}, {host, string}, {nickname, string}],
 +			result = {res, rescode}},
@@ -347,6 +348,13 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			module = ?MODULE, function = get_vcard,
 +			args = [{user, string}, {host, string}, {name, string}, {subname, string}],
 +			result = {content, string}},
++     #ejabberd_commands{name = get_vcard2_multi, tags = [vcard],
++			desc = "Get multiple contents from a vCard field (requires exmpp installed)",
++			longdesc = Vcard2FieldsString ++ "\n\n" ++ Vcard1FieldsString ++ "\n" ++ VcardXEP,
++			module = ?MODULE, function = get_vcard_multi,
++			args = [{user, string}, {host, string}, {name, string}, {subname, string}],
++			result = {contents, {list, string}}},
++
 +     #ejabberd_commands{name = set_vcard, tags = [vcard],
 +			desc = "Set content in a vCard field",
 +			longdesc = Vcard1FieldsString ++ "\n" ++ Vcard2FieldsString ++ "\n\n" ++ VcardXEP,
@@ -358,6 +366,12 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			longdesc = Vcard2FieldsString ++ "\n\n" ++ Vcard1FieldsString ++ "\n" ++ VcardXEP,
 +			module = ?MODULE, function = set_vcard,
 +			args = [{user, string}, {host, string}, {name, string}, {subname, string}, {content, string}],
++			result = {res, rescode}},
++     #ejabberd_commands{name = set_vcard2_multi, tags = [vcard],
++			desc = "Set multiple contents in a vCard subfield",
++			longdesc = Vcard2FieldsString ++ "\n\n" ++ Vcard1FieldsString ++ "\n" ++ VcardXEP,
++			module = ?MODULE, function = set_vcard,
++			args = [{user, string}, {host, string}, {name, string}, {subname, string}, {contents, {list, string}}],
 +			result = {res, rescode}},
 +
 +     #ejabberd_commands{name = add_rosteritem, tags = [roster],
@@ -417,6 +431,8 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			result = {contacts, {list, {contact, {tuple, [
 +								      {jid, string},
 +								      {nick, string},
++								      {subscription, string},
++								      {ask, string},
 +								      {group, string}
 +								     ]}}}}},
 +     #ejabberd_commands{name = push_roster, tags = [roster],
@@ -433,6 +449,14 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +			desc = "Add all the users to all the users of Host in Group",
 +			module = ?MODULE, function = push_alltoall,
 +			args = [{host, string}, {group, string}],
++			result = {res, rescode}},
++
++     #ejabberd_commands{name = set_last, tags = [last],
++			desc = "Set last activity information",
++			longdesc = "Timestamp is the seconds since"
++			"1970-01-01 00:00:00 UTC, for example: date +%s",
++			module = ?MODULE, function = set_last,
++			args = [{user, string}, {host, string}, {timestamp, integer}, {status, string}],
 +			result = {res, rescode}},
 +
 +     #ejabberd_commands{name = private_get, tags = [private],
@@ -846,7 +870,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	      NodeS = atom_to_list(node(Pid)),
 +	      Uptime = CurrentSec - calendar:datetime_to_gregorian_seconds(
 +				      calendar:now_to_local_time(Now)),
-+	      {[U, $@, S, $/, R], Conn, IPS, Port, Priority, NodeS, Uptime}
++	      {[U, $@, S, $/, R], atom_to_list(Conn), IPS, Port, Priority, NodeS, Uptime}
 +      end,
 +      USRIs).
 +
@@ -892,6 +916,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +      fun(Session) ->
 +	      {_U, _S, Resource} = Session#session.usr,
 +	      {Now, Pid} = Session#session.sid,
++	      {_U, _Resource, Status, StatusText} = ejabberd_c2s:get_presence(Pid),
 +	      Info = Session#session.info,
 +	      Priority = Session#session.priority,
 +	      Conn = proplists:get_value(conn, Info),
@@ -900,7 +925,7 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +	      NodeS = atom_to_list(node(Pid)),
 +	      Uptime = CurrentSec - calendar:datetime_to_gregorian_seconds(
 +				      calendar:now_to_local_time(Now)),
-+	      {Conn, IPS, Port, Priority, NodeS, Uptime, Resource}
++	      {atom_to_list(Conn), IPS, Port, Priority, NodeS, Uptime, Status, Resource, StatusText}
 +      end,
 +      Sessions).
 +
@@ -927,48 +952,79 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    end.
 +
 +get_vcard(User, Host, Name) ->
-+    get_vcard_content(User, Host, [Name]).
++    [Res | _] = get_vcard_content(User, Host, [Name]),
++    Res.
 +
 +get_vcard(User, Host, Name, Subname) ->
++    [Res | _] = get_vcard_content(User, Host, [Name, Subname]),
++    Res.
++
++get_vcard_multi(User, Host, Name, Subname) ->
 +    get_vcard_content(User, Host, [Name, Subname]).
 +
-+set_vcard(User, Host, Name, Content) ->
-+    set_vcard_content(User, Host, [Name], Content).
++set_vcard(User, Host, Name, SomeContent) ->
++    set_vcard_content(User, Host, [Name], SomeContent).
 +
-+set_vcard(User, Host, Name, Subname, Content) ->
-+    set_vcard_content(User, Host, [Name, Subname], Content).
++set_vcard(User, Host, Name, Subname, SomeContent) ->
++    set_vcard_content(User, Host, [Name, Subname], SomeContent).
 +
 +
 +%%
 +%% Internal vcard
 +
++get_module_resource(Server) ->
++    case gen_mod:get_module_opt(Server, ?MODULE, module_resource, none) of
++	none -> atom_to_list(?MODULE);
++	R when is_list(R) -> R
++    end.
++
 +get_vcard_content(User, Server, Data) ->
 +    [{_, Module, Function, _Opts}] = ets:lookup(sm_iqtable, {?NS_VCARD, Server}),
-+    JID = jlib:make_jid(User, Server, ""),
++    JID = jlib:make_jid(User, Server, get_module_resource(Server)),
 +    IQ = #iq{type = get, xmlns = ?NS_VCARD},
 +    IQr = Module:Function(JID, JID, IQ),
 +    case IQr#iq.sub_el of
 +	[A1] ->
 +	    case get_vcard(Data, A1) of
 +		false -> "Error: no_value";
-+		Elem -> xml:get_tag_cdata(Elem)
++		ElemList -> [xml:get_tag_cdata(Elem) || Elem <- ElemList]
 +	    end;
 +	[] ->
 +	    "Error: no_vcard"
 +    end.
 +
 +get_vcard([Data1, Data2], A1) ->
-+    case xml:get_subtag(A1, Data1) of
++    case get_subtag(A1, Data1) of
 +    	false -> false;
-+	A2 -> get_vcard([Data2], A2)
++	A2List -> lists:flatten([get_vcard([Data2], A2) || A2 <- A2List])
 +    end;
 +
 +get_vcard([Data], A1) ->
-+    xml:get_subtag(A1, Data).
++    get_subtag(A1, Data).
 +
-+set_vcard_content(User, Server, Data, Content) ->
++get_subtag(Xmlelement, Name) ->
++    case code:ensure_loaded(exmpp_xml) of
++	{error, _} ->
++	    get_subtag_xml(Xmlelement, Name);
++	{module, exmpp_xml} ->
++	    get_subtag_exmpp(Xmlelement, Name)
++    end.
++
++get_subtag_xml(Xmlelement, Name) ->
++    xml:get_subtag(Xmlelement, Name).
++
++get_subtag_exmpp(Xmlelement, Name) ->
++    Xmlel = exmpp_xml:xmlelement_to_xmlel(Xmlelement),
++    XmlelList = exmpp_xml:get_elements(Xmlel, Name),
++    [exmpp_xml:xmlel_to_xmlelement(Xmlel2) || Xmlel2 <- XmlelList].
++
++set_vcard_content(User, Server, Data, SomeContent) ->
++    ContentList = case SomeContent of
++	[Char | _] when not is_list(Char) -> [SomeContent];
++	[Char | _] when is_list(Char) -> SomeContent
++    end,
 +    [{_, Module, Function, _Opts}] = ets:lookup(sm_iqtable, {?NS_VCARD, Server}),
-+    JID = jlib:make_jid(User, Server, ""),
++    JID = jlib:make_jid(User, Server, get_module_resource(Server)),
 +    IQ = #iq{type = get, xmlns = ?NS_VCARD},
 +    IQr = Module:Function(JID, JID, IQ),
 +
@@ -976,9 +1032,9 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    A4 = case IQr#iq.sub_el of
 +	     [A1] ->
 +		 {_, _, _, A2} = A1,
-+		 update_vcard_els(Data, Content, A2);
++		 update_vcard_els(Data, ContentList, A2);
 +	     [] ->
-+		 update_vcard_els(Data, Content, [])
++		 update_vcard_els(Data, ContentList, [])
 +	 end,
 +
 +    %% Build new vcard
@@ -988,21 +1044,21 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    Module:Function(JID, JID, IQ2),
 +    ok.
 +
-+update_vcard_els(Data, Content, Els1) ->
++update_vcard_els(Data, ContentList, Els1) ->
 +    Els2 = lists:keysort(2, Els1),
 +    [Data1 | Data2] = Data,
 +    NewEl = case Data2 of
 +		[] ->
-+		    {xmlelement, Data1, [], [{xmlcdata,Content}]};
++		    [{xmlelement, Data1, [], [{xmlcdata,Content}]} || Content <- ContentList];
 +		[D2] ->
 +		    OldEl = case lists:keysearch(Data1, 2, Els2) of
 +				{value, A} -> A;
 +				false -> {xmlelement, Data1, [], []}
 +			    end,
 +		    {xmlelement, _, _, ContentOld1} = OldEl,
-+		    Content2 = [{xmlelement, D2, [], [{xmlcdata,Content}]}],
-+		    ContentOld2 = lists:keysort(2, ContentOld1),
-+		    ContentOld3 = lists:keydelete(D2, 2, ContentOld2),
++		    Content2 = [{xmlelement, D2, [], [{xmlcdata,Content}]} || Content <- ContentList],
++		    ContentOld2 = [A || {_, X, _, _} = A <- ContentOld1, X/=D2],
++		    ContentOld3 = lists:keysort(2, ContentOld2),
 +		    ContentNew = lists:keymerge(2, Content2, ContentOld3),
 +		    {xmlelement, Data1, [], ContentNew}
 +	    end,
@@ -1073,11 +1129,13 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +      fun(Item, Res) ->
 +	      JIDS = jlib:jid_to_string(Item#roster.jid),
 +	      Nick = Item#roster.name,
++	      Subs = atom_to_list(Item#roster.subscription),
++	      Ask = atom_to_list(Item#roster.ask),
 +	      Groups = case Item#roster.groups of
 +			   [] -> [""];
 +			   Gs -> Gs
 +		       end,
-+	      ItemsX = [{JIDS, Nick, Group}
++	      ItemsX = [{JIDS, Nick, Subs, Ask, Group}
 +			|| Group <- Groups],
 +	      ItemsX ++ Res
 +      end,
@@ -1177,6 +1235,14 @@ Index: pkg-ejabberd/src/mod_admin_extra.erl
 +    {xmlelement, "broadcast", [],
 +     [{item, {U, S, ""}, SubsAtom}]
 +    }.
++
++%%%
++%%% Last Activity
++%%%
++
++set_last(User, Server, Timestamp, Status) ->
++    Mod = get_lastactivity_module(Server),
++    Mod:store_last_info(User, Server, Timestamp, Status).
 +
 +%%%
 +%%% Private Storage
