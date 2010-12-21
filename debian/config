@@ -1,49 +1,64 @@
-#!/bin/sh
+#!/usr/bin/perl
 
-set -e
+use strict;
+use warnings;
+use Debconf::Client::ConfModule ':all';
 
-get_passwd()
+$| = 1;
+
+sub ask($)
 {
-  db_input medium ejabberd/password || true
-  db_input medium ejabberd/verify || true
-  db_go || true
-  db_get ejabberd/password
-  PASSWORD="$RET"
-  db_get ejabberd/verify
-  VERIFY="$RET"
-  if [ "$PASSWORD" != "$VERIFY" ]; then
-    db_input medium ejabberd/nomatch || true
-    db_go || true
-    get_passwd
-  fi
+	my @ret = go();
+	$ret[0] == 0 or die "Failed to ask debconf for $_[0]: $ret[1]\n";
 }
 
-get_credentials()
+sub get_passwd()
 {
-  db_get ejabberd/user
-  USER=${RET:-admin}
-  db_subst ejabberd/user user "$USER"
-  db_get ejabberd/hostname
-  HOST=${RET:-hostname}
-  db_subst ejabberd/user hostname "$HOST"
-  db_input medium ejabberd/user || true
-  db_go || true
-  db_get ejabberd/user
-  if [ -n "$RET" ]; then
-    get_passwd
-  fi
+	while (1) {
+		input('medium', 'ejabberd/password');
+		input('medium', 'ejabberd/verify');
+		ask('password');
+
+		my $pass1 = get('ejabberd/password');
+		my $pass2 = get('ejabberd/verify');
+		if ($pass1 eq $pass2) {
+			last;
+		} else {
+			input('medium', 'ejabberd/nomatch');
+			ask('different passwords banner');
+		}
+	}
 }
 
-# Source debconf library.
-. /usr/share/debconf/confmodule
+sub get_credentials()
+{
+	my $user = get('ejabberd/user');
+	if ($user eq '') {
+		$user = 'admin';
+	}
+	subst('ejabberd/user', 'user', $user);
 
-db_input medium ejabberd/hostname || true
-db_go || true
+	my $host = get('ejabberd/hostname');
+	if ($host eq '') {
+		$host = 'hostname';
+	}
+	subst('ejabberd/user', 'hostname', $host);
 
-FLAG="/var/lib/ejabberd/.admin_registered"
-if [ ! -f $FLAG ]; then
-  get_credentials
-fi
+	input('medium', 'ejabberd/user');
+	ask('user');
 
-exit 0
+	$user = get('ejabberd/user');
+	if ($user ne '') {
+		get_passwd();
+	}
+}
+
+input('medium', 'ejabberd/hostname');
+ask('hostname');
+
+if (! -e '/var/lib/ejabberd/.admin_registered') {
+	get_credentials();
+}
+
+exit(0);
 
