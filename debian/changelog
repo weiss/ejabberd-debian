@@ -1,4 +1,4 @@
-ejabberd (2.1.6-1) experimental; urgency=low
+ejabberd (2.1.6-1) unstable; urgency=low
 
   * New upstream release.
   * Remove obsolete patches.
