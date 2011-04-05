@@ -17,6 +17,10 @@ AUTO_OPTS = --sourcedirectory=src
 
 DESTDIR=$(CURDIR)/debian/ejabberd
 
+ifndef HOME
+	export HOME="$(CURDIR)"
+endif
+
 configure: configure-stamp
 configure-stamp: $(QUILT_STAMPFN)
 	dh_testdir
