@@ -1,0 +1,25 @@
+From 2cf277b5e42911403869073eedb4a162b38fb132 Mon Sep 17 00:00:00 2001
+From: Badlop <badlop@process-one.net>
+Date: Fri, 20 May 2011 23:13:16 +0200
+Subject: [PATCH] Disable all entity expansions (thanks to Alexey Shchepin)
+
+---
+ src/expat_erl.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/src/expat_erl.c b/src/expat_erl.c
+index 08f298e..4444bb1 100644
+--- a/src/expat_erl.c
++++ b/src/expat_erl.c
+@@ -169,6 +169,8 @@ static ErlDrvData expat_erl_start(ErlDrvPort port, char *buff)
+       d->parser, (XML_StartNamespaceDeclHandler) erlXML_StartNamespaceDeclHandler);
+    XML_SetReturnNSTriplet(d->parser, 1);
+ 
++   XML_SetDefaultHandler(d->parser, NULL);
++
+    return (ErlDrvData)d;
+ }
+ 
+-- 
+1.7.4.4
+
