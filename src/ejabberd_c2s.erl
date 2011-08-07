@@ -5,7 +5,7 @@
 %%% Created : 16 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -1051,7 +1051,9 @@ session_established2(El, StateData) ->
 			end;
 		    "iq" ->
 			case jlib:iq_query_info(NewEl) of
-			    #iq{xmlns = ?NS_PRIVACY} = IQ ->
+			    #iq{xmlns = Xmlns} = IQ
+			    when Xmlns == ?NS_PRIVACY;
+				 Xmlns == ?NS_BLOCKING ->
 				process_privacy_iq(
 				  FromJID, ToJID, IQ, StateData);
 			    _ ->
@@ -1283,6 +1285,9 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 				send_element(StateData, PrivPushEl),
 				{false, Attrs, StateData#state{privacy_list = NewPL}}
 			end;
+		    [{blocking, What}] ->
+			route_blocking(What, StateData),
+			{false, Attrs, StateData};
 		    _ ->
 			{false, Attrs, StateData}
 		end;
@@ -1733,37 +1738,33 @@ presence_update(From, Packet, StateData) ->
 		StateData#state.pres_invis,
 	    ?DEBUG("from unavail = ~p~n", [FromUnavail]),
 	    NewState =
+                NewStateData = StateData#state{pres_last = Packet,
+                                               pres_invis = false,
+                                               pres_timestamp = Timestamp},
 		if
 		    FromUnavail ->
 			ejabberd_hooks:run(user_available_hook,
-					   StateData#state.server,
-					   [StateData#state.jid]),
+					   NewStateData#state.server,
+					   [NewStateData#state.jid]),
 			if NewPriority >= 0 ->
-				resend_offline_messages(StateData),
-				resend_subscription_requests(StateData);
+				resend_offline_messages(NewStateData),
+				resend_subscription_requests(NewStateData);
 			   true ->
 				ok
 			end,
-			presence_broadcast_first(
-			  From, StateData#state{pres_last = Packet,
-						pres_invis = false,
-						pres_timestamp = Timestamp
-					       }, Packet);
+			presence_broadcast_first(From, NewStateData, Packet);
 		    true ->
-			presence_broadcast_to_trusted(StateData,
+			presence_broadcast_to_trusted(NewStateData,
 						      From,
-						      StateData#state.pres_f,
-						      StateData#state.pres_a,
+						      NewStateData#state.pres_f,
+						      NewStateData#state.pres_a,
 						      Packet),
 			if OldPriority < 0, NewPriority >= 0 ->
-				resend_offline_messages(StateData);
+				resend_offline_messages(NewStateData);
 			   true ->
 				ok
 			end,
-			StateData#state{pres_last = Packet,
-					pres_invis = false,
-					pres_timestamp = Timestamp
-				       }
+                        NewStateData
 		end,
 	    NewState
     end.
@@ -2059,7 +2060,7 @@ resend_offline_messages(StateData) ->
 	Rs when is_list(Rs) ->
 	    lists:foreach(
 	      fun({route,
-		   From, To, {xmlelement, Name, Attrs, Els} = Packet}) ->
+		   From, To, {xmlelement, _Name, _Attrs, _Els} = Packet}) ->
 		      Pass = case privacy_check_packet(StateData, From, To, Packet, in) of
 				 allow ->
 				     true;
@@ -2068,16 +2069,18 @@ resend_offline_messages(StateData) ->
 			     end,
 		      if
 			  Pass ->
-			      Attrs2 = jlib:replace_from_to_attrs(
-					 jlib:jid_to_string(From),
-					 jlib:jid_to_string(To),
-					 Attrs),
-			      FixedPacket = {xmlelement, Name, Attrs2, Els},
-			      send_element(StateData, FixedPacket),
-			      ejabberd_hooks:run(user_receive_packet,
-						 StateData#state.server,
-						 [StateData#state.jid,
-						  From, To, FixedPacket]);
+			      %% Attrs2 = jlib:replace_from_to_attrs(
+			      %%		 jlib:jid_to_string(From),
+			      %%		 jlib:jid_to_string(To),
+			      %%		 Attrs),
+			      %% FixedPacket = {xmlelement, Name, Attrs2, Els},
+                              %% Use route instead of send_element to go through standard workflow
+                              ejabberd_router:route(From, To, Packet); 
+			      %% send_element(StateData, FixedPacket),
+			      %% ejabberd_hooks:run(user_receive_packet,
+			      %%			 StateData#state.server,
+			      %%			 [StateData#state.jid,
+			      %%			  From, To, FixedPacket]);
 			  true ->
 			      ok
 		      end
@@ -2238,6 +2241,51 @@ bounce_messages() ->
     after 0 ->
 	    ok
     end.
+
+%%%----------------------------------------------------------------------
+%%% XEP-0191
+%%%----------------------------------------------------------------------
+
+route_blocking(What, StateData) ->
+    SubEl =
+	case What of
+	    {block, JIDs} ->
+		{xmlelement, "block",
+		 [{"xmlns", ?NS_BLOCKING}],
+		 lists:map(
+		   fun(JID) ->
+			   {xmlelement, "item",
+			    [{"jid", jlib:jid_to_string(JID)}],
+			    []}
+				       end, JIDs)};
+	    {unblock, JIDs} ->
+		{xmlelement, "unblock",
+		 [{"xmlns", ?NS_BLOCKING}],
+		 lists:map(
+		   fun(JID) ->
+			   {xmlelement, "item",
+			    [{"jid", jlib:jid_to_string(JID)}],
+			    []}
+		   end, JIDs)};
+	    unblock_all ->
+		{xmlelement, "unblock",
+		 [{"xmlns", ?NS_BLOCKING}], []}
+	end,
+    PrivPushIQ =
+	#iq{type = set, xmlns = ?NS_BLOCKING,
+	    id = "push",
+	    sub_el = [SubEl]},
+    PrivPushEl =
+	jlib:replace_from_to(
+	  jlib:jid_remove_resource(
+	    StateData#state.jid),
+	  StateData#state.jid,
+	  jlib:iq_to_xml(PrivPushIQ)),
+    send_element(StateData, PrivPushEl),
+    %% No need to replace active privacy list here,
+    %% blocking pushes are always accompanied by
+    %% Privacy List pushes
+    ok.
 
 %%%----------------------------------------------------------------------
 %%% JID Set memory footprint reduction code

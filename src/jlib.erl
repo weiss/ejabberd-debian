@@ -5,7 +5,7 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -803,4 +803,6 @@ ip_to_list({_,_,_,_,_,_,_,_} = Ipv6Address) ->
     inet_parse:ntoa(Ipv6Address);
 %% This function clause could use inet_parse too:
 ip_to_list({A,B,C,D}) ->
-    lists:flatten(io_lib:format("~w.~w.~w.~w",[A,B,C,D])).
+    lists:flatten(io_lib:format("~w.~w.~w.~w",[A,B,C,D]));
+ip_to_list(IP) ->
+    lists:flatten(io_lib:format("~w", [IP])).

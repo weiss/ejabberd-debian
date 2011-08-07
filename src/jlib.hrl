@@ -1,6 +1,6 @@
 %%%----------------------------------------------------------------------
 %%%
-%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -30,6 +30,7 @@
 -define(NS_ROSTER,       "jabber:iq:roster").
 -define(NS_ROSTER_VER,   "urn:xmpp:features:rosterver").
 -define(NS_PRIVACY,      "jabber:iq:privacy").
+-define(NS_BLOCKING,     "urn:xmpp:blocking").
 -define(NS_PRIVATE,      "jabber:iq:private").
 -define(NS_VERSION,      "jabber:iq:version").
 -define(NS_TIME90,       "jabber:iq:time"). % TODO: Remove once XEP-0090 is Obsolete
