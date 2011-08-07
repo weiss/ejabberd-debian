@@ -1,7 +1,7 @@
 %%
 %% %CopyrightBegin%
 %%
-%% Copyright Ericsson AB 1997-2010. All Rights Reserved.
+%% Copyright Ericsson AB 1997-2011. All Rights Reserved.
 %%
 %% The contents of this file are subject to the Erlang Public License,
 %% Version 1.1, (the "License"); you may not use this file except in
@@ -30,17 +30,11 @@
 %%% Exported functions
 %%%
 
-%-spec start_link() -> {'ok', pid()} | {'error', term()}.
-
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%-spec start() -> {'ok', pid()} | {'error', term()}.
-
 start() ->
     ensure_started().
-
-%-spec create(term()) -> 'ok'.
 
 create(Name) ->
     ensure_started(),
@@ -55,10 +49,6 @@ create(Name) ->
             ok
     end.
 
-%-type name() :: term().
-
-%-spec delete(name()) -> 'ok'.
-
 delete(Name) ->
     ensure_started(),
     global:trans({{?MODULE, Name}, self()},
@@ -66,8 +56,6 @@ delete(Name) ->
                          gen_server:multi_call(?MODULE, {delete, Name})
                  end),
     ok.
-
-%-spec join(name(), pid()) -> 'ok' | {'error', {'no_such_group', term()}}.
 
 join(Name, Pid) when is_pid(Pid) ->
     ensure_started(),
@@ -83,8 +71,6 @@ join(Name, Pid) when is_pid(Pid) ->
             ok
     end.
 
-%-spec leave(name(), pid()) -> 'ok' | {'error', {'no_such_group', name()}}.
-
 leave(Name, Pid) when is_pid(Pid) ->
     ensure_started(),
     case ets:member(pg2_table, {group, Name}) of
@@ -99,10 +85,6 @@ leave(Name, Pid) when is_pid(Pid) ->
             ok
     end.
 
-%-type get_members_ret() :: [pid()] | {'error', {'no_such_group', name()}}.
-
-%-spec get_members(name()) -> get_members_ret().
-   
 get_members(Name) ->
     ensure_started(),
     case ets:member(pg2_table, {group, Name}) of
@@ -111,8 +93,6 @@ get_members(Name) ->
         false ->
             {error, {no_such_group, Name}}
     end.
-
-%-spec get_local_members(name()) -> get_members_ret().
 
 get_local_members(Name) ->
     ensure_started(),
@@ -123,15 +103,9 @@ get_local_members(Name) ->
             {error, {no_such_group, Name}}
     end.
 
-%-spec which_groups() -> [name()].
-
 which_groups() ->
     ensure_started(),
     all_groups().
-
-%-type gcp_error_reason() :: {'no_process', term()} | {'no_such_group', term()}.
-
-%-spec get_closest_pid(term()) -> pid() | {'error', gcp_error_reason()}.
 
 get_closest_pid(Name) ->
     case get_local_members(Name) of
@@ -157,8 +131,6 @@ get_closest_pid(Name) ->
 
 -record(state, {}).
 
-%-spec init([]) -> {'ok', #state{}}.
-
 init([]) ->
     Ns = nodes(),
     net_kernel:monitor_nodes(true),
@@ -168,14 +140,6 @@ init([]) ->
                   end, Ns),
     pg2_table = ets:new(pg2_table, [ordered_set, protected, named_table]),
     {ok, #state{}}.
-
-%-type call() :: {'create', name()}
-%              | {'delete', name()}
-%              | {'join', name(), pid()}
-%              | {'leave', name(), pid()}.
-
-%-spec handle_call(call(), _, #state{}) -> 
-%        {'reply', 'ok', #state{}}.
 
 handle_call({create, Name}, _From, S) ->
     assure_group(Name),
@@ -195,20 +159,12 @@ handle_call(Request, From, S) ->
                              [Request, From]),
     {noreply, S}.
 
-%-type all_members() :: [[name(),...]].
-%-type cast() :: {'exchange', node(), all_members()}
-%              | {'del_member', name(), pid()}.
-
-%-spec handle_cast(cast(), #state{}) -> {'noreply', #state{}}.
-
 handle_cast({exchange, _Node, List}, S) ->
     store(List),
     {noreply, S};
 handle_cast(_, S) ->
     %% Ignore {del_member, Name, Pid}.
     {noreply, S}.
-
-%-spec handle_info(tuple(), #state{}) -> {'noreply', #state{}}.
 
 handle_info({'DOWN', MonitorRef, process, _Pid, _Info}, S) ->
     member_died(MonitorRef),
@@ -221,8 +177,6 @@ handle_info({new_pg2, Node}, S) ->
     {noreply, S};
 handle_info(_, S) ->
     {noreply, S}.
-
-%-spec terminate(term(), #state{}) -> 'ok'.
 
 terminate(_Reason, _S) ->
     true = ets:delete(pg2_table),
@@ -253,9 +207,12 @@ terminate(_Reason, _S) ->
 store(List) ->
     _ = [(assure_group(Name)
           andalso
-          [join_group(Name, P) || P <- Members -- group_members(Name)]) ||
+          store2(Name, Members)) ||
             [Name, Members] <- List],
     ok.
+store2(Name, Members) ->
+    [join_group(Name, P) || P <- Members -- group_members(Name)],
+    true.
 
 assure_group(Name) ->
     Key = {group, Name},
@@ -289,7 +246,7 @@ join_group(Name, Pid) ->
     try _ = ets:update_counter(pg2_table, Member_Name_Pid, {2, +1})
     catch _:_ ->
             true = ets:insert(pg2_table, {Member_Name_Pid, 1}),
-            _ = [ets:insert(pg2_table, {{local_member, Name, Pid}}) ||
+            _ = [ets:insert(pg2_table, {{local_member, Name, PidX}}) ||
                     PidX <- [Pid],
                     node(PidX) =:= node()],
             true = ets:insert(pg2_table, {{pid, Pid, Name}})
@@ -302,7 +259,7 @@ leave_group(Name, Pid) ->
             if 
                 N =:= 0 ->
                     true = ets:delete(pg2_table, {pid, Pid, Name}),
-                    _ = [ets:delete(pg2_table, {local_member, Name, Pid}) ||
+                    _ = [ets:delete(pg2_table, {local_member, Name, PidX}) ||
                             PidX <- [Pid],
                             node(PidX) =:= node()],
                     true = ets:delete(pg2_table, Member_Name_Pid);

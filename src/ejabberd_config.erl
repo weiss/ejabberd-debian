@@ -5,7 +5,7 @@
 %%% Created : 14 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -215,7 +215,7 @@ exit_or_halt(ExitText) ->
     case [Vsn || {ejabberd, _Desc, Vsn} <- application:which_applications()] of
 	[] ->
 	    timer:sleep(1000),
-	    halt(ExitText);
+	    halt(string:substr(ExitText, 1, 199));
 	[_] ->
 	    exit(ExitText)
     end.
@@ -431,6 +431,8 @@ process_term(Term, State) ->
 	    add_option(captcha_cmd, Cmd, State);
 	{captcha_host, Host} ->
 	    add_option(captcha_host, Host, State);
+        {captcha_limit, Limit} ->
+            add_option(captcha_limit, Limit, State);
 	{ejabberdctl_access_commands, ACs} ->
 	    add_option(ejabberdctl_access_commands, ACs, State);
 	{loglevel, Loglevel} ->

@@ -11,11 +11,11 @@
 %%% under the License.
 %%% 
 %%% The Initial Developer of the Original Code is ProcessOne.
-%%% Portions created by ProcessOne are Copyright 2006-2010, ProcessOne
+%%% Portions created by ProcessOne are Copyright 2006-2011, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2010, ProcessOne.
+%%% This software is copyright 2006-2011, ProcessOne.
 %%%
-%%% @copyright 2006-2010 ProcessOne
+%%% @copyright 2006-2011 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -1022,7 +1022,7 @@ iq_get_vcard(Lang) ->
       [{xmlcdata,
 	translate:translate(Lang,
 			    "ejabberd Publish-Subscribe module") ++
-			    "\nCopyright (c) 2004-2010 ProcessOne"}]}].
+			    "\nCopyright (c) 2004-2011 ProcessOne"}]}].
 
 iq_pubsub(Host, ServerHost, From, IQType, SubEl, Lang) ->
     iq_pubsub(Host, ServerHost, From, IQType, SubEl, Lang, all, plugins(ServerHost)).
@@ -1841,7 +1841,7 @@ publish_item(Host, ServerHost, Node, Publisher, ItemId, Payload) ->
 		    DeliverPayloads = get_option(Options, deliver_payloads),
 		    PersistItems = get_option(Options, persist_items),
 		    PayloadCount = payload_xmlelements(Payload),
-		    PayloadSize = size(term_to_binary(Payload)),
+		    PayloadSize = size(term_to_binary(Payload))-2, % size(term_to_binary([])) == 2
 		    PayloadMaxSize = get_option(Options, max_payload_size),
 		    % pubsub#deliver_payloads true 
 		    % pubsub#persist_items true -> 1 item; false -> 0 item

@@ -11,12 +11,12 @@
 %%% under the License.
 %%% 
 %%% The Initial Developer of the Original Code is ProcessOne.
-%%% Portions created by ProcessOne are Copyright 2006-2010, ProcessOne
+%%% Portions created by ProcessOne are Copyright 2006-2011, ProcessOne
 %%% All Rights Reserved.''
-%%% This software is copyright 2006-2010, ProcessOne.
+%%% This software is copyright 2006-2011, ProcessOne.
 %%%
 %%%
-%%% @copyright 2006-2010 ProcessOne
+%%% @copyright 2006-2011 ProcessOne
 %%% @author Christophe Romain <christophe.romain@process-one.net>
 %%%   [http://www.process-one.net/]
 %%% @version {@vsn}, {@date} {@time}
@@ -581,10 +581,10 @@ delete_item(NodeIdx, Publisher, PublishModel, ItemId) ->
 		false ->
 		    case Affiliation of
 			owner ->
-			    %% Owner can delete other publishers items as well
+			    %% Owner can delete any items from its own node
 			    {result, States} = get_states(NodeIdx),
 			    lists:foldl(
-				fun(#pubsub_state{items = PI, affiliation = publisher} = S, Res) ->
+				fun(#pubsub_state{items = PI} = S, Res) ->
 				    case lists:member(ItemId, PI) of
 					true ->
 					    del_item(NodeIdx, ItemId),
