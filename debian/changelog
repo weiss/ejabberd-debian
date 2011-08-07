@@ -1,3 +1,11 @@
+ejabberd (2.1.6-2.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Disable entity expansion completely to prevent against
+    billion laugs DoS attack (CVE-2011-1753).
+
+ -- Nico Golde <nion@debian.org>  Mon, 30 May 2011 23:53:46 +0200
+
 ejabberd (2.1.6-2) unstable; urgency=low
 
   * Artifically set HOME environment variable in debian/rules
