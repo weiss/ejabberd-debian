@@ -1,3 +1,18 @@
+ejabberd (2.1.5-3+squeeze1) stable-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fix billion laughs attack DoS attack vector by disabling entity expansion
+    completely (CVE-2011-1753.patch).
+
+ -- Nico Golde <nion@debian.org>  Sun, 22 May 2011 15:25:47 +0000
+
+ejabberd (2.1.5-3) unstable; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Add patch http-poll-binary-parse.patch fixing EJAB-1325 (closes: #601094).
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sat, 23 Oct 2010 17:05:48 +0400
+
 ejabberd (2.1.5-2~bpo50+1) lenny-backports; urgency=low
 
   * Rebuild for lenny-backports. Changes kept:
