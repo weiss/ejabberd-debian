@@ -5,7 +5,7 @@
 %%% Created : 27 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -31,6 +31,7 @@
 
 %% API
 -export([route/3,
+	 route_error/4,
 	 register_route/1,
 	 register_route/2,
 	 register_routes/1,
@@ -72,6 +73,17 @@ route(From, To, Packet) ->
 	    ok
     end.
 
+%% Route the error packet only if the originating packet is not an error itself.
+%% RFC3920 9.3.1
+route_error(From, To, ErrPacket, OrigPacket) ->
+    {xmlelement, _Name, Attrs, _Els} = OrigPacket,
+    case "error" == xml:get_attr_s("type", Attrs) of
+	false ->
+	    route(From, To, ErrPacket);
+	true ->
+	    ok
+    end.
+
 register_route(Domain) ->
     register_route(Domain, undefined).
 
@@ -91,7 +103,7 @@ register_route(Domain, LocalHint) ->
 		    mnesia:transaction(F);
 		N ->
 		    F = fun() ->
-				case mnesia:read({route, LDomain}) of
+				case mnesia:wread({route, LDomain}) of
 				    [] ->
 					mnesia:write(
 					  #route{domain = LDomain,

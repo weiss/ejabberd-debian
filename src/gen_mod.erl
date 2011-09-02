@@ -5,7 +5,7 @@
 %%% Created : 24 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -226,6 +226,8 @@ get_hosts(Opts, Prefix) ->
 	    Hosts
     end.
 
+get_module_proc(Host, {frontend, Base}) ->
+    get_module_proc("frontend_" ++ Host, Base);
 get_module_proc(Host, Base) ->
     list_to_atom(atom_to_list(Base) ++ "_" ++ Host).
 

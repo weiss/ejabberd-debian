@@ -5,7 +5,7 @@
 %%% Created : 20 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -28,14 +28,19 @@
 -author('alexey@process-one.net').
 
 -export([element_to_string/1,
+	 element_to_binary/1,
 	 crypt/1, make_text_node/1,
 	 remove_cdata/1,
 	 get_cdata/1, get_tag_cdata/1,
 	 get_attr/2, get_attr_s/2,
 	 get_tag_attr/2, get_tag_attr_s/2,
 	 get_subtag/2, get_subtag_cdata/2,
+	 append_subtags/2,
 	 get_path_s/2,
+	 start/0,
 	 replace_tag_attr/3]).
+
+-include("ejabberd.hrl").
 
 %% Select at compile time how to escape characters in binary text
 %% nodes.
@@ -46,19 +51,46 @@
 -define(ESCAPE_BINARY(CData), crypt(CData)).
 -endif.
 
+%% Replace element_to_binary/1 with NIF
+%% Can be choosen with ./configure --enable-nif
+-ifdef(NIF).
+start() ->
+    SOPath = filename:join(ejabberd:get_so_path(), "xml"),
+    case catch erlang:load_nif(SOPath, 0) of
+	ok ->
+	    ok;
+	Err ->
+	    ?WARNING_MSG("unable to load xml NIF: ~p", [Err])
+    end.
+-else.
+start() ->
+    ok.
+-endif.
+
+element_to_binary(El) ->
+    iolist_to_binary(element_to_string(El)).
+
 element_to_string(El) ->
+    case catch element_to_string_nocatch(El) of
+	{'EXIT', Reason} ->
+	    erlang:error({badxml, El, Reason});
+	Result ->
+	    Result
+    end.
+
+element_to_string_nocatch(El) ->
     case El of
 	{xmlelement, Name, Attrs, Els} ->
 	    if
 		Els /= [] ->
 		    [$<, Name, attrs_to_list(Attrs), $>,
-		     [element_to_string(E) || E <- Els],
+		     [element_to_string_nocatch(E) || E <- Els],
 		     $<, $/, Name, $>];
 	       true ->
 		    [$<, Name, attrs_to_list(Attrs), $/, $>]
 	       end;
 	%% We do not crypt CDATA binary, but we enclose it in XML CDATA
-	{xmlcdata, CData} when binary(CData) ->
+	{xmlcdata, CData} when is_binary(CData) ->
 	    ?ESCAPE_BINARY(CData);
 	%% We crypt list and possibly binaries if full XML usage is
 	%% disabled unsupported (implies a conversion to list).
@@ -70,7 +102,7 @@ attrs_to_list(Attrs) ->
     [attr_to_list(A) || A <- Attrs].
 
 attr_to_list({Name, Value}) ->
-    [$\s, crypt(Name), $=, $', crypt(Value), $'].
+    [$\s, Name, $=, $', crypt(Value), $'].
 
 crypt(S) when is_list(S) ->
     [case C of
@@ -90,12 +122,12 @@ make_text_node(CData) ->
 	cdata ->
 	    CDATA1 = <<"<![CDATA[">>,
 	    CDATA2 = <<"]]>">>,
-	    concat_binary([CDATA1, CData, CDATA2]);
+	    list_to_binary([CDATA1, CData, CDATA2]);
 	none ->
 	    CData;
 	{cdata, EndTokens} ->
 	    EscapedCData = escape_cdata(CData, EndTokens),
-	    concat_binary(EscapedCData)
+	    list_to_binary(EscapedCData)
     end.
 
 %% Returns escape type needed for the text node
@@ -210,6 +242,9 @@ get_subtag_cdata(Tag, Name) ->
 	Subtag ->
 	    get_tag_cdata(Subtag)
     end.
+
+append_subtags({xmlelement, Name, Attrs, SubTags1}, SubTags2) ->
+    {xmlelement, Name, Attrs, SubTags1 ++ SubTags2}.
 
 get_path_s(El, []) ->
     El;

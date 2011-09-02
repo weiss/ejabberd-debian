@@ -5,7 +5,7 @@
 %%% Created : 12 Nov 2006 by Evgeniy Khramtsov <xram@jabber.ru>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -29,10 +29,13 @@
 
 %% API
 -export([
-	 start_link/6,
+	 start_link/7,
 	 bind/3,
-	 search/2
+	 search/2,
+	 modify_passwd/3
 	]).
+
+-include("ejabberd.hrl").
 
 %%====================================================================
 %% API
@@ -43,18 +46,23 @@ bind(PoolName, DN, Passwd) ->
 search(PoolName, Opts) ->
     do_request(PoolName, {search, [Opts]}).
 
-start_link(Name, Hosts, Backups, Port, Rootdn, Passwd) ->
+modify_passwd(PoolName, DN, Passwd) ->
+    do_request(PoolName, {modify_passwd, [DN, Passwd]}).
+
+start_link(Name, Hosts, Backups, Port, Rootdn, Passwd, Opts) ->
     PoolName = make_id(Name),
     pg2:create(PoolName),
-    lists:foreach(fun(Host) ->
-			  ID = erlang:ref_to_list(make_ref()),
-			  case catch eldap:start_link(ID, [Host|Backups], Port, Rootdn, Passwd) of
-			      {ok, Pid} ->
-				  pg2:join(PoolName, Pid);
-			      _ ->
-				  error
-			  end
-		  end, Hosts).
+    lists:foreach(
+      fun(Host) ->
+	      ID = erlang:ref_to_list(make_ref()),
+	      case catch eldap:start_link(ID, [Host|Backups], Port,
+					  Rootdn, Passwd, Opts) of
+		  {ok, Pid} ->
+		      pg2:join(PoolName, Pid);
+		  _ ->
+		      error
+	      end
+      end, Hosts).
 
 %%====================================================================
 %% Internal functions
@@ -64,6 +72,8 @@ do_request(Name, {F, Args}) ->
 	Pid when is_pid(Pid) ->
 	    case catch apply(eldap, F, [Pid | Args]) of
 		{'EXIT', Reason} ->
+		    ?ERROR_MSG("LDAP request failed: eldap:~p(~p)~nReason: ~p",
+			       [F, Args, Reason]),
 		    {error, Reason};
 		Reply ->
 		    Reply

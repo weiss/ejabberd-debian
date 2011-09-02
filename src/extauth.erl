@@ -5,7 +5,7 @@
 %%% Created : 30 Jul 2004 by Leif Johansson <leifj@it.su.se>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -27,22 +27,45 @@
 -module(extauth).
 -author('leifj@it.su.se').
 
--export([start/2, stop/1, init/2,
-	 check_password/3, set_password/3, is_user_exists/2]).
+-export([start/2,
+	 stop/1,
+	 init/2,
+	 check_password/3,
+	 set_password/3,
+	 try_register/3,
+	 remove_user/2,
+	 remove_user/3,
+	 is_user_exists/2]).
 
 -include("ejabberd.hrl").
 
-start(Host, ExtPrg) ->
-    spawn(?MODULE, init, [Host, ExtPrg]).
+-define(INIT_TIMEOUT, 60000). % Timeout is in milliseconds: 60 seconds == 60000
+-define(CALL_TIMEOUT, 10000). % Timeout is in milliseconds: 10 seconds == 10000
 
-init(Host, ExtPrg) ->
-    register(gen_mod:get_module_proc(Host, eauth), self()),
+start(Host, ExtPrg) ->
+    lists:foreach(
+	fun(This) ->
+	    spawn(?MODULE, init, [get_process_name(Host, This), ExtPrg])
+	end,
+	lists:seq(0, get_instances(Host)-1)
+    ).
+
+init(ProcessName, ExtPrg) ->
+    register(ProcessName, self()),
     process_flag(trap_exit,true),
     Port = open_port({spawn, ExtPrg}, [{packet,2}]),
-    loop(Port).
+    loop(Port, ?INIT_TIMEOUT).
 
 stop(Host) ->
-    gen_mod:get_module_proc(Host, eauth) ! stop.
+    lists:foreach(
+	fun(This) ->
+	    get_process_name(Host, This) ! stop
+	end,
+	lists:seq(0, get_instances(Host)-1)
+    ).
+
+get_process_name(Host, Integer) ->
+    gen_mod:get_module_proc(lists:append([Host, integer_to_list(Integer)]), eauth).
 
 check_password(User, Server, Password) ->
     call_port(Server, ["auth", User, Server, Password]).
@@ -53,23 +76,55 @@ is_user_exists(User, Server) ->
 set_password(User, Server, Password) ->
     call_port(Server, ["setpass", User, Server, Password]).
 
+try_register(User, Server, Password) ->
+    case call_port(Server, ["tryregister", User, Server, Password]) of
+	true -> {atomic, ok};
+	false -> {error, not_allowed}
+    end.
+
+remove_user(User, Server) ->
+    call_port(Server, ["removeuser", User, Server]).
+
+remove_user(User, Server, Password) ->
+    call_port(Server, ["removeuser3", User, Server, Password]).
+
 call_port(Server, Msg) ->
     LServer = jlib:nameprep(Server),
-    gen_mod:get_module_proc(LServer, eauth) ! {call, self(), Msg},
+    ProcessName = get_process_name(LServer, random_instance(get_instances(LServer))),
+    ProcessName ! {call, self(), Msg},
     receive
 	{eauth,Result} ->
 	    Result
     end.
 
-loop(Port) ->
+random_instance(MaxNum) ->
+    {A1,A2,A3} = now(),
+    random:seed(A1, A2, A3),
+    random:uniform(MaxNum) - 1.
+
+get_instances(Server) ->
+    case ejabberd_config:get_local_option({extauth_instances, Server}) of
+	Num when is_integer(Num) -> Num;
+	_ -> 1
+    end.
+
+loop(Port, Timeout) ->
     receive
 	{call, Caller, Msg} ->
 	    Port ! {self(), {command, encode(Msg)}},
 	    receive
 		{Port, {data, Data}} ->
-		    Caller ! {eauth, decode(Data)}
+                    ?DEBUG("extauth call '~p' received data response:~n~p", [Msg, Data]),
+                    Caller ! {eauth, decode(Data)};
+		{Port, Other} ->
+                    ?ERROR_MSG("extauth call '~p' received strange response:~n~p", [Msg, Other]),
+                    Caller ! {eauth, false}
+            after
+                Timeout ->
+                    ?ERROR_MSG("extauth call '~p' didn't receive response", [Msg]),
+                    Caller ! {eauth, false}
 	    end,
-	    loop(Port);
+	    loop(Port, ?CALL_TIMEOUT);
 	stop ->
 	    Port ! {self(), close},
 	    receive

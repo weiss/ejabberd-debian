@@ -1,5 +1,5 @@
 /*
- * ejabberd, Copyright (C) 2002-2009   ProcessOne
+ * ejabberd, Copyright (C) 2002-2010   ProcessOne
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -10,7 +10,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *                         
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -369,9 +369,10 @@ static int tls_drv_control(ErlDrvData handle,
 
 	 SSL_set_bio(d->ssl, d->bio_read, d->bio_write);
 
-	 if (command == SET_CERTIFICATE_FILE_ACCEPT)
+	 if (command == SET_CERTIFICATE_FILE_ACCEPT) {
+	    SSL_set_options(d->ssl, SSL_OP_NO_TICKET);
 	    SSL_set_accept_state(d->ssl);
-	 else {
+	 } else {
 	    SSL_set_options(d->ssl, SSL_OP_NO_SSLv2|SSL_OP_NO_TICKET);
 	    SSL_set_connect_state(d->ssl);
 	 }

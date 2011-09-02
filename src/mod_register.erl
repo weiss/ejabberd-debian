@@ -5,7 +5,7 @@
 %%% Created :  8 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -31,8 +31,9 @@
 
 -export([start/2,
 	 stop/1,
-	 stream_feature_register/1,
+	 stream_feature_register/2,
 	 unauthenticated_iq_register/4,
+	 try_register/5,
 	 process_iq/3]).
 
 -include("ejabberd.hrl").
@@ -64,7 +65,7 @@ stop(Host) ->
     gen_iq_handler:remove_iq_handler(ejabberd_sm, Host, ?NS_REGISTER).
 
 
-stream_feature_register(Acc) ->
+stream_feature_register(Acc, _Host) ->
     [{xmlelement, "register",
       [{"xmlns", ?NS_FEATURE_IQREGISTER}], []} | Acc].
 
@@ -165,13 +166,20 @@ process_iq(From, To,
 			#jid{user = User, lserver = Server} ->
 			    try_set_password(User, Server, Password, IQ, SubEl);
 			_ ->
-			    case try_register(User, Server, Password,
-					      Source, Lang) of
-				ok ->
-				    IQ#iq{type = result, sub_el = [SubEl]};
-				{error, Error} ->
+			    case check_from(From, Server) of
+				allow ->
+				    case try_register(User, Server, Password,
+						      Source, Lang) of
+					ok ->
+					    IQ#iq{type = result,
+						  sub_el = [SubEl]};
+					{error, Error} ->
+					    IQ#iq{type = error,
+						  sub_el = [SubEl, Error]}
+				    end;
+				deny ->
 				    IQ#iq{type = error,
-					  sub_el = [SubEl, Error]}
+					  sub_el = [SubEl, ?ERR_FORBIDDEN]}
 			    end
 		    end;
 		true ->
@@ -179,6 +187,18 @@ process_iq(From, To,
 			  sub_el = [SubEl, ?ERR_BAD_REQUEST]}
 	    end;
 	get ->
+	    {UsernameSubels, QuerySubels} =
+		case From of
+		    #jid{user = User, lserver = Server} ->
+			case ejabberd_auth:is_user_exists(User,Server) of
+			    true ->
+				{[{xmlcdata, User}], [{xmlelement, "registered", [], []}]};
+			    false ->
+				{[{xmlcdata, User}], []}
+			end;
+		    _ ->
+			{[], []}
+		end,
 	    IQ#iq{type = result,
 		  sub_el = [{xmlelement,
 			     "query",
@@ -189,8 +209,9 @@ process_iq(From, To,
 				   Lang,
 				   "Choose a username and password "
 				   "to register with this server")}]},
-			      {xmlelement, "username", [], []},
-			      {xmlelement, "password", [], []}]}]}
+			      {xmlelement, "username", [], UsernameSubels},
+			      {xmlelement, "password", [], []}
+			      | QuerySubels]}]}
     end.
 
 %% @doc Try to change password and return IQ response
@@ -217,14 +238,14 @@ try_register(User, Server, Password, Source, Lang) ->
 	    Access = gen_mod:get_module_opt(Server, ?MODULE, access, all),
 	    case acl:match_rule(Server, Access, JID) of
 		deny ->
-		    {error, ?ERR_CONFLICT};
+		    {error, ?ERR_FORBIDDEN};
 		allow ->
 		    case check_timeout(Source) of
 			true ->
 			    case ejabberd_auth:try_register(User, Server, Password) of
 				{atomic, ok} ->
 				    send_welcome_message(JID),
-				    send_registration_notifications(JID),
+				    send_registration_notifications(JID, Source),
 				    ok;
 				Error ->
 				    remove_timeout(Source),
@@ -241,7 +262,7 @@ try_register(User, Server, Password, Source, Lang) ->
 			    end;
 			false ->
 			    ErrText = "Users are not allowed to register "
-				"accounts so fast",
+				"accounts so quickly",
 			    {error, ?ERRT_RESOURCE_CONSTRAINT(Lang, ErrText)}
 		    end
 	    end
@@ -264,15 +285,17 @@ send_welcome_message(JID) ->
 	    ok
     end.
 
-send_registration_notifications(UJID) ->
+send_registration_notifications(UJID, Source) ->
     Host = UJID#jid.lserver,
     case gen_mod:get_module_opt(Host, ?MODULE, registration_watchers, []) of
 	[] -> ok;
 	JIDs when is_list(JIDs) ->
 	    Body = lists:flatten(
 		     io_lib:format(
-		       "The user '~s' was just created on node ~w.",
-		       [jlib:jid_to_string(UJID), node()])),
+		       "[~s] The account ~s was registered from IP address ~s "
+		       "on node ~w using ~p.",
+		       [get_time_string(), jlib:jid_to_string(UJID),
+			ip_to_string(Source), node(), ?MODULE])),
 	    lists:foreach(
 	      fun(S) ->
 		      case jlib:string_to_jid(S) of
@@ -290,6 +313,11 @@ send_registration_notifications(UJID) ->
 	    ok
     end.
 
+check_from(#jid{user = "", server = ""}, _Server) ->
+    allow;
+check_from(JID, Server) ->
+    Access = gen_mod:get_module_opt(Server, ?MODULE, access_from, none),
+    acl:match_rule(Server, Access, JID).
 
 check_timeout(undefined) ->
     true;
@@ -380,3 +408,12 @@ remove_timeout(Source) ->
 	    ok
     end.
 
+ip_to_string(Source) when is_tuple(Source) -> inet_parse:ntoa(Source);
+ip_to_string(undefined) -> "undefined";
+ip_to_string(_) -> "unknown".
+
+get_time_string() -> write_time(erlang:localtime()).
+%% Function copied from ejabberd_logger_h.erl and customized
+write_time({{Y,Mo,D},{H,Mi,S}}) ->
+    io_lib:format("~w-~.2.0w-~.2.0w ~.2.0w:~.2.0w:~.2.0w",
+		  [Y, Mo, D, H, Mi, S]).

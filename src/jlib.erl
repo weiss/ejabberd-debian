@@ -5,7 +5,7 @@
 %%% Created : 23 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -55,14 +55,19 @@
 	 is_iq_request_type/1,
 	 iq_to_xml/1,
 	 parse_xdata_submit/1,
-	 timestamp_to_iso/1,
-	 timestamp_to_xml/1,
+	 timestamp_to_iso/1, % TODO: Remove once XEP-0091 is Obsolete
+	 timestamp_to_iso/2,
+	 timestamp_to_xml/4,
+	 timestamp_to_xml/1, % TODO: Remove once XEP-0091 is Obsolete
 	 now_to_utc_string/1,
 	 now_to_local_string/1,
 	 datetime_string_to_timestamp/1,
 	 decode_base64/1,
 	 encode_base64/1,
-	 ip_to_list/1]).
+	 ip_to_list/1,
+	 rsm_encode/1,
+	 rsm_encode/2,
+	 rsm_decode/1]).
 
 -include("jlib.hrl").
 
@@ -377,7 +382,7 @@ iq_info_internal({xmlelement, Name, Attrs, Els}, Filter) when Name == "iq" ->
 			 "result" -> {result, reply};
 			 "error" -> {error, reply};
 			 _ -> {invalid, invalid}
-	    end,
+		     end,
     if
 	Type1 == invalid ->
 	    invalid;
@@ -399,22 +404,24 @@ iq_info_internal({xmlelement, Name, Attrs, Els}, Filter) when Name == "iq" ->
 					      <- FilteredEls, 
 					  SubName /= "error"],
 			{case NonErrorEls of
-			     [NonErrorEl] -> xml:get_tag_attr_s("xmlns", NonErrorEl);
-			     _ -> invalid
+			     [NonErrorEl] ->
+				 xml:get_tag_attr_s("xmlns", NonErrorEl);
+			     _ ->
+				 ""
 			 end,
 			 FilteredEls};
 		    _ ->
-			{invalid, invalid}
+			{"", []}
 		end,
 	    if XMLNS == "", Class == request ->
 		    invalid;
 	       true ->
-			    #iq{id = ID,
-				type = Type1,
-				xmlns = XMLNS,
-				lang = Lang,
+		    #iq{id = ID,
+			type = Type1,
+			xmlns = XMLNS,
+			lang = Lang,
 			sub_el = SubEl}
-		    end;
+	    end;
 	Class == reply, Filter /= any ->
 	    reply
     end;
@@ -484,15 +491,111 @@ parse_xdata_values([{xmlelement, Name, _Attrs, SubEls} | Els], Res) ->
 parse_xdata_values([_ | Els], Res) ->
     parse_xdata_values(Els, Res).
 
+rsm_decode(#iq{sub_el=SubEl})->
+	rsm_decode(SubEl);
+rsm_decode({xmlelement, _,_,_}=SubEl)->
+	case xml:get_subtag(SubEl,"set") of
+		false ->
+			none;
+		{xmlelement, "set", _Attrs, SubEls}->
+			lists:foldl(fun rsm_parse_element/2, #rsm_in{}, SubEls)
+	end.
+
+rsm_parse_element({xmlelement, "max",[], _}=Elem, RsmIn)->
+    CountStr = xml:get_tag_cdata(Elem),
+    {Count, _} = string:to_integer(CountStr),
+    RsmIn#rsm_in{max=Count};
+
+rsm_parse_element({xmlelement, "before", [], _}=Elem, RsmIn)->
+    UID = xml:get_tag_cdata(Elem),
+    RsmIn#rsm_in{direction=before, id=UID};
+
+rsm_parse_element({xmlelement, "after", [], _}=Elem, RsmIn)->
+    UID = xml:get_tag_cdata(Elem),
+    RsmIn#rsm_in{direction=aft, id=UID};
+
+rsm_parse_element({xmlelement, "index",[], _}=Elem, RsmIn)->
+    IndexStr = xml:get_tag_cdata(Elem),
+    {Index, _} = string:to_integer(IndexStr),
+    RsmIn#rsm_in{index=Index};
+
+
+rsm_parse_element(_, RsmIn)->
+    RsmIn.
+
+rsm_encode(#iq{sub_el=SubEl}=IQ,RsmOut)->
+    Set = {xmlelement, "set", [{"xmlns", ?NS_RSM}],
+	   lists:reverse(rsm_encode_out(RsmOut))},
+    {xmlelement, Name, Attrs, SubEls} = SubEl,
+    New = {xmlelement, Name, Attrs, [Set | SubEls]},
+    IQ#iq{sub_el=New}.
+
+rsm_encode(none)->
+    [];
+rsm_encode(RsmOut)->
+    [{xmlelement, "set", [{"xmlns", ?NS_RSM}], lists:reverse(rsm_encode_out(RsmOut))}].
+rsm_encode_out(#rsm_out{count=Count, index=Index, first=First, last=Last})->
+    El = rsm_encode_first(First, Index, []),
+    El2 = rsm_encode_last(Last,El),
+    rsm_encode_count(Count, El2).
+
+rsm_encode_first(undefined, undefined, Arr) ->
+    Arr;
+rsm_encode_first(First, undefined, Arr) ->
+    [{xmlelement, "first",[], [{xmlcdata, First}]}|Arr];
+rsm_encode_first(First, Index, Arr) ->
+    [{xmlelement, "first",[{"index", i2l(Index)}], [{xmlcdata, First}]}|Arr].
+
+rsm_encode_last(undefined, Arr) -> Arr;
+rsm_encode_last(Last, Arr) ->
+    [{xmlelement, "last",[], [{xmlcdata, Last}]}|Arr].
+
+rsm_encode_count(undefined, Arr)-> Arr;
+rsm_encode_count(Count, Arr)->
+    [{xmlelement, "count",[], [{xmlcdata, i2l(Count)}]} | Arr].
+
+i2l(I) when is_integer(I) -> integer_to_list(I);
+i2l(L) when is_list(L)    -> L.
+
+%% Timezone = utc | {Hours, Minutes}
+%% Hours = integer()
+%% Minutes = integer()
+timestamp_to_iso({{Year, Month, Day}, {Hour, Minute, Second}}, Timezone) ->
+    Timestamp_string =
+	lists:flatten(
+	  io_lib:format("~4..0w-~2..0w-~2..0wT~2..0w:~2..0w:~2..0w",
+			[Year, Month, Day, Hour, Minute, Second])),
+    Timezone_string =
+	case Timezone of
+	    utc -> "Z";
+	    {TZh, TZm} ->
+		Sign = case TZh >= 0 of
+			   true -> "+";
+			   false -> "-"
+		       end,
+		io_lib:format("~s~2..0w:~2..0w", [Sign, abs(TZh),TZm])
+	end,
+    {Timestamp_string, Timezone_string}.
 
 timestamp_to_iso({{Year, Month, Day}, {Hour, Minute, Second}}) ->
     lists:flatten(
       io_lib:format("~4..0w~2..0w~2..0wT~2..0w:~2..0w:~2..0w",
 		    [Year, Month, Day, Hour, Minute, Second])).
 
+timestamp_to_xml(DateTime, Timezone, FromJID, Desc) ->
+    {T_string, Tz_string} = timestamp_to_iso(DateTime, Timezone),
+    Text = [{xmlcdata, Desc}],
+    From = jlib:jid_to_string(FromJID),
+    {xmlelement, "delay",
+     [{"xmlns", ?NS_DELAY},
+      {"from", From},
+      {"stamp", T_string ++ Tz_string}],
+     Text}.
+
+%% TODO: Remove this function once XEP-0091 is Obsolete
 timestamp_to_xml({{Year, Month, Day}, {Hour, Minute, Second}}) ->
     {xmlelement, "x",
-     [{"xmlns", ?NS_DELAY},
+     [{"xmlns", ?NS_DELAY91},
       {"stamp", lists:flatten(
 		  io_lib:format("~4..0w~2..0w~2..0wT~2..0w:~2..0w:~2..0w",
 				[Year, Month, Day, Hour, Minute, Second]))}],
@@ -634,7 +737,7 @@ decode1_base64([Sextet1,Sextet2,$=,$=|Rest]) ->
 	(d(Sextet1) bsl 18) bor
 	(d(Sextet2) bsl 12),
     Octet1=Bits2x6 bsr 16,
-    [Octet1|decode_base64(Rest)];
+    [Octet1|decode1_base64(Rest)];
 decode1_base64([Sextet1,Sextet2,Sextet3,$=|Rest]) ->
     Bits3x6=
 	(d(Sextet1) bsl 18) bor
@@ -642,7 +745,7 @@ decode1_base64([Sextet1,Sextet2,Sextet3,$=|Rest]) ->
 	(d(Sextet3) bsl 6),
     Octet1=Bits3x6 bsr 16,
     Octet2=(Bits3x6 bsr 8) band 16#ff,
-    [Octet1,Octet2|decode_base64(Rest)];
+    [Octet1,Octet2|decode1_base64(Rest)];
 decode1_base64([Sextet1,Sextet2,Sextet3,Sextet4|Rest]) ->
     Bits4x6=
 	(d(Sextet1) bsl 18) bor
@@ -652,7 +755,7 @@ decode1_base64([Sextet1,Sextet2,Sextet3,Sextet4|Rest]) ->
     Octet1=Bits4x6 bsr 16,
     Octet2=(Bits4x6 bsr 8) band 16#ff,
     Octet3=Bits4x6 band 16#ff,
-    [Octet1,Octet2,Octet3|decode_base64(Rest)];
+    [Octet1,Octet2,Octet3|decode1_base64(Rest)];
 decode1_base64(_CatchAll) ->
     "".
 

@@ -5,7 +5,7 @@
 %%% Created : 22 Apr 2008 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -32,7 +32,10 @@
 	 delete_root/1,
 	 get_root/1,
 	 lookup/2,
-	 is_empty/1]).
+	 is_empty/1,
+	 fold/3,
+	 from_list/1,
+	 to_list/1]).
 
 empty() ->
     nil.
@@ -43,7 +46,7 @@ insert(Key, Priority, Value, Tree) ->
 
 insert1(nil, HashKey, Priority, Value) ->
     {HashKey, Priority, Value, nil, nil};
-insert1({HashKey1, Priority1, Value1, Left, Right},
+insert1({HashKey1, Priority1, Value1, Left, Right} = Tree,
 	HashKey, Priority, Value) ->
     if
 	HashKey < HashKey1 ->
@@ -54,8 +57,10 @@ insert1({HashKey1, Priority1, Value1, Left, Right},
 	    heapify({HashKey1, Priority1, Value1,
 		     Left,
 		     insert1(Right, HashKey, Priority, Value)});
+	Priority == Priority1 ->
+	    {HashKey, Priority, Value, Left, Right};
 	true ->
-	    erlang:error(key_exists)
+	    insert1(delete_root(Tree), HashKey, Priority, Value)
     end.
 
 heapify(nil) ->
@@ -105,6 +110,8 @@ delete(Key, Tree) ->
     HashKey = {erlang:phash2(Key), Key},
     delete1(HashKey, Tree).
 
+delete1(_HashKey, nil) ->
+    nil;
 delete1(HashKey, {HashKey1, Priority1, Value1, Left, Right} = Tree) ->
     if
 	HashKey < HashKey1 ->
@@ -162,3 +169,26 @@ lookup1({HashKey1, Priority1, Value1, Left, Right}, HashKey) ->
 	    {ok, Priority1, Value1}
     end.
 
+fold(_F, Acc, nil) ->
+    Acc;
+fold(F, Acc, {{_Hash, Key}, Priority, Value, Left, Right}) ->
+    Acc1 = F({Key, Priority, Value}, Acc),
+    Acc2 = fold(F, Acc1, Left),
+    fold(F, Acc2, Right).
+
+to_list(Tree) ->
+    to_list(Tree, []).
+
+to_list(nil, Acc) ->
+    Acc;
+to_list(Tree, Acc) ->
+    Root = get_root(Tree),
+    to_list(delete_root(Tree), [Root|Acc]).
+
+from_list(List) ->
+    from_list(List, nil).
+
+from_list([{Key, Priority, Value}|Tail], Tree) ->
+    from_list(Tail, insert(Key, Priority, Value, Tree));
+from_list([], Tree) ->
+    Tree.

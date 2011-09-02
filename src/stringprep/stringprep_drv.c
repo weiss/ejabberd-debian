@@ -1,5 +1,5 @@
 /*
- * ejabberd, Copyright (C) 2002-2009   ProcessOne
+ * ejabberd, Copyright (C) 2002-2010   ProcessOne
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -10,7 +10,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *                         
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -369,7 +369,7 @@ static int stringprep_erl_control(ErlDrvData drv_data,
       }
       last_ral = info & D1Mask;
       have_ral = have_ral || last_ral;
-      have_l = info & D2Mask;
+      have_l |= info & D2Mask;
       ADD_UCHAR(ruc);
    }
 

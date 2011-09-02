@@ -5,7 +5,7 @@
 %%% Created : 10 Nov 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -136,12 +136,7 @@ handle_call({starttls, TLSSocket}, _From,
 	    #state{xml_stream_state = XMLStreamState,
 		   c2s_pid = C2SPid,
 		   max_stanza_size = MaxStanzaSize} = State) ->
-    if
-	XMLStreamState /= undefined ->
-	    xml_stream:close(XMLStreamState);
-	true ->
-	    ok
-    end,
+    close_stream(XMLStreamState),
     NewXMLStreamState = xml_stream:new(C2SPid, MaxStanzaSize),
     NewState = State#state{socket = TLSSocket,
 			   sock_mod = tls,
@@ -156,7 +151,7 @@ handle_call({compress, ZlibSocket}, _From,
 	    #state{xml_stream_state = XMLStreamState,
 		   c2s_pid = C2SPid,
 		   max_stanza_size = MaxStanzaSize} = State) ->
-    xml_stream:close(XMLStreamState),
+    close_stream(XMLStreamState),
     NewXMLStreamState = xml_stream:new(C2SPid, MaxStanzaSize),
     NewState = State#state{socket = ZlibSocket,
 			   sock_mod = ejabberd_zlib,
@@ -171,7 +166,7 @@ handle_call(reset_stream, _From,
 	    #state{xml_stream_state = XMLStreamState,
 		   c2s_pid = C2SPid,
 		   max_stanza_size = MaxStanzaSize} = State) ->
-    xml_stream:close(XMLStreamState),
+    close_stream(XMLStreamState),
     NewXMLStreamState = xml_stream:new(C2SPid, MaxStanzaSize),
     Reply = ok,
     {reply, Reply, State#state{xml_stream_state = NewXMLStreamState},
@@ -210,7 +205,7 @@ handle_cast(_Msg, State) ->
 handle_info({Tag, _TCPSocket, Data},
 	    #state{socket = Socket,
 		   sock_mod = SockMod} = State)
-  when (Tag == tcp) or (Tag == ssl) ->
+  when (Tag == tcp) or (Tag == ssl) or (Tag == ejabberd_xml) ->
     case SockMod of
 	tls ->
 	    case tls:recv_data(Socket, Data) of
@@ -260,7 +255,7 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 terminate(_Reason, #state{xml_stream_state = XMLStreamState,
 			  c2s_pid = C2SPid} = State) ->
-    xml_stream:close(XMLStreamState),
+    close_stream(XMLStreamState),
     if
 	C2SPid /= undefined ->
 	    gen_fsm:send_event(C2SPid, closed);
@@ -299,6 +294,25 @@ activate_socket(#state{socket = Socket,
 	    ok
     end.
 
+%% Data processing for connectors directly generating xmlelement in
+%% Erlang data structure.
+%% WARNING: Shaper does not work with Erlang data structure.
+process_data([], State) ->
+    activate_socket(State),
+    State;
+process_data([Element|Els], #state{c2s_pid = C2SPid} = State)
+  when element(1, Element) == xmlelement;
+       element(1, Element) == xmlstreamstart;
+      element(1, Element) == xmlstreamelement;
+       element(1, Element) == xmlstreamend ->
+    if
+	C2SPid == undefined ->
+	    State;
+	true ->
+	    catch gen_fsm:send_event(C2SPid, element_wrapper(Element)),
+	    process_data(Els, State)
+    end;
+%% Data processing for connectors receivind data as string.
 process_data(Data,
 	     #state{xml_stream_state = XMLStreamState,
 		    shaper_state = ShaperState,
@@ -317,3 +331,17 @@ process_data(Data,
     State#state{xml_stream_state = XMLStreamState1,
 		shaper_state = NewShaperState}.
 
+%% Element coming from XML parser are wrapped inside xmlstreamelement
+%% When we receive directly xmlelement tuple (from a socket module
+%% speaking directly Erlang XML), we wrap it inside the same
+%% xmlstreamelement coming from the XML parser.
+element_wrapper(XMLElement)
+  when element(1, XMLElement) == xmlelement ->
+    {xmlstreamelement, XMLElement};
+element_wrapper(Element) ->
+    Element.
+
+close_stream(undefined) ->
+    ok;
+close_stream(XMLStreamState) ->
+    xml_stream:close(XMLStreamState).

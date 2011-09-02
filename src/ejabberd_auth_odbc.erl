@@ -5,7 +5,7 @@
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -51,11 +51,7 @@
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
-start(Host) ->
-    ejabberd_ctl:register_commands(
-      Host,
-      [{"registered-users", "list all registered users"}],
-      ejabberd_auth, ctl_process_get_registered),
+start(_Host) ->
     ok.
 
 plain_password_required() ->
@@ -71,7 +67,7 @@ check_password(User, Server, Password) ->
 	    LServer = jlib:nameprep(Server),
 	    try odbc_queries:get_password(LServer, Username) of
 		{selected, ["password"], [{Password}]} ->
-		    true; %% Password is correct
+		    Password /= ""; %% Password is correct, and not empty
 		{selected, ["password"], [{_Password2}]} ->
 		    false; %% Password is not correct
 		{selected, ["password"], []} ->
@@ -84,8 +80,8 @@ check_password(User, Server, Password) ->
 	    end
     end.
 
-%% @spec (User, Server, Password, StreamID, Digest) -> true | false | {error, Error}
-check_password(User, Server, Password, StreamID, Digest) ->
+%% @spec (User, Server, Password, Digest, DigestGen) -> true | false | {error, Error}
+check_password(User, Server, Password, Digest, DigestGen) ->
     case jlib:nodeprep(User) of
 	error ->
 	    false;
@@ -97,7 +93,7 @@ check_password(User, Server, Password, StreamID, Digest) ->
 		{selected, ["password"], [{Passwd}]} ->
 		    DigRes = if
 				 Digest /= "" ->
-				     Digest == sha:sha(StreamID ++ Passwd);
+				     Digest == DigestGen(Passwd);
 				 true ->
 				     false
 			     end,

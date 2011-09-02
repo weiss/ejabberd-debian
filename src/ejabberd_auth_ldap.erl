@@ -5,7 +5,7 @@
 %%% Created : 12 Dec 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -66,6 +66,7 @@
 		servers,
 		backups,
 		port,
+		tls_options,
 		dn,
 		password,
 		base,
@@ -112,30 +113,25 @@ start_link(Host) ->
     Proc = gen_mod:get_module_proc(Host, ?MODULE),
     gen_server:start_link({local, Proc}, ?MODULE, Host, []).
 
-terminate(_Reason, State) ->
-    ejabberd_ctl:unregister_commands(
-      State#state.host,
-      [{"registered-users", "list all registered users"}],
-      ejabberd_auth, ctl_process_get_registered).
+terminate(_Reason, _State) ->
+    ok.
 
 init(Host) ->
     State = parse_options(Host),
     eldap_pool:start_link(State#state.eldap_id,
-		     State#state.servers,
-		     State#state.backups,
-		     State#state.port,
-		     State#state.dn,
-		     State#state.password),
+			  State#state.servers,
+			  State#state.backups,
+			  State#state.port,
+			  State#state.dn,
+			  State#state.password,
+			  State#state.tls_options),
     eldap_pool:start_link(State#state.bind_eldap_id,
-		     State#state.servers,
-		     State#state.backups,
-		     State#state.port,
-		     State#state.dn,
-		     State#state.password),
-    ejabberd_ctl:register_commands(
-      Host,
-      [{"registered-users", "list all registered users"}],
-      ejabberd_auth, ctl_process_get_registered),
+			  State#state.servers,
+			  State#state.backups,
+			  State#state.port,
+			  State#state.dn,
+			  State#state.password,
+			  State#state.tls_options),
     {ok, State}.
 
 plain_password_required() ->
@@ -154,11 +150,17 @@ check_password(User, Server, Password) ->
         end
     end.
 
-check_password(User, Server, Password, _StreamID, _Digest) ->
+check_password(User, Server, Password, _Digest, _DigestGen) ->
     check_password(User, Server, Password).
 
-set_password(_User, _Server, _Password) ->
-    {error, not_allowed}.
+set_password(User, Server, Password) ->
+    {ok, State} = eldap_utils:get_state(Server, ?MODULE),
+    case find_user_dn(User, State) of
+	false ->
+	    {error, user_not_found};
+	DN ->
+	    eldap_pool:modify_passwd(State#state.eldap_id, DN, Password)
+    end.
 
 %% @spec (User, Server, Password) -> {error, not_allowed}
 try_register(_User, _Server, _Password) ->
@@ -221,13 +223,13 @@ get_vh_registered_users_ldap(Server) ->
     UIDs = State#state.uids,
     Eldap_ID = State#state.eldap_id,
     Server = State#state.host,
-    SortedDNAttrs = eldap_utils:usort_attrs(State#state.dn_filter_attrs),
+    ResAttrs = result_attrs(State),
     case eldap_filter:parse(State#state.sfilter) of
 		{ok, EldapFilter} ->
 		    case eldap_pool:search(Eldap_ID, [{base, State#state.base},
 						 {filter, EldapFilter},
 						 {timeout, ?LDAP_SEARCH_TIMEOUT},
-						 {attributes, SortedDNAttrs}]) of
+						 {attributes, ResAttrs}]) of
 			#eldap_search_result{entries = Entries} ->
 			    lists:flatmap(
 			      fun(#eldap_entry{attributes = Attrs,
@@ -273,15 +275,16 @@ handle_call(_Request, _From, State) ->
     {reply, bad_request, State}.
 
 find_user_dn(User, State) ->
-    DNAttrs = eldap_utils:usort_attrs(State#state.dn_filter_attrs),
+    ResAttrs = result_attrs(State),
     case eldap_filter:parse(State#state.ufilter, [{"%u", User}]) of
 	{ok, Filter} ->
-	    case eldap_pool:search(State#state.eldap_id, [{base, State#state.base},
-						     {filter, Filter},
-						     {attributes, DNAttrs}]) of
+	    case eldap_pool:search(State#state.eldap_id,
+				   [{base, State#state.base},
+				    {filter, Filter},
+				    {attributes, ResAttrs}]) of
 		#eldap_search_result{entries = [#eldap_entry{attributes = Attrs,
 							     object_name = DN} | _]} ->
-			dn_filter(DN, Attrs, State);
+		    dn_filter(DN, Attrs, State);
 		_ ->
 		    false
 	    end;
@@ -350,6 +353,14 @@ local_filter(equal, Attrs, FilterMatch) ->
 local_filter(notequal, Attrs, FilterMatch) ->
     not local_filter(equal, Attrs, FilterMatch).
 
+result_attrs(#state{uids = UIDs, dn_filter_attrs = DNFilterAttrs}) ->
+    lists:foldl(
+      fun({UID}, Acc) ->
+	      [UID | Acc];
+	 ({UID, _}, Acc) ->
+	      [UID | Acc]
+      end, DNFilterAttrs, UIDs).
+
 %%%----------------------------------------------------------------------
 %%% Auxiliary functions
 %%%----------------------------------------------------------------------
@@ -361,8 +372,14 @@ parse_options(Host) ->
 		   undefined -> [];
 		   Backups -> Backups
 		   end,
+    LDAPEncrypt = ejabberd_config:get_local_option({ldap_encrypt, Host}),
+    LDAPTLSVerify = ejabberd_config:get_local_option({ldap_tls_verify, Host}),
     LDAPPort = case ejabberd_config:get_local_option({ldap_port, Host}) of
-		   undefined -> 389;
+		   undefined -> case LDAPEncrypt of
+				    tls -> ?LDAPS_PORT;
+				    starttls -> ?LDAP_PORT;
+				    _ -> ?LDAP_PORT
+				end;
 		   P -> P
 	       end,
     RootDN = case ejabberd_config:get_local_option({ldap_rootdn, Host}) of
@@ -387,8 +404,12 @@ parse_options(Host) ->
     LDAPBase = ejabberd_config:get_local_option({ldap_base, Host}),
     {DNFilter, DNFilterAttrs} =
 	case ejabberd_config:get_local_option({ldap_dn_filter, Host}) of
-	    undefined -> {undefined, undefined};
-	    {DNF, DNFA} -> {DNF, DNFA}
+	    undefined ->
+		{undefined, []};
+	    {DNF, undefined} ->
+		{DNF, []};
+	    {DNF, DNFA} ->
+		{DNF, DNFA}
 	end,
 	LocalFilter = ejabberd_config:get_local_option({ldap_local_filter, Host}),
     #state{host = Host,
@@ -397,6 +418,8 @@ parse_options(Host) ->
 	   servers = LDAPServers,
 	   backups = LDAPBackups,
 	   port = LDAPPort,
+	   tls_options = [{encrypt, LDAPEncrypt},
+			  {tls_verify, LDAPTLSVerify}],
 	   dn = RootDN,
 	   password = Password,
 	   base = LDAPBase,

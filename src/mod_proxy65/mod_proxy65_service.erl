@@ -5,7 +5,7 @@
 %%% Created : 12 Oct 2006 by Evgeniy Khramtsov <xram@jabber.ru>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -39,10 +39,10 @@
 	]).
 
 %% API.
--export([start_link/2]).
+-export([start_link/2, add_listener/2, delete_listener/1]).
 
--include("../ejabberd.hrl").
--include("../jlib.hrl").
+-include("ejabberd.hrl").
+-include("jlib.hrl").
 
 -define(PROCNAME, ejabberd_mod_proxy65_service).
 
@@ -52,31 +52,25 @@
 	  name,
 	  stream_addr,
 	  port,
+	  ip,
 	  acl
 	 }).
 
-%% Unused callbacks.
-handle_cast(_Request, State) ->
-    {noreply, State}.
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
-%%----------------
+
+%%%------------------------
+%%% gen_server callbacks
+%%%------------------------
 
 start_link(Host, Opts) ->
     Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
     gen_server:start_link({local, Proc}, ?MODULE, [Host, Opts], []).
 
 init([Host, Opts]) ->
-    {IP, State} = parse_options(Host, Opts),
-    NewOpts = [Host, {ip, IP} | Opts],
-    ejabberd_listener:add_listener(State#state.port, mod_proxy65_stream, NewOpts),
+    State = parse_options(Host, Opts),
     ejabberd_router:register_route(State#state.myhost),
     {ok, State}.
 
-terminate(_Reason, #state{myhost=MyHost, port=Port}) ->
-    catch ejabberd_listener:delete_listener(Port),
+terminate(_Reason, #state{myhost=MyHost}) ->
     ejabberd_router:unregister_route(MyHost),
     ok.
 
@@ -93,18 +87,46 @@ handle_info({route, From, To, {xmlelement, "iq", _, _} = Packet}, State) ->
 	    ok
     end,
     {noreply, State};
-
 handle_info(_Info, State) ->
     {noreply, State}.
+
+handle_call(get_port_ip, _From, State) ->
+    {reply, {port_ip, State#state.port, State#state.ip}, State};
+handle_call(_Request, _From, State) ->
+    {reply, ok, State}.
+
+handle_cast(_Request, State) ->
+    {noreply, State}.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%%------------------------
+%%% Listener management
+%%%------------------------
+
+add_listener(Host, Opts) ->
+    State = parse_options(Host, Opts),
+    NewOpts = [Host | Opts],
+    ejabberd_listener:add_listener({State#state.port, State#state.ip}, mod_proxy65_stream, NewOpts).
+
+delete_listener(Host) ->
+    Proc = gen_mod:get_module_proc(Host, ?PROCNAME),
+    {port_ip, Port, IP} = gen_server:call(Proc, get_port_ip),
+    catch ejabberd_listener:delete_listener({Port, IP}, mod_proxy65_stream).
 
 %%%------------------------
 %%% IQ Processing
 %%%------------------------
 
 %% disco#info request
-process_iq(_, #iq{type = get, xmlns = ?NS_DISCO_INFO, lang = Lang} = IQ, #state{name=Name}) ->
+process_iq(_, #iq{type = get, xmlns = ?NS_DISCO_INFO, lang = Lang} = IQ,
+	   #state{name=Name, serverhost=ServerHost}) ->
+    Info = ejabberd_hooks:run_fold(
+	     disco_info, ServerHost, [], [ServerHost, ?MODULE, "", ""]),
     IQ#iq{type = result, sub_el =
-	  [{xmlelement, "query", [{"xmlns", ?NS_DISCO_INFO}], iq_disco_info(Lang, Name)}]};
+	  [{xmlelement, "query", [{"xmlns", ?NS_DISCO_INFO}],
+	    iq_disco_info(Lang, Name) ++ Info}]};
 
 %% disco#items request
 process_iq(_, #iq{type = get, xmlns = ?NS_DISCO_ITEMS} = IQ, _) ->
@@ -189,7 +211,7 @@ iq_vcard(Lang) ->
       [{xmlcdata, ?EJABBERD_URI}]},
      {xmlelement, "DESC", [],
       [{xmlcdata, translate:translate(Lang, "ejabberd SOCKS5 Bytestreams module") ++
-       "\nCopyright (c) 2003-2009 Alexey Shchepin"}]}].
+       "\nCopyright (c) 2003-2010 Alexey Shchepin"}]}].
 
 parse_options(ServerHost, Opts) ->
     MyHost = gen_mod:get_opt_host(ServerHost, Opts, "proxy.@HOST@"),
@@ -200,14 +222,23 @@ parse_options(ServerHost, Opts) ->
 	     none -> get_my_ip();
 	     Addr -> Addr
 	 end,
-    StrIP = inet_parse:ntoa(IP),
-    StreamAddr = [{"jid", MyHost}, {"host", StrIP}, {"port", integer_to_list(Port)}],
-    {IP, #state{myhost      = MyHost,
-		serverhost  = ServerHost,
-		name        = Name,
-		port        = Port,
-		stream_addr = StreamAddr, 
-		acl         = ACL}}.
+    HostName = case gen_mod:get_opt(hostname, Opts, none) of
+		   none ->
+		       inet_parse:ntoa(IP);
+		   HostAddr when is_tuple(HostAddr) ->
+		       inet_parse:ntoa(HostAddr);
+		   HostNameStr ->
+		       HostNameStr
+	     end,
+    StreamAddr = [{"jid", MyHost}, {"host", HostName},
+		  {"port", integer_to_list(Port)}],
+    #state{myhost      = MyHost,
+	   serverhost  = ServerHost,
+	   name        = Name,
+	   port        = Port,
+	   ip          = IP,
+	   stream_addr = StreamAddr, 
+	   acl         = ACL}.
 
 get_my_ip() ->
     {ok, MyHostName} = inet:gethostname(),

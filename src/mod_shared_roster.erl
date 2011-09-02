@@ -5,7 +5,7 @@
 %%% Created :  5 Mar 2005 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -124,11 +124,12 @@ get_user_roster(Items, US) ->
     SRUsers = 
 	lists:foldl(
 	  fun(Group, Acc1) ->
+		  GroupName = get_group_name(S, Group),
 		  lists:foldl(
 		    fun(User, Acc2) ->
 			    if User == US -> Acc2;
 			       true -> dict:append(User, 
-						   get_group_name(S, Group),
+						   GroupName,
 						   Acc2)
 			    end
 		    end, Acc1, get_group_users(S, Group))
@@ -151,15 +152,44 @@ get_user_roster(Items, US) ->
 	  end, SRUsers, Items),
 
     %% Export items in roster format:
+    ModVcard = get_vcard_module(S),
     SRItems = [#roster{usj = {U, S, {U1, S1, ""}},
 		       us = US,
 		       jid = {U1, S1, ""},
-		       name = "",
+		       name = get_rosteritem_name(ModVcard, U1, S1),
 		       subscription = both,
 		       ask = none,
 		       groups = GroupNames} ||
 		  {{U1, S1}, GroupNames} <- dict:to_list(SRUsersRest)],
     SRItems ++ NewItems1.
+
+get_vcard_module(Server) ->
+    Modules = gen_mod:loaded_modules(Server),
+    [M || M <- Modules,
+	  (M == mod_vcard) or (M == mod_vcard_odbc) or (M == mod_vcard_ldap)].
+
+get_rosteritem_name([], _, _) ->
+    "";
+get_rosteritem_name([ModVcard], U, S) ->
+    From = jlib:make_jid("", S, mod_shared_roster),
+    To = jlib:make_jid(U, S, ""),
+    IQ = {iq,"",get,"vcard-temp","",
+	  {xmlelement,"vCard",[{"xmlns","vcard-temp"}],[]}},
+    IQ_Vcard = ModVcard:process_sm_iq(From, To, IQ),
+    try get_rosteritem_name_vcard(IQ_Vcard#iq.sub_el)
+    catch E1:E2 ->
+	    ?ERROR_MSG("Error ~p found when trying to get the vCard of ~s@~s "
+		       "in ~p:~n ~p", [E1, U, S, ModVcard, E2]),
+	    ""
+    end.
+
+get_rosteritem_name_vcard([]) ->
+    "";
+get_rosteritem_name_vcard([Vcard]) ->
+    case xml:get_path_s(Vcard, [{elem, "NICKNAME"}, cdata]) of
+	"" -> xml:get_path_s(Vcard, [{elem, "FN"}, cdata]);
+	Nickname -> Nickname
+    end.
 
 %% This function rewrites the roster entries when moving or renaming
 %% them in the user contact list.
@@ -426,6 +456,7 @@ is_group_enabled(Host, Group) ->
 	    false
     end.
 
+%% @spec (Host::string(), Group::string(), Opt::atom(), Default) -> OptValue | Default
 get_group_opt(Host, Group, Opt, Default) ->
     case catch mnesia:dirty_read(sr_group, {Group, Host}) of
 	[#sr_group{opts = Opts}] ->
@@ -436,7 +467,7 @@ get_group_opt(Host, Group, Opt, Default) ->
 		    Default
 	    end;
 	_ ->
-	    false
+	    Default
     end.
 
 get_group_users(Host, Group) ->
@@ -542,15 +573,28 @@ is_user_in_group({_U, S} = US, Group, Host) ->
 %% @spec (Host::string(), {User::string(), Server::string()}, Group::string()) -> {atomic, ok}
 add_user_to_group(Host, US, Group) ->
     {LUser, LServer} = US,
-    %% Push this new user to members of groups where this group is displayed
-    push_user_to_displayed(LUser, LServer, Group, both),
-    %% Push members of groups that are displayed to this group
-    push_displayed_to_user(LUser, LServer, Group, Host, both),
-    R = #sr_user{us = US, group_host = {Group, Host}},
-    F = fun() ->
-		mnesia:write(R)
-	end,
-    mnesia:transaction(F).
+    case regexp:match(LUser, "^@.+@$") of
+	{match,_,_} ->
+	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    AllUsersOpt =
+		case LUser == "@all@" of
+		    true -> [{all_users, true}];
+		    false -> []
+		end,
+            mod_shared_roster:set_group_opts(
+	      Host, Group,
+	      GroupOpts ++ AllUsersOpt);
+	nomatch ->
+	    %% Push this new user to members of groups where this group is displayed
+	    push_user_to_displayed(LUser, LServer, Group, both),
+	    %% Push members of groups that are displayed to this group
+	    push_displayed_to_user(LUser, LServer, Group, Host, both),
+	    R = #sr_user{us = US, group_host = {Group, Host}},
+	    F = fun() ->
+			mnesia:write(R)
+	        end,
+	    mnesia:transaction(F)
+    end.
 
 push_displayed_to_user(LUser, LServer, Group, Host, Subscription) ->
     GroupsOpts = groups_with_opts(LServer),
@@ -560,17 +604,29 @@ push_displayed_to_user(LUser, LServer, Group, Host, Subscription) ->
 
 remove_user_from_group(Host, US, Group) ->
     GroupHost = {Group, Host},
-    R = #sr_user{us = US, group_host = GroupHost},
-    F = fun() ->
-		mnesia:delete_object(R)
-	end,
-    Result = mnesia:transaction(F),
     {LUser, LServer} = US,
-    %% Push removal of the old user to members of groups where the group that this user was members was displayed
-    push_user_to_displayed(LUser, LServer, Group, remove),
-    %% Push removal of members of groups that where displayed to the group which this user has left
-    push_displayed_to_user(LUser, LServer, Group, Host, remove),
-    Result.
+    case regexp:match(LUser, "^@.+@$") of
+	{match,_,_} ->
+	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    NewGroupOpts =
+		case LUser of
+		    "@all@" ->
+			lists:filter(fun(X) -> X/={all_users,true} end, GroupOpts)
+		end,
+	    mod_shared_roster:set_group_opts(Host, Group, NewGroupOpts);
+	nomatch ->
+	    R = #sr_user{us = US, group_host = GroupHost},
+	    F = fun() ->
+			mnesia:delete_object(R)
+		end,
+	    Result = mnesia:transaction(F),
+	    %% Push removal of the old user to members of groups where the group that this user was members was displayed
+	    push_user_to_displayed(LUser, LServer, Group, remove),
+	    %% Push removal of members of groups that where displayed to the group which this user has left
+	    push_displayed_to_user(LUser, LServer, Group, Host, remove),
+	    Result
+    end.
+
 
 push_members_to_user(LUser, LServer, Group, Host, Subscription) ->
     GroupsOpts = groups_with_opts(LServer),
@@ -599,6 +655,7 @@ push_user_to_members(User, Server, Subscription) ->
     UserGroups = get_user_displayed_groups(LUser, LServer, GroupsOpts),
     lists:foreach(
       fun(Group) ->
+	      remove_user_from_group(LServer, {LUser, LServer}, Group),
 	      GroupOpts = proplists:get_value(Group, GroupsOpts, []),
 	      GroupName = proplists:get_value(name, GroupOpts, Group),
 	      lists:foreach(
@@ -748,10 +805,10 @@ list_shared_roster_groups(Host, Query, Lang) ->
 		       ]
 		      )]
 		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
+    ?H1GL(?T("Shared Roster Groups"), "modsharedroster", "mod_shared_roster") ++
 	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
+	    ok -> [?XREST("Submitted")];
+	    error -> [?XREST("Bad format")];
 	    nothing -> []
 	end ++
 	[?XAE("form", [{"action", ""}, {"method", "post"}],
@@ -814,8 +871,9 @@ shared_roster_group(Host, Group, Query, Lang) ->
 		[]
 	end ++ [[us_to_list(Member), $\n] || Member <- Members],
     FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
+    DescNL = length(element(2, regexp:split(Description, "\n"))),
     FGroup =
-	?XAE("table", [],
+	?XAE("table", [{"class", "withtextareas"}],
 	     [?XE("tbody",
 		  [?XE("tr",
 		       [?XCT("td", "Name:"),
@@ -824,34 +882,34 @@ shared_roster_group(Host, Group, Query, Lang) ->
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Description:"),
-			?XE("td", [?XAC("textarea", [{"name", "description"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					Description)])
+			?XE("td", [
+				   ?TEXTAREA("description", integer_to_list(lists:max([3, DescNL])), "20", Description)
+				  ]
+			   )
 		       ]
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Members:"),
-			?XE("td", [?XAC("textarea", [{"name", "members"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FMembers)])
+			?XE("td", [
+				   ?TEXTAREA("members", integer_to_list(lists:max([3, length(FMembers)])), "20", FMembers)
+				  ]
+			   )
 		       ]
 		      ),
 		   ?XE("tr",
 		       [?XCT("td", "Displayed Groups:"),
-			?XE("td", [?XAC("textarea", [{"name", "dispgroups"},
-						     {"rows", "3"},
-						     {"cols", "20"}],
-					FDisplayedGroups)])
+			?XE("td", [
+				   ?TEXTAREA("dispgroups", integer_to_list(lists:max([3, length(FDisplayedGroups)])), "20", FDisplayedGroups)
+				  ]
+			   )
 		       ]
 		      )]
 		 )]),
-    [?XC("h1", ?T("Shared Roster Groups"))] ++
+    ?H1GL(?T("Shared Roster Groups"), "modsharedroster", "mod_shared_roster") ++
 	[?XC("h2", ?T("Group ") ++ Group)] ++
 	case Res of
-	    ok -> [?CT("Submitted"), ?P];
-	    error -> [?CT("Bad format"), ?P];
+	    ok -> [?XREST("Submitted")];
+	    error -> [?XREST("Bad format")];
 	    nothing -> []
 	end ++
 	[?XAE("form", [{"action", ""}, {"method", "post"}],

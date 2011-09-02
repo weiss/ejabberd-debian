@@ -8,14 +8,18 @@ Quickstart guide
 To compile ejabberd you need:
  - GNU Make
  - GCC
- - libexpat 1.95 or higher
- - Erlang/OTP R10B-9 or higher
- - OpenSSL 0.9.6 or higher, for STARTTLS, SASL and SSL
-   encryption. Optional, highly recommended.
+ - Libexpat 1.95 or higher
+ - Erlang/OTP R10B-9 or higher. Recommended versions: R12B-5 and R13B04
+ - OpenSSL 0.9.8 or higher, for STARTTLS, SASL and SSL encryption.
  - Zlib 1.2.3 or higher, for Stream Compression support
    (XEP-0138). Optional.
+ - Erlang mysql library. Optional. MySQL authentication/storage.
+ - Erlang pgsql library. Optional. PostgreSQL authentication/storage.
+ - PAM library. Optional. For Pluggable Authentication Modules (PAM).
  - GNU Iconv 1.8 or higher, for the IRC Transport
    (mod_irc). Optional. Not needed on systems with GNU Libc.
+ - ImageMagick's Convert program. Optional. For CAPTCHA challenges.
+ - exmpp 0.9.2 or higher. Optional. For import/export XEP-0227 files. 
 
 
 1. Compile and install on *nix systems
@@ -30,9 +34,11 @@ To install ejabberd, run this command with system administrator rights
   sudo make install
 
 These commands will:
- - Install a startup script: /sbin/ejabberdctl
- - Install ejabberd in /var/lib/ejabberd/
  - Install the configuration files in /etc/ejabberd/
+ - Install ejabberd binary, header and runtime files in /lib/ejabberd/
+ - Install the administration script: /sbin/ejabberdctl
+ - Install ejabberd documentation in /share/doc/ejabberd/
+ - Create a spool directory: /var/lib/ejabberd/
  - Create a directory for log files: /var/log/ejabberd/
 
 

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(ejabberd.erl,, ejabberd@process-one.net)
+AC_INIT(ejabberd, m4_esyscmd([grep -o -E "\{vsn,.\".*\"\}" ejabberd.app | cut -d \" -f 2 | tr -d '\n']), [ejabberd@process-one.net], [ejabberd])
 
 # Checks for programs.
 AC_PROG_CC
@@ -81,7 +81,7 @@ AC_ARG_ENABLE(transient_supervisors,
 [case "${enableval}" in
   yes) transient_supervisors=true ;;
   no)  transient_supervisors=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-full-xml) ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-transient_supervisors) ;;
 esac],[transient_supervisors=true])
 AC_SUBST(transient_supervisors)
 
@@ -94,6 +94,15 @@ AC_ARG_ENABLE(full_xml,
 esac],[full_xml=false])
 AC_SUBST(full_xml)
 
+AC_ARG_ENABLE(nif,
+[AC_HELP_STRING([--enable-nif], [replace some functions with C equivalents. Requires Erlang R13B04 or higher (default: no)])],
+[case "${enableval}" in
+  yes) nif=true ;;
+  no)  nif=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-nif) ;;
+esac],[nif=false])
+AC_SUBST(nif)
+
 AC_CONFIG_FILES([Makefile
                  $make_mod_irc
                  $make_mod_muc
@@ -103,6 +112,7 @@ AC_CONFIG_FILES([Makefile
                  $make_pam
                  $make_web
                  stringprep/Makefile
+                 stun/Makefile
                  $make_tls
                  $make_odbc
                  $make_ejabberd_zlib])
@@ -123,5 +133,46 @@ else
         done
 fi
 AC_CHECK_HEADER(krb5.h,,)
+
+ENABLEUSER=""
+AC_ARG_ENABLE(user,
+  [AS_HELP_STRING([--enable-user[[[[=USER]]]]], [allow this system user to start ejabberd (default: no)])],
+  [case "${enableval}" in
+     yes) ENABLEUSER=`whoami` ;;
+     no) ENABLEUSER="" ;;
+     *) ENABLEUSER=$enableval
+   esac],
+  [])
+if test "$ENABLEUSER" != ""; then
+  echo "allow this system user to start ejabberd: $ENABLEUSER"
+  AC_SUBST([INSTALLUSER], [$ENABLEUSER])
+fi
+
+AC_CANONICAL_SYSTEM
+#AC_DEFINE_UNQUOTED(CPU_VENDOR_OS, "$target")
+#AC_SUBST(target_os)
+
+
+case "$target_os" in
+    *darwin10*)
+	echo "Target OS is 'Darwin10'"
+	AC_LANG(Erlang)
+	AC_RUN_IFELSE(
+	    [AC_LANG_PROGRAM([],[dnl
+	     halt(case erlang:system_info(wordsize) of
+	     8 -> 0; 4 -> 1 end)])],
+	    [AC_MSG_NOTICE(found 64-bit Erlang)
+	     CBIT=-m64],
+	    [AC_MSG_NOTICE(found 32-bit Erlang)
+	     CBIT=-m32])
+	;;
+    *)        
+	echo "Target OS is '$target_os'"
+	CBIT=""
+	;;
+esac
+CFLAGS="$CFLAGS $CBIT"
+LD_SHARED="$LD_SHARED $CBIT"
+echo "CBIT is set to '$CBIT'"
 
 AC_OUTPUT

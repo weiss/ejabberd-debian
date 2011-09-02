@@ -5,7 +5,7 @@
 %%% Created :  6 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -67,8 +67,12 @@ load_dir(Dir) ->
 			 end, Files),
 	    lists:foreach(
 	      fun(FN) ->
-		      L = ascii_tolower(
-			    string:substr(FN, 1, string:len(FN) - 4)),
+		      LP = ascii_tolower(
+			     string:substr(FN, 1, string:len(FN) - 4)),
+		      L = case string:tokens(LP, ".") of
+			      [Language] -> Language;
+			      [Language, _Project] -> Language
+			  end,
 		      load_file(L, Dir ++ "/" ++ FN)
 	      end, MsgFiles),
 	    ok;
@@ -89,8 +93,16 @@ load_file(Lang, File) ->
 			      ets:insert(translations,
 					     {{Lang, Orig}, Trans1})
 			  end, Terms);
+        %% Code copied from ejabberd_config.erl
+	{error, {_LineNumber, erl_parse, _ParseMessage} = Reason} ->
+	    ExitText = lists:flatten(File ++ " approximately in the line "
+				     ++ file:format_error(Reason)),
+	    ?ERROR_MSG("Problem loading translation file ~n~s", [ExitText]),
+	    exit(ExitText);
 	{error, Reason} ->
-	    exit(file:format_error(Reason))
+	    ExitText = lists:flatten(File ++ ": " ++ file:format_error(Reason)),
+	    ?ERROR_MSG("Problem loading translation file ~n~s", [ExitText]),
+	    exit(ExitText)
     end.
 
 translate(Lang, Msg) ->

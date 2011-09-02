@@ -1,5 +1,5 @@
 /*
- * ejabberd, Copyright (C) 2002-2009   ProcessOne
+ * ejabberd, Copyright (C) 2002-2010   ProcessOne
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -10,7 +10,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *                         
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -59,21 +59,31 @@ static int iconv_erl_control(ErlDrvData drv_data,
    ErlDrvBinary *b;
    char *from, *to, *string, *stmp, *rstring, *rtmp;
    iconv_t cd;
+   int invalid_utf8_as_latin1 = 0;
 
    ei_decode_version(buf, &index, &i);
    ei_decode_tuple_header(buf, &index, &i);
    ei_get_type(buf, &index, &i, &size);
-   from = malloc(size + 1); 
+   from = driver_alloc(size + 1); 
    ei_decode_string(buf, &index, from);
 
    ei_get_type(buf, &index, &i, &size);
-   to = malloc(size + 1); 
+   to = driver_alloc(size + 1); 
    ei_decode_string(buf, &index, to);
   
    ei_get_type(buf, &index, &i, &size);
-   stmp = string = malloc(size + 1); 
+   stmp = string = driver_alloc(size + 1); 
    ei_decode_string(buf, &index, string);
 
+   /* Special mode: parse as UTF-8 if possible; otherwise assume it's
+      Latin-1.  Makes no difference when encoding. */
+   if (strcmp(from, "utf-8+latin-1") == 0) {
+      from[5] = '\0';
+      invalid_utf8_as_latin1 = 1;
+   }
+   if (strcmp(to, "utf-8+latin-1") == 0) {
+      to[5] = '\0';
+   }
    cd = iconv_open(to, from);
 
    if (cd == (iconv_t) -1) {
@@ -82,9 +92,9 @@ static int iconv_erl_control(ErlDrvData drv_data,
 	 *rbuf = (char*)(b = driver_alloc_binary(size));
 	 memcpy(b->orig_bytes, string, size);
 
-	 free(from);
-	 free(to);
-	 free(string);
+	 driver_free(from);
+	 driver_free(to);
+	 driver_free(string);
 
 	 return size;
       }
@@ -92,9 +102,15 @@ static int iconv_erl_control(ErlDrvData drv_data,
    
    outleft = avail = 4*size;
    inleft = size;
-   rtmp = rstring = malloc(avail);
+   rtmp = rstring = driver_alloc(avail);
    while (inleft > 0) {
       if (iconv(cd, &stmp, &inleft, &rtmp, &outleft) == (size_t) -1) {
+	 if (invalid_utf8_as_latin1 && (*stmp & 0x80) && outleft >= 2) {
+	    /* Encode one byte of (assumed) Latin-1 into two bytes of UTF-8 */
+	    *rtmp++ = 0xc0 | ((*stmp & 0xc0) >> 6);
+	    *rtmp++ = 0x80 | (*stmp & 0x3f);
+	    outleft -= 2;
+	 }
 	 stmp++;
 	 inleft--;
       }
@@ -105,10 +121,10 @@ static int iconv_erl_control(ErlDrvData drv_data,
    *rbuf = (char*)(b = driver_alloc_binary(size));
    memcpy(b->orig_bytes, rstring, size);
 
-   free(from);
-   free(to);
-   free(string);
-   free(rstring);
+   driver_free(from);
+   driver_free(to);
+   driver_free(string);
+   driver_free(rstring);
    iconv_close(cd);
    
    return size;

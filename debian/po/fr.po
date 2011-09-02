@@ -1,8 +1,8 @@
 # Translation of ejabberd debconf templates to French
 # Copyright (C) 2008 Florentin Duneau <fduneau@gmail.com>
 # This file is distributed under the same license as the ejabberd package.
-#
-#
+# 
+# 
 # Florentin Duneau <f.baced@wanadoo.fr>, 2006.
 # Florentin Duneau <fduneau@gmail.com>, 2008.
 msgid ""
@@ -13,6 +13,7 @@ msgstr ""
 "PO-Revision-Date: 2008-03-01 13:47+0100\n"
 "Last-Translator: Florentin Duneau <fduneau@gmail.com>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -52,8 +53,8 @@ msgstr ""
 "Après l'installation, vous pourrez utilisez cette identité pour vous "
 "connecter avec tout client Jabber ou l'interface d'administration sur http://"
 "${hostname}:5280/admin/ pour réaliser des tâches administratives. Veuillez "
-"seulement entrer ici l'identifiant (par exemple, « ${user} »), cependant vous "
-"devrez utiliser une identité Jabber complète (par exemple, « ${user}@"
+"seulement entrer ici l'identifiant (par exemple, « ${user} »), cependant "
+"vous devrez utiliser une identité Jabber complète (par exemple, « ${user}@"
 "${hostname} ») pour vous connecter à l'interface web."
 
 #. Type: string

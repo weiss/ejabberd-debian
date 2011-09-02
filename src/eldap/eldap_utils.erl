@@ -5,7 +5,7 @@
 %%% Created : 12 Oct 2006 by Mickael Remond <mremond@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -53,15 +53,17 @@ subfilter({UIDAttr}) ->
 
 %% Not tail-recursive, but it is not very terribly.
 %% It stops finding on the first not empty value.
+find_ldap_attrs([{Attr} | Rest], Attributes) ->
+    find_ldap_attrs([{Attr, "%u"} | Rest], Attributes);
 find_ldap_attrs([{Attr, Format} | Rest], Attributes) ->
-	case get_ldap_attr(Attr, Attributes) of
+    case get_ldap_attr(Attr, Attributes) of
 	Value when is_list(Value), Value /= "" ->
-		{Value, Format};
+	    {Value, Format};
 	_ ->
-		find_ldap_attrs(Rest, Attributes)
-	end;
+	    find_ldap_attrs(Rest, Attributes)
+    end;
 find_ldap_attrs([], _) ->
-	"".
+    "".
 
 get_ldap_attr(LDAPAttr, Attributes) ->
     Res = lists:filter(

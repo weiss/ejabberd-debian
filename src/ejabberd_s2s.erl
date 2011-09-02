@@ -5,7 +5,7 @@
 %%% Created :  7 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -39,16 +39,19 @@
 	 remove_connection/3,
 	 dirty_get_connections/0,
 	 allow_host/2,
-	 ctl_process/2
+	 incoming_s2s_number/0,
+	 outgoing_s2s_number/0
 	]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
+%% ejabberd API
+-export([get_info_s2s_connections/1]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
--include("ejabberd_ctl.hrl").
+-include("ejabberd_commands.hrl").
 
 -define(DEFAULT_MAX_S2S_CONNECTIONS_NUMBER, 1).
 -define(DEFAULT_MAX_S2S_CONNECTIONS_NUMBER_PER_NODE, 1).
@@ -164,10 +167,7 @@ init([]) ->
 			      {attributes, record_info(fields, s2s)}]),
     mnesia:add_table_copy(s2s, node(), ram_copies),
     mnesia:subscribe(system),
-    ejabberd_ctl:register_commands(
-      [{"incoming-s2s-number", "print number of incoming s2s connections on the node"},
-       {"outgoing-s2s-number", "print number of outgoing s2s connections on the node"}],
-      ?MODULE, ctl_process),
+    ejabberd_commands:register_commands(commands()),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -221,6 +221,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
+    ejabberd_commands:unregister_commands(commands()),
     ok.
 
 %%--------------------------------------------------------------------
@@ -244,18 +245,23 @@ clean_table_from_bad_node(Node) ->
 				      mnesia:delete_object(E)
 			      end, Es)
 	end,
-    mnesia:transaction(F).
+    mnesia:async_dirty(F).
 
 do_route(From, To, Packet) ->
     ?DEBUG("s2s manager~n\tfrom ~p~n\tto ~p~n\tpacket ~P~n",
            [From, To, Packet, 8]),
     case find_connection(From, To) of
-	{atomic, Pid} when pid(Pid) ->
+	{atomic, Pid} when is_pid(Pid) ->
 	    ?DEBUG("sending to process ~p~n", [Pid]),
 	    {xmlelement, Name, Attrs, Els} = Packet,
 	    NewAttrs = jlib:replace_from_to_attrs(jlib:jid_to_string(From),
 						  jlib:jid_to_string(To),
 						  Attrs),
+	    #jid{lserver = MyServer} = From,
+	    ejabberd_hooks:run(
+	      s2s_send_packet,
+	      MyServer,
+	      [From, To, Packet]),
 	    send_element(Pid, {xmlelement, Name, NewAttrs, Els}),
 	    ok;
 	{aborted, _Reason} ->
@@ -422,16 +428,35 @@ is_subdomain(Domain1, Domain2) ->
 send_element(Pid, El) ->
     Pid ! {send_element, El}.
 
-ctl_process(_Val, ["incoming-s2s-number"]) ->
-    N = length(supervisor:which_children(ejabberd_s2s_in_sup)),
-    ?PRINT("~p~n", [N]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process(_Val, ["outgoing-s2s-number"]) ->
-    N = length(supervisor:which_children(ejabberd_s2s_out_sup)),
-    ?PRINT("~p~n", [N]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process(Val, _Args) ->
-    Val.
+
+%%%----------------------------------------------------------------------
+%%% ejabberd commands
+
+commands() ->
+    [
+     #ejabberd_commands{name = incoming_s2s_number,
+		       tags = [stats, s2s],
+		       desc = "Number of incoming s2s connections on the node",
+		       module = ?MODULE, function = incoming_s2s_number,
+		       args = [],
+		       result = {s2s_incoming, integer}},
+     #ejabberd_commands{name = outgoing_s2s_number,
+		       tags = [stats, s2s],
+		       desc = "Number of outgoing s2s connections on the node",
+		       module = ?MODULE, function = outgoing_s2s_number,
+		       args = [],
+		       result = {s2s_outgoing, integer}}
+    ].
+
+incoming_s2s_number() ->
+    length(supervisor:which_children(ejabberd_s2s_in_sup)).
+
+outgoing_s2s_number() ->
+    length(supervisor:which_children(ejabberd_s2s_out_sup)).
+
+
+%%%----------------------------------------------------------------------
+%%% Update Mnesia tables
 
 update_tables() ->
     case catch mnesia:table_info(s2s, type) of
@@ -461,13 +486,58 @@ update_tables() ->
 
 %% Check if host is in blacklist or white list
 allow_host(MyServer, S2SHost) ->
-    case ejabberd_config:get_local_option({{s2s_host, S2SHost},MyServer}) of
-        deny -> false;
-        allow -> true;
-        _ ->
-            case ejabberd_config:get_local_option({s2s_default_policy, MyServer}) of
-                deny -> false;
-                allow -> true;
-                _ -> true %% The default s2s policy is allow
-            end
+    case lists:filter(
+	   fun(Host) ->
+		   is_subdomain(MyServer, Host)
+	   end, ?MYHOSTS) of
+	[MyHost|_] ->
+	    allow_host1(MyHost, S2SHost);
+	[] ->
+	    allow_host1(MyServer, S2SHost)
     end.
+
+allow_host1(MyHost, S2SHost) ->
+    case ejabberd_config:get_local_option({{s2s_host, S2SHost}, MyHost}) of
+	deny -> false;
+	allow -> true;
+	_ ->
+	    case ejabberd_config:get_local_option({s2s_default_policy, MyHost}) of
+		deny -> false;
+		_ ->
+		    case ejabberd_hooks:run_fold(s2s_allow_host, MyHost,
+						 allow, [MyHost, S2SHost]) of
+			deny -> false;
+			allow -> true;
+			_ -> true
+		    end
+	    end
+    end.
+
+%% Get information about S2S connections of the specified type.
+%% @spec (Type) -> [Info]
+%% where Type = in | out
+%%       Info = [{InfoName::atom(), InfoValue::any()}]
+get_info_s2s_connections(Type) ->
+    ChildType = case Type of
+		    in -> ejabberd_s2s_in_sup;
+		    out -> ejabberd_s2s_out_sup
+		end,
+    Connections = supervisor:which_children(ChildType),
+    get_s2s_info(Connections,Type).
+
+get_s2s_info(Connections,Type)->
+    complete_s2s_info(Connections,Type,[]).
+complete_s2s_info([],_,Result)->
+    Result;
+complete_s2s_info([Connection|T],Type,Result)->
+    {_,PID,_,_}=Connection,
+    State = get_s2s_state(PID),
+    complete_s2s_info(T,Type,[State|Result]).
+
+get_s2s_state(S2sPid)->
+    Infos = case gen_fsm:sync_send_all_state_event(S2sPid,get_state_infos) of
+		{state_infos, Is} -> [{status, open} | Is];
+		{noproc,_} -> [{status, closed}]; %% Connection closed
+		{badrpc,_} -> [{status, error}]
+	    end,
+    [{s2s_pid, S2sPid} | Infos].

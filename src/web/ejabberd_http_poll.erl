@@ -1,11 +1,11 @@
 %%%----------------------------------------------------------------------
 %%% File    : ejabberd_http_poll.erl
 %%% Author  : Alexey Shchepin <alexey@process-one.net>
-%%% Purpose : HTTP Polling support (JEP-0025)
+%%% Purpose : HTTP Polling support (XEP-0025)
 %%% Created :  4 Mar 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -57,6 +57,7 @@
 		input = "",
 		waiting_input = false, %% {ReceiverPid, Tag}
 		last_receiver,
+		http_poll_timeout,
 		timer}).
 
 %-define(DBGFSM, true).
@@ -153,11 +154,31 @@ process([], #request{data = Data,
 		    end
 	    end;
 	_ ->
-	    {200, [?CT, {"Set-Cookie", "ID=-2:0; expires=-1"}], ""}
+	    HumanHTMLxmlel = get_human_html_xmlel(),
+	    {200, [?CT, {"Set-Cookie", "ID=-2:0; expires=-1"}], HumanHTMLxmlel}
     end;
 process(_, _Request) ->
     {400, [], {xmlelement, "h1", [],
 	       [{xmlcdata, "400 Bad Request"}]}}.
+
+%% Code copied from mod_http_bind.erl and customized
+get_human_html_xmlel() ->
+    Heading = "ejabberd " ++ atom_to_list(?MODULE),
+    {xmlelement, "html", [{"xmlns", "http://www.w3.org/1999/xhtml"}],
+     [{xmlelement, "head", [],
+       [{xmlelement, "title", [], [{xmlcdata, Heading}]}]},
+      {xmlelement, "body", [],
+       [{xmlelement, "h1", [], [{xmlcdata, Heading}]},
+        {xmlelement, "p", [],
+         [{xmlcdata, "An implementation of "},
+          {xmlelement, "a",
+	   [{"href", "http://xmpp.org/extensions/xep-0025.html"}],
+           [{xmlcdata, "Jabber HTTP Polling (XEP-0025)"}]}]},
+        {xmlelement, "p", [],
+         [{xmlcdata, "This web page is only informative. "
+	   "To use HTTP-Poll you need a Jabber/XMPP client that supports it."}
+	 ]}
+       ]}]}.
 
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_fsm
@@ -181,12 +202,20 @@ init([ID, Key, IP]) ->
     %% connector.
     Opts = ejabberd_c2s_config:get_c2s_limits(),
 
+    HTTPPollTimeout = case ejabberd_config:get_local_option({http_poll_timeout,
+							     ?MYNAME}) of
+			  %% convert seconds of option into milliseconds
+			  Int when is_integer(Int) -> Int*1000;
+			  undefined -> ?HTTP_POLL_TIMEOUT
+		      end,
+    
     Socket = {http_poll, self(), IP},
     ejabberd_socket:start(ejabberd_c2s, ?MODULE, Socket, Opts),
-    Timer = erlang:start_timer(?HTTP_POLL_TIMEOUT, self(), []),
+    Timer = erlang:start_timer(HTTPPollTimeout, self(), []),
     {ok, loop, #state{id = ID,
 		      key = Key,
 		      socket = Socket,
+		      http_poll_timeout = HTTPPollTimeout,
 		      timer = Timer}}.
 
 %%----------------------------------------------------------------------
@@ -278,7 +307,7 @@ handle_sync_event({http_put, Key, NewKey, Packet},
 		    Receiver ! {tcp, StateData#state.socket,
 				list_to_binary(Packet)},
 		    cancel_timer(StateData#state.timer),
-		    Timer = erlang:start_timer(?HTTP_POLL_TIMEOUT, self(), []),
+		    Timer = erlang:start_timer(StateData#state.http_poll_timeout, self(), []),
 		    Reply = ok,
 		    {reply, Reply, StateName,
 		     StateData#state{waiting_input = false,
@@ -397,11 +426,16 @@ resend_messages(Messages) ->
 %% This function is used to resend messages that have been polled but not
 %% delivered.
 resend_message(Packet) ->
-    ParsedPacket = xml_stream:parse_element(Packet),
-    From = get_jid("from", ParsedPacket),
-    To = get_jid("to", ParsedPacket),
-    ?DEBUG("Resend ~p ~p ~p~n",[From,To, ParsedPacket]),
-    ejabberd_router:route(From, To, ParsedPacket).
+    {xmlelement, Name, _, _} = ParsedPacket = xml_stream:parse_element(Packet),
+    %% Avoid sending <stream:error>
+    if Name == "iq"; Name == "message"; Name == "presence" ->
+	    From = get_jid("from", ParsedPacket),
+	    To = get_jid("to", ParsedPacket),
+	    ?DEBUG("Resend ~p ~p ~p~n",[From,To, ParsedPacket]),
+	    ejabberd_router:route(From, To, ParsedPacket);
+       true ->
+	    ok
+    end.
 
 %% Type can be "from" or "to"
 %% Parsed packet is a parsed Jabber packet.

@@ -10,7 +10,7 @@
  *
  * Modified for ejabberd by Alexey Shchepin
  *
- * RCS: @(#) $Id: uni_data.c 970 2007-11-15 10:33:18Z mremond $
+ * RCS: @(#) $Id$
  */
 
 /*

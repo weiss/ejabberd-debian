@@ -5,7 +5,7 @@
 %%% Created : 11 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -101,7 +101,7 @@ get_local_stats(_Server, ["running nodes", _], []) ->
      [?STAT("time/uptime"),
       ?STAT("time/cputime"),
       ?STAT("users/online"),
-      ?STAT("transactions/commited"),
+      ?STAT("transactions/committed"),
       ?STAT("transactions/aborted"),
       ?STAT("transactions/restarted"),
       ?STAT("transactions/logged")
@@ -200,7 +200,7 @@ get_node_stat(Node, Name) when Name == "users/online" ->
 	    ?STATVAL(integer_to_list(length(Users)), "users")
     end;
 
-get_node_stat(Node, Name) when Name == "transactions/commited" ->
+get_node_stat(Node, Name) when Name == "transactions/committed" ->
     case catch rpc:call(Node, mnesia, system_info, [transaction_commits]) of
 	{badrpc, _Reason} ->
 	    ?STATERR("500", "Internal Server Error");

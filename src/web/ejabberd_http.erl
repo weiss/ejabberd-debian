@@ -5,7 +5,7 @@
 %%% Created : 27 Feb 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -35,6 +35,9 @@
 	 receive_headers/1,
 	 url_encode/1]).
 
+%% Callbacks
+-export([init/2]).
+
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 -include("ejabberd_http.hrl").
@@ -57,6 +60,10 @@
 		%%			       {request_handlers, [{["test", "module"], mod_test_web}]}]}
 		%%
 		request_handlers = [],
+		request_host,
+		request_port,
+		request_tp,
+		request_headers = [],
 		end_of_request = false,
 		trail = ""
 	       }).
@@ -75,11 +82,15 @@
 start(SockData, Opts) ->
     supervisor:start_child(ejabberd_http_sup, [SockData, Opts]).
 
-start_link({SockMod, Socket}, Opts) ->
+start_link(SockData, Opts) ->
+    {ok, proc_lib:spawn_link(ejabberd_http, init, [SockData, Opts])}.
+
+init({SockMod, Socket}, Opts) ->
     TLSEnabled = lists:member(tls, Opts),
-    TLSOpts = lists:filter(fun({certfile, _}) -> true;
+    TLSOpts1 = lists:filter(fun({certfile, _}) -> true;
 			      (_) -> false
 			   end, Opts),
+    TLSOpts = [verify_none | TLSOpts1],
     {SockMod1, Socket1} =
 	if
 	    TLSEnabled ->
@@ -97,7 +108,7 @@ start_link({SockMod, Socket}, Opts) ->
     end,
 
     %% XXX bard: for backward compatibility, expand in Opts:
-    %%  web_admin -> {["admin"], ejabberd_web_admin} 
+    %%  web_admin -> {["admin"], ejabberd_web_admin}
     %%  http_bind -> {["http-bind"], mod_http_bind}
     %%  http_poll -> {["http-poll"], ejabberd_http_poll}
 
@@ -105,6 +116,10 @@ start_link({SockMod, Socket}, Opts) ->
 	case lists:keysearch(request_handlers, 1, Opts) of
 	    {value, {request_handlers, H}} -> H;
 	    false -> []
+        end ++
+	case lists:member(captcha, Opts) of
+            true -> [{["captcha"], ejabberd_captcha}];
+            false -> []
         end ++
         case lists:member(web_admin, Opts) of
             true -> [{["admin"], ejabberd_web_admin}];
@@ -121,11 +136,10 @@ start_link({SockMod, Socket}, Opts) ->
     ?DEBUG("S: ~p~n", [RequestHandlers]),
 
     ?INFO_MSG("started: ~p", [{SockMod1, Socket1}]),
-    {ok, proc_lib:spawn_link(ejabberd_http,
-			     receive_headers,
-			     [#state{sockmod = SockMod1,
-				     socket = Socket1,
-				     request_handlers = RequestHandlers}])}.
+    State = #state{sockmod = SockMod1,
+                   socket = Socket1,
+                   request_handlers = RequestHandlers},
+    receive_headers(State).
 
 
 become_controller(_Pid) ->
@@ -135,8 +149,15 @@ socket_type() ->
     raw.
 
 send_text(State, Text) ->
-    (State#state.sockmod):send(State#state.socket, Text).
-
+    case catch (State#state.sockmod):send(State#state.socket, Text) of
+        ok -> ok;
+	{error, timeout} ->
+	    ?INFO_MSG("Timeout on ~p:send",[State#state.sockmod]),
+	    exit(normal);
+        Error ->
+	    ?DEBUG("Error in ~p:send: ~p",[State#state.sockmod, Error]),
+	    exit(normal)
+    end.
 
 receive_headers(State) ->
     SockMod = State#state.sockmod,
@@ -197,7 +218,7 @@ process_header(State, Data) ->
 			request_version = Version,
 			request_path = Path,
 			request_keepalive = KeepAlive};
-	{ok, {http_header, _, 'Connection', _, Conn}} ->
+	{ok, {http_header, _, 'Connection'=Name, _, Conn}} ->
 	    KeepAlive1 = case jlib:tolower(Conn) of
 			     "keep-alive" ->
 				 true;
@@ -206,28 +227,43 @@ process_header(State, Data) ->
 			     _ ->
 				 State#state.request_keepalive
 			 end,
-	    State#state{request_keepalive = KeepAlive1};
-	{ok, {http_header, _, 'Authorization', _, Auth}} ->
-	    State#state{request_auth = parse_auth(Auth)};
-	{ok, {http_header, _, 'Content-Length', _, SLen}} ->
+	    State#state{request_keepalive = KeepAlive1,
+			request_headers=add_header(Name, Conn, State)};
+	{ok, {http_header, _, 'Authorization'=Name, _, Auth}} ->
+	    State#state{request_auth = parse_auth(Auth),
+			request_headers=add_header(Name, Auth, State)};
+	{ok, {http_header, _, 'Content-Length'=Name, _, SLen}} ->
 	    case catch list_to_integer(SLen) of
 		Len when is_integer(Len) ->
-		    State#state{request_content_length = Len};
+		    State#state{request_content_length = Len,
+				request_headers=add_header(Name, SLen, State)};
 		_ ->
 		    State
 	    end;
-	{ok, {http_header, _, 'Accept-Language', _, Langs}} ->
-	    State#state{request_lang = parse_lang(Langs)};
-	{ok, {http_header, _, _, _, _}} ->
-	    State;
+	{ok, {http_header, _, 'Accept-Language'=Name, _, Langs}} ->
+	    State#state{request_lang = parse_lang(Langs),
+			request_headers=add_header(Name, Langs, State)};
+	{ok, {http_header, _, 'Host'=Name, _, Host}} ->
+	    State#state{request_host = Host,
+			request_headers=add_header(Name, Host, State)};
+	{ok, {http_header, _, Name, _, Value}} ->
+	    State#state{request_headers=add_header(Name, Value, State)};
+	{ok, http_eoh} when State#state.request_host == undefined ->
+	    ?WARNING_MSG("An HTTP request without 'Host' HTTP header was received.", []),
+	    throw(http_request_no_host_header);
 	{ok, http_eoh} ->
 	    ?DEBUG("(~w) http query: ~w ~s~n",
-		      [State#state.socket,
-		       State#state.request_method,
-		       element(2, State#state.request_path)]),
-	    Out = process_request(State),
-	    send_text(State, Out),
-	    case State#state.request_keepalive of
+		   [State#state.socket,
+		    State#state.request_method,
+		    element(2, State#state.request_path)]),
+	    {Host, Port, TP} = get_transfer_protocol(SockMod,
+						     State#state.request_host),
+	    State2 = State#state{request_host = Host,
+				 request_port = Port,
+				 request_tp = TP},
+	    Out = process_request(State2),
+	    send_text(State2, Out),
+	    case State2#state.request_keepalive of
 		true ->
 		    case SockMod of
 			gen_tcp ->
@@ -250,6 +286,30 @@ process_header(State, Data) ->
 		   request_handlers = State#state.request_handlers}
     end.
 
+add_header(Name, Value, State) ->
+    [{Name, Value} | State#state.request_headers].
+
+%% @spec (SockMod, HostPort) -> {Host::string(), Port::integer(), TP}
+%% where
+%%       SockMod = gen_tcp | tls
+%%       HostPort = string()
+%%       TP = http | https
+%% @doc Given a socket and hostport header, return data of transfer protocol.
+%% Note that HostPort can be a string of a host like "example.org",
+%% or a string of a host and port like "example.org:5280".
+get_transfer_protocol(SockMod, HostPort) ->
+    [Host | PortList] = string:tokens(HostPort, ":"),
+    case {SockMod, PortList} of
+	{gen_tcp, []} ->
+	    {Host, 80, http};
+	{gen_tcp, [Port]} ->
+	    {Host, list_to_integer(Port), http};
+	{tls, []} ->
+	    {Host, 443, https};
+	{tls, [Port]} ->
+	    {Host, list_to_integer(Port), https}
+    end.
+
 %% XXX bard: search through request handlers looking for one that
 %% matches the requested URL path, and pass control to it.  If none is
 %% found, answer with HTTP 404.
@@ -258,7 +318,8 @@ process([], _) ->
 process(Handlers, Request) ->
     [{HandlerPathPrefix, HandlerModule} | HandlersLeft] = Handlers,
 
-    case lists:prefix(HandlerPathPrefix, Request#request.path) of
+    case (lists:prefix(HandlerPathPrefix, Request#request.path) or
+         (HandlerPathPrefix==Request#request.path)) of
 	true ->
             ?DEBUG("~p matches ~p", [Request#request.path, HandlerPathPrefix]),
             %% LocalPath is the path "local to the handler", i.e. if
@@ -266,29 +327,36 @@ process(Handlers, Request) ->
             %% requested path is "/test/foo/bar", the local path is
             %% ["foo", "bar"]
             LocalPath = lists:nthtail(length(HandlerPathPrefix), Request#request.path),
-	    HandlerModule:process(LocalPath, Request);
+  	        R = HandlerModule:process(LocalPath, Request),
+            ejabberd_hooks:run(http_request_debug, [{LocalPath, Request}]),
+            R;
 	false ->
 	    process(HandlersLeft, Request)
     end.
 
-process_request(#state{request_method = 'GET',
+process_request(#state{request_method = Method,
 		       request_path = {abs_path, Path},
 		       request_auth = Auth,
 		       request_lang = Lang,
 		       request_handlers = RequestHandlers,
+		       request_host = Host,
+		       request_port = Port,
+		       request_tp = TP,
+		       request_headers = RequestHeaders,
 		       sockmod = SockMod,
-		       socket = Socket} = State) ->
+		       socket = Socket} = State)
+  when Method=:='GET' orelse Method=:='HEAD' orelse Method=:='DELETE' orelse Method=:='OPTIONS' ->
     case (catch url_decode_q_split(Path)) of
 	{'EXIT', _} ->
 	    process_request(false);
 	{NPath, Query} ->
+	    LPath = [path_decode(NPE) || NPE <- string:tokens(NPath, "/")],
 	    LQuery = case (catch parse_urlencoded(Query)) of
 			 {'EXIT', _Reason} ->
 			     [];
 			 LQ ->
 			     LQ
 		     end,
-	    LPath = string:tokens(NPath, "/"),
 	    {ok, IP} =
 		case SockMod of
 		    gen_tcp ->
@@ -296,11 +364,15 @@ process_request(#state{request_method = 'GET',
 		    _ ->
 			SockMod:peername(Socket)
 		end,
-	    Request = #request{method = 'GET',
+	    Request = #request{method = Method,
 			       path = LPath,
 			       q = LQuery,
 			       auth = Auth,
 			       lang = Lang,
+			       host = Host,
+			       port = Port,
+			       tp = TP,
+			       headers = RequestHeaders,
 			       ip = IP},
 	    %% XXX bard: This previously passed control to
 	    %% ejabberd_web:process_get, now passes it to a local
@@ -319,15 +391,19 @@ process_request(#state{request_method = 'GET',
 	    end
     end;
 
-process_request(#state{request_method = 'POST',
+process_request(#state{request_method = Method,
 		       request_path = {abs_path, Path},
 		       request_auth = Auth,
 		       request_content_length = Len,
 		       request_lang = Lang,
 		       sockmod = SockMod,
 		       socket = Socket,
+		       request_host = Host,
+		       request_port = Port,
+		       request_tp = TP,
+		       request_headers = RequestHeaders,
 		       request_handlers = RequestHandlers} = State)
-  when is_integer(Len) ->
+  when (Method=:='POST' orelse Method=:='PUT') andalso is_integer(Len) ->
     {ok, IP} =
 	case SockMod of
 	    gen_tcp ->
@@ -347,19 +423,23 @@ process_request(#state{request_method = 'POST',
 	{'EXIT', _} ->
 	    process_request(false);
 	{NPath, _Query} ->
-	    LPath = string:tokens(NPath, "/"),
+	    LPath = [path_decode(NPE) || NPE <- string:tokens(NPath, "/")],
 	    LQuery = case (catch parse_urlencoded(Data)) of
 			 {'EXIT', _Reason} ->
 			     [];
 			 LQ ->
 			     LQ
 		     end,
-	    Request = #request{method = 'POST',
+	    Request = #request{method = Method,
 			       path = LPath,
 			       q = LQuery,
 			       auth = Auth,
 			       data = Data,
 			       lang = Lang,
+			       host = Host,
+			       port = Port,
+			       tp = TP,
+			       headers = RequestHeaders,
 			       ip = IP},
 	    case process(RequestHandlers, Request) of
 		El when element(1, El) == xmlelement ->
@@ -390,10 +470,7 @@ recv_data(_State, 0, Acc) ->
 recv_data(State, Len, Acc) ->
     case State#state.trail of
 	[] ->
-	    %% TODO: Fix the problem in tls C driver and revert this workaround
-	    %% https://support.process-one.net/browse/EJAB-611
-	    %%case (State#state.sockmod):recv(State#state.socket, Len, 300000) of
-	    case (State#state.sockmod):recv(State#state.socket,   0, 300000) of
+	    case (State#state.sockmod):recv(State#state.socket,   Len, 300000) of
 		{ok, Data} ->
 		    recv_data(State, Len - size(Data), [Acc | Data]);
 		_ ->
@@ -542,24 +619,30 @@ crypt(S) when is_binary(S) ->
 %    notice as well as this list of conditions.
 
 
-%% url decode the path and return {Path, QueryPart}
-
+%% @doc Split the URL and return {Path, QueryPart}
 url_decode_q_split(Path) ->
     url_decode_q_split(Path, []).
+url_decode_q_split([$?|T], Ack) ->
+    %% Don't decode the query string here, that is parsed separately.
+    {path_norm_reverse(Ack), T};
+url_decode_q_split([H|T], Ack) when H /= 0 ->
+    url_decode_q_split(T, [H|Ack]);
+url_decode_q_split([], Ack) ->
+    {path_norm_reverse(Ack), []}.
 
-url_decode_q_split([$%, Hi, Lo | Tail], Ack) ->
+%% @doc Decode a part of the URL and return string()
+path_decode(Path) ->
+    path_decode(Path, []).
+path_decode([$%, Hi, Lo | Tail], Ack) ->
     Hex = hex_to_integer([Hi, Lo]),
     if Hex  == 0 -> exit(badurl);
        true -> ok
     end,
-    url_decode_q_split(Tail, [Hex|Ack]);
-url_decode_q_split([$?|T], Ack) ->
-    %% Don't decode the query string here, that is parsed separately.
-    {path_norm_reverse(Ack), T};
-url_decode_q_split([H|T], Ack) when H /= 0 -> 
-    url_decode_q_split(T, [H|Ack]);
-url_decode_q_split([], Ack) ->
-    {path_norm_reverse(Ack), []}.
+    path_decode(Tail, [Hex|Ack]);
+path_decode([H|T], Ack) when H /= 0 ->
+    path_decode(T, [H|Ack]);
+path_decode([], Ack) ->
+    lists:reverse(Ack).
 
 path_norm_reverse("/" ++ T) -> start_dir(0, "/", T);
 path_norm_reverse(       T) -> start_dir(0,  "", T).
@@ -570,7 +653,7 @@ start_dir(N, Path, "./"  ++ T ) -> start_dir(N    , Path, T);
 start_dir(N, Path, "../" ++ T ) -> start_dir(N + 1, Path, T);
 start_dir(N, Path,          T ) -> rest_dir (N    , Path, T).
 
-rest_dir (_N, Path, []         ) -> case Path of 
+rest_dir (_N, Path, []         ) -> case Path of
 				       [] -> "/";
 				       _  -> Path
 				   end;

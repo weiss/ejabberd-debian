@@ -5,7 +5,7 @@
 %%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -27,7 +27,9 @@
 -module(ejabberd_service).
 -author('alexey@process-one.net').
 
--behaviour(gen_fsm).
+-define(GEN_FSM, p1_fsm).
+
+-behaviour(?GEN_FSM).
 
 %% External exports
 -export([start/2,
@@ -45,7 +47,8 @@
 	 handle_sync_event/4,
 	 code_change/4,
 	 handle_info/3,
-	 terminate/3]).
+	 terminate/3,
+     print_state/1]).
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
@@ -80,7 +83,11 @@
        ).
 
 -define(INVALID_HANDSHAKE_ERR,
-	"<stream:error>Invalid Handshake</stream:error>"
+	"<stream:error>"
+	"<not-authorized xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>"
+	"<text xmlns='urn:ietf:params:xml:ns:xmpp-streams' xml:lang='en'>"
+	"Invalid Handshake</text>"
+	"</stream:error>"
 	"</stream:stream>"
        ).
 
@@ -96,7 +103,8 @@ start(SockData, Opts) ->
     supervisor:start_child(ejabberd_service_sup, [SockData, Opts]).
 
 start_link(SockData, Opts) ->
-    gen_fsm:start_link(ejabberd_service, [SockData, Opts], ?FSMOPTS).
+    ?GEN_FSM:start_link(ejabberd_service, [SockData, Opts],
+			fsm_limit_opts(Opts) ++ ?FSMOPTS).
 
 socket_type() ->
     xml_stream.
@@ -339,11 +347,11 @@ handle_info({route, From, To, Packet}, StateName, StateData) ->
 	    Attrs2 = jlib:replace_from_to_attrs(jlib:jid_to_string(From),
 						jlib:jid_to_string(To),
 						Attrs),
-	    Text = xml:element_to_string({xmlelement, Name, Attrs2, Els}),
+	    Text = xml:element_to_binary({xmlelement, Name, Attrs2, Els}),
 	    send_text(StateData, Text);
 	deny ->
 	    Err = jlib:make_error_reply(Packet, ?ERR_NOT_ALLOWED),
-	    ejabberd_router:route(To, From, Err)
+	    ejabberd_router:route_error(To, From, Err, Packet)
     end,
     {next_state, StateName, StateData}.
 
@@ -367,6 +375,14 @@ terminate(Reason, StateName, StateData) ->
     (StateData#state.sockmod):close(StateData#state.socket),
     ok.
 
+%%----------------------------------------------------------------------
+%% Func: print_state/1
+%% Purpose: Prepare the state to be printed on error log
+%% Returns: State to print
+%%----------------------------------------------------------------------
+print_state(State) ->
+    State.
+
 %%%----------------------------------------------------------------------
 %%% Internal functions
 %%%----------------------------------------------------------------------
@@ -375,7 +391,20 @@ send_text(StateData, Text) ->
     (StateData#state.sockmod):send(StateData#state.socket, Text).
 
 send_element(StateData, El) ->
-    send_text(StateData, xml:element_to_string(El)).
+    send_text(StateData, xml:element_to_binary(El)).
 
 new_id() ->
     randoms:get_string().
+
+fsm_limit_opts(Opts) ->
+    case lists:keysearch(max_fsm_queue, 1, Opts) of
+	{value, {_, N}} when is_integer(N) ->
+	    [{max_queue, N}];
+	_ ->
+	    case ejabberd_config:get_local_option(max_fsm_queue) of
+		N when is_integer(N) ->
+		    [{max_queue, N}];
+		_ ->
+		    []
+	    end
+    end.

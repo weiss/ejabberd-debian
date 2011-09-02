@@ -4,7 +4,7 @@
 %%% Purpose : Bytestream process.
 %%% Created : 12 Oct 2006 by Evgeniy Khramtsov <xram@jabber.ru>
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -58,7 +58,7 @@
 	]).
 
 -include("mod_proxy65.hrl").
--include("../ejabberd.hrl").
+-include("ejabberd.hrl").
 
 -define(WAIT_TIMEOUT, 60000). %% 1 minute (is it enough?)
 
@@ -78,7 +78,8 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
     {ok, StateName, StateData}.
 %%-------------------------------
 
-start({gen_tcp, Socket}, [Host | Opts]) ->
+start({gen_tcp, Socket}, Opts1) ->
+    {[Host], Opts} = lists:partition(fun(O) -> is_list(O) end, Opts1),
     Supervisor = gen_mod:get_module_proc(Host, ejabberd_mod_proxy65_sup),
     supervisor:start_child(Supervisor, [Socket, Host, Opts]).
 
@@ -89,8 +90,8 @@ init([Socket, Host, Opts]) ->
     process_flag(trap_exit, true),
     AuthType = gen_mod:get_opt(auth_type, Opts, anonymous),
     Shaper = gen_mod:get_opt(shaper, Opts, none),
-    RecvBuf = gen_mod:get_opt(recbuf, Opts, 65535),
-    SendBuf = gen_mod:get_opt(sndbuf, Opts, 65535),
+    RecvBuf = gen_mod:get_opt(recbuf, Opts, 8192),
+    SendBuf = gen_mod:get_opt(sndbuf, Opts, 8192),
     TRef = erlang:send_after(?WAIT_TIMEOUT, self(), stop),
     inet:setopts(Socket, [{active, true}, {recbuf, RecvBuf}, {sndbuf, SendBuf}]),
     {ok, wait_for_init, #state{host      = Host,

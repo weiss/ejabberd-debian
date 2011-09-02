@@ -5,7 +5,7 @@
 %%% Created : 19 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -237,7 +237,23 @@ get_local_features(Acc, From, #jid{lserver = LServer} = _To, Node, _Lang) ->
 		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
 		["config", _] ->
 		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
-		["http:" | _] ->
+		?NS_ADMINL("add-user") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("delete-user") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("end-user-session") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("get-user-password") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("change-user-password") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("get-user-lastlogin") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("user-stats") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("get-registered-users-num") ->
+		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
+		?NS_ADMINL("get-online-users-num") ->
 		    ?INFO_RESULT(Allow, [?NS_COMMANDS]);
 		_ ->
 		    Acc
@@ -449,7 +465,23 @@ get_local_items(Acc, From, #jid{lserver = LServer} = To, Node, Lang) ->
 		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
 		["config", _] ->
 		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
-		?NS_ADMINL(_) ->
+		?NS_ADMINL("add-user") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("delete-user") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("end-user-session") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("get-user-password") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("change-user-password") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("get-user-lastlogin") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("user-stats") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("get-registered-users-num") ->
+		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
+		?NS_ADMINL("get-online-users-num") ->
 		    ?ITEMS_RESULT(Allow, LNode, {error, ?ERR_FORBIDDEN});
 		_ ->
 		    Acc
@@ -544,7 +576,7 @@ get_local_items({global, _Host}, ["running nodes", ENode], Server, Lang) ->
      [?NODE("Database", "running nodes/" ++ ENode ++ "/DB"),
       ?NODE("Modules", "running nodes/" ++ ENode ++ "/modules"),
       ?NODE("Backup Management", "running nodes/" ++ ENode ++ "/backup"),
-      ?NODE("Import Users From jabberd 1.4 Spool Files",
+      ?NODE("Import Users From jabberd14 Spool Files",
 	    "running nodes/" ++ ENode ++ "/import"),
       ?NODE("Restart Service", "running nodes/" ++ ENode ++ "/restart"),
       ?NODE("Shut Down Service", "running nodes/" ++ ENode ++ "/shutdown")
@@ -994,7 +1026,7 @@ get_form(_Host, ["running nodes", ENode, "import", "file"], Lang) ->
 	        {xmlelement, "instructions", [],
 	         [{xmlcdata,
 	           ?T(
-		      Lang, "Enter path to jabberd1.4 spool file")}]},
+		      Lang, "Enter path to jabberd14 spool file")}]},
 		?XFIELD("text-single", "Path to File", "path", "")
 	       ]}]};
 
@@ -1008,7 +1040,7 @@ get_form(_Host, ["running nodes", ENode, "import", "dir"], Lang) ->
 	        {xmlelement, "instructions", [],
 	         [{xmlcdata,
 	           ?T(
-		      Lang, "Enter path to jabberd1.4 spool dir")}]},
+		      Lang, "Enter path to jabberd14 spool dir")}]},
 		?XFIELD("text-single", "Path to Dir", "path", "")
 	       ]}]};
 
@@ -1433,7 +1465,7 @@ set_form(_From, _Host, ["running nodes", ENode, "backup", "textfile"], _Lang, XD
 		false ->
 		    {error, ?ERR_BAD_REQUEST};
 		{value, {_, [String]}} ->
-		    case rpc:call(Node, ejabberd_ctl, dump_to_textfile, [String]) of
+		    case rpc:call(Node, ejabberd_admin, dump_to_textfile, [String]) of
 			{badrpc, _Reason} ->
 			    {error, ?ERR_INTERNAL_SERVER_ERROR};
 			{error, _Reason} ->

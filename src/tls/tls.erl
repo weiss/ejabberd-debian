@@ -5,7 +5,7 @@
 %%% Created : 24 Jul 2004 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -60,6 +60,13 @@
 -define(GET_PEER_CERTIFICATE, 7).
 -define(GET_VERIFY_RESULT,    8).
 -define(VERIFY_NONE, 16#10000).
+
+-ifdef(SSL40).
+-define(CERT_DECODE, {public_key, pkix_decode_cert, plain}).
+-else.
+-define(CERT_DECODE, {ssl_pkix, decode_cert, [pkix]}).
+-endif.
+
 
 -record(tlssock, {tcpsock, tlsport}).
 
@@ -159,7 +166,15 @@ recv(#tlssock{tcpsock = TCPSocket} = TLSSock,
 	    Error
     end.
 
-recv_data(#tlssock{tcpsock = TCPSocket, tlsport = Port}, Packet) ->
+recv_data(TLSSock, Packet) ->
+    case catch recv_data1(TLSSock, Packet) of
+	{'EXIT', Reason} ->
+	    {error, Reason};
+	Res ->
+	    Res
+    end.
+
+recv_data1(#tlssock{tcpsock = TCPSocket, tlsport = Port}, Packet) ->
     case port_control(Port, ?SET_ENCRYPTED_INPUT, Packet) of
 	<<0>> ->
 	    case port_control(Port, ?GET_DECRYPTED_INPUT, []) of
@@ -224,7 +239,8 @@ close(#tlssock{tcpsock = TCPSocket, tlsport = Port}) ->
 get_peer_certificate(#tlssock{tlsport = Port}) ->
     case port_control(Port, ?GET_PEER_CERTIFICATE, []) of
 	<<0, BCert/binary>> ->
-	    case catch ssl_pkix:decode_cert(BCert, [pkix]) of
+	    {CertMod, CertFun, CertSecondArg} = ?CERT_DECODE,
+	    case catch apply(CertMod, CertFun, [BCert, CertSecondArg]) of
 		{ok, Cert} ->
 		    {ok, Cert};
 		_ ->

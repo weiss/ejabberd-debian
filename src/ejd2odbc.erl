@@ -5,7 +5,7 @@
 %%% Created : 22 Aug 2005 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -131,11 +131,17 @@ export_offline(Server, Output) ->
 	      NewPacket = {xmlelement, Name, Attrs2,
 			   Els ++
 			   [jlib:timestamp_to_xml(
-			      calendar:now_to_universal_time(TimeStamp))]},
+			      calendar:now_to_universal_time(TimeStamp),
+			      utc,
+			      jlib:make_jid("", Server, ""),
+			      "Offline Storage"),
+			    %% TODO: Delete the next three lines once XEP-0091 is Obsolete
+			    jlib:timestamp_to_xml(
+			      calendar:now_to_universal_time(
+				TimeStamp))]},
 	      XML =
 		  ejabberd_odbc:escape(
-		    lists:flatten(
-		      xml:element_to_string(NewPacket))),
+		    xml:element_to_binary(NewPacket)),
 	      ["insert into spool(username, xml) "
 	       "values ('", Username, "', '",
 	       XML,
@@ -169,7 +175,7 @@ export_vcard(Server, Output) ->
 	 when LServer == Host ->
 	      Username = ejabberd_odbc:escape(LUser),
 	      SVCARD = ejabberd_odbc:escape(
-			 lists:flatten(xml:element_to_string(VCARD))),
+			 xml:element_to_binary(VCARD)),
 	      ["delete from vcard where username='", Username, "';"
 	       "insert into vcard(username, vcard) "
 	       "values ('", Username, "', '", SVCARD, "');"];
@@ -253,7 +259,7 @@ export_private_storage(Server, Output) ->
 	      Username = ejabberd_odbc:escape(LUser),
       	      LXMLNS = ejabberd_odbc:escape(XMLNS),
 	      SData = ejabberd_odbc:escape(
-			lists:flatten(xml:element_to_string(Data))),
+			xml:element_to_binary(Data)),
       	      odbc_queries:set_private_data_sql(Username, LXMLNS, SData);
 	 (_Host, _R) ->
       	      []

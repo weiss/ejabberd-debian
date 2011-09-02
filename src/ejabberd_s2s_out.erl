@@ -5,7 +5,7 @@
 %%% Created :  6 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -51,6 +51,7 @@
 	 handle_sync_event/4,
 	 handle_info/3,
 	 terminate/3,
+     print_state/1,
 	 code_change/4,
 	 test_get_addr_port/1,
 	 get_addr_port/1]).
@@ -84,15 +85,12 @@
 %% Module start with or without supervisor:
 -ifdef(NO_TRANSIENT_SUPERVISORS).
 -define(SUPERVISOR_START, p1_fsm:start(ejabberd_s2s_out, [From, Host, Type],
-				       ?FSMLIMITS ++ ?FSMOPTS)).
+				       fsm_limit_opts() ++ ?FSMOPTS)).
 -else.
 -define(SUPERVISOR_START, supervisor:start_child(ejabberd_s2s_out_sup,
 						 [From, Host, Type])).
 -endif.
 
-%% Only change this value if you now what your are doing:
--define(FSMLIMITS,[]).
-%% -define(FSMLIMITS, [{max_queue, 2000}]).
 -define(FSMTIMEOUT, 30000).
 
 %% We do not block on send anymore.
@@ -122,6 +120,8 @@
 -define(INVALID_XML_ERR,
 	xml:element_to_string(?SERR_XML_NOT_WELL_FORMED)).
 
+-define(SOCKET_DEFAULT_RESULT, {error, badarg}).
+
 %%%----------------------------------------------------------------------
 %%% API
 %%%----------------------------------------------------------------------
@@ -130,7 +130,7 @@ start(From, Host, Type) ->
 
 start_link(From, Host, Type) ->
     p1_fsm:start_link(ejabberd_s2s_out, [From, Host, Type],
-		      ?FSMLIMITS ++ ?FSMOPTS).
+		      fsm_limit_opts() ++ ?FSMOPTS).
 
 start_connection(Pid) ->
     p1_fsm:send_event(Pid, init).
@@ -192,7 +192,8 @@ init([From, Server, Type]) ->
 open_socket(init, StateData) ->
     log_s2s_out(StateData#state.new,
 		StateData#state.myname,
-		StateData#state.server),
+		StateData#state.server,
+		StateData#state.tls),
     ?DEBUG("open_socket: ~p", [{StateData#state.myname,
 				StateData#state.server,
 				StateData#state.new,
@@ -209,7 +210,7 @@ open_socket(init, StateData) ->
 				 _ ->
 				     open_socket1(Addr, Port)
 			     end
-		     end, {error, badarg}, AddrList) of
+		     end, ?SOCKET_DEFAULT_RESULT, AddrList) of
 	{ok, Socket} ->
 	    Version = if
 			  StateData#state.use_v10 ->
@@ -242,35 +243,47 @@ open_socket(_, StateData) ->
     {next_state, open_socket, StateData}.
 
 %%----------------------------------------------------------------------
-open_socket1(Addr, Port) ->
-    ?DEBUG("s2s_out: connecting to ~s:~p~n", [Addr, Port]),
-    Res = case catch ejabberd_socket:connect(
-		       Addr, Port,
-		       [binary, {packet, 0},
-			{active, false}]) of
-	      {ok, _Socket} = R -> R;
-	      {error, Reason1} ->
-		  ?DEBUG("s2s_out: connect return ~p~n", [Reason1]),
-		  catch ejabberd_socket:connect(
-			  Addr, Port,
-			  [binary, {packet, 0},
-			   {send_timeout, ?TCP_SEND_TIMEOUT},
-			   {active, false}, inet6]);
-	      {'EXIT', Reason1} ->
-		  ?DEBUG("s2s_out: connect crashed ~p~n", [Reason1]),
-		  catch ejabberd_socket:connect(
-			  Addr, Port,
-			  [binary, {packet, 0},
-			   {active, false}, inet6])
-	  end,
-    case Res of
-	{ok, Socket} ->
-	    {ok, Socket};
-	{error, Reason} ->
-	    ?DEBUG("s2s_out: inet6 connect return ~p~n", [Reason]),
-	    {error, Reason};
+%% IPv4
+open_socket1({_,_,_,_} = Addr, Port) ->
+    open_socket2(inet, Addr, Port);
+
+%% IPv6
+open_socket1({_,_,_,_,_,_,_,_} = Addr, Port) ->
+    open_socket2(inet6, Addr, Port);
+
+%% Hostname
+open_socket1(Host, Port) ->
+    lists:foldl(fun(_Family, {ok, _Socket} = R) ->
+			R;
+		   (Family, _) ->
+			Addrs = get_addrs(Host, Family),
+			lists:foldl(fun(_Addr, {ok, _Socket} = R) ->
+					    R;
+				       (Addr, _) ->
+					    open_socket1(Addr, Port)
+				    end, ?SOCKET_DEFAULT_RESULT, Addrs)
+		end, ?SOCKET_DEFAULT_RESULT, outgoing_s2s_families()).
+
+open_socket2(Type, Addr, Port) ->
+    ?DEBUG("s2s_out: connecting to ~p:~p~n", [Addr, Port]),
+    Timeout = outgoing_s2s_timeout(),
+    SockOpts = try erlang:system_info(otp_release) >= "R13B" of
+		   true -> [{send_timeout_close, true}];
+		   false -> []
+	       catch
+		   _:_ -> []
+	       end,
+    case (catch ejabberd_socket:connect(Addr, Port,
+					[binary, {packet, 0},
+					 {send_timeout, ?TCP_SEND_TIMEOUT},
+					 {active, false}, Type | SockOpts],
+					Timeout)) of
+	{ok, _Socket} = R -> R;
+	{error, Reason} = R ->
+	    ?DEBUG("s2s_out: connect return ~p~n", [Reason]),
+	    R;
 	{'EXIT', Reason} ->
-	    ?DEBUG("s2s_out: inet6 connect crashed ~p~n", [Reason]),
+	    ?DEBUG("s2s_out: connect crashed ~p~n", [Reason]),
 	    {error, Reason}
     end.
 
@@ -288,10 +301,12 @@ wait_for_stream({xmlstreamstart, _Name, Attrs}, StateData) ->
 	    {next_state, wait_for_features, StateData, ?FSMTIMEOUT};
 	{"jabber:server", "", true} when StateData#state.use_v10 ->
 	    {next_state, wait_for_features, StateData#state{db_enabled = false}, ?FSMTIMEOUT};
-	_ ->
+	{NSProvided, DB, _} ->
 	    send_text(StateData, ?INVALID_NAMESPACE_ERR),
-	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid namespace)",
-		      [StateData#state.myname, StateData#state.server]),
+	    ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid namespace).~n"
+		      "Namespace provided: ~p~nNamespace expected: \"jabber:server\"~n"
+		      "xmlns:db provided: ~p~nAll attributes: ~p",
+		      [StateData#state.myname, StateData#state.server, NSProvided, DB, Attrs]),
 	    {stop, normal, StateData}
     end;
 
@@ -299,6 +314,11 @@ wait_for_stream({xmlstreamerror, _}, StateData) ->
     send_text(StateData,
 	      ?INVALID_XML_ERR ++ ?STREAM_TRAILER),
     ?INFO_MSG("Closing s2s connection: ~s -> ~s (invalid xml)",
+	      [StateData#state.myname, StateData#state.server]),
+    {stop, normal, StateData};
+
+wait_for_stream({xmlstreamend,_Name}, StateData) ->
+    ?INFO_MSG("Closing s2s connection: ~s -> ~s (xmlstreamend)",
 	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
@@ -321,8 +341,8 @@ wait_for_validation({xmlstreamelement, El}, StateData) ->
 	    case Type of
 		"valid" ->
 		    send_queue(StateData, StateData#state.queue),
-		    ?INFO_MSG("Connection established: ~s -> ~s",
-			      [StateData#state.myname, StateData#state.server]),
+		    ?INFO_MSG("Connection established: ~s -> ~s with TLS=~p",
+			      [StateData#state.myname, StateData#state.server, StateData#state.tls_enabled]),
 		    ejabberd_hooks:run(s2s_connect_hook,
 				       [StateData#state.myname,
 					StateData#state.server]),
@@ -685,7 +705,7 @@ stream_established({xmlstreamelement, El}, StateData) ->
     {next_state, stream_established, StateData};
 
 stream_established({xmlstreamend, _Name}, StateData) ->
-    ?INFO_MSG("stream established: ~s -> ~s (xmlstreamend)",
+    ?INFO_MSG("Connection closed in stream established: ~s -> ~s (xmlstreamend)",
 	      [StateData#state.myname, StateData#state.server]),
     {stop, normal, StateData};
 
@@ -729,6 +749,42 @@ stream_established(closed, StateData) ->
 %%----------------------------------------------------------------------
 handle_event(_Event, StateName, StateData) ->
     {next_state, StateName, StateData, get_timeout_interval(StateName)}.
+
+%%----------------------------------------------------------------------
+%% Func: handle_sync_event/4
+%% Returns: The associated StateData for this connection
+%%   {reply, Reply, NextStateName, NextStateData}
+%%   Reply = {state_infos, [{InfoName::atom(), InfoValue::any()]
+%%----------------------------------------------------------------------
+handle_sync_event(get_state_infos, _From, StateName, StateData) ->
+    {Addr,Port} = try ejabberd_socket:peername(StateData#state.socket) of
+		      {ok, {A,P}} ->  {A,P};
+		      {error, _} -> {unknown,unknown}
+		  catch
+		      _:_ ->
+			  {unknown,unknown}
+		  end,
+    Infos = [
+	     {direction, out},
+	     {statename, StateName},
+	     {addr, Addr},
+	     {port, Port},
+	     {streamid, StateData#state.streamid},
+	     {use_v10, StateData#state.use_v10},
+	     {tls, StateData#state.tls},
+	     {tls_required, StateData#state.tls_required},
+	     {tls_enabled, StateData#state.tls_enabled},
+	     {tls_options, StateData#state.tls_options},
+	     {authenticated, StateData#state.authenticated},
+	     {db_enabled, StateData#state.db_enabled},
+	     {try_auth, StateData#state.try_auth},
+	     {myname, StateData#state.myname},
+	     {server, StateData#state.server},
+	     {delay_to_retry, StateData#state.delay_to_retry},
+	     {verify, StateData#state.verify}
+	    ],
+    Reply = {state_infos, Infos},
+    {reply,Reply,StateName,StateData};
 
 %%----------------------------------------------------------------------
 %% Func: handle_sync_event/4
@@ -821,6 +877,14 @@ terminate(Reason, StateName, StateData) ->
     end,
     ok.
 
+%%----------------------------------------------------------------------
+%% Func: print_state/1
+%% Purpose: Prepare the state to be printed on error log
+%% Returns: State to print
+%%----------------------------------------------------------------------
+print_state(State) ->
+    State.
+
 %%%----------------------------------------------------------------------
 %%% Internal functions
 %%%----------------------------------------------------------------------
@@ -829,7 +893,7 @@ send_text(StateData, Text) ->
     ejabberd_socket:send(StateData#state.socket, Text).
 
 send_element(StateData, El) ->
-    send_text(StateData, xml:element_to_string(El)).
+    send_text(StateData, xml:element_to_binary(El)).
 
 send_queue(StateData, Q) ->
     case queue:out(Q) of
@@ -898,30 +962,36 @@ send_db_request(StateData) ->
 	      Key ->
 		  Key
 	  end,
-    case New of
-	false ->
-	    ok;
-	Key1 ->
-	    send_element(StateData,
-			 {xmlelement,
-			  "db:result",
-			  [{"from", StateData#state.myname},
-			   {"to", Server}],
-			  [{xmlcdata, Key1}]})
-    end,
-    case StateData#state.verify of
-	false ->
-	    ok;
-	{_Pid, Key2, SID} ->
-	    send_element(StateData,
-			 {xmlelement,
-			  "db:verify",
-			  [{"from", StateData#state.myname},
-			   {"to", StateData#state.server},
-			   {"id", SID}],
-			  [{xmlcdata, Key2}]})
-    end,
-    {next_state, wait_for_validation, StateData#state{new = New}, ?FSMTIMEOUT*6}.
+    NewStateData = StateData#state{new = New},
+    try
+	case New of
+	    false ->
+		ok;
+	    Key1 ->
+		send_element(StateData,
+			     {xmlelement,
+			      "db:result",
+			      [{"from", StateData#state.myname},
+			       {"to", Server}],
+			      [{xmlcdata, Key1}]})
+	end,
+	case StateData#state.verify of
+	    false ->
+		ok;
+	    {_Pid, Key2, SID} ->
+		send_element(StateData,
+			     {xmlelement,
+			      "db:verify",
+			      [{"from", StateData#state.myname},
+			       {"to", StateData#state.server},
+			       {"id", SID}],
+			      [{xmlcdata, Key2}]})
+	end,
+	{next_state, wait_for_validation, NewStateData, ?FSMTIMEOUT*6}
+    catch
+	_:_ ->
+	    {stop, normal, NewStateData}
+    end.
 
 
 is_verify_res({xmlelement, Name, Attrs, _Els}) when Name == "db:result" ->
@@ -946,11 +1016,7 @@ is_verify_res(_) ->
 -include_lib("kernel/include/inet.hrl").
 
 get_addr_port(Server) ->
-    Res = case inet_res:getbyname("_xmpp-server._tcp." ++ Server, srv) of
-	      {error, _Reason} ->
-		  inet_res:getbyname("_jabber._tcp." ++ Server, srv);
-	      {ok, _HEnt} = R -> R
-	  end,
+    Res = srv_lookup(Server),
     case Res of
 	{error, Reason} ->
 	    ?DEBUG("srv lookup of '~s' failed: ~p~n", [Server, Reason]),
@@ -974,7 +1040,7 @@ get_addr_port(Server) ->
 					      end,
 					  {Priority * 65536 - N, Host, Port}
 				  end, AddrList)) of
-			{'EXIT', _Reasn} ->
+			{'EXIT', _Reason} ->
 			    [{Server, outgoing_s2s_port()}];
 			SortedList ->
 			    List = lists:map(
@@ -985,6 +1051,36 @@ get_addr_port(Server) ->
 			    List
 		    end
 	    end
+    end.
+
+srv_lookup(Server) ->
+    Options = case ejabberd_config:get_local_option(s2s_dns_options) of
+                  L when is_list(L) -> L;
+                  _ -> []
+              end,
+    TimeoutMs = timer:seconds(proplists:get_value(timeout, Options, 10)),
+    Retries = proplists:get_value(retries, Options, 2),
+    srv_lookup(Server, TimeoutMs, Retries).
+
+%% XXX - this behaviour is suboptimal in the case that the domain
+%% has a "_xmpp-server._tcp." but not a "_jabber._tcp." record and
+%% we don't get a DNS reply for the "_xmpp-server._tcp." lookup. In this
+%% case we'll give up when we get the "_jabber._tcp." nxdomain reply.
+srv_lookup(_Server, _Timeout, Retries) when Retries < 1 ->
+    {error, timeout};
+srv_lookup(Server, Timeout, Retries) ->
+    case inet_res:getbyname("_xmpp-server._tcp." ++ Server, srv, Timeout) of
+        {error, _Reason} ->
+            case inet_res:getbyname("_jabber._tcp." ++ Server, srv, Timeout) of
+                {error, timeout} ->
+                    ?ERROR_MSG("The DNS servers~n  ~p~ntimed out on request"
+			       " for ~p IN SRV."
+			       " You should check your DNS configuration.",
+                               [inet_db:res_option(nameserver), Server]),
+                    srv_lookup(Server, Timeout, Retries - 1);
+                R -> R
+            end;
+        {ok, _HEnt} = R -> R
     end.
 
 test_get_addr_port(Server) ->
@@ -999,6 +1095,23 @@ test_get_addr_port(Server) ->
 	      end
       end, [], lists:seq(1, 100000)).
 
+get_addrs(Host, Family) ->
+    Type = case Family of
+	       inet4 -> inet;
+	       ipv4 -> inet;
+	       inet6 -> inet6;
+	       ipv6 -> inet6
+	   end,
+    case inet:gethostbyname(Host, Type) of
+	{ok, #hostent{h_addr_list = Addrs}} ->
+	    ?DEBUG("~s of ~s resolved to: ~p~n", [Type, Host, Addrs]),
+	    Addrs;
+	{error, Reason} ->
+	    ?DEBUG("~s lookup of '~s' failed: ~p~n", [Type, Host, Reason]),
+	    []
+    end.
+
+
 outgoing_s2s_port() ->
     case ejabberd_config:get_local_option(outgoing_s2s_port) of
 	Port when is_integer(Port) ->
@@ -1007,12 +1120,42 @@ outgoing_s2s_port() ->
 	    5269
     end.
 
+outgoing_s2s_families() ->
+    case ejabberd_config:get_local_option(outgoing_s2s_options) of
+	{Families, _} when is_list(Families) ->
+	    Families;
+	undefined ->
+	    %% DISCUSSION: Why prefer IPv4 first?
+	    %%
+	    %% IPv4 connectivity will be available for everyone for
+	    %% many years to come. So, there's absolutely no benefit
+	    %% in preferring IPv6 connections which are flaky at best
+	    %% nowadays.
+	    %%
+	    %% On the other hand content providers hesitate putting up
+	    %% AAAA records for their sites due to the mentioned
+	    %% quality of current IPv6 connectivity. Making IPv6 the a
+	    %% `fallback' may avoid these problems elegantly.
+	    [ipv4, ipv6]
+    end.
+
+outgoing_s2s_timeout() ->
+    case ejabberd_config:get_local_option(outgoing_s2s_options) of
+	{_, Timeout} when is_integer(Timeout) ->
+	    Timeout;
+	{_, infinity} ->
+	    infinity;
+	undefined ->
+	    %% 10 seconds
+	    10000
+    end.
+
 %% Human readable S2S logging: Log only new outgoing connections as INFO
 %% Do not log dialback
-log_s2s_out(false, _, _) -> ok;
+log_s2s_out(false, _, _, _) -> ok;
 %% Log new outgoing connections:
-log_s2s_out(_, Myname, Server) ->
-    ?INFO_MSG("Trying to open s2s connection: ~s -> ~s",[Myname, Server]).
+log_s2s_out(_, Myname, Server, Tls) ->
+    ?INFO_MSG("Trying to open s2s connection: ~s -> ~s with TLS=~p", [Myname, Server, Tls]).
 
 %% Calculate timeout depending on which state we are in:
 %% Can return integer > 0 | infinity
@@ -1072,3 +1215,11 @@ terminate_if_waiting_delay(From, To) ->
 	      Pid ! terminate_if_waiting_before_retry
       end,
       Pids).
+
+fsm_limit_opts() ->
+    case ejabberd_config:get_local_option(max_fsm_queue) of
+	N when is_integer(N) ->
+	    [{max_queue, N}];
+	_ ->
+	    []
+    end.

@@ -5,7 +5,7 @@
 %%% Created : 27 Feb 2008 by Mickael Remond <mremond@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -95,7 +95,7 @@ get_db_used() ->
 	    [], Domains),
     lists:usort(DBs).
 
-%% @doc Depending in the DB definition, return which type of DB this is
+%% @doc Depending in the DB definition, return which type of DB this is.
 %% Note that MSSQL is detected as ODBC.
 %% @spec (DB) -> mysql | pgsql | odbc
 get_db_type(DB) when is_tuple(DB) ->

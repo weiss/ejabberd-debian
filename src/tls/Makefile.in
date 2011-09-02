@@ -1,4 +1,4 @@
-# $Id: Makefile.in 1075 2007-12-17 18:59:51Z badlop $
+# $Id$
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -12,20 +12,25 @@ SSL_LIBS = @SSL_LIBS@
 ERLANG_CFLAGS = @ERLANG_CFLAGS@
 ERLANG_LIBS = @ERLANG_LIBS@
 
+# Assume Linux-style dynamic library flags
+DYNAMIC_LIB_CFLAGS = -fpic -shared
 ifeq ($(shell uname),Darwin)
-	DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
-else
-	# Assume Linux-style dynamic library flags
-	DYNAMIC_LIB_CFLAGS = -fpic -shared
+    DYNAMIC_LIB_CFLAGS = -fPIC -bundle -flat_namespace -undefined suppress
+endif
+ifeq ($(shell uname),SunOs)
+    DYNAMIC_LIB_CFLAGS = -KPIC -G -z text
 endif
 
-EFLAGS = -I .. -pz ..
+EFLAGS += @ERLANG_SSLVER@
+EFLAGS += -I ..
+EFLAGS += -pz ..
+
 # make debug=true to compile Erlang module with debug informations.
 ifdef debug
-	EFLAGS+=+debug_info
+	EFLAGS+=+debug_info +export_all
 endif
 
-ERLSHLIBS = ../tls_drv.so
+ERLSHLIBS = ../tls_drv.so ../sha_drv.so
 OUTDIR = ..
 SOURCES = $(wildcard *.erl)
 BEAMS = $(addprefix $(OUTDIR)/,$(SOURCES:.erl=.beam))
@@ -40,11 +45,15 @@ $(OUTDIR)/%.beam:       %.erl
 #	erl -s make all report "{outdir, \"..\"}" -noinput -s erlang halt
 
 $(ERLSHLIBS):	../%.so:	%.c
-			$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) \
-			$(subst ../,,$(subst .so,.c,$@)) $(LIBS) \
-			$(SSL_LIBS) $(SSL_CFLAGS) \
-			$(ERLANG_LIBS) $(ERLANG_CFLAGS) \
-			-o $@ $(DYNAMIC_LIB_CFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) \
+		$(subst ../,,$(subst .so,.c,$@)) \
+		$(LIBS) \
+		$(SSL_LIBS) \
+		$(SSL_CFLAGS) \
+		$(ERLANG_LIBS) \
+		$(ERLANG_CFLAGS) \
+		-o $@ \
+		$(DYNAMIC_LIB_CFLAGS)
 
 clean:
 	rm -f $(BEAMS) $(ERLSHLIBS)

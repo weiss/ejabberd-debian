@@ -5,7 +5,7 @@
 %%% Created :  5 Oct 2006 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -92,7 +92,7 @@ set_data(LUser, LServer, El) ->
 		    Username = ejabberd_odbc:escape(LUser),
 		    LXMLNS = ejabberd_odbc:escape(XMLNS),
 		    SData = ejabberd_odbc:escape(
-			       lists:flatten(xml:element_to_string(El))),
+			      xml:element_to_binary(El)),
 			odbc_queries:set_private_data(LServer, Username, LXMLNS, SData)
 	    end;
 	_ ->

@@ -1,6 +1,6 @@
 %%%----------------------------------------------------------------------
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -18,6 +18,9 @@
 %%% 02111-1307 USA
 %%%
 %%%----------------------------------------------------------------------
+
+-define(LDAP_PORT, 389).
+-define(LDAPS_PORT, 636).
 
 -record(eldap_search, {scope = wholeSubtree,
 		       base = [],

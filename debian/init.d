@@ -5,8 +5,8 @@
 
 ### BEGIN INIT INFO
 # Provides:          ejabberd
-# Required-Start:    $remote_fs $network
-# Required-Stop:     $remote_fs $network
+# Required-Start:    $remote_fs $network $named $time
+# Required-Stop:     $remote_fs $network $named $time
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Starts ejabberd jabber server
@@ -17,6 +17,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 EJABBERD=/usr/sbin/ejabberd
 EJABBERDCTL=/usr/sbin/ejabberdctl
+EJABBERDRUN=/var/run/ejabberd
 EJABBERDUSER=ejabberd
 NAME=ejabberd
 
@@ -34,8 +35,23 @@ ctl()
     su $EJABBERDUSER -c "$EJABBERDCTL $action" >/dev/null
 }
 
+mkrundir()
+{
+    if [ ! -d $EJABBERDRUN ]; then
+        mkdir -p $EJABBERDRUN
+        if [ $? -ne 0 ]; then
+            echo -n " failed"
+            return
+        fi
+        chmod 0755 $EJABBERDRUN
+        chown ejabberd:ejabberd $EJABBERDRUN
+    fi
+}
+
 start()
 {
+    mkrundir
+
     cd /var/lib/ejabberd
     su $EJABBERDUSER -c "$EJABBERD -noshell -detached"
 
@@ -70,6 +86,19 @@ stop()
     fi
 }
 
+live()
+{
+    mkrundir
+
+    echo '*******************************************************'
+    echo '* To quit, press Ctrl-g then enter q and press Return *'
+    echo '*******************************************************'
+    echo
+
+    cd /var/lib/ejabberd
+    exec su $EJABBERDUSER -c "$EJABBERD"
+}
+
 case "$1" in
     start)
 	echo -n "Starting jabber server: $NAME"
@@ -97,8 +126,15 @@ case "$1" in
 	    start
 	fi
     ;;
+    live)
+	if ctl status ; then
+	    echo -n "ejabberd is already running"
+	else
+	    live
+	fi
+    ;;
     *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|restart|force-reload|live}" >&2
 	exit 1
     ;;
 esac

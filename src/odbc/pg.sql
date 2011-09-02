@@ -1,5 +1,5 @@
 --
--- ejabberd, Copyright (C) 2002-2009   ProcessOne
+-- ejabberd, Copyright (C) 2002-2010   ProcessOne
 --
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License as
@@ -19,7 +19,8 @@
 
 CREATE TABLE users (
     username text PRIMARY KEY,
-    "password" text NOT NULL
+    "password" text NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 
@@ -39,7 +40,8 @@ CREATE TABLE rosterusers (
     askmessage text NOT NULL,
     server character(1) NOT NULL,
     subscribe text,
-    "type" text
+    "type" text,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX i_rosteru_user_jid ON rosterusers USING btree (username, jid);
@@ -59,7 +61,8 @@ CREATE INDEX pk_rosterg_user_jid ON rostergroups USING btree (username, jid);
 CREATE TABLE spool (
     username text NOT NULL,
     xml text NOT NULL,
-    seq SERIAL
+    seq SERIAL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX i_despool ON spool USING btree (username);
@@ -67,7 +70,8 @@ CREATE INDEX i_despool ON spool USING btree (username);
 
 CREATE TABLE vcard (
     username text PRIMARY KEY,
-    vcard text NOT NULL
+    vcard text NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE vcard_search (
@@ -117,7 +121,8 @@ CREATE TABLE privacy_default_list (
 CREATE TABLE privacy_list (
     username text NOT NULL,
     name text NOT NULL,
-    id SERIAL UNIQUE
+    id SERIAL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX i_privacy_list_username ON privacy_list USING btree (username);
@@ -139,12 +144,18 @@ CREATE TABLE privacy_list_data (
 CREATE TABLE private_storage (
     username text NOT NULL,
     namespace text NOT NULL,
-    data text NOT NULL
+    data text NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX i_private_storage_username ON private_storage USING btree (username);
 CREATE UNIQUE INDEX i_private_storage_username_namespace ON private_storage USING btree (username, namespace);
 
+
+CREATE TABLE roster_version (
+    username text PRIMARY KEY,
+    version text NOT NULL
+);
 
 -- To update from 0.9.8:
 -- CREATE SEQUENCE spool_seq_seq;
@@ -157,3 +168,54 @@ CREATE UNIQUE INDEX i_private_storage_username_namespace ON private_storage USIN
 -- ALTER TABLE rosterusers ADD COLUMN askmessage text;
 -- UPDATE rosterusers SET askmessage = '';
 -- ALTER TABLE rosterusers ALTER COLUMN askmessage SET NOT NULL;
+
+CREATE TABLE pubsub_node (
+  host text,
+  node text,
+  parent text,
+  "type" text,
+  nodeid SERIAL UNIQUE
+);
+CREATE INDEX i_pubsub_node_parent ON pubsub_node USING btree (parent);
+CREATE UNIQUE INDEX i_pubsub_node_tuple ON pubsub_node USING btree (host, node);
+
+CREATE TABLE pubsub_node_option (
+  nodeid bigint REFERENCES pubsub_node(nodeid) ON DELETE CASCADE,
+  name text,
+  val text
+);
+CREATE INDEX i_pubsub_node_option_nodeid ON pubsub_node_option USING btree (nodeid);
+
+CREATE TABLE pubsub_node_owner (
+  nodeid bigint REFERENCES pubsub_node(nodeid) ON DELETE CASCADE,
+  owner text
+);
+CREATE INDEX i_pubsub_node_owner_nodeid ON pubsub_node_owner USING btree (nodeid);
+
+CREATE TABLE pubsub_state (
+  nodeid bigint REFERENCES pubsub_node(nodeid) ON DELETE CASCADE,
+  jid text,
+  affiliation character(1),
+  subscriptions text,
+  stateid SERIAL UNIQUE
+);
+CREATE INDEX i_pubsub_state_jid ON pubsub_state USING btree (jid);
+CREATE UNIQUE INDEX i_pubsub_state_tuple ON pubsub_state USING btree (nodeid, jid);
+
+CREATE TABLE pubsub_item (
+  nodeid bigint REFERENCES pubsub_node(nodeid) ON DELETE CASCADE,
+  itemid text, 
+  publisher text,
+  creation text,
+  modification text,
+  payload text
+);
+CREATE INDEX i_pubsub_item_itemid ON pubsub_item USING btree (itemid);
+CREATE UNIQUE INDEX i_pubsub_item_tuple ON pubsub_item USING btree (nodeid, itemid);
+
+CREATE TABLE pubsub_subscription_opt (
+  subid text,
+  opt_name varchar(32),
+  opt_value text
+);
+CREATE UNIQUE INDEX i_pubsub_subscription_opt ON pubsub_subscription_opt USING btree (subid, opt_name);

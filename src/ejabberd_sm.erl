@@ -5,7 +5,7 @@
 %%% Created : 24 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -43,10 +43,14 @@
 	 dirty_get_sessions_list/0,
 	 dirty_get_my_sessions_list/0,
 	 get_vh_session_list/1,
+	 get_vh_session_number/1,
 	 register_iq_handler/4,
 	 register_iq_handler/5,
 	 unregister_iq_handler/2,
-	 ctl_process/2,
+	 force_update_presence/1,
+	 connected_users/0,
+	 connected_users_number/0,
+	 user_resources/2,
 	 get_session_pid/3,
 	 get_user_info/3,
 	 get_user_ip/3
@@ -58,10 +62,11 @@
 
 -include("ejabberd.hrl").
 -include("jlib.hrl").
--include("ejabberd_ctl.hrl").
+-include("ejabberd_commands.hrl").
 -include("mod_privacy.hrl").
 
 -record(session, {sid, usr, us, priority, info}).
+-record(session_counter, {vhost, count}).
 -record(state, {}).
 
 %% default value for the maximum number of user connections
@@ -88,6 +93,8 @@ route(From, To, Packet) ->
 
 open_session(SID, User, Server, Resource, Info) ->
     set_session(SID, User, Server, Resource, undefined, Info),
+    mnesia:dirty_update_counter(session_counter,
+				jlib:nameprep(Server), 1),
     check_for_sessions_to_replace(User, Server, Resource),
     JID = jlib:make_jid(User, Server, Resource),
     ejabberd_hooks:run(sm_register_connection_hook, JID#jid.lserver,
@@ -99,7 +106,9 @@ close_session(SID, User, Server, Resource) ->
 	[#session{info=I}] -> I
     end,
     F = fun() ->
-		mnesia:delete({session, SID})
+		mnesia:delete({session, SID}),
+		mnesia:dirty_update_counter(session_counter,
+					    jlib:nameprep(Server), -1)
 	end,
     mnesia:sync_dirty(F),
     JID = jlib:make_jid(User, Server, Resource),
@@ -212,6 +221,19 @@ get_vh_session_list(Server) ->
 	[{'==', {element, 2, '$1'}, LServer}],
 	['$1']}]).
 
+get_vh_session_number(Server) ->
+    LServer = jlib:nameprep(Server),
+    Query = mnesia:dirty_select(
+		session_counter,
+		[{#session_counter{vhost = LServer, count = '$1'},
+		  [],
+		  ['$1']}]),
+    case Query of
+	[Count] ->
+	    Count;
+	_ -> 0
+    end.
+    
 register_iq_handler(Host, XMLNS, Module, Fun) ->
     ejabberd_sm ! {register_iq_handler, Host, XMLNS, Module, Fun}.
 
@@ -238,9 +260,13 @@ init([]) ->
     mnesia:create_table(session,
 			[{ram_copies, [node()]},
 			 {attributes, record_info(fields, session)}]),
+    mnesia:create_table(session_counter,
+			[{ram_copies, [node()]},
+			 {attributes, record_info(fields, session_counter)}]),
     mnesia:add_table_index(session, usr),
     mnesia:add_table_index(session, us),
     mnesia:add_table_copy(session, node(), ram_copies),
+    mnesia:add_table_copy(session_counter, node(), ram_copies),
     mnesia:subscribe(system),
     ets:new(sm_iqtable, [named_table]),
     lists:foreach(
@@ -252,11 +278,7 @@ init([]) ->
 	      ejabberd_hooks:add(remove_user, Host,
 				 ejabberd_sm, disconnect_removed_user, 100)
       end, ?MYHOSTS),
-    ejabberd_ctl:register_commands(
-      [{"connected-users", "list all established sessions"},
-       {"connected-users-number", "print a number of established sessions"},
-       {"user-resources user server", "print user's connected resources"}],
-      ?MODULE, ctl_process),
+    ejabberd_commands:register_commands(commands()),
 
     {ok, #state{}}.
 
@@ -298,7 +320,7 @@ handle_info({route, From, To, Packet}, State) ->
     end,
     {noreply, State};
 handle_info({mnesia_system_event, {mnesia_down, Node}}, State) ->
-    clean_table_from_bad_node(Node),
+    recount_session_table(Node),
     {noreply, State};
 handle_info({register_iq_handler, Host, XMLNS, Module, Function}, State) ->
     ets:insert(sm_iqtable, {{XMLNS, Host}, Module, Function}),
@@ -326,6 +348,7 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
+    ejabberd_commands:unregister_commands(commands()),
     ok.
 
 %%--------------------------------------------------------------------
@@ -354,7 +377,9 @@ set_session(SID, User, Server, Resource, Priority, Info) ->
 	end,
     mnesia:sync_dirty(F).
 
-clean_table_from_bad_node(Node) ->
+%% Recalculates alive sessions when Node goes down 
+%% and updates session and session_counter tables 
+recount_session_table(Node) ->
     F = fun() ->
 		Es = mnesia:select(
 		       session,
@@ -363,9 +388,21 @@ clean_table_from_bad_node(Node) ->
 			 ['$_']}]),
 		lists:foreach(fun(E) ->
 				      mnesia:delete({session, E#session.sid})
-			      end, Es)
+			      end, Es),
+		%% reset session_counter table with active sessions
+		mnesia:clear_table(session_counter),
+		lists:foreach(fun(Server) ->
+				LServer = jlib:nameprep(Server),
+				Hs = mnesia:select(session,
+				    [{#session{usr = '$1', _ = '_'},
+				    [{'==', {element, 2, '$1'}, LServer}],
+				    ['$1']}]),
+				mnesia:write(
+				    #session_counter{vhost = LServer, 
+						     count = length(Hs)})
+			      end, ?MYHOSTS)
 	end,
-    mnesia:sync_dirty(F).
+    mnesia:async_dirty(F).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -460,7 +497,7 @@ do_route(From, To, Packet) ->
 				_ ->
 				    Err =
 					jlib:make_error_reply(
-					  Packet, ?ERR_RECIPIENT_UNAVAILABLE),
+					  Packet, ?ERR_SERVICE_UNAVAILABLE),
 				    ejabberd_router:route(To, From, Err)
 			    end;
 			_ ->
@@ -536,9 +573,14 @@ route_message(From, To, Packet) ->
 		_ ->
 		    case ejabberd_auth:is_user_exists(LUser, LServer) of
 			true ->
-			    ejabberd_hooks:run(offline_message_hook,
-					       LServer,
-					       [From, To, Packet]);
+			    case is_privacy_allow(From, To, Packet) of
+				true ->
+				    ejabberd_hooks:run(offline_message_hook,
+						       LServer,
+						       [From, To, Packet]);
+				false ->
+				    ok
+			    end;
 			_ ->
 			    Err = jlib:make_error_reply(
 				    Packet, ?ERR_SERVICE_UNAVAILABLE),
@@ -642,7 +684,6 @@ get_max_user_sessions(LUser, Host) ->
 	_ -> ?MAX_USER_SESSIONS
     end.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 process_iq(From, To, Packet) ->
@@ -676,28 +717,57 @@ process_iq(From, To, Packet) ->
 	    ok
     end.
 
+force_update_presence({LUser, _LServer} = US) ->
+    case catch mnesia:dirty_index_read(session, US, #session.us) of
+        {'EXIT', _Reason} ->
+            ok;
+        Ss ->
+            lists:foreach(fun(#session{sid = {_, Pid}}) ->
+                                  Pid ! {force_update_presence, LUser}
+                          end, Ss)
+    end.
 
-ctl_process(_Val, ["connected-users"]) ->
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% ejabberd commands
+
+commands() ->
+	[
+     #ejabberd_commands{name = connected_users,
+		       tags = [session],
+		       desc = "List all established sessions",
+		       module = ?MODULE, function = connected_users,
+		       args = [],
+		       result = {connected_users, {list, {sessions, string}}}},
+     #ejabberd_commands{name = connected_users_number,
+		       tags = [session, stats],
+		       desc = "Get the number of established sessions",
+		       module = ?MODULE, function = connected_users_number,
+		       args = [],
+		       result = {num_sessions, integer}},
+     #ejabberd_commands{name = user_resources,
+		       tags = [session],
+		       desc = "List user's connected resources",
+		       module = ?MODULE, function = user_resources,
+		       args = [{user, string}, {host, string}],
+		       result = {resources, {list, {resource, string}}}}
+	].
+
+connected_users() ->
     USRs = dirty_get_sessions_list(),
-    NewLine = io_lib:format("~n", []),
     SUSRs = lists:sort(USRs),
-    FUSRs = lists:map(fun({U, S, R}) -> [U, $@, S, $/, R, NewLine] end, SUSRs),
-    ?PRINT("~s", [FUSRs]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process(_Val, ["connected-users-number"]) ->
-    N = length(dirty_get_sessions_list()),
-    ?PRINT("~p~n", [N]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process(_Val, ["user-resources", User, Server]) ->
-    Resources =  get_user_resources(User, Server),
-    NewLine = io_lib:format("~n", []),
-    SResources = lists:sort(Resources),
-    FResources = lists:map(fun(R) -> [R, NewLine] end, SResources),
-    ?PRINT("~s", [FResources]),
-    {stop, ?STATUS_SUCCESS};
-ctl_process(Val, _Args) ->
-    Val.
+    lists:map(fun({U, S, R}) -> [U, $@, S, $/, R] end, SUSRs).
 
+connected_users_number() ->
+    length(dirty_get_sessions_list()).
+
+user_resources(User, Server) ->
+    Resources =  get_user_resources(User, Server),
+    lists:sort(Resources).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Update Mnesia tables
 
 update_tables() ->
     case catch mnesia:table_info(session, attributes) of

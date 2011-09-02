@@ -1,11 +1,11 @@
 %%%----------------------------------------------------------------------
 %%% File    : mod_adhoc.erl
 %%% Author  : Magnus Henoch <henoch@dtek.chalmers.se>
-%%% Purpose : Handle incoming ad-doc requests (JEP-0050)
+%%% Purpose : Handle incoming ad-doc requests (XEP-0050)
 %%% Created : 15 Nov 2005 by Magnus Henoch <henoch@dtek.chalmers.se>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as

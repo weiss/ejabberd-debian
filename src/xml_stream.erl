@@ -5,7 +5,7 @@
 %%% Created : 17 Nov 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2009   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2010   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -83,7 +83,7 @@ process_data(CallbackPid, Stack, Data) ->
 		[{xmlelement, Name, Attrs,
 		  [{xmlcdata, PreviousCData}|Els]} | Tail] ->
 		    [{xmlelement, Name, Attrs,
-		      [{xmlcdata, concat_binary([PreviousCData, CData])} | Els]} | Tail];
+		      [{xmlcdata, list_to_binary([PreviousCData, CData])} | Els]} | Tail];
 		%% No previous CDATA
 		[{xmlelement, Name, Attrs, Els} | Tail] ->
 		    [{xmlelement, Name, Attrs, [{xmlcdata, CData} | Els]} |
