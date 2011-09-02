@@ -1,8 +1,15 @@
 ejabberd (2.1.8-1) unstable; urgency=low
 
+  [ Konstantin Khomoutov ]
   * New upstream release.
+  * Remove patch fixing DSA-2248-1 (CVE-2011-1753)
+    as the fix is now integrated upstream.
+  * Drop patches from OLPC project implementing @recent@ and @online@
+    shared roster groups; support for @online@ is now intergated upstream.
+  * Add patch fixing version string where applicable (EJAB-1484).
+  * Bump standards version to 3.9.2
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 07 Aug 2011 17:09:00 +0400
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 02 Sep 2011 15:02:19 +0400
 
 ejabberd (2.1.6-2.1) unstable; urgency=high
 
