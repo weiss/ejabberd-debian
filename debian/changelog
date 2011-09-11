@@ -9,6 +9,9 @@ ejabberd (2.1.8-1) unstable; urgency=low
   * Add patch fixing version string where applicable (EJAB-1484).
   * Bump standards version to 3.9.2
 
+  [ Gerfried Fuchs ]
+  * Add recommended targets build-arch and build-indep to debian/rules.
+
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 02 Sep 2011 15:02:19 +0400
 
 ejabberd (2.1.6-2.1) unstable; urgency=high
