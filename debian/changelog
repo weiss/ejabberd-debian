@@ -11,8 +11,9 @@ ejabberd (2.1.8-1) unstable; urgency=low
 
   [ Gerfried Fuchs ]
   * Add recommended targets build-arch and build-indep to debian/rules.
+  * Fix spelling error in manpage noticed by lintian.
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 02 Sep 2011 15:02:19 +0400
+ -- Gerfried Fuchs <rhonda@debian.org>  Sun, 11 Sep 2011 16:16:55 +0200
 
 ejabberd (2.1.6-2.1) unstable; urgency=high
 
