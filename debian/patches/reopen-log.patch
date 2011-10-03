@@ -167,7 +167,7 @@ https://support.process-one.net/browse/EJAB-1243
      error_logger:add_report_handler(ejabberd_logger_h, LogPath),
      erl_ddll:load_driver(ejabberd:get_so_path(), tls_drv),
 @@ -113,6 +120,23 @@
-     Port = open_port({spawn, expat_erl}, [binary]),
+     Port = open_port({spawn, "expat_erl"}, [binary]),
      loop(Port).
  
 +get_sasl_logger() ->
