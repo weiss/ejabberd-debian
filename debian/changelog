@@ -2,6 +2,7 @@ ejabberd (2.1.9-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
   * New upstream release.
+  * Remove obsoleted version.patch.
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Mon, 03 Oct 2011 20:27:12 +0400
 
