@@ -1,3 +1,10 @@
+ejabberd (2.1.9-2) experimental; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Integrate upstream patches to support Erlang R15B.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 22 Dec 2011 02:45:14 +0400
+
 ejabberd (2.1.9-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]

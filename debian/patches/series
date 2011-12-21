@@ -2,3 +2,7 @@ mod_admin_extra.patch
 captcha.patch
 fix_examples.patch
 reopen-log.patch
+r15b-1.patch
+r15b-2.patch
+r15b-3.patch
+r15b-4.patch

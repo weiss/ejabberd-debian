@@ -1,0 +1,482 @@
+From 96f0b48cce7472a2e529a292a8bee65d411c7c04 Mon Sep 17 00:00:00 2001
+From: Badlop <badlop@process-one.net>
+Date: Thu, 8 Dec 2011 12:39:58 +0100
+Subject: [PATCH 1/4] Frontend module to Re and Regexp (EJAB-921)
+
+---
+ src/acl.erl                        |    8 ++--
+ src/ejabberd_ctl.erl               |   12 +++---
+ src/ejabberd_regexp.erl            |   72 ++++++++++++++++++++++++++++++++++++
+ src/ejabberd_s2s_in.erl            |    8 ++--
+ src/eldap/eldap_utils.erl          |   11 +++--
+ src/gen_mod.erl                    |    4 +-
+ src/mod_configure.erl              |    2 +-
+ src/mod_irc/mod_irc_connection.erl |   35 +++++++----------
+ src/mod_muc/mod_muc_log.erl        |   23 +++++------
+ src/mod_shared_roster.erl          |   10 ++--
+ src/web/ejabberd_web_admin.erl     |    7 +--
+ 11 files changed, 129 insertions(+), 63 deletions(-)
+ create mode 100644 src/ejabberd_regexp.erl
+
+--- a/src/acl.erl
++++ b/src/acl.erl
+@@ -223,19 +223,19 @@
+     end.
+ 
+ is_regexp_match(String, RegExp) ->
+-    case regexp:first_match(String, RegExp) of
++    case ejabberd_regexp:run(String, RegExp) of
+ 	nomatch ->
+ 	    false;
+-	{match, _, _} ->
++	match ->
+ 	    true;
+ 	{error, ErrDesc} ->
+ 	    ?ERROR_MSG(
+ 	       "Wrong regexp ~p in ACL: ~p",
+-	       [RegExp, lists:flatten(regexp:format_error(ErrDesc))]),
++	       [RegExp, ErrDesc]),
+ 	    false
+     end.
+ 
+ is_glob_match(String, Glob) ->
+-    is_regexp_match(String, regexp:sh_to_awk(Glob)).
++    is_regexp_match(String, ejabberd_regexp:sh_to_awk(Glob)).
+ 
+ 
+--- a/src/ejabberd_ctl.erl
++++ b/src/ejabberd_ctl.erl
+@@ -190,7 +190,7 @@
+ 	    print_usage_help(MaxC, ShCode),
+ 	    ?STATUS_SUCCESS;
+ 	[CmdString | _] ->
+-	    {ok, CmdStringU, _} = regexp:gsub(CmdString, "-", "_"),
++	    CmdStringU = ejabberd_regexp:greplace(CmdString, "-", "_"),
+ 	    print_usage_commands(CmdStringU, MaxC, ShCode),
+ 	    ?STATUS_SUCCESS
+     end;
+@@ -281,7 +281,7 @@
+ 
+ %% @spec (Args::[string()], Auth, AccessCommands) -> string() | integer() | {string(), integer()} | {error, ErrorType}
+ call_command([CmdString | Args], Auth, AccessCommands) ->
+-    {ok, CmdStringU, _} = regexp:gsub(CmdString, "-", "_"),
++    CmdStringU = ejabberd_regexp:greplace(CmdString, "-", "_"),
+     Command = list_to_atom(CmdStringU),
+     case ejabberd_commands:get_command_format(Command) of
+ 	{error, command_unknown} ->
+@@ -678,13 +678,13 @@
+     end.
+ 
+ filter_commands_regexp(All, Glob) ->
+-    RegExp = regexp:sh_to_awk(Glob),
++    RegExp = ejabberd_regexp:sh_to_awk(Glob),
+     lists:filter(
+       fun(Command) ->
+-	      case regexp:first_match(Command, RegExp) of
+-		  {match, _, _} ->
++	      case ejabberd_regexp:run(Command, RegExp) of
++		  match ->
+ 		      true;
+-		  _ ->
++		  nomatch ->
+ 		      false
+ 	      end
+       end,
+--- /dev/null
++++ b/src/ejabberd_regexp.erl
+@@ -0,0 +1,72 @@
++%%%----------------------------------------------------------------------
++%%% File    : ejabberd_regexp.erl
++%%% Author  : Badlop
++%%% Purpose : Frontend to Re and Regexp OTP modules
++%%% Created : 8 Dec 2011 by Badlop
++%%%
++%%%
++%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
++%%%
++%%% This program is free software; you can redistribute it and/or
++%%% modify it under the terms of the GNU General Public License as
++%%% published by the Free Software Foundation; either version 2 of the
++%%% License, or (at your option) any later version.
++%%%
++%%% This program is distributed in the hope that it will be useful,
++%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
++%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++%%% General Public License for more details.
++%%%
++%%% You should have received a copy of the GNU General Public License
++%%% along with this program; if not, write to the Free Software
++%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++%%% 02111-1307 USA
++%%%
++%%%----------------------------------------------------------------------
++
++-module(ejabberd_regexp).
++-compile([export_all]).
++
++exec(ReM, ReF, ReA, RgM, RgF, RgA) ->
++    try apply(ReM, ReF, ReA)
++    catch
++	error:undef ->
++	    apply(RgM, RgF, RgA);
++	A:B ->
++	    {error, {A, B}}
++    end.
++
++run(String, Regexp) ->
++    case exec(re, run, [String, Regexp, [{capture, none}]], regexp, first_match, [String, Regexp]) of
++	{match, _, _} -> match;
++	{match, _} -> match;
++	match -> match;
++	nomatch -> nomatch;
++	{error, Error} -> {error, Error}
++    end.
++
++split(String, Regexp) ->
++    case exec(re, split, [String, Regexp, [{return, list}]], regexp, split, [String, Regexp]) of
++	{ok, FieldList} -> FieldList;
++	{error, Error} -> throw(Error);
++	A -> A
++    end.
++
++replace(String, Regexp, New) ->
++    case exec(re, replace, [String, Regexp, New, [{return, list}]], regexp, sub, [String, Regexp, New]) of
++	{ok, NewString, _RepCount} -> NewString;
++	{error, Error} -> throw(Error);
++	A -> A
++    end.
++
++greplace(String, Regexp, New) ->
++    case exec(re, replace, [String, Regexp, New, [global, {return, list}]], regexp, sub, [String, Regexp, New]) of
++	{ok, NewString, _RepCount} -> NewString;
++	{error, Error} -> throw(Error);
++	A -> A
++    end.
++
++sh_to_awk(ShRegExp) ->
++    case exec(xmerl_regexp, sh_to_awk, [ShRegExp], regexp, sh_to_awk, [ShRegExp]) of
++	A -> A
++    end.
+--- a/src/ejabberd_s2s_in.erl
++++ b/src/ejabberd_s2s_in.erl
+@@ -805,11 +805,11 @@
+ 				 orelse (C == $-) orelse (C == $*)
+ 		   end, PL) of
+ 	true ->
+-	    Regexp = regexp:sh_to_awk(PL),
+-	    case regexp:match(DL, Regexp) of
+-		{match, _, _} ->
++	    Regexp = ejabberd_regexp:sh_to_awk(PL),
++	    case ejabberd_regexp:run(DL, Regexp) of
++		match ->
+ 		    match_labels(DLabels, PLabels);
+-		_ ->
++		nomatch ->
+ 		    false
+ 	    end;
+ 	false ->
+--- a/src/eldap/eldap_utils.erl
++++ b/src/eldap/eldap_utils.erl
+@@ -94,17 +94,18 @@
+ 	{'EXIT', _} ->
+ 	    {error, badmatch};
+ 	Result ->
+-	    case regexp:sub(Pattern, "%u", Result) of
+-		{ok, StringRes, _} ->
++            case catch ejabberd_regexp:replace(Pattern, "%u", Result) of
++                {'EXIT', _} ->
++                    {error, badmatch};
++		StringRes ->
+                     case (string:to_lower(StringRes) ==
+                               string:to_lower(String)) of
+                         true ->
+                             {ok, Result};
+                         false ->
+                             {error, badmatch}
+-                    end;
+-		_ -> {error, badmatch}
+-	    end
++                    end
++            end
+     end.
+ 
+ make_filter(Data, UIDs) ->
+--- a/src/gen_mod.erl
++++ b/src/gen_mod.erl
+@@ -186,11 +186,11 @@
+ 
+ get_module_opt_host(Host, Module, Default) ->
+     Val = get_module_opt(Host, Module, host, Default),
+-    element(2, regexp:gsub(Val, "@HOST@", Host)).
++    ejabberd_regexp:greplace(Val, "@HOST@", Host).
+ 
+ get_opt_host(Host, Opts, Default) ->
+     Val = get_opt(host, Opts, Default),
+-    element(2, regexp:gsub(Val, "@HOST@", Host)).
++    ejabberd_regexp:greplace(Val, "@HOST@", Host).
+ 
+ loaded_modules(Host) ->
+     ets:select(ejabberd_modules,
+--- a/src/mod_configure.erl
++++ b/src/mod_configure.erl
+@@ -542,7 +542,7 @@
+ 	Users ->
+ 	    SUsers = lists:sort([{S, U} || {U, S} <- Users]),
+ 	    case catch begin
+-			   {ok, [S1, S2]} = regexp:split(Diap, "-"),
++			   [S1, S2] = ejabberd_regexp:split(Diap, "-"),
+ 			   N1 = list_to_integer(S1),
+ 			   N2 = list_to_integer(S2),
+ 			   Sub = lists:sublist(SUsers, N1, N2 - N1 + 1),
+--- a/src/mod_irc/mod_irc_connection.erl
++++ b/src/mod_irc/mod_irc_connection.erl
+@@ -625,7 +625,7 @@
+     {next_state, StateName, StateData};
+ handle_info({tcp, _Socket, Data}, StateName, StateData) ->
+     Buf = StateData#state.inbuf ++ binary_to_list(Data),
+-    {ok, Strings} = regexp:split([C || C <- Buf, C /= $\r], "\n"),
++    Strings = ejabberd_regexp:split([C || C <- Buf, C /= $\r], "\n"),
+     ?DEBUG("strings=~p~n", [Strings]),
+     NewBuf = process_lines(StateData#state.encoding, Strings),
+     {next_state, StateName, StateData#state{inbuf = NewBuf}};
+@@ -797,7 +797,7 @@
+ 
+ 
+ process_channel_topic(StateData, Chan, String) ->
+-    {ok, Msg, _} = regexp:sub(String, ".*332[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*332[^:]*:", ""),
+     Msg1 = filter_message(Msg),
+     ejabberd_router:route(
+       jlib:make_jid(
+@@ -831,7 +831,7 @@
+ 
+ 
+ error_nick_in_use(_StateData, String) ->
+-    {ok, Msg, _} = regexp:sub(String, ".*433 +[^ ]* +", ""),
++    Msg = ejabberd_regexp:replace(String, ".*433 +[^ ]* +", ""),
+     Msg1 = filter_message(Msg),
+     {xmlelement, "error", [{"code", "409"}, {"type", "cancel"}],
+      [{xmlelement, "conflict", [{"xmlns", ?NS_STANZAS}], []},
+@@ -879,7 +879,7 @@
+        [{xmlelement, "body", [], [{xmlcdata, "End of WHOIS"}]}]}).
+ 
+ process_whois311(StateData, String, Nick, Ident, Irchost) ->
+-    {ok, Fullname, _} = regexp:sub(String, ".*311[^:]*:", ""),
++    Fullname = ejabberd_regexp:replace(String, ".*311[^:]*:", ""),
+     ejabberd_router:route(
+       jlib:make_jid(lists:concat([Nick, "!", StateData#state.server]),
+ 		    StateData#state.host, ""),
+@@ -891,7 +891,7 @@
+ 			Ident, "@" , Irchost, " : " , Fullname])}]}]}).
+ 
+ process_whois312(StateData, String, Nick, Ircserver) ->
+-    {ok, Ircserverdesc, _} = regexp:sub(String, ".*312[^:]*:", ""),
++    Ircserverdesc = ejabberd_regexp:replace(String, ".*312[^:]*:", ""),
+     ejabberd_router:route(
+       jlib:make_jid(lists:concat([Nick, "!", StateData#state.server]),
+ 		    StateData#state.host, ""),
+@@ -902,7 +902,7 @@
+ 				   Ircserver, " : ", Ircserverdesc])}]}]}).
+ 
+ process_whois319(StateData, String, Nick) ->
+-    {ok, Chanlist, _} = regexp:sub(String, ".*319[^:]*:", ""),
++    Chanlist = ejabberd_regexp:replace(String, ".*319[^:]*:", ""),
+     ejabberd_router:route(
+       jlib:make_jid(lists:concat([Nick, "!", StateData#state.server]),
+ 		    StateData#state.host, ""),
+@@ -916,7 +916,7 @@
+ 
+ process_chanprivmsg(StateData, Chan, From, String) ->
+     [FromUser | _] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*PRIVMSG[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*PRIVMSG[^:]*:", ""),
+     Msg1 = case Msg of
+ 	       [1, $A, $C, $T, $I, $O, $N, $  | Rest] ->
+ 		   "/me " ++ Rest;
+@@ -935,7 +935,7 @@
+ 
+ process_channotice(StateData, Chan, From, String) ->
+     [FromUser | _] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*NOTICE[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*NOTICE[^:]*:", ""),
+     Msg1 = case Msg of
+ 	       [1, $A, $C, $T, $I, $O, $N, $  | Rest] ->
+ 		   "/me " ++ Rest;
+@@ -955,7 +955,7 @@
+ 
+ process_privmsg(StateData, _Nick, From, String) ->
+     [FromUser | _] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*PRIVMSG[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*PRIVMSG[^:]*:", ""),
+     Msg1 = case Msg of
+ 	       [1, $A, $C, $T, $I, $O, $N, $  | Rest] ->
+ 		   "/me " ++ Rest;
+@@ -973,7 +973,7 @@
+ 
+ process_notice(StateData, _Nick, From, String) ->
+     [FromUser | _] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*NOTICE[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*NOTICE[^:]*:", ""),
+     Msg1 = case Msg of
+ 	       [1, $A, $C, $T, $I, $O, $N, $  | Rest] ->
+ 		   "/me " ++ Rest;
+@@ -1016,7 +1016,7 @@
+ 
+ process_topic(StateData, Chan, From, String) ->
+     [FromUser | _] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*TOPIC[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*TOPIC[^:]*:", ""),
+     Msg1 = filter_message(Msg),
+     ejabberd_router:route(
+       jlib:make_jid(lists:concat([Chan, "%", StateData#state.server]),
+@@ -1030,7 +1030,7 @@
+ 
+ process_part(StateData, Chan, From, String) ->
+     [FromUser | FromIdent] = string:tokens(From, "!"),
+-    {ok, Msg, _} = regexp:sub(String, ".*PART[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*PART[^:]*:", ""),
+     Msg1 = filter_message(Msg),
+     ejabberd_router:route(
+       jlib:make_jid(lists:concat([Chan, "%", StateData#state.server]),
+@@ -1059,7 +1059,7 @@
+ process_quit(StateData, From, String) ->
+     [FromUser | FromIdent] = string:tokens(From, "!"),
+ 
+-    {ok, Msg, _} = regexp:sub(String, ".*QUIT[^:]*:", ""),
++    Msg = ejabberd_regexp:replace(String, ".*QUIT[^:]*:", ""),
+     Msg1 = filter_message(Msg),
+     %%NewChans =
+ 	dict:map(
+@@ -1215,7 +1215,7 @@
+       end, dict:fetch_keys(StateData#state.channels)).
+ 
+ error_unknown_num(_StateData, String, Type) ->
+-    {ok, Msg, _} = regexp:sub(String, ".*[45][0-9][0-9] +[^ ]* +", ""),
++    Msg = ejabberd_regexp:replace(String, ".*[45][0-9][0-9] +[^ ]* +", ""),
+     Msg1 = filter_message(Msg),
+     {xmlelement, "error", [{"code", "500"}, {"type", Type}],
+      [{xmlelement, "undefined-condition", [{"xmlns", ?NS_STANZAS}], []},
+@@ -1313,12 +1313,7 @@
+       end, filter_mirc_colors(Msg)).
+ 
+ filter_mirc_colors(Msg) ->
+-    case regexp:gsub(Msg, "(\\003[0-9]+)(,[0-9]+)?", "") of
+-	{ok, Msg2, _} ->
+-	    Msg2;
+-	_ ->
+-	    Msg
+-    end.
++    ejabberd_regexp:greplace(Msg, "(\\003[0-9]+)(,[0-9]+)?", "").
+ 
+ unixtime2string(Unixtime) ->
+     Secs = Unixtime + calendar:datetime_to_gregorian_seconds(
+--- a/src/mod_muc/mod_muc_log.erl
++++ b/src/mod_muc/mod_muc_log.erl
+@@ -416,11 +416,11 @@
+ 		   io_lib:format("<font class=\"msc\">~s~s~s</font><br/>", 
+ 				 [Nick, ?T(" has set the subject to: "), htmlize(T,NoFollow,FileFormat)]);
+ 	       {body, T} ->  
+-		   case {regexp:first_match(T, "^/me\s"), Nick} of
++		   case {ejabberd_regexp:run(T, "^/me\s"), Nick} of
+ 		       {_, ""} ->
+ 			   io_lib:format("<font class=\"msm\">~s</font><br/>",
+ 					 [htmlize(T,NoFollow,FileFormat)]);
+-		       {{match, _, _}, _} ->
++		       {match, _} ->
+ 			   io_lib:format("<font class=\"mne\">~s ~s</font><br/>", 
+ 					 [Nick, string:substr(htmlize(T,FileFormat), 5)]);
+ 		       {nomatch, _} ->
+@@ -662,8 +662,7 @@
+ 	     html ->
+ 		 S1;
+ 	     plaintext ->
+-		 {ok, Res, _} = regexp:gsub(S1, "<[^>]*>", ""),
+-		 Res
++		 ejabberd_regexp:greplace(S1, "<[^>]*>", "")
+ 	 end,
+     io:format(F, S2, []).
+ 
+@@ -790,15 +789,15 @@
+       S2_list).
+ 
+ htmlize2(S1, NoFollow) ->
+-    S2 = element(2, regexp:gsub(S1, "\\&", "\\&amp;")),
+-    S3 = element(2, regexp:gsub(S2, "<", "\\&lt;")),
+-    S4 = element(2, regexp:gsub(S3, ">", "\\&gt;")),
+-    S5 = element(2, regexp:gsub(S4, "((http|https|ftp)://|(mailto|xmpp):)[^] )\'\"}]+",
+-				link_regexp(NoFollow))),
++    S2 = ejabberd_regexp:greplace(S1, "\\&", "\\&amp;"),
++    S3 = ejabberd_regexp:greplace(S2, "<", "\\&lt;"),
++    S4 = ejabberd_regexp:greplace(S3, ">", "\\&gt;"),
++    S5 = ejabberd_regexp:greplace(S4, "((http|https|ftp)://|(mailto|xmpp):)[^] )\'\"}]+",
++				link_regexp(NoFollow)),
+     %% Remove 'right-to-left override' unicode character 0x202e
+-    S6 = element(2, regexp:gsub(S5, "  ", "\\&nbsp;\\&nbsp;")),
+-    S7 = element(2, regexp:gsub(S6, "\\t", "\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;")),
+-    element(2, regexp:gsub(S7, [226,128,174], "[RLO]")).
++    S6 = ejabberd_regexp:greplace(S5, "  ", "\\&nbsp;\\&nbsp;"),
++    S7 = ejabberd_regexp:greplace(S6, "\\t", "\\&nbsp;\\&nbsp;\\&nbsp;\\&nbsp;"),
++    ejabberd_regexp:greplace(S7, [226,128,174], "[RLO]").
+ 
+ %% Regexp link
+ %% Add the nofollow rel attribute when required
+--- a/src/mod_shared_roster.erl
++++ b/src/mod_shared_roster.erl
+@@ -614,8 +614,8 @@
+ %% @spec (Host::string(), {User::string(), Server::string()}, Group::string()) -> {atomic, ok}
+ add_user_to_group(Host, US, Group) ->
+     {LUser, LServer} = US,
+-    case regexp:match(LUser, "^@.+@$") of
+-	{match,_,_} ->
++    case ejabberd_regexp:run(LUser, "^@.+@$") of
++	match ->
+ 	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+ 	    MoreGroupOpts =
+ 		case LUser of
+@@ -647,8 +647,8 @@
+ remove_user_from_group(Host, US, Group) ->
+     GroupHost = {Group, Host},
+     {LUser, LServer} = US,
+-    case regexp:match(LUser, "^@.+@$") of
+-	{match,_,_} ->
++    case ejabberd_regexp:run(LUser, "^@.+@$") of
++	match ->
+ 	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+ 	    NewGroupOpts =
+ 		case LUser of
+@@ -967,7 +967,7 @@
+ 	end ++
+ 	[[us_to_list(Member), $\n] || Member <- Members],
+     FDisplayedGroups = [[DG, $\n] || DG <- DisplayedGroups],
+-    DescNL = length(element(2, regexp:split(Description, "\n"))),
++    DescNL = length(ejabberd_regexp:split(Description, "\n")),
+     FGroup =
+ 	?XAE("table", [{"class", "withtextareas"}],
+ 	     [?XE("tbody",
+--- a/src/web/ejabberd_web_admin.erl
++++ b/src/web/ejabberd_web_admin.erl
+@@ -1239,13 +1239,12 @@
+ term_to_string(T) ->
+     StringParagraph = lists:flatten(io_lib:format("~1000000p", [T])),
+     %% Remove from the string all the carriage returns characters
+-    {ok, StringLine, _} = regexp:gsub(StringParagraph, "\\n ", ""),
+-    StringLine.
++    ejabberd_regexp:greplace(StringParagraph, "\\n ", "").
+ 
+ %% @spec (T::any(), Cols::integer()) -> {NumLines::integer(), Paragraph::string()}
+ term_to_paragraph(T, Cols) ->
+     Paragraph = erl_prettypr:format(erl_syntax:abstract(T), [{paper, Cols}]),
+-    {ok, FieldList} = regexp:split(Paragraph, "\n"),
++    FieldList = ejabberd_regexp:split(Paragraph, "\n"),
+     NumLines = length(FieldList),
+     {NumLines, Paragraph}.
+ 
+@@ -1558,7 +1557,7 @@
+ list_users_in_diapason(Host, Diap, Lang, URLFunc) ->
+     Users = ejabberd_auth:get_vh_registered_users(Host),
+     SUsers = lists:sort([{S, U} || {U, S} <- Users]),
+-    {ok, [S1, S2]} = regexp:split(Diap, "-"),
++    [S1, S2] = ejabberd_regexp:split(Diap, "-"),
+     N1 = list_to_integer(S1),
+     N2 = list_to_integer(S2),
+     Sub = lists:sublist(SUsers, N1, N2 - N1 + 1),

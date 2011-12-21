@@ -1,0 +1,351 @@
+From 294fa5099c61f84adc5a7704099b7b0820cb6e1f Mon Sep 17 00:00:00 2001
+From: Badlop <badlop@process-one.net>
+Date: Wed, 21 Dec 2011 12:15:21 +0100
+Subject: [PATCH 4/4] Support Erlang/OTP R15B driver (EJAB-1521)
+
+---
+ src/ejabberd_zlib/ejabberd_zlib_drv.c |   29 +++++++++++++++++++++++++----
+ src/expat_erl.c                       |   30 ++++++++++++++++++++++++++----
+ src/mod_irc/iconv_erl.c               |   30 ++++++++++++++++++++++++++----
+ src/stringprep/stringprep_drv.c       |   30 ++++++++++++++++++++++++++----
+ src/tls/sha_drv.c                     |   30 ++++++++++++++++++++++++++----
+ src/tls/tls_drv.c                     |   30 ++++++++++++++++++++++++++----
+ 6 files changed, 155 insertions(+), 24 deletions(-)
+
+diff --git a/src/ejabberd_zlib/ejabberd_zlib_drv.c b/src/ejabberd_zlib/ejabberd_zlib_drv.c
+index ca3e793..bcd9ad3 100644
+--- a/src/ejabberd_zlib/ejabberd_zlib_drv.c
++++ b/src/ejabberd_zlib/ejabberd_zlib_drv.c
+@@ -23,6 +23,15 @@
+ #include <erl_driver.h>
+ #include <zlib.h>
+ 
++/*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
+ 
+ #define BUF_SIZE 1024
+ 
+@@ -98,10 +107,10 @@ static void ejabberd_zlib_drv_stop(ErlDrvData handle)
+ 	 }
+ 
+ 
+-static int ejabberd_zlib_drv_control(ErlDrvData handle,
++static ErlDrvSSizeT ejabberd_zlib_drv_control(ErlDrvData handle,
+ 				     unsigned int command,
+-				     char *buf, int len,
+-				     char **rbuf, int rlen)
++				     char *buf, ErlDrvSizeT len,
++				     char **rbuf, ErlDrvSizeT rlen)
+ {
+    ejabberd_zlib_data *d = (ejabberd_zlib_data *)handle;
+    int err;
+@@ -187,7 +196,19 @@ ErlDrvEntry ejabberd_zlib_driver_entry = {
+    NULL,			/* handle */
+    ejabberd_zlib_drv_control,   /* F_PTR control, port_command callback */
+    NULL,			/* F_PTR timeout, reserved */
+-   NULL				/* F_PTR outputv, reserved */
++   NULL,			/* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(ejabberd_zlib_drv) /* must match name in driver_entry */
+diff --git a/src/expat_erl.c b/src/expat_erl.c
+index 32826f2..1ea17e5 100644
+--- a/src/expat_erl.c
++++ b/src/expat_erl.c
+@@ -34,6 +34,16 @@
+ #define PARSE_COMMAND 0
+ #define PARSE_FINAL_COMMAND 1
+ 
++/*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
++
+ ei_x_buff event_buf;
+ ei_x_buff xmlns_buf;
+ 
+@@ -190,10 +200,10 @@ static void expat_erl_stop(ErlDrvData handle)
+    driver_free((char*)handle);
+ }
+ 
+-static int expat_erl_control(ErlDrvData drv_data,
++static ErlDrvSSizeT expat_erl_control(ErlDrvData drv_data,
+ 			     unsigned int command,
+-			     char *buf, int len,
+-			     char **rbuf, int rlen)
++			     char *buf, ErlDrvSizeT len,
++			     char **rbuf, ErlDrvSizeT rlen)
+ {
+    expat_data* d = (expat_data*)drv_data;
+    int res, errcode;
+@@ -251,7 +261,19 @@ ErlDrvEntry expat_driver_entry = {
+    NULL,			/* handle */
+    expat_erl_control,		/* F_PTR control, port_command callback */
+    NULL,			/* F_PTR timeout, reserved */
+-   NULL				/* F_PTR outputv, reserved */
++   NULL,			/* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(expat_erl) /* must match name in driver_entry */
+diff --git a/src/mod_irc/iconv_erl.c b/src/mod_irc/iconv_erl.c
+index 9f48500..cad4157 100644
+--- a/src/mod_irc/iconv_erl.c
++++ b/src/mod_irc/iconv_erl.c
+@@ -24,6 +24,16 @@
+ #include <ei.h>
+ #include <iconv.h>
+ 
++/*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
++
+ typedef struct {
+       ErlDrvPort port;
+       iconv_t cd;
+@@ -46,10 +56,10 @@ static void iconv_erl_stop(ErlDrvData handle)
+    driver_free((char*)handle);
+ }
+ 
+-static int iconv_erl_control(ErlDrvData drv_data,
++static ErlDrvSSizeT iconv_erl_control(ErlDrvData drv_data,
+ 			     unsigned int command,
+-			     char *buf, int len,
+-			     char **rbuf, int rlen)
++			     char *buf, ErlDrvSizeT len,
++			     char **rbuf, ErlDrvSizeT rlen)
+ {
+    int i;
+    int size;
+@@ -144,7 +154,19 @@ ErlDrvEntry iconv_driver_entry = {
+    NULL,                       /* handle */
+    iconv_erl_control,          /* F_PTR control, port_command callback */
+    NULL,                       /* F_PTR timeout, reserved */
+-   NULL                        /* F_PTR outputv, reserved */
++   NULL,                       /* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(iconv_erl) /* must match name in driver_entry */
+diff --git a/src/stringprep/stringprep_drv.c b/src/stringprep/stringprep_drv.c
+index f4d98f8..e3246e8 100644
+--- a/src/stringprep/stringprep_drv.c
++++ b/src/stringprep/stringprep_drv.c
+@@ -30,6 +30,16 @@
+ #define NODEPREP_COMMAND 2
+ #define RESOURCEPREP_COMMAND 3
+ 
++/*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
++
+ typedef struct {
+       ErlDrvPort port;
+ } stringprep_data;
+@@ -194,10 +204,10 @@ static int compose(int ch1, int ch2)
+ 
+ 
+ 
+-static int stringprep_erl_control(ErlDrvData drv_data,
++static ErlDrvSSizeT stringprep_erl_control(ErlDrvData drv_data,
+ 				  unsigned int command,
+-				  char *buf, int len,
+-				  char **rbuf, int rlen)
++				  char *buf, ErlDrvSizeT len,
++				  char **rbuf, ErlDrvSizeT rlen)
+ {
+    int i, j, pos=1;
+    unsigned char c;
+@@ -400,7 +410,19 @@ ErlDrvEntry stringprep_driver_entry = {
+    NULL,			/* handle */
+    stringprep_erl_control,	/* F_PTR control, port_command callback */
+    NULL,			/* F_PTR timeout, reserved */
+-   NULL				/* F_PTR outputv, reserved */
++   NULL,			/* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(stringprep_erl) /* must match name in driver_entry */
+diff --git a/src/tls/sha_drv.c b/src/tls/sha_drv.c
+index 2242670..fc8fb9a 100644
+--- a/src/tls/sha_drv.c
++++ b/src/tls/sha_drv.c
+@@ -24,16 +24,26 @@
+ #include <openssl/md2.h>
+ #endif
+ 
++/*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
++
+ static ErlDrvData sha_drv_start(ErlDrvPort port, char *buf)
+ {
+   set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY);
+   return NULL;
+ }
+ 
+-static int sha_drv_control(ErlDrvData handle,
++static ErlDrvSSizeT sha_drv_control(ErlDrvData handle,
+ 			   unsigned int command,
+-			   char *buf, int len,
+-			   char **rbuf, int rlen)
++			   char *buf, ErlDrvSizeT len,
++			   char **rbuf, ErlDrvSizeT rlen)
+ {
+   ErlDrvBinary *b = NULL;
+ 
+@@ -89,7 +99,19 @@ ErlDrvEntry sha_driver_entry = {
+   NULL,			/* handle */
+   sha_drv_control,	/* F_PTR control, port_command callback */
+   NULL,			/* F_PTR timeout, reserved */
+-  NULL			/* F_PTR outputv, reserved */
++  NULL,			/* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(sha_drv) /* must match name in driver_entry */
+diff --git a/src/tls/tls_drv.c b/src/tls/tls_drv.c
+index bdb5446..c421005 100644
+--- a/src/tls/tls_drv.c
++++ b/src/tls/tls_drv.c
+@@ -45,6 +45,16 @@ typedef unsigned __int32 uint32_t;
+ #endif
+ 
+ /*
++ * R15B changed several driver callbacks to use ErlDrvSizeT and
++ * ErlDrvSSizeT typedefs instead of int.
++ * This provides missing typedefs on older OTP versions.
++ */
++#if ERL_DRV_EXTENDED_MAJOR_VERSION < 2
++typedef int ErlDrvSizeT;
++typedef int ErlDrvSSizeT;
++#endif
++
++/*
+  * str_hash is based on the public domain code from
+  * http://www.burtleburtle.net/bob/hash/doobs.html
+  */
+@@ -305,10 +315,10 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
+ 	 }
+ 
+ 
+-static int tls_drv_control(ErlDrvData handle,
++static ErlDrvSSizeT tls_drv_control(ErlDrvData handle,
+ 			   unsigned int command,
+-			   char *buf, int len,
+-			   char **rbuf, int rlen)
++			   char *buf, ErlDrvSizeT len,
++			   char **rbuf, ErlDrvSizeT rlen)
+ {
+    tls_data *d = (tls_data *)handle;
+    int res;
+@@ -503,7 +513,19 @@ ErlDrvEntry tls_driver_entry = {
+    NULL,			/* handle */
+    tls_drv_control,		/* F_PTR control, port_command callback */
+    NULL,			/* F_PTR timeout, reserved */
+-   NULL				/* F_PTR outputv, reserved */
++   NULL,			/* F_PTR outputv, reserved */
++  /* Added in Erlang/OTP R15B: */
++  NULL,                 /* ready_async */
++  NULL,                 /* flush */
++  NULL,                 /* call */
++  NULL,                 /* event */
++  ERL_DRV_EXTENDED_MARKER,        /* extended_marker */
++  ERL_DRV_EXTENDED_MAJOR_VERSION, /* major_version */
++  ERL_DRV_EXTENDED_MINOR_VERSION, /* minor_version */
++  0,                    /* driver_flags */
++  NULL,                 /* handle2 */
++  NULL,                 /* process_exit */
++  NULL                  /* stop_select */
+ };
+ 
+ DRIVER_INIT(tls_drv) /* must match name in driver_entry */
+-- 
+1.7.7.3
+
