@@ -1,3 +1,10 @@
+ejabberd (2.1.10-1) experimental; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * New upstream release.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Tue, 27 Dec 2011 14:24:48 +0400
+
 ejabberd (2.1.9-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
