@@ -4,7 +4,7 @@ by adding several new commands.
 
 The code is taken from the ProcessOne repository:
 https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
-(trunk, revision 1078).
+(trunk, revision 1119).
 
 --- a/src/ejabberd.app
 +++ b/src/ejabberd.app
@@ -986,11 +986,11 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 +    case IQr#iq.sub_el of
 +	[A1] ->
 +	    case get_vcard(Data, A1) of
-+		false -> "Error: no_value";
++		[] -> throw(error_no_value_found_in_vcard);
 +		ElemList -> [xml:get_tag_cdata(Elem) || Elem <- ElemList]
 +	    end;
 +	[] ->
-+	    "Error: no_vcard"
++	    throw(error_no_vcard_found)
 +    end.
 +
 +get_vcard([Data1, Data2], A1) ->
@@ -1005,7 +1005,7 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 +get_subtag(Xmlelement, Name) ->
 +    case code:ensure_loaded(exmpp_xml) of
 +	{error, _} ->
-+	    get_subtag_xml(Xmlelement, Name);
++	    [get_subtag_xml(Xmlelement, Name)];
 +	{module, exmpp_xml} ->
 +	    get_subtag_exmpp(Xmlelement, Name)
 +    end.
@@ -1047,7 +1047,7 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 +update_vcard_els(Data, ContentList, Els1) ->
 +    Els2 = lists:keysort(2, Els1),
 +    [Data1 | Data2] = Data,
-+    NewEl = case Data2 of
++    NewEls = case Data2 of
 +		[] ->
 +		    [{xmlelement, Data1, [], [{xmlcdata,Content}]} || Content <- ContentList];
 +		[D2] ->
@@ -1060,10 +1060,10 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 +		    ContentOld2 = [A || {_, X, _, _} = A <- ContentOld1, X/=D2],
 +		    ContentOld3 = lists:keysort(2, ContentOld2),
 +		    ContentNew = lists:keymerge(2, Content2, ContentOld3),
-+		    {xmlelement, Data1, [], ContentNew}
++		    [{xmlelement, Data1, [], ContentNew}]
 +	    end,
 +    Els3 = lists:keydelete(Data1, 2, Els2),
-+    lists:keymerge(2, [NewEl], Els3).
++    lists:keymerge(2, NewEls, Els3).
 +
 +
 +%%%
@@ -1405,9 +1405,9 @@ https://forge.process-one.net/browse/ejabberd-modules/mod_admin_extra
 +    QueryEl = xml_stream:parse_element(QueryS),
 +    StanzaEl = {xmlelement, "iq", [{"type", "set"}], [QueryEl]},
 +    IQ = jlib:iq_query_info(StanzaEl),
-+    {result, []} = ejabberd_hooks:run_fold(
++    ejabberd_hooks:run_fold(
 +		     privacy_iq_set,
-+		     "localhost",
++		     Host,
 +		     {error, ?ERR_FEATURE_NOT_IMPLEMENTED},
 +		     [From, To, IQ]
 +		    ),
