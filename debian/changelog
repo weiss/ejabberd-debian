@@ -2,8 +2,9 @@ ejabberd (2.1.10-1) experimental; urgency=low
 
   [ Konstantin Khomoutov ]
   * New upstream release.
+  * Update mod_admin_extra to revision 1123.
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Tue, 27 Dec 2011 14:24:48 +0400
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 29 Dec 2011 13:34:36 +0400
 
 ejabberd (2.1.9-1) unstable; urgency=low
 
