@@ -4,7 +4,10 @@ ejabberd (2.1.10-1) experimental; urgency=low
   * New upstream release.
   * Update mod_admin_extra to revision 1123.
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 29 Dec 2011 13:34:36 +0400
+  [ Gerfried Fuchs ]
+  * Bump erlang-dev Build-Depends version to >= 1:15.b.
+
+ -- Gerfried Fuchs <rhonda@debian.org>  Sun, 08 Jan 2012 11:45:38 +0100
 
 ejabberd (2.1.9-1) unstable; urgency=low
 
