@@ -1,3 +1,10 @@
+ejabberd (2.1.10-2) unstable; urgency=low
+
+  [ Gerfried Fuchs ]
+  * Upload to unstable.
+
+ -- 
+
 ejabberd (2.1.10-1) experimental; urgency=low
 
   [ Konstantin Khomoutov ]
