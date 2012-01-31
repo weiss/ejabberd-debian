@@ -25,7 +25,8 @@ configure: configure-stamp
 configure-stamp: $(QUILT_STAMPFN)
 	dh_testdir
 
-	dh_auto_configure $(AUTO_OPTS) -- $(DEB_CONFIGURE_EXTRA_FLAGS)
+	dh_auto_configure $(AUTO_OPTS) -- $(DEB_CONFIGURE_EXTRA_FLAGS) \
+		$(shell dpkg-buildflags --export=configure)
 
 	touch configure-stamp
 
