@@ -8,7 +8,7 @@ ejabberd (2.1.10-2) unstable; urgency=low
   [ Konstantin Khomoutov ]
   * Update Dutch translation (thanks to Jeroen Schot, closes: #657590).
 
- --
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Wed, 01 Feb 2012 01:03:18 +0400
 
 ejabberd (2.1.10-1) experimental; urgency=low
 
