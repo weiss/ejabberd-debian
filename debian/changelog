@@ -1,3 +1,10 @@
+ejabberd (2.1.10-2ubuntu1) precise; urgency=low
+
+  * Revert bumping erlang-dev Build-Depends version to >= 1:15.b, there is no
+    1:15.b in precise.
+
+ -- Gerfried Fuchs <rhonda@ubuntu.com>  Wed, 15 Feb 2012 08:50:42 +0100
+
 ejabberd (2.1.10-2) unstable; urgency=low
 
   [ Gerfried Fuchs ]
