@@ -5,7 +5,7 @@
 %%% Created :  5 Mar 2005 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2012   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -186,7 +186,7 @@ get_vcard_module(Server) ->
 get_rosteritem_name([], _, _) ->
     "";
 get_rosteritem_name([ModVcard], U, S) ->
-    From = jlib:make_jid("", S, mod_shared_roster),
+    From = jlib:make_jid("", S, ?MODULE),
     To = jlib:make_jid(U, S, ""),
     IQ = {iq,"",get,"vcard-temp","",
 	  {xmlelement,"vCard",[{"xmlns","vcard-temp"}],[]}},
@@ -619,19 +619,19 @@ add_user_to_group(Host, US, Group) ->
     {LUser, LServer} = US,
     case ejabberd_regexp:run(LUser, "^@.+@$") of
 	match ->
-	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    GroupOpts = ?MODULE:get_group_opts(Host, Group),
 	    MoreGroupOpts =
 		case LUser of
 		    "@all@" -> [{all_users, true}];
 		    "@online@" -> [{online_users, true}];
 		    _ -> []
 		end,
-            mod_shared_roster:set_group_opts(
+            ?MODULE:set_group_opts(
 	      Host, Group,
 	      GroupOpts ++ MoreGroupOpts);
 	nomatch ->
 	    %% Push this new user to members of groups where this group is displayed
-	    push_user_to_displayed(LUser, LServer, Group, both),
+	    push_user_to_displayed(LUser, LServer, Group, Host, both),
 	    %% Push members of groups that are displayed to this group
 	    push_displayed_to_user(LUser, LServer, Group, Host, both),
 	    R = #sr_user{us = US, group_host = {Group, Host}},
@@ -652,7 +652,7 @@ remove_user_from_group(Host, US, Group) ->
     {LUser, LServer} = US,
     case ejabberd_regexp:run(LUser, "^@.+@$") of
 	match ->
-	    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+	    GroupOpts = ?MODULE:get_group_opts(Host, Group),
 	    NewGroupOpts =
 		case LUser of
 		    "@all@" ->
@@ -660,7 +660,7 @@ remove_user_from_group(Host, US, Group) ->
 		    "@online@" ->
 			lists:filter(fun(X) -> X/={online_users,true} end, GroupOpts)
 		end,
-	    mod_shared_roster:set_group_opts(Host, Group, NewGroupOpts);
+	    ?MODULE:set_group_opts(Host, Group, NewGroupOpts);
 	nomatch ->
 	    R = #sr_user{us = US, group_host = GroupHost},
 	    F = fun() ->
@@ -668,7 +668,7 @@ remove_user_from_group(Host, US, Group) ->
 		end,
 	    Result = mnesia:transaction(F),
 	    %% Push removal of the old user to members of groups where the group that this user was members was displayed
-	    push_user_to_displayed(LUser, LServer, Group, remove),
+	    push_user_to_displayed(LUser, LServer, Group, Host, remove),
 	    %% Push removal of members of groups that where displayed to the group which this user has left
 	    push_displayed_to_user(LUser, LServer, Group, Host, remove),
 	    Result
@@ -689,7 +689,7 @@ register_user(User, Server) ->
     %% Get list of groups where this user is member
     Groups = get_user_groups({User, Server}),
     %% Push this user to members of groups where is displayed a group which this user is member
-    [push_user_to_displayed(User, Server, Group, both) || Group <- Groups].
+    [push_user_to_displayed(User, Server, Group, Server, both) || Group <- Groups].
 
 remove_user(User, Server) ->
     push_user_to_members(User, Server, remove).
@@ -711,19 +711,19 @@ push_user_to_members(User, Server, Subscription) ->
 		end, get_group_users(LServer, Group, GroupOpts))
       end, lists:usort(SpecialGroups++UserGroups)).
 
-push_user_to_displayed(LUser, LServer, Group, Subscription) ->
-    GroupsOpts = groups_with_opts(LServer),
+push_user_to_displayed(LUser, LServer, Group, Host, Subscription) ->
+    GroupsOpts = groups_with_opts(Host),
     GroupOpts = proplists:get_value(Group, GroupsOpts, []),
     GroupName = proplists:get_value(name, GroupOpts, Group),
-    DisplayedToGroupsOpts = displayed_to_groups(Group, LServer),
-    [push_user_to_group(LUser, LServer, GroupD, GroupName, Subscription) || {GroupD, _Opts} <- DisplayedToGroupsOpts].
+    DisplayedToGroupsOpts = displayed_to_groups(Group, Host),
+    [push_user_to_group(LUser, LServer, GroupD, Host, GroupName, Subscription) || {GroupD, _Opts} <- DisplayedToGroupsOpts].
 
-push_user_to_group(LUser, LServer, Group, GroupName, Subscription) ->
+push_user_to_group(LUser, LServer, Group, Host, GroupName, Subscription) ->
     lists:foreach(
-      fun({U, S}) when (U == LUser) and (S == LServer) -> ok;
+      fun({U, S})  when (U == LUser) and (S == LServer) -> ok;
          ({U, S}) ->
 	      push_roster_item(U, S, LUser, LServer, GroupName, Subscription)
-      end, get_group_users(LServer, Group)).
+      end, get_group_users(Host, Group)).
 
 %% Get list of groups to which this group is displayed
 displayed_to_groups(GroupName, LServer) ->
@@ -819,7 +819,7 @@ user_available(New) ->
 	      fun(OG) ->
 		      ?DEBUG("user_available: pushing  ~p @ ~p grp ~p",
 			     [LUser, LServer, OG ]),
-		      push_user_to_displayed(LUser, LServer, OG, both)
+		      push_user_to_displayed(LUser, LServer, OG, LServer, both)
 	      end, OnlineGroups);
 	_ ->
 	    ok
@@ -840,7 +840,7 @@ unset_presence(LUser, LServer, Resource, Status) ->
 	      fun(OG) ->
 		      %% Push removal of the old user to members of groups
 		      %% where the group that this uwas members was displayed
-		      push_user_to_displayed(LUser, LServer, OG, remove),
+		      push_user_to_displayed(LUser, LServer, OG, LServer, remove),
 		      %% Push removal of members of groups that where
 		      %% displayed to the group which thiuser has left
 		      push_displayed_to_user(LUser, LServer, OG, LServer,remove)
@@ -876,7 +876,7 @@ webadmin_page(Acc, _, _) -> Acc.
 
 list_shared_roster_groups(Host, Query, Lang) ->
     Res = list_sr_groups_parse_query(Host, Query),
-    SRGroups = mod_shared_roster:list_groups(Host),
+    SRGroups = ?MODULE:list_groups(Host),
     FGroups =
 	?XAE("table", [],
 	     [?XE("tbody",
@@ -925,19 +925,19 @@ list_sr_groups_parse_query(Host, Query) ->
 list_sr_groups_parse_addnew(Host, Query) ->
     case lists:keysearch("namenew", 1, Query) of
 	{value, {_, Group}} when Group /= "" ->
-	    mod_shared_roster:create_group(Host, Group),
+	    ?MODULE:create_group(Host, Group),
 	    ok;
 	_ ->
 	    error
     end.
 
 list_sr_groups_parse_delete(Host, Query) ->
-    SRGroups = mod_shared_roster:list_groups(Host),
+    SRGroups = ?MODULE:list_groups(Host),
     lists:foreach(
       fun(Group) ->
 	      case lists:member({"selected", Group}, Query) of
 		  true ->
-		      mod_shared_roster:delete_group(Host, Group);
+		      ?MODULE:delete_group(Host, Group);
 		  _ ->
 		      ok
 	      end
@@ -947,14 +947,14 @@ list_sr_groups_parse_delete(Host, Query) ->
 
 shared_roster_group(Host, Group, Query, Lang) ->
     Res = shared_roster_group_parse_query(Host, Group, Query),
-    GroupOpts = mod_shared_roster:get_group_opts(Host, Group),
+    GroupOpts = ?MODULE:get_group_opts(Host, Group),
     Name = get_opt(GroupOpts, name, ""),
     Description = get_opt(GroupOpts, description, ""),
     AllUsers = get_opt(GroupOpts, all_users, false),
     OnlineUsers = get_opt(GroupOpts, online_users, false),
     %%Disabled = false,
     DisplayedGroups = get_opt(GroupOpts, displayed_groups, []),
-    Members = mod_shared_roster:get_group_explicit_users(Host, Group),
+    Members = ?MODULE:get_group_explicit_users(Host, Group),
     FMembers =
 	if
 	    AllUsers ->
@@ -1042,7 +1042,7 @@ shared_roster_group_parse_query(Host, Group, Query) ->
 		    true -> [{displayed_groups, DispGroups}]
 		end,
 
-	    OldMembers = mod_shared_roster:get_group_explicit_users(
+	    OldMembers = ?MODULE:get_group_explicit_users(
 			   Host, Group),
 	    SJIDs = string:tokens(SMembers, ", \r\n"),
 	    NewMembers =
@@ -1074,7 +1074,7 @@ shared_roster_group_parse_query(Host, Group, Query) ->
 		    false -> []
 		end,
 
-	    mod_shared_roster:set_group_opts(
+	    ?MODULE:set_group_opts(
 	      Host, Group,
 	      NameOpt ++ DispGroupsOpt ++ DescriptionOpt ++ AllUsersOpt ++ OnlineUsersOpt),
 
@@ -1085,12 +1085,12 @@ shared_roster_group_parse_query(Host, Group, Query) ->
 		    RemovedMembers = OldMembers -- NewMembers,
 		    lists:foreach(
 		      fun(US) ->
-			      mod_shared_roster:remove_user_from_group(
+			      ?MODULE:remove_user_from_group(
 				Host, US, Group)
 		      end, RemovedMembers),
 		    lists:foreach(
 		      fun(US) ->
-			      mod_shared_roster:add_user_to_group(
+			      ?MODULE:add_user_to_group(
 				Host, US, Group)
 		      end, AddedMembers),
 		    ok

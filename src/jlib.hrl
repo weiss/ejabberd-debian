@@ -1,6 +1,6 @@
 %%%----------------------------------------------------------------------
 %%%
-%%% ejabberd, Copyright (C) 2002-2011   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2012   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -100,6 +100,8 @@
 	 [{"code", Code}, {"type", Type}],
 	 [{xmlelement, Condition, [{"xmlns", ?NS_STANZAS}], []}]}).
 
+-define(ERR_BAD_FORMAT,
+	?STANZA_ERROR("406", "modify", "bad-format")).
 -define(ERR_BAD_REQUEST,
 	?STANZA_ERROR("400", "modify", "bad-request")).
 -define(ERR_CONFLICT,
@@ -154,6 +156,8 @@
 	  {xmlelement, "text", [{"xmlns", ?NS_STANZAS}],
 	   [{xmlcdata, translate:translate(Lang, Text)}]}]}).
 
+-define(ERRT_BAD_FORMAT(Lang, Text),
+	?STANZA_ERRORT("406", "modify", "bad-format", Lang, Text)).
 -define(ERRT_BAD_REQUEST(Lang, Text),
 	?STANZA_ERRORT("400", "modify", "bad-request", Lang, Text)).
 -define(ERRT_CONFLICT(Lang, Text),
