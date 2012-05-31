@@ -7,6 +7,8 @@ sh(Pattern) when is_list(Pattern) ->
 
 sh(char, [], Acc) ->
 	lists:reverse(Acc);
+sh(State, [$\\|Tail], Acc) ->
+	escaped(State, Tail, Acc);
 sh(char, [Ch|Tail], Acc) ->
 	case Ch of
 		$[ ->
@@ -44,6 +46,11 @@ sh(bexp_next, [Ch|Tail], Acc) ->
 			bexp_next
 	end,
 	sh(State, Tail, [Ch|Acc]).
+
+escaped(_, [], _) ->
+	{error, stray_backslash};
+escaped(State, [Ch|Tail], Acc) ->
+	sh(State, Tail, [Ch,$\\|Acc]).
 
 test() ->
 	ok.
