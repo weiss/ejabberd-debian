@@ -2,19 +2,6 @@
 -compile(export_all).
 -import(lists, [reverse/1]).
 
-escape(Pattern) when is_list(Pattern) ->
-	escape(Pattern, []).
-
-escape([], Acc) ->
-	lists:reverse(Acc);
-escape([Ch|Tail], Acc) ->
-	case lists:member(Ch, "^.?*+{}()[]$|\\") of
-		true ->
-			escape(Tail, [Ch,$\\|Acc]);
-		false ->
-			escape(Tail, [Ch|Acc])
-	end.
-
 sh(Pattern) when is_list(Pattern) ->
 	sh(char, Pattern, []).
 
