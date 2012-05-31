@@ -1,3 +1,11 @@
+ejabberd (2.1.11-1) unstable; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * New upstream release.
+  * Update mod_admin_extra module to revision 1126.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 20 May 2012 14:51:12 +0400
+
 ejabberd (2.1.10-2) unstable; urgency=low
 
   [ Gerfried Fuchs ]
