@@ -14,7 +14,7 @@ sh(char, [Ch|Tail], Acc) ->
 		$[ ->
 			sh(bexp_first, Tail, [Ch|Acc]);
 		$? ->
-			sh(char, Tail, [Ch,$.|Acc]);
+			sh(char, Tail, [$.|Acc]);
 		$* ->
 			sh(char, Tail, [Ch,$.|Acc]);
 		_ ->
