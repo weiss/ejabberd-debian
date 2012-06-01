@@ -1,6 +1,6 @@
 -module(ejabberd_regexp).
--compile(export_all).
 -import(lists, [reverse/1]).
+-export([sh_to_awk/1]).
 
 sh_to_awk(Pattern) when is_list(Pattern) ->
     fnmatch_char(Pattern, [$(,$^]).
