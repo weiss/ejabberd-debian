@@ -16,7 +16,7 @@ sh_char([Ch|Tail], Acc) ->
 		$? ->
 			sh_char(Tail, [$.|Acc]);
 		$* ->
-			sh_char(Tail, [Ch,$.|Acc]);
+			sh_char(Tail, [$*,$.|Acc]);
 		_ ->
 			case lists:member(Ch, "^.+{}()$|\\") of
 				true ->
