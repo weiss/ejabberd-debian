@@ -3,54 +3,56 @@
 -import(lists, [reverse/1]).
 
 sh(Pattern) when is_list(Pattern) ->
-	sh(char, Pattern, [$^]).
+	sh_char(Pattern, [$^]).
 
-sh(char, [], Acc) ->
+sh_char([], Acc) ->
 	lists:reverse([$$|Acc]);
-sh(State, [$\\|Tail], Acc) ->
-	escaped(State, Tail, Acc);
-sh(char, [Ch|Tail], Acc) ->
+sh_char([Ch|Tail], Acc) ->
 	case Ch of
+		$\\ ->
+			sh_char(Tail, [$\\,$\\|Acc]);
 		$[ ->
-			sh(bexp_first, Tail, [Ch|Acc]);
+			sh_bexp_first(Tail, [Ch|Acc]);
 		$? ->
-			sh(char, Tail, [$.|Acc]);
+			sh_char(Tail, [$.|Acc]);
 		$* ->
-			sh(char, Tail, [Ch,$.|Acc]);
+			sh_char(Tail, [Ch,$.|Acc]);
 		_ ->
 			case lists:member(Ch, "^.+{}()$|\\") of
 				true ->
-					sh(char, Tail, [Ch,$\\|Acc]);
+					sh_char(Tail, [Ch,$\\|Acc]);
 				false ->
-					sh(char, Tail, [Ch|Acc])
+					sh_char(Tail, [Ch|Acc])
 			end
-	end;
-sh(bexp_first, [], _) ->
+	end.
+
+sh_bexp_first([], _) ->
 	{error, unclosed_be};
-sh(bexp_first, [Ch|Tail], Acc) ->
+sh_bexp_first([Ch|Tail], Acc) ->
 	case Ch of
 		$] ->
 			{error, empty_be};
 		$! ->
-			sh(bexp_next, Tail, [$^|Acc]);
+			sh_bexp_next(Tail, false, [$^|Acc]);
+		$\\ ->
+			sh_bexp_next(Tail, true, Acc);
 		_ ->
-			sh(bexp_next, Tail, [Ch|Acc])
-	end;
-sh(bexp_next, [], _) ->
-	{error, unclosed_be};
-sh(bexp_next, [Ch|Tail], Acc) ->
-	State = case Ch of
-		$] ->
-			char;
-		_ ->
-			bexp_next
-	end,
-	sh(State, Tail, [Ch|Acc]).
+			sh_bexp_next(Tail, false, [Ch|Acc])
+	end.
 
-escaped(_, [], _) ->
-	{error, stray_backslash};
-escaped(State, [Ch|Tail], Acc) ->
-	sh(State, Tail, [Ch,$\\|Acc]).
+sh_bexp_next([], _, _) ->
+	{error, unclosed_be};
+sh_bexp_next([Ch|Tail], true, Acc) ->
+	sh_bexp_next(Tail, false, [Ch,$\\|Acc]);
+sh_bexp_next([Ch|Tail], false, Acc) ->
+	case Ch of
+		$] ->
+			sh_char(Tail, [Ch|Acc]);
+		$\\ ->
+			sh_bexp_next(Tail, true, Acc);
+		_ ->
+			sh_bexp_next(Tail, false, [Ch|Acc])
+	end.
 
 test() ->
 	ok.
