@@ -3,10 +3,10 @@
 -import(lists, [reverse/1]).
 
 sh(Pattern) when is_list(Pattern) ->
-	sh_char(Pattern, [$^]).
+	sh_char(Pattern, [$(,$^]).
 
 sh_char([], Acc) ->
-	lists:reverse([$$|Acc]);
+	lists:reverse([$$,$)|Acc]);
 sh_char([Ch|Tail], Acc) ->
 	case Ch of
 		$\\ ->
