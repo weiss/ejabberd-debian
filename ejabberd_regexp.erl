@@ -54,7 +54,4 @@ fnmatch_bexp_next([Ch|Tail], false, Acc) ->
 	    fnmatch_bexp_next(Tail, false, [Ch|Acc])
     end.
 
-test() ->
-    ok.
-
 %% vim:ts=8:sw=4:sts=4:noet
