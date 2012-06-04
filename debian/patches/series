@@ -1,3 +1,4 @@
+use_dpkg_buildflags.patch
 ejabberd_regexp.patch
 mod_admin_extra.patch
 captcha.patch
