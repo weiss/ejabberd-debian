@@ -58,7 +58,7 @@ https://support.process-one.net/browse/EJAB-1243
  	    {ok, State#state{fd = Fd}};
 --- a/src/ejabberd_admin.erl
 +++ b/src/ejabberd_admin.erl
-@@ -219,28 +219,9 @@
+@@ -223,28 +223,9 @@
  
  reopen_log() ->
      ejabberd_hooks:run(reopen_log_hook, []),

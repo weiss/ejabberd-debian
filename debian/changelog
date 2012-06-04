@@ -5,6 +5,7 @@ ejabberd (2.1.11-1) unstable; urgency=low
   * Update mod_admin_extra module to revision 1126.
   * Provide custom implementation of xmerl_regexp:sh_to_awk/1
     (closes: #670307).
+  * Refresh reopen-log.patch
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 20 May 2012 14:51:12 +0400
 
