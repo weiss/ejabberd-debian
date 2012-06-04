@@ -1,3 +1,4 @@
+ejabberd_regexp.patch
 mod_admin_extra.patch
 captcha.patch
 fix_examples.patch
