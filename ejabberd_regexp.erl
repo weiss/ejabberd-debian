@@ -1,5 +1,5 @@
 -module(ejabberd_regexp).
--import(lists, [reverse/1]).
+-import(lists, [reverse/1, member/2]).
 -export([sh_to_awk/1]).
 
 sh_to_awk(Pattern) when is_list(Pattern) ->
