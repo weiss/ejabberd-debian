@@ -5,6 +5,8 @@ ejabberd (2.1.10-3) unstable; urgency=low
     (closes: #670307).
   * Add use_dpkg_buildflags.patch (thanks to Simon Ruderich,
     closes: #664034).
+  * Add Slovak translation (thanks to Slavko, closes: #647115).
+  * Add Italian translation (thanks to Beatrice Torracca, closes: #682987).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 20 May 2012 14:51:12 +0400
 
