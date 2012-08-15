@@ -5,6 +5,7 @@ ejabberd (2.1.10-3) unstable; urgency=low
     (closes: #670307).
   * Add use_dpkg_buildflags.patch (thanks to Simon Ruderich,
     closes: #664034).
+  * Add relax-digest-uri-handling.patch (closes: #654853).
   * Add Slovak translation (thanks to Slavko, closes: #647115).
   * Add Italian translation (thanks to Beatrice Torracca, closes: #682987).
 
