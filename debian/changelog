@@ -3,6 +3,8 @@ ejabberd (2.1.10-4) unstable; urgency=low
   [ Konstantin Khomoutov ]
   * Do not run ejabberdctl as root in prerm and logrotate scripts
     (closes: #691125, thanks to Michael Stapelberg and Felix Geyer).
+  * Add upstream patch fixing receiving JPEG vCard photos via LDAP
+    (closes: #660186).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sat, 16 Feb 2013 16:59:21 +0000
 

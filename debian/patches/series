@@ -5,3 +5,4 @@ captcha.patch
 fix_examples.patch
 reopen-log.patch
 relax-digest-uri-handling.patch
+fix-ldap-vcard-jpeg-photos.patch
