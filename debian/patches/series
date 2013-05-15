@@ -8,3 +8,4 @@ relax-digest-uri-handling.patch
 fix-ldap-vcard-jpeg-photos.patch
 fix-parsing-split-https-requests.patch
 scram-optional-parameter-parsing-bugfix.patch
+fix-odbc-escaping.patch
