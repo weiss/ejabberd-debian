@@ -1,3 +1,16 @@
+ejabberd (2.1.10-5) unstable; urgency=low
+
+  This release adds support for the SCRAM-SHA-1 authentication mecnahism.
+  If the fully-qualified hostname of the server differs from the name
+  of the XMPP domain it serves, in order for this mechanism to work
+  with compliant clients, a modification should be made to the ejabberd's
+  configuration file.
+
+  Please consult the section "Using SCRAM-SHA-1 authentication mechanism"
+  in the README.Debian file for detailed information.
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 16 May 2013 13:27:56 +0000
+
 ejabberd (2.1.8-1) unstable; urgency=low
 
   This release drops support for the @recent@ shared roster group
