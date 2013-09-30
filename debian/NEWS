@@ -1,4 +1,4 @@
-ejabberd (2.1.10-5) unstable; urgency=low
+ejabberd (2.1.10-4+deb7u1) unstable; urgency=low
 
   This release adds support for the SCRAM-SHA-1 authentication mecnahism.
   If the fully-qualified hostname of the server differs from the name
