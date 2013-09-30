@@ -12,6 +12,8 @@ ejabberd (2.1.10-4+deb7u1) unstable; urgency=low
     thanks to Vladislav Chugunov).
   * Add upstream patches disabling SSLv2 and weak cyphers in TLS driver
     (closes: #724992).
+  * Add patch (extracted from upstream) which fixes rendering of angle
+    brackets in plain-text MUC logs (closes: #724994).
 
  -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Sun, 29 Sep 2013 21:48:11 +0400
 

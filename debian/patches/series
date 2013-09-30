@@ -11,3 +11,4 @@ scram-optional-parameter-parsing-bugfix.patch
 fix-odbc-escaping.patch
 disable-ssl2.patch
 disable-insecure-ssl-cyphers.patch
+fix-nicks-in-plaintext-muc-log.patch
