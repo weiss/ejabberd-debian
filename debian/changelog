@@ -1,3 +1,9 @@
+ejabberd (2.1.5-3+squeeze2) stable-security; urgency=low
+
+  * Disable SSLv2 and weak/export cyphers in TLS driver (closes: #724993).
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Mon, 30 Sep 2013 17:10:02 +0400
+
 ejabberd (2.1.5-3+squeeze1) stable-security; urgency=high
 
   * Non-maintainer upload by the Security Team.

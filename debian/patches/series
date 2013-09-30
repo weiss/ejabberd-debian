@@ -8,3 +8,5 @@ eldap-asn-driver-race-fix.patch
 mod-vcard-ldap-photo.patch
 http-poll-binary-parse.patch
 CVE-2011-1753.patch
+disable-ssl2.patch
+disable-insecure-ssl-cyphers.patch
