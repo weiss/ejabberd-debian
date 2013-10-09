@@ -1,4 +1,4 @@
-ejabberd (2.1.10-4+deb7u1) stable; urgency=low
+ejabberd (2.1.10-4+deb7u1) stable-security; urgency=low
 
   [ Konstantin Khomoutov ]
   * Add patch fixing parsing of optional parameters in SCRAM SHA-1 headers
