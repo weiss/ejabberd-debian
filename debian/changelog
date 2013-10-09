@@ -1,4 +1,4 @@
-ejabberd (2.1.5-3+squeeze2) stable-security; urgency=low
+ejabberd (2.1.5-3+squeeze2) oldstable-security; urgency=low
 
   * Disable SSLv2 and weak/export cyphers in TLS driver (closes: #724993).
 
