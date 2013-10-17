@@ -1,0 +1,35 @@
+Description: Fix escaping of single quotes in SQL queries
+ The ODBC backend code improperly used a backslash character
+ to escape a single quote character in SQL queries instead of
+ duplicating the single quote character as required by SQL-92,
+ rendering the generated queries not understandable for certain
+ SQL servers, namely PostgreSQL.  The patch corrects this problem.
+ .
+ This patch is extracted from the commit
+ 89aa7baa5b5601c078d90bcd64deede218c7e5a8 in the upstream Git repository.
+ .
+ The first upstream version to integrate this patch is 2.1.11.
+Author: Evgeniy Khramtsov <ekhramtsov@process-one.net>
+Forwarded: not-needed
+Bug: https://github.com/processone/ejabberd/issues/24
+Last-Update: 2013-05-15
+XXX
+commit 
+Date:   Tue Jan 31 11:18:14 2012 +1000
+
+    Replace a single quote with double quotes in
+    an ODBC escape (thanks to Vladislav Chugunov)
+
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/odbc/odbc_queries.erl
++++ b/src/odbc/odbc_queries.erl
+@@ -557,7 +557,7 @@ escape($\n) -> "\\n";
+ escape($\t) -> "\\t";
+ escape($\b) -> "\\b";
+ escape($\r) -> "\\r";
+-escape($')  -> "\\'";
++escape($')  -> "''";
+ escape($")  -> "\\\"";
+ escape($\\) -> "\\\\";
+ escape(C)   -> C.
