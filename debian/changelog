@@ -24,7 +24,7 @@ ejabberd (2.1.10-5) unstable; urgency=low
     (closes: #705613, thanks to Stephen Röttger for both writing the
     original patch and backporting it to 2.1.10).
 
- -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 16 May 2013 14:48:13 +0000
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Thu, 25 Apr 2013 15:31:59 +0000
 
 ejabberd (2.1.10-4) unstable; urgency=low
 
