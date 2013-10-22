@@ -19,7 +19,8 @@ ejabberd (2.1.11-1) unstable; urgency=low
   * Add upstream patches disabling SSLv2 and weak cyphers in TLS driver
     (closes: #722105).
   * New upstream release made these patches obsolete:
-    relax-digest-uri-handling.patch, fix-parsing-split-https-requests.patch
+    relax-digest-uri-handling.patch, fix-parsing-split-https-requests.patch,
+    fix-odbc-escaping.patch
 
  -- Gerfried Fuchs <rhonda@debian.org>  Thu, 17 Oct 2013 12:57:47 +0200
 
