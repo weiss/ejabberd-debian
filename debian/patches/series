@@ -5,7 +5,6 @@ captcha.patch
 fix_examples.patch
 reopen-log.patch
 fix-ldap-vcard-jpeg-photos.patch
-fix-parsing-split-https-requests.patch
 scram-optional-parameter-parsing-bugfix.patch
 fix-odbc-escaping.patch
 disable-ssl2.patch
