@@ -1,0 +1,36 @@
+Description: Disable SSLv2 in the TLS driver
+ SSL 2.0 is not used anywhere as it has security problems.
+ Disable it unconditionally both in server and client mode.
+ This does not disable support for SSL 2.0 compatible client
+ hello which still will be accepted in the server mode.
+ .
+ This patch is a backport of changes introduced by the commit
+ e06c1c49c14c3f56cf4ddae080514f7802669335 in the upstream Git repository
+ to the ejabberd code base as of version 2.1.12.
+Author: Janusz Dziemidowicz <rraptorr@nails.eu.org>
+Forwarded: not-needed
+Last-Update: 2013-09-29
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/tls/tls_drv.c
++++ b/src/tls/tls_drv.c
+@@ -354,6 +354,8 @@ static ErlDrvSSizeT tls_drv_control(ErlDrvData handle,
+ 	    res = SSL_CTX_check_private_key(ctx);
+ 	    die_unless(res > 0, "SSL_CTX_check_private_key failed");
+ 
++	    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_TICKET);
++
+ 	    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+ 	    SSL_CTX_set_default_verify_paths(ctx);
+ #ifdef SSL_MODE_RELEASE_BUFFERS
+@@ -386,10 +388,8 @@ static ErlDrvSSizeT tls_drv_control(ErlDrvData handle,
+ 	 SSL_set_bio(d->ssl, d->bio_read, d->bio_write);
+ 
+ 	 if (command == SET_CERTIFICATE_FILE_ACCEPT) {
+-	    SSL_set_options(d->ssl, SSL_OP_NO_TICKET);
+ 	    SSL_set_accept_state(d->ssl);
+ 	 } else {
+-	    SSL_set_options(d->ssl, SSL_OP_NO_SSLv2|SSL_OP_NO_TICKET);
+ 	    SSL_set_connect_state(d->ssl);
+ 	 }
+ 	 break;
