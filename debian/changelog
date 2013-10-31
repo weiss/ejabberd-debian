@@ -1,3 +1,10 @@
+ejabberd (2.1.10-5ubuntu1.1) saucy; urgency=low
+
+  [ Konstantin Khomoutov ]
+  * Add patch providing compatibility with Erlang R16 (LP: #1241632).
+
+ -- Konstantin Khomoutov <flatworm@users.sourceforge.net>  Fri, 25 Oct 2013 09:13:23 +0000
+
 ejabberd (2.1.10-5ubuntu1) saucy; urgency=low
 
   * Disable SSLv2 and weak ciphers in the TLS driver.
