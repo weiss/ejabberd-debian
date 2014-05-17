@@ -1,3 +1,23 @@
+ejabberd (14.05-1~experimental1) experimental; urgency=medium
+
+  * Import Upstream version 14.05
+  * Declare package source format as 3.0 (quilt)
+  * Switch to debhelper 9
+  * Drop obsolete patches for older releases
+  * Add new patches to make 14.05 build and work
+  * Drop custom scripts in favour of upstream ones
+  * Drop custom config+init in favour of upstream ones
+  * Adjust packaging to new upstream release
+  * Update (Build-)Depends and Standards-Version
+  * Update copyright
+  * Update maintainer scripts
+  * Update TODO
+  * Update NEWS
+  * Fix watch file
+  * Clean up packaging
+
+ -- Philipp Huebner <debalance@debian.org>  Sat, 17 May 2014 14:22:46 +0200
+
 ejabberd (2.1.11-1) unstable; urgency=low
 
   [ Konstantin Khomoutov ]
