@@ -5,7 +5,7 @@
 
 set -e
 
-CONFIG_TARGET=/etc/ejabberd/ejabberd.cfg
+CONFIG_TARGET=/etc/ejabberd/ejabberd.yml
 
 if [ -f /usr/share/debconf/confmodule ]; then
     . /usr/share/debconf/confmodule
@@ -20,7 +20,7 @@ case "$1" in
 	    ucf --purge $CONFIG_TARGET
 	fi
 	rm -f $CONFIG_TARGET
-	rm -f /etc/ejabberd/ejabberd.pem
+	rm -f /etc/ejabberd/ejabberd.pem /etc/ejabberd/ejabberd.yml.ucf-old
 	rm -Rf /var/log/ejabberd /var/lib/ejabberd
 	rm -Rf /var/run/ejabberd || true
 	rm -f /etc/default/ejabberd
@@ -28,6 +28,7 @@ case "$1" in
 	    deluser ejabberd 2>/dev/null || true
 	    delgroup ejabberd 2>/dev/null || true
 	fi
+	update-rc.d ejabberd remove > /dev/null
     ;;
 
     *)
