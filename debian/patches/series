@@ -1,10 +1,7 @@
-use_dpkg_buildflags.patch
-ejabberd_regexp.patch
-mod_admin_extra.patch
-captcha.patch
+remove_deps.diff
+disable_rebar_deps.diff
+disable_test.diff
+fix_includes.diff
+
 fix_examples.patch
-reopen-log.patch
-fix-ldap-vcard-jpeg-photos.patch
-scram-optional-parameter-parsing-bugfix.patch
-disable-ssl2.patch
-disable-insecure-ssl-cyphers.patch
+fix_init.patch
