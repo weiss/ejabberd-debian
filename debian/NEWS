@@ -1,4 +1,4 @@
-ejabberd (13.12-1~experimental1) experimental; urgency=low
+ejabberd (14.05-1~experimental1) experimental; urgency=low
 
   This is the first release after a rather long time. A lot has changed, many
   patches were dropped and there's a bunch of new features.
