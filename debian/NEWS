@@ -1,3 +1,20 @@
+ejabberd (13.12-1~experimental1) experimental; urgency=low
+
+  This is the first release after a rather long time. A lot has changed, many
+  patches were dropped and there's a bunch of new features.
+  Most important: the configuration file format was changed to YAML.
+
+  In previous ejabberd version the configuration file should be written in
+  Erlang terms. The format is still supported, but it is highly recommended to
+  convert it to the new YAML format using convert_to_yaml command from
+  ejabberdctl.
+
+  Currently the maintainer scripts / debconf part seems to have a few bugs.
+  You might have to start the daemon and register your first admin user by
+  hand.
+
+ -- Philipp Huebner <debalance@debian.org>  Sat, 3 May 2014 16:14:39 +0200
+
 ejabberd (2.1.11-1) unstable; urgency=low
 
   This release adds support for the SCRAM-SHA-1 authentication mecnahism.
