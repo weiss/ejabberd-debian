@@ -3,6 +3,9 @@
 
 * Fix lintian warnings where possible.
 
+* Work on bugreports and add "Closes:" to changelog before uploading
+  to unstable
+
 * In debconf code, check if the user name contains
   the "@" character and if it is, does the part of
   the username to the right of it equals to the
