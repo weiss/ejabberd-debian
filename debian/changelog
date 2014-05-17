@@ -1,4 +1,4 @@
-ejabberd (14.05-1~experimental1) experimental; urgency=medium
+ejabberd (14.05-1~experimental1) experimental; urgency=low
 
   * Import Upstream version 14.05
   * Declare package source format as 3.0 (quilt)
