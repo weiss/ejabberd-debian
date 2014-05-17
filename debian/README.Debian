@@ -366,8 +366,8 @@ to "--erlang-log" to match the change above.
 =============================================
 
 Since version 2.1.9 ejabberd supports the SCRAM-SHA-1 authentication
-mechanism (which, among other things, allows to not store passwords of
-XMPP accounts in clear text if the internal database backend is used
+mechanism (which, among other things, allows one to not store passwords
+of XMPP accounts in clear text if the internal database backend is used
 for storage).  This authentication process implemented by this
 mechanism includes the client sending a so-called "digest URI" which
 includes the server's identity as perceived by the connecting client.
