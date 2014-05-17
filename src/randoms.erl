@@ -5,7 +5,7 @@
 %%% Created : 13 Dec 2002 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2012   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2014   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -17,43 +17,35 @@
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
 %%%
-%%% You should have received a copy of the GNU General Public License
-%%% along with this program; if not, write to the Free Software
-%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-%%% 02111-1307 USA
+%%% You should have received a copy of the GNU General Public License along
+%%% with this program; if not, write to the Free Software Foundation, Inc.,
+%%% 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 %%%
 %%%----------------------------------------------------------------------
 
 -module(randoms).
+
 -author('alexey@process-one.net').
 
 -export([get_string/0]).
 
 -export([start/0, init/0]).
 
-
 start() ->
     register(random_generator, spawn(randoms, init, [])).
 
 init() ->
-    {A1, A2, A3} = now(),
-    random:seed(A1,A2,A3),
-    loop().
+    {A1, A2, A3} = now(), random:seed(A1, A2, A3), loop().
 
 loop() ->
     receive
-	{From, get_random, N} ->
-	    From ! {random, random:uniform(N)},
-	    loop();
-	_ ->
-	    loop()
+      {From, get_random, N} ->
+	  From ! {random, random:uniform(N)}, loop();
+      _ -> loop()
     end.
-
 
 get_string() ->
-    random_generator ! {self(), get_random, 65536*65536},
+    random_generator ! {self(), get_random, 65536 * 65536},
     receive
-	{random, R} ->
-	    integer_to_list(R)
+      {random, R} -> jlib:integer_to_binary(R)
     end.
-

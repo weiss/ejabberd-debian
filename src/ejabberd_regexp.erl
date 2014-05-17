@@ -5,7 +5,7 @@
 %%% Created : 8 Dec 2011 by Badlop
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2012   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2014   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -17,56 +17,79 @@
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
 %%%
-%%% You should have received a copy of the GNU General Public License
-%%% along with this program; if not, write to the Free Software
-%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-%%% 02111-1307 USA
+%%% You should have received a copy of the GNU General Public License along
+%%% with this program; if not, write to the Free Software Foundation, Inc.,
+%%% 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 %%%
 %%%----------------------------------------------------------------------
 
 -module(ejabberd_regexp).
+
 -compile([export_all]).
 
-exec(ReM, ReF, ReA, RgM, RgF, RgA) ->
-    try apply(ReM, ReF, ReA)
-    catch
-	error:undef ->
-	    apply(RgM, RgF, RgA);
-	A:B ->
-	    {error, {A, B}}
+exec({ReM, ReF, ReA}, {RgM, RgF, RgA}) ->
+    try apply(ReM, ReF, ReA) catch
+      error:undef -> apply(RgM, RgF, RgA);
+      A:B -> {error, {A, B}}
     end.
+
+-spec run(binary(), binary()) -> match | nomatch | {error, any()}.
 
 run(String, Regexp) ->
-    case exec(re, run, [String, Regexp, [{capture, none}]], regexp, first_match, [String, Regexp]) of
-	{match, _, _} -> match;
-	{match, _} -> match;
-	match -> match;
-	nomatch -> nomatch;
-	{error, Error} -> {error, Error}
+    case exec({re, run, [String, Regexp, [{capture, none}]]},
+	      {regexp, first_match, [binary_to_list(String),
+                                     binary_to_list(Regexp)]})
+	of
+      {match, _, _} -> match;
+      {match, _} -> match;
+      match -> match;
+      nomatch -> nomatch;
+      {error, Error} -> {error, Error}
     end.
+
+-spec split(binary(), binary()) -> [binary()].
 
 split(String, Regexp) ->
-    case exec(re, split, [String, Regexp, [{return, list}]], regexp, split, [String, Regexp]) of
-	{ok, FieldList} -> FieldList;
-	{error, Error} -> throw(Error);
-	A -> A
+    case exec({re, split, [String, Regexp, [{return, binary}]]},
+	      {regexp, split, [binary_to_list(String),
+                               binary_to_list(Regexp)]})
+	of
+      {ok, FieldList} -> [iolist_to_binary(F) || F <- FieldList];
+      {error, Error} -> throw(Error);
+      A -> A
     end.
+
+-spec replace(binary(), binary(), binary()) -> binary().
 
 replace(String, Regexp, New) ->
-    case exec(re, replace, [String, Regexp, New, [{return, list}]], regexp, sub, [String, Regexp, New]) of
-	{ok, NewString, _RepCount} -> NewString;
-	{error, Error} -> throw(Error);
-	A -> A
+    case exec({re, replace, [String, Regexp, New, [{return, binary}]]},
+              {regexp, sub, [binary_to_list(String),
+                             binary_to_list(Regexp),
+                             binary_to_list(New)]})
+	of
+      {ok, NewString, _RepCount} -> iolist_to_binary(NewString);
+      {error, Error} -> throw(Error);
+      A -> A
     end.
+
+-spec greplace(binary(), binary(), binary()) -> binary().
 
 greplace(String, Regexp, New) ->
-    case exec(re, replace, [String, Regexp, New, [global, {return, list}]], regexp, sub, [String, Regexp, New]) of
-	{ok, NewString, _RepCount} -> NewString;
-	{error, Error} -> throw(Error);
-	A -> A
+    case exec({re, replace, [String, Regexp, New, [global, {return, binary}]]},
+              {regexp, sub, [binary_to_list(String),
+                             binary_to_list(Regexp),
+                             binary_to_list(New)]})
+	of
+      {ok, NewString, _RepCount} -> iolist_to_binary(NewString);
+      {error, Error} -> throw(Error);
+      A -> A
     end.
 
+-spec sh_to_awk(binary()) -> binary().
+
 sh_to_awk(ShRegExp) ->
-    case exec(xmerl_regexp, sh_to_awk, [ShRegExp], regexp, sh_to_awk, [ShRegExp]) of
-	A -> A
+    case exec({xmerl_regexp, sh_to_awk, [binary_to_list(ShRegExp)]},
+              {regexp, sh_to_awk, [binary_to_list(ShRegExp)]})
+	of
+      A -> iolist_to_binary(A)
     end.

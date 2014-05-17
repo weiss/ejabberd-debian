@@ -5,7 +5,7 @@
 %%% Created : 31 Jan 2003 by Alexey Shchepin <alexey@process-one.net>
 %%%
 %%%
-%%% ejabberd, Copyright (C) 2002-2012   ProcessOne
+%%% ejabberd, Copyright (C) 2002-2014   ProcessOne
 %%%
 %%% This program is free software; you can redistribute it and/or
 %%% modify it under the terms of the GNU General Public License as
@@ -17,10 +17,9 @@
 %%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 %%% General Public License for more details.
 %%%
-%%% You should have received a copy of the GNU General Public License
-%%% along with this program; if not, write to the Free Software
-%%% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-%%% 02111-1307 USA
+%%% You should have received a copy of the GNU General Public License along
+%%% with this program; if not, write to the Free Software Foundation, Inc.,
+%%% 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 %%%
 %%%----------------------------------------------------------------------
 
@@ -169,21 +168,6 @@ init([]) ->
 	 infinity,
 	 supervisor,
 	 [ejabberd_tmp_sup]},
-    STUNSupervisor =
-	{ejabberd_stun_sup,
-	 {ejabberd_tmp_sup, start_link,
-	  [ejabberd_stun_sup, ejabberd_stun]},
-	 permanent,
-	 infinity,
-	 supervisor,
-	 [ejabberd_tmp_sup]},
-    CacheTabSupervisor =
-	{cache_tab_sup,
-	 {cache_tab_sup, start_link, []},
-	 permanent,
-	 infinity,
-	 supervisor,
-	 [cache_tab_sup]},
     {ok, {{one_for_one, 10, 1},
 	  [Hooks,
 	   NodeGroups,
@@ -201,9 +185,7 @@ init([]) ->
 	   HTTPSupervisor,
 	   HTTPPollSupervisor,
 	   IQSupervisor,
-	   STUNSupervisor,
 	   FrontendSocketSupervisor,
-	   CacheTabSupervisor,
 	   Listener]}}.
 
 
