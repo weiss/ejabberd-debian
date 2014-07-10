@@ -1,3 +1,9 @@
+ejabberd (14.05-1~experimental2) experimental; urgency=medium
+
+  * Fix arch-specific line in debian/rules
+
+ -- Philipp Huebner <debalance@debian.org>  Thu, 10 Jul 2014 11:07:50 +0200
+
 ejabberd (14.05-1~experimental1) experimental; urgency=low
 
   * Import Upstream version 14.05

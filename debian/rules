@@ -3,11 +3,13 @@
 
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/architecture.mk
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
 DESTDIR=$(CURDIR)/debian/ejabberd
+
 
 %:
 	dh $@
@@ -32,7 +34,7 @@ override_dh_auto_install:
 	mv $(DESTDIR)/etc/ejabberd/ejabberdctl.cfg $(DESTDIR)/etc/default/ejabberd
 	ln -s ../default/ejabberd $(DESTDIR)/etc/ejabberd/ejabberdctl.cfg
 	rm -r $(DESTDIR)/var/lock
-	rmdir $(DESTDIR)/usr/lib/x86_64-linux-gnu/ejabberd/priv/lib
+	rm -rf $(DESTDIR)/usr/lib/$(DPKG_CACHE_DEB_BUILD_MULTIARCH)/ejabberd/priv/lib
 	rm $(DESTDIR)/usr/share/doc/ejabberd/COPYING
 
 .PHONY: override_dh_compress
