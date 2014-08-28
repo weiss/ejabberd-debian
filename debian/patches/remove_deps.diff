@@ -5,17 +5,16 @@ Author: Philipp Huebner <debalance@debian.org>
 
 Index: ejabberd/rebar.config.script
 ===================================================================
---- ejabberd.orig/rebar.config.script	2014-05-15 08:03:26.962505041 +0200
-+++ ejabberd/rebar.config.script	2014-05-15 08:03:52.071081244 +0200
-@@ -127,9 +70,8 @@
+--- ejabberd.orig/rebar.config.script
++++ ejabberd/rebar.config.script
+@@ -126,9 +126,7 @@ Config = [{erl_opts, Macros ++ HiPE ++ D
+           {sub_dirs, ["rel"]},
            {keep_build_info, true},
            {ct_extra_params, "-include "
-            ++ filename:join([Cwd, "tools"]) ++ " "
--           ++ filename:join([Cwd, "deps", "p1_xml", "include"])},
+-           ++ filename:join([Cwd, "tools"])},
 -          {post_hooks, PostHooks ++ CfgPostHooks},
 -          {deps, Deps ++ CfgDeps}],
-+           ++ filename:join([Cwd, "deps", "p1_xml", "include"])}
-+	 ],
++           ++ filename:join([Cwd, "tools"])}],
  %%io:format("ejabberd configuration:~n  ~p~n", [Config]),
  Config.
  

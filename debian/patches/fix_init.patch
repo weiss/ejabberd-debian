@@ -5,8 +5,8 @@ Author: Philipp Huebner <debalance@debian.org>
 
 Index: ejabberd/ejabberd.init.template
 ===================================================================
---- ejabberd.orig/ejabberd.init.template	2014-05-14 21:32:17.046884560 +0200
-+++ ejabberd/ejabberd.init.template	2014-05-14 21:35:41.731504199 +0200
+--- ejabberd.orig/ejabberd.init.template
++++ ejabberd/ejabberd.init.template
 @@ -16,9 +16,12 @@
  
  set -o errexit
@@ -22,7 +22,7 @@ Index: ejabberd/ejabberd.init.template
  
  test -x "$CTL" || {
  	echo "ERROR: ejabberd not found: $DIR"
-@@ -29,11 +32,26 @@
+@@ -29,11 +32,26 @@ grep ^"$USER": /etc/passwd >/dev/null ||
  	exit 2
  }
  
@@ -51,9 +51,9 @@ Index: ejabberd/ejabberd.init.template
      su - $USER -c "$CTL started"
 Index: ejabberd/ejabberdctl.template
 ===================================================================
---- ejabberd.orig/ejabberdctl.template	2014-05-14 21:32:17.046884560 +0200
-+++ ejabberd/ejabberdctl.template	2014-05-14 21:32:17.042884473 +0200
-@@ -13,7 +13,7 @@
+--- ejabberd.orig/ejabberdctl.template
++++ ejabberd/ejabberdctl.template
+@@ -12,7 +12,7 @@ ERLANG_NODE=ejabberd@localhost
  # define default environment variables
  SCRIPT_DIR=`cd ${0%/*} && pwd`
  ERL={{erl}}

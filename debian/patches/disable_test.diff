@@ -6,9 +6,9 @@ Author: Philipp Huebner <debalance@debian.org>
 
 Index: ejabberd/Makefile.in
 ===================================================================
---- ejabberd.orig/Makefile.in	2014-05-03 15:27:02.834708618 +0200
-+++ ejabberd/Makefile.in	2014-05-03 15:27:02.830708545 +0200
-@@ -259,10 +259,6 @@
+--- ejabberd.orig/Makefile.in
++++ ejabberd/Makefile.in
+@@ -260,10 +260,6 @@ dialyzer: erlang_plt deps_plt ejabberd_p
  	status=$$? ; if [ $$status -ne 2 ]; then exit $$status; else exit 0; fi
  
  test:

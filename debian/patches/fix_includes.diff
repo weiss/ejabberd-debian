@@ -4,55 +4,42 @@ Description: correct include
  necessary.
 Author: Philipp Huebner <debalance@debian.org>
 
-Index: ejabberd/include/jlib.hrl
-===================================================================
---- ejabberd.orig/include/jlib.hrl	2014-05-15 08:21:35.000000000 +0200
-+++ ejabberd/include/jlib.hrl	2014-05-15 08:21:53.000000000 +0200
-@@ -19,7 +19,7 @@
- %%%----------------------------------------------------------------------
- 
- -include("ns.hrl").
---include("xml.hrl").
-+-include_lib("p1_xml/include/xml.hrl").
- 
- -define(STANZA_ERROR(Code, Type, Condition),
- 	#xmlel{name = <<"error">>,
 Index: ejabberd/src/mod_sip_proxy.erl
 ===================================================================
---- ejabberd.orig/src/mod_sip_proxy.erl	2014-05-15 08:21:35.000000000 +0200
-+++ ejabberd/src/mod_sip_proxy.erl	2014-05-15 08:21:53.000000000 +0200
+--- ejabberd.orig/src/mod_sip_proxy.erl
++++ ejabberd/src/mod_sip_proxy.erl
 @@ -21,7 +21,7 @@
  
  -include("ejabberd.hrl").
  -include("logger.hrl").
---include("esip.hrl").
+--include_lib("esip/include/esip.hrl").
 +-include_lib("p1_sip/include/esip.hrl").
  
- -record(state, {host = <<"">>  :: binary(),
- 		opts = []      :: [{certfile, binary()}],
+ -define(SIGN_LIFETIME, 300). %% in seconds.
+ 
 Index: ejabberd/src/mod_sip.erl
 ===================================================================
---- ejabberd.orig/src/mod_sip.erl	2014-05-14 21:11:44.679189053 +0200
-+++ ejabberd/src/mod_sip.erl	2014-05-15 08:23:53.169105371 +0200
+--- ejabberd.orig/src/mod_sip.erl
++++ ejabberd/src/mod_sip.erl
 @@ -20,7 +20,7 @@
  
  -include("ejabberd.hrl").
  -include("logger.hrl").
---include("esip.hrl").
+--include_lib("esip/include/esip.hrl").
 +-include_lib("p1_sip/include/esip.hrl").
  
  %%%===================================================================
  %%% API
 Index: ejabberd/src/mod_sip_registrar.erl
 ===================================================================
---- ejabberd.orig/src/mod_sip_registrar.erl	2014-05-14 21:11:44.679189053 +0200
-+++ ejabberd/src/mod_sip_registrar.erl	2014-05-15 08:24:25.797809764 +0200
+--- ejabberd.orig/src/mod_sip_registrar.erl
++++ ejabberd/src/mod_sip_registrar.erl
 @@ -20,7 +20,7 @@
  
  -include("ejabberd.hrl").
  -include("logger.hrl").
---include("esip.hrl").
+--include_lib("esip/include/esip.hrl").
 +-include_lib("p1_sip/include/esip.hrl").
  
  -define(CALL_TIMEOUT, timer:seconds(30)).
- 
+ -define(DEFAULT_EXPIRES, 3600).

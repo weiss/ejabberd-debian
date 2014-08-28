@@ -5,9 +5,9 @@ Author: Philipp Huebner <debalance@debian.org>
 
 Index: ejabberd/Makefile.in
 ===================================================================
---- ejabberd.orig/Makefile.in	2014-04-10 21:56:14.888012584 +0200
-+++ ejabberd/Makefile.in	2014-04-10 21:57:34.137713563 +0200
-@@ -68,26 +68,11 @@
+--- ejabberd.orig/Makefile.in
++++ ejabberd/Makefile.in
+@@ -68,26 +68,11 @@ else
    INIT_USER=$(INSTALLUSER)
  endif
  
@@ -36,7 +36,7 @@ Index: ejabberd/Makefile.in
  translations:
  	contrib/extract_translations/prepare-translation.sh -updateall
  
-@@ -103,8 +88,6 @@
+@@ -103,8 +88,6 @@ spec:
  	$(ERL) -noinput +B -pa ebin -pa deps/*/ebin -eval \
  	'case xml_gen:compile("tools/xmpp_codec.spec") of ok -> halt(0); _ -> halt(1) end.'
  
@@ -45,7 +45,7 @@ Index: ejabberd/Makefile.in
  install: all
  	#
  	# Configuration files
-@@ -139,14 +122,11 @@
+@@ -139,14 +122,11 @@ install: all
  	$(INSTALL) -d $(BEAMDIR)
  	$(INSTALL) -m 644 ebin/*.app $(BEAMDIR)
  	$(INSTALL) -m 644 ebin/*.beam $(BEAMDIR)
@@ -60,7 +60,7 @@ Index: ejabberd/Makefile.in
  	#
  	# Binary C programs
  	$(INSTALL) -d $(PBINDIR)
-@@ -154,7 +134,6 @@
+@@ -156,7 +136,6 @@ install: all
  	#
  	# Binary system libraries
  	$(INSTALL) -d $(SODIR)
