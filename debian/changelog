@@ -1,3 +1,11 @@
+ejabberd (14.07-1) experimental; urgency=medium
+
+  * Import Upstream version 14.07
+  * Refresh patches for ejabberd 14.07
+  * Add erlang-p1-utils to (Build-)Depends
+
+ -- Philipp Huebner <debalance@debian.org>  Thu, 28 Aug 2014 15:20:45 +0200
+
 ejabberd (14.05-1~experimental2) experimental; urgency=medium
 
   * Fix arch-specific line in debian/rules
