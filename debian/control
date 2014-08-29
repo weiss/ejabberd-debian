@@ -23,6 +23,7 @@ Depends: adduser, erlang-base (>= 1:15.b) | ${erlang-abi:Depends}, ${erlang:Depe
                erlang-ssl, erlang-xmlrpc,
 Suggests: libunix-syslog-perl, imagemagick | graphicsmagick-imagemagick-compat
 Conflicts: ejabberd-mod-shared-roster-ldap
+Provides: xmpp-server
 Description: distributed, fault-tolerant Jabber/XMPP server written in Erlang
  ejabberd is a distributed, fault-tolerant Jabber/XMPP server written in Erlang.
  Its features contain:
