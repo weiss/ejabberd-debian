@@ -1,10 +1,13 @@
-ejabberd (14.07-1) experimental; urgency=medium
+ejabberd (14.07-1) experimental; urgency=low
 
   * Import Upstream version 14.07
   * Refresh patches for ejabberd 14.07
   * Add erlang-p1-utils to (Build-)Depends
+  * Make ejabberdctl work for root
+  * Change default EJABBERD_NODE back to "ejabberd" (Closes: #757858)
+  * Suppress misleading warning during postinst (Closes: #598332)
 
- -- Philipp Huebner <debalance@debian.org>  Thu, 28 Aug 2014 15:20:45 +0200
+ -- Philipp Huebner <debalance@debian.org>  Sat, 30 Aug 2014 01:06:04 +0200
 
 ejabberd (14.05-1~experimental2) experimental; urgency=medium
 
