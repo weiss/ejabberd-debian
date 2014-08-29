@@ -53,7 +53,13 @@ Index: ejabberd/ejabberdctl.template
 ===================================================================
 --- ejabberd.orig/ejabberdctl.template
 +++ ejabberd/ejabberdctl.template
-@@ -12,7 +12,7 @@ ERLANG_NODE=ejabberd@localhost
+@@ -7,12 +7,12 @@ ERL_MAX_PORTS=32000
+ ERL_PROCESSES=250000
+ ERL_MAX_ETS_TABLES=1400
+ FIREWALL_WINDOW=""
+-ERLANG_NODE=ejabberd@localhost
++ERLANG_NODE=ejabberd
+ 
  # define default environment variables
  SCRIPT_DIR=`cd ${0%/*} && pwd`
  ERL={{erl}}
