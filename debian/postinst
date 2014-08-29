@@ -116,6 +116,7 @@ register_admin()
 		    fi
 		else
 		    echo "Admin user \"$USER@$HOST\" is registered successfully."
+		    invoke-rc.d ejabberd restart
 		fi
 	    fi
 	else
@@ -131,6 +132,7 @@ case "$1" in
 	adduser --quiet --system --shell /bin/sh --group --home /var/lib/ejabberd ejabberd
 	setup_ejabberd "$@"
 	update-rc.d ejabberd defaults > /dev/null
+	invoke-rc.d ejabberd start
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
