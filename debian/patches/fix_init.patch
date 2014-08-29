@@ -62,3 +62,12 @@ Index: ejabberd/ejabberdctl.template
  
  # Compatibility in ZSH
  #setopt shwordsplit 2>/dev/null
+@@ -22,7 +22,7 @@ if [ "$INSTALLUSER" != "" ] ; then
+     EXEC_CMD="false"
+     for GID in `id -G`; do
+         if [ $GID -eq 0 ] ; then
+-            EXEC_CMD="su $INSTALLUSER -p -c"
++            EXEC_CMD="su $INSTALLUSER -c"
+         fi
+     done
+     if [ `id -g` -eq `id -g $INSTALLUSER` ] ; then
