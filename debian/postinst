@@ -132,7 +132,9 @@ case "$1" in
 	adduser --quiet --system --shell /bin/sh --group --home /var/lib/ejabberd ejabberd 2> /dev/null
 	setup_ejabberd "$@"
 	update-rc.d ejabberd defaults > /dev/null
-	invoke-rc.d ejabberd start
+	if ! ejabberdctl status > /dev/null; then 
+	    invoke-rc.d ejabberd start
+	fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
