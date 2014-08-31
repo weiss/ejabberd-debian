@@ -1,10 +1,8 @@
-* The maintainer scripts + debconf parts are not working correctly yet
-  (as of 14.05)
+* Update README.Debian
 
-* Fix lintian warnings where possible.
+* Update ejabberd.8
 
-* Work on bugreports and add "Closes:" to changelog before uploading
-  to unstable
+* Update ejabberdctl.8
 
 * In debconf code, check if the user name contains
   the "@" character and if it is, does the part of
@@ -14,6 +12,9 @@
   complain. At the current state it's possible to
   enter an invalid username and several users
   tripped over this issue.
+
+* In debconf code, make sure username contains only valid characters (e.g. no / )
+
 
 
 ejabberdctl.8 tasks
