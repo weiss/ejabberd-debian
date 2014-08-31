@@ -7,7 +7,7 @@ Files: *
 Copyright: 2002-2014, ProcessOne
 License: GPL-2+ with OpenSSL exception
 
-Files: src/node* src/p*
+Files: src/node* src/p* src/*_pubsub_* include/pubsub.hrl
 Copyright: 2002-2014, ProcessOne
 License: EPL-1.1
 
