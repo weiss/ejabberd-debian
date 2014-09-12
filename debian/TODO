@@ -1,3 +1,9 @@
+* Patch default config to listen for IPv6
+
+* Patch the init script not to fail stopping when already stopped
+
+* Reduce dependencies in debian/control by using erlang-depends in debian/rules
+
 * Update README.Debian
 
 * Update ejabberd.8
