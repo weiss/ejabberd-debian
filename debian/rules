@@ -41,6 +41,11 @@ override_dh_auto_install:
 override_dh_compress:
 	dh_compress --exclude=ejabberd.yml
 
+.PHONY: override_dh_installdeb
+override_dh_installdeb:
+	erlang-depends
+	dh_installdeb
+
 .PHONY: override_dh_auto_clean
 override_dh_auto_clean:
 	cd doc && make clean
