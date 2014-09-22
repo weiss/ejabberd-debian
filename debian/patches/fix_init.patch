@@ -7,7 +7,7 @@ Index: ejabberd/ejabberd.init.template
 ===================================================================
 --- ejabberd.orig/ejabberd.init.template
 +++ ejabberd/ejabberd.init.template
-@@ -16,24 +16,38 @@
+@@ -16,34 +16,52 @@
  
  set -o errexit
  
@@ -49,17 +49,22 @@ Index: ejabberd/ejabberd.init.template
      test -x "$CTL" || exit 0
 +    mkrundir
      echo "Starting ejabberd..."
-     su - $USER -c "$CTL start"
-     su - $USER -c "$CTL started"
-@@ -42,8 +56,10 @@ case "$1" in
+-    su - $USER -c "$CTL start"
+-    su - $USER -c "$CTL started"
++    if ! /etc/init.d/ejabberd status > /dev/null; then 
++	su - $USER -c "$CTL start"
++	su - $USER -c "$CTL started"
++    fi
+     echo "done."
+     ;;
    stop)
      test -x "$CTL" || exit 0
      echo "Stopping ejabberd..."
 -    su - $USER -c "$CTL stop"
 -    su - $USER -c "$CTL stopped"
 +    if $CTL status >/dev/null || test $? = 1 ; then
-+	    su - $USER -c "$CTL stop"
-+	    su - $USER -c "$CTL stopped"
++	su - $USER -c "$CTL stop"
++	su - $USER -c "$CTL stopped"
 +    fi
      echo "done."
      ;;
