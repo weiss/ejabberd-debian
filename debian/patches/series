@@ -5,3 +5,4 @@ fix_includes.diff
 
 fix_examples.patch
 fix_init.patch
+enable-ipv6.diff
