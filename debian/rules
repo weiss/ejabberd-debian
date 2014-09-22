@@ -1,12 +1,8 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
+#export DH_VERBOSE=1
 
 DPKG_EXPORT_BUILDFLAGS = 1
-include /usr/share/dpkg/buildflags.mk
-include /usr/share/dpkg/architecture.mk
-
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+include /usr/share/dpkg/default.mk
 
 DESTDIR=$(CURDIR)/debian/ejabberd
 
