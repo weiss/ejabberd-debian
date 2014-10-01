@@ -24,6 +24,7 @@ case "$1" in
 	rm -Rf /var/log/ejabberd /var/lib/ejabberd
 	rm -Rf /var/run/ejabberd || true
 	rm -f /etc/default/ejabberd
+	rm -f /root/.rnd || true
 	if which deluser >/dev/null ; then
 	    deluser ejabberd || true
 	    delgroup ejabberd || true

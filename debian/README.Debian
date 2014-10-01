@@ -129,11 +129,11 @@ scripts honor this setting so it survives upgrades.
 
 As an example, to make epam setgid shadow, you can use:
 
-dpkg-statoverride --add root shadow 02755 /usr/lib/erlang/bin/epam
+  dpkg-statoverride --add root shadow 02755 /usr/lib/erlang/p1_pam/bin/epam
 
 and to make epam setuid root you can do:
 
-dpkg-statoverride --add root ejabberd 04754 /usr/lib/erlang/bin/epam
+  dpkg-statoverride --add root ejabberd 04754 /usr/lib/erlang/p1_pam/bin/epam
 
 (Note that we set o-x there so that only users in the ejabberd group
 are able to elevate their privileges by executing this program.)
@@ -325,4 +325,4 @@ Sergei Golovan <sgolovan@debian.org>
 Konstantin Khomoutov <flatworm@users.sourceforge.net>
 Philipp Huebner <debalance@debian.org>
 
-Tue, 23 Sep 2014 03:52:33 +0300
+Wed, 01 Oct 2014 14:52:33 +0200
