@@ -1,3 +1,16 @@
+ejabberd (14.07-2) unstable; urgency=medium
+
+  * Enable IPv6 in default configuration
+  * Fix init: stopping should succeed if the program is not running
+  * Fix init: only start ejabberd if not already running
+  * Recommend ejabberd-contrib
+  * Update README.Debian (Closes: #624793)
+  * Backport upstream fix for "ldap_deref_aliases"
+  * Call erlang-depends in debian/rules and reduce hardcoded dependencies
+  * Updated Standards-Version: 3.9.6 (no changes needed)
+
+ -- Philipp Huebner <debalance@debian.org>  Wed, 01 Oct 2014 15:06:49 +0200
+
 ejabberd (14.07-1) unstable; urgency=low
 
   * New upstream release (Closes: #503313, #539409, #610532, #706897, #712145,
