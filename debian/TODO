@@ -1,3 +1,6 @@
+* Move ejabberd.yml.example to different location to follow policy,
+  see http://lists.alioth.debian.org/pipermail/piuparts-devel/2014-October/005564.html
+
 * Update ejabberd.8
 
 * Update ejabberdctl.8
