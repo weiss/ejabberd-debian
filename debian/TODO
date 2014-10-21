@@ -1,5 +1,12 @@
+* Add security patch: https://github.com/processone/ejabberd/commit/7bdc1151b
+  CVE-2014-8760	
+
+* Disable ejabberd's internal logrotation to prevent overwriting rotated files
+
 * Move ejabberd.yml.example to different location to follow policy,
   see http://lists.alioth.debian.org/pipermail/piuparts-devel/2014-October/005564.html
+
+* Add a debconf check for the config change to YAML / add info to Jessie release notes
 
 * Update ejabberd.8
 
