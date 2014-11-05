@@ -32,6 +32,8 @@ override_dh_auto_install:
 	rm -r $(DESTDIR)/var/lock
 	rm -rf $(DESTDIR)/usr/lib/$(DPKG_CACHE_DEB_BUILD_MULTIARCH)/ejabberd/priv/lib
 	rm $(DESTDIR)/usr/share/doc/ejabberd/COPYING
+	mkdir $(DESTDIR)/usr/share/ejabberd
+	cp ejabberd.yml.example $(DESTDIR)/usr/share/ejabberd/ejabberd.yml.example
 
 .PHONY: override_dh_compress
 override_dh_compress:
