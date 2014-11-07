@@ -1,0 +1,25 @@
+Description: don't let "reopen-log" command rotate logs
+ Make sure the "ejabberdctl reopen-log" command really just reopens log
+ files and doesn't also rename them.  This allows us to use it as a
+ "postrotate" command in our logrotate configuration for ejabberd.
+Author: Holger Weiss <holger@zedat.fu-berlin.de>
+
+diff --git a/src/ejabberd_logger.erl b/src/ejabberd_logger.erl
+index 65899c8..257da7b 100644
+--- a/src/ejabberd_logger.erl
++++ b/src/ejabberd_logger.erl
+@@ -114,13 +114,7 @@ start() ->
+     ok.
+ 
+ reopen_log() ->
+-    lager_crash_log ! rotate,
+-    lists:foreach(
+-      fun({lager_file_backend, File}) ->
+-              whereis(lager_event) ! {rotate, File};
+-         (_) ->
+-              ok
+-      end, gen_event:which_handlers(lager_event)).
++    ok.
+ 
+ get() ->
+     case lager:get_loglevel(lager_console_backend) of
