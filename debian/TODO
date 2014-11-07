@@ -1,5 +1,3 @@
-* Disable ejabberd's internal logrotation to prevent overwriting rotated files
-
 * Add a debconf check for the config change to YAML / add info to Jessie release notes
 
 * Update ejabberd.8
