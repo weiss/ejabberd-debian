@@ -1,0 +1,38 @@
+Description: disable ejabberd's internal log rotation
+ There is a conflict between ejabberd's internal logrotation and
+ the external logrotate configuration. In order to use external
+ log rotation reliably, ejabberd's internal logrotation needs to be
+ disabled. Otherwise loss of some log content will occur.
+Author: Philipp Huebner <debalance@debian.org>
+
+Index: ejabberd/ejabberd.yml.example
+===================================================================
+--- ejabberd.orig/ejabberd.yml.example
++++ ejabberd/ejabberd.yml.example
+@@ -39,23 +39,10 @@
+ loglevel: 4
+ 
+ ##
+-## rotation: Describe how to rotate logs. Either size and/or date can trigger
+-## log rotation. Setting count to N keeps N rotated logs. Setting count to 0
+-## does not disable rotation, it instead rotates the file and keeps no previous
+-## versions around. Setting size to X rotate log when it reaches X bytes.
+-## To disable rotation set the size to 0 and the date to ""
+-## Date syntax is taken from the syntax newsyslog uses in newsyslog.conf.
+-## Some examples:
+-##  $D0     rotate every night at midnight
+-##  $D23    rotate every day at 23:00 hr
+-##  $W0D23  rotate every week on Sunday at 23:00 hr
+-##  $W5D16  rotate every week on Friday at 16:00 hr
+-##  $M1D0   rotate on the first day of every month at midnight
+-##  $M5D6   rotate on every 5th day of the month at 6:00 hr
+-##
+-log_rotate_size: 10485760
++## rotation: Disable ejabberd's internal log rotation, as the Debian package
++## uses logrotate(8).
++log_rotate_size: 0
+ log_rotate_date: ""
+-log_rotate_count: 1
+ 
+ ##
+ ## overload protection: If you want to limit the number of messages per second

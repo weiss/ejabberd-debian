@@ -7,4 +7,5 @@ fix_init.patch
 enable-ipv6.diff
 fix_option_name.patch
 CVE-2014-8760.patch
+disable_internal_logrotate.patch
 fix_reopen_log.patch
