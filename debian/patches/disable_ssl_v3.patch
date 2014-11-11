@@ -1,0 +1,30 @@
+Description: disable use of SSLv3
+ As SSLv3 is no longer considered "secure", it should be disabled
+ in the default configuration
+
+Index: ejabberd/ejabberd.yml.example
+===================================================================
+--- ejabberd.orig/ejabberd.yml.example
++++ ejabberd/ejabberd.yml.example
+@@ -103,8 +103,8 @@ listen:
+     ##
+     ## Custom OpenSSL options
+     ##
+-    ## protocol_options:
+-    ##   - "no_sslv3"
++    protocol_options:
++      - "no_sslv3"
+     ##   - "no_tlsv1"
+     max_stanza_size: 65536
+     shaper: c2s_shaper
+@@ -168,8 +168,8 @@ listen:
+ 
+ ## Custom OpenSSL options
+ ##
+-## s2s_protocol_options:
+-##   - "no_sslv3"
++   s2s_protocol_options:
++     - "no_sslv3"
+ ##   - "no_tlsv1"
+ 
+ ##
