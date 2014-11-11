@@ -1,6 +1,7 @@
 Description: disable use of SSLv3
  As SSLv3 is no longer considered "secure", it should be disabled
  in the default configuration
+Author: Philipp Huebner <debalance@debian.org>
 
 Index: ejabberd/ejabberd.yml.example
 ===================================================================
