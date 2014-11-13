@@ -24,8 +24,8 @@ Index: ejabberd/ejabberd.yml.example
  ##
 -## s2s_protocol_options:
 -##   - "no_sslv3"
-+   s2s_protocol_options:
-+     - "no_sslv3"
++    s2s_protocol_options:
++      - "no_sslv3"
  ##   - "no_tlsv1"
  
  ##
