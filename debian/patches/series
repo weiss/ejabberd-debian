@@ -9,4 +9,4 @@ fix_option_name.patch
 CVE-2014-8760.patch
 disable_internal_logrotate.patch
 fix_reopen_log.patch
-disable_ssl_v3.patch
+configure_ssl.patch

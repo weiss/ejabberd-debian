@@ -1,0 +1,48 @@
+Description: Configure default usage of TLS/SSL
+ Enable TLS but disable SSLv3 as it is no longer considered "secure"
+Author: Philipp Huebner <debalance@debian.org>
+
+Index: ejabberd/ejabberd.yml.example
+===================================================================
+--- ejabberd.orig/ejabberd.yml.example
++++ ejabberd/ejabberd.yml.example
+@@ -98,13 +98,13 @@ listen:
+     ## certificate, specify the full path to the
+     ## file and uncomment this line:
+     ##
+-    ## certfile: "/path/to/ssl.pem"
+-    ## starttls: true
++    certfile: "/etc/ejabberd/ejabberd.pem"
++    starttls: true
+     ##
+     ## Custom OpenSSL options
+     ##
+-    ## protocol_options:
+-    ##   - "no_sslv3"
++    protocol_options:
++      - "no_sslv3"
+     ##   - "no_tlsv1"
+     max_stanza_size: 65536
+     shaper: c2s_shaper
+@@ -159,17 +159,17 @@ listen:
+ ## Allowed values are: false optional required required_trusted
+ ## You must specify a certificate file.
+ ##
+-## s2s_use_starttls: optional
++s2s_use_starttls: optional
+ 
+ ##
+ ## s2s_certfile: Specify a certificate file.
+ ##
+-## s2s_certfile: "/path/to/ssl.pem"
++s2s_certfile: "/etc/ejabberd/ejabberd.pem"
+ 
+ ## Custom OpenSSL options
+ ##
+-## s2s_protocol_options:
+-##   - "no_sslv3"
++s2s_protocol_options:
++  - "no_sslv3"
+ ##   - "no_tlsv1"
+ 
+ ##
