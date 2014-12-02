@@ -10,3 +10,4 @@ CVE-2014-8760.patch
 disable_internal_logrotate.patch
 fix_reopen_log.patch
 configure_ssl.patch
+avoid_hanging_c2s.patch
